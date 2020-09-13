@@ -1,0 +1,172 @@
+// Copyright 2018 The NuxUI Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+package log
+
+import (
+	"fmt"
+	"io"
+	"os"
+	"sync"
+)
+
+const (
+	VERBOSE = iota + 2
+	DEBUG
+	INFO
+	WARN
+	ERROR
+	FATAL
+)
+
+type Logger interface {
+	V(tag string, format string, msg ...interface{})
+	D(tag string, format string, msg ...interface{})
+	I(tag string, format string, msg ...interface{})
+	W(tag string, format string, msg ...interface{})
+	E(tag string, format string, msg ...interface{})
+	Fatal(tag string, format string, msg ...interface{}) // TODO:: print log, print stack, exit
+	SetOutput(w io.Writer)
+	Flags() int
+	SetFlags(flag int)
+	Prefix() string
+	SetPrefix(prefix string)
+}
+
+const bufferSize = 10
+
+const (
+	Ldate         = 1 << iota // the date in the local time zone: 2009/01/23
+	Ltime                     // the time in the local time zone: 01:23:23
+	Lmicroseconds             // microsecond resolution: 01:23:23.123123.  assumes Ltime.
+	Llongfile                 // full file name and line number: /a/b/c/d.go:23
+	Lshortfile                // final file name element and line number: d.go:23. overrides Llongfile
+	LUTC                      // if Ldate or Ltime is set, use UTC rather than the local time zone
+	LstdFlags     = Ltime     // initial values for the standard logger
+)
+
+type logger struct {
+	flags  int
+	depth  int
+	prefix string
+	mux    sync.Mutex
+	out    io.Writer
+}
+
+var logs = make(chan string, bufferSize)
+var logsRun = false
+var logsMux sync.Mutex
+
+func New(out io.Writer, prefix string, flags int) Logger {
+	return new(out, prefix, flags, 1)
+}
+
+func (me *logger) V(tag string, format string, msg ...interface{}) {
+	me.output(me.depth, VERBOSE, "V", tag, format, msg...)
+}
+
+func (me *logger) D(tag string, format string, msg ...interface{}) {
+	me.output(me.depth, DEBUG, "D", tag, format, msg...)
+}
+
+func (me *logger) I(tag string, format string, msg ...interface{}) {
+	me.output(me.depth, INFO, "I", tag, format, msg...)
+}
+
+func (me *logger) W(tag string, format string, msg ...interface{}) {
+	me.output(me.depth, WARN, "W", tag, format, msg...)
+}
+
+func (me *logger) E(tag string, format string, msg ...interface{}) {
+	me.output(me.depth, ERROR, "E", tag, format, msg...)
+}
+
+func (me *logger) Fatal(tag string, format string, msg ...interface{}) {
+	me.output(me.depth, ERROR, "Fatal", tag, format, msg...)
+	panic(fmt.Sprintf(format, msg...))
+}
+
+func (me *logger) SetOutput(w io.Writer) {
+	me.mux.Lock()
+	me.out = w
+	me.mux.Unlock()
+}
+
+// Flags returns the output flags for the logger.
+func (me *logger) Flags() int {
+	me.mux.Lock()
+	defer me.mux.Unlock()
+	return me.flags
+}
+
+// SetFlags sets the output flags for the logger.
+func (me *logger) SetFlags(flags int) {
+	me.mux.Lock()
+	me.flags = flags
+	me.mux.Unlock()
+}
+
+// Prefix returns the output prefix for the logger.
+func (me *logger) Prefix() string {
+	me.mux.Lock()
+	defer me.mux.Unlock()
+	return me.prefix
+}
+
+// SetPrefix sets the output prefix for the logger.
+func (me *logger) SetPrefix(prefix string) {
+	me.mux.Lock()
+	me.prefix = prefix
+	me.mux.Unlock()
+}
+
+var std = new(os.Stdout, "", LstdFlags, 2)
+
+func V(tag string, format string, msg ...interface{}) {
+	std.V(tag, format, msg...)
+}
+
+func D(tag string, format string, msg ...interface{}) {
+	std.D(tag, format, msg...)
+}
+
+func I(tag string, format string, msg ...interface{}) {
+	std.I(tag, format, msg...)
+}
+
+func W(tag string, format string, msg ...interface{}) {
+	std.W(tag, format, msg...)
+}
+
+func E(tag string, format string, msg ...interface{}) {
+	std.E(tag, format, msg...)
+}
+
+func Fatal(tag string, format string, msg ...interface{}) {
+	std.Fatal(tag, format, msg...)
+}
+
+func SetOutput(w io.Writer) {
+	std.SetOutput(w)
+}
+
+// Flags returns the output flags for the standard logger.
+func Flags() int {
+	return std.Flags()
+}
+
+// SetFlags sets the output flags for the standard logger.
+func SetFlags(flags int) {
+	std.SetFlags(flags)
+}
+
+// Prefix returns the output prefix for the standard logger.
+func Prefix() string {
+	return std.Prefix()
+}
+
+// SetPrefix sets the output prefix for the standard logger.
+func SetPrefix(prefix string) {
+	std.SetPrefix(prefix)
+}
