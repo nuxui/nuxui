@@ -13,6 +13,22 @@
 #import <Foundation/Foundation.h>
 #import <OpenGL/gl3.h>
 
+char* window_title(uintptr_t window){
+    return (char *)[[(NSWindow*)window title] UTF8String];
+}
+
+void window_setTitle(uintptr_t window, char* title){
+    ((NSWindow*)window).title = [NSString stringWithUTF8String:title];
+}
+
+float window_alpha(uintptr_t window){
+    return (float)([(NSWindow*)window alphaValue]);
+}
+
+void window_setAlpha(uintptr_t window, float alpha){
+    ((NSWindow*)window).alphaValue = alpha;
+}
+
 int32_t window_getWidth(uintptr_t window){
     return (int32_t)([(NSWindow*)window frame].size.width);
 }
@@ -20,6 +36,7 @@ int32_t window_getWidth(uintptr_t window){
 int32_t window_getHeight(uintptr_t window){
     return (int32_t)([(NSWindow*)window frame].size.height);
 }
+
 int32_t window_getContentWidth(uintptr_t window){
     return (int32_t)([[(NSWindow*)window contentView] bounds].size.width);
 }
@@ -43,7 +60,7 @@ void flush_buffer(uintptr_t window, void* buf){
     NSWindow* w = (NSWindow*)window;
     size_t width = w.contentView.bounds.size.width;
     size_t height = w.contentView.bounds.size.height;
-    NSLog(@"flush_buffer w=%d , h=%d", width, height);
+    // NSLog(@"flush_buffer w=%d , h=%d", width, height);
     uint8_t *buffer = (uint8_t *)buf;
     size_t pitch = width * sizeof(uint32_t);
 

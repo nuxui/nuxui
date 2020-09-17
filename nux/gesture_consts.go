@@ -15,5 +15,5 @@ const (
 const (
 	DOWN_DELAY               = 100
 	DOWN_TO_UP_DELAY         = 100
-	MIN_PAN_DISTANCE float64 = 10 /*use dp*/
+	MIN_PAN_DISTANCE float32 = 10 /*use dp*/
 )

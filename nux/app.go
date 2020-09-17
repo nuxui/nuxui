@@ -10,8 +10,12 @@ import "github.com/nuxui/nuxui/log"
 type Application interface {
 	Manifest() Manifest
 	MainWindow() Window
+	// KeyWindow() Window
+	// Windows() []Window
+	// FindWindow() Window
 	SendEvent(Event)
 	sendEventAndWaitDone(Event)
+	Terminate()
 }
 
 // App get the nux app instance
@@ -86,8 +90,8 @@ func (me *application) loop() {
 			}
 		// App().MainWindow()
 		// App().Manifest().Root()
-		case Type_InputEvent:
-			log.V("nux", "Type_InputEvent")
+		case Type_PointerEvent:
+			log.V("nux", "Type_PointerEvent")
 			if f, ok := App().MainWindow().(Draw); ok {
 				if canvas, err := App().MainWindow().LockCanvas(); err == nil {
 					f.Draw(canvas)

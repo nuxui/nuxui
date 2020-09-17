@@ -15,11 +15,11 @@ package nux
 #include <pthread.h>
 #include <stdlib.h>
 
-void runApp(void);
+void runApp();
+void terminate();
 */
 import "C"
 import (
-	"fmt"
 	"time"
 
 	"github.com/nuxui/nuxui/log"
@@ -84,17 +84,18 @@ func (me *application) sendEventAndWaitDone(event Event) {
 	<-me.eventDone
 }
 
+func (me *application) Terminate() {
+	C.terminate()
+}
+
 //export windowCreated
 func windowCreated(windptr C.uintptr_t) {
 	theApp.window.windptr = windptr
 
-	e := &windowEvent{
-		event: event{
-			id:     1,
-			time:   time.Now(),
-			etype:  Type_WindowEvent,
-			action: Action_WindowCreated,
-		},
+	e := &event{
+		time:   time.Now(),
+		etype:  Type_WindowEvent,
+		action: Action_WindowCreated,
 		window: theApp.findWindow(windptr),
 	}
 
@@ -103,13 +104,10 @@ func windowCreated(windptr C.uintptr_t) {
 
 //export windowResized
 func windowResized(windptr C.uintptr_t) {
-	e := &windowEvent{
-		event: event{
-			id:     1,
-			time:   time.Now(),
-			etype:  Type_WindowEvent,
-			action: Action_WindowMeasured,
-		},
+	e := &event{
+		time:   time.Now(),
+		etype:  Type_WindowEvent,
+		action: Action_WindowMeasured,
 		window: theApp.findWindow(windptr),
 	}
 
@@ -120,13 +118,10 @@ func windowResized(windptr C.uintptr_t) {
 func windowDraw(windptr C.uintptr_t) {
 	log.V("nux", "windowDraw")
 
-	e := &windowEvent{
-		event: event{
-			id:     1,
-			time:   time.Now(),
-			etype:  Type_WindowEvent,
-			action: Action_WindowDraw,
-		},
+	e := &event{
+		time:   time.Now(),
+		etype:  Type_WindowEvent,
+		action: Action_WindowDraw,
 		window: theApp.findWindow(windptr),
 	}
 
@@ -154,376 +149,408 @@ func run() {
 	C.runApp()
 }
 
-//export nativeLoopPrepared
-func nativeLoopPrepared() {
+//export go_nativeLoopPrepared
+func go_nativeLoopPrepared() {
 	theApp.nativeLoopPrepared <- struct{}{}
 }
 
 func startTextInput() {
 }
 
-//export eventKey
-func eventKey(runeVal int32, direction uint8, code uint16, flags uint32) {
-	// var modifiers key.Modifiers
-	// for _, mod := range mods {
-	// 	if flags&mod.flags == mod.flags {
-	// 		modifiers |= mod.mod
-	// 	}
-	// }
+var lastMouseEvent map[MouseButton]Event = map[MouseButton]Event{}
 
-	// theApp.eventsIn <- key.Event{
-	// 	Rune:      convRune(rune(runeVal)),
-	// 	Code:      convVirtualKeyCode(code),
-	// 	Modifiers: modifiers,
-	// 	Direction: key.Direction(direction),
-	// }
-	convVirtualKeyCode(code)
+//export go_mouseEvent
+func go_mouseEvent(windptr C.uintptr_t, etype uint, x, y, screenX, screenY, scrollX, scrollY float32, pressure float32, stage int32) {
+	e := &event{
+		window:   theApp.findWindow(windptr),
+		time:     time.Now(),
+		etype:    Type_PointerEvent,
+		action:   Action_None,
+		pointer:  0,
+		button:   MB_None,
+		kind:     Kind_Mouse,
+		x:        x,
+		y:        y,
+		screenX:  screenX,
+		screenY:  screenY,
+		scrollX:  scrollX,
+		scrollY:  scrollY,
+		pressure: pressure,
+		stage:    stage,
+	}
+
+	switch etype {
+	case C.NSEventTypeMouseMoved:
+		log.V("nuxui", "NSEventTypeMouseMoved")
+		e.button = MB_None
+		e.action = Action_Move
+		e.pointer = 0
+	case C.NSEventTypeLeftMouseDown:
+		log.V("nuxui", "NSEventTypeLeftMouseDown")
+		e.button = MB_Left
+		e.action = Action_Down
+		e.pointer = time.Now().UnixNano()
+		lastMouseEvent[MB_Left] = e
+	case C.NSEventTypeLeftMouseUp:
+		log.V("nuxui", "NSEventTypeLeftMouseUp")
+		e.button = MB_Left
+		e.action = Action_Up
+		if v, ok := lastMouseEvent[MB_Left]; ok {
+			e.pointer = v.Pointer()
+		}
+	case C.NSEventTypeLeftMouseDragged:
+		log.V("nuxui", "NSEventTypeLeftMouseDragged")
+		e.button = MB_Left
+		e.action = Action_Move
+		if v, ok := lastMouseEvent[MB_Left]; ok {
+			e.pointer = v.Pointer()
+		}
+	case C.NSEventTypeRightMouseDown:
+		log.V("nuxui", "NSEventTypeRightMouseDown")
+		e.button = MB_Right
+		e.action = Action_Down
+		e.pointer = time.Now().UnixNano()
+		lastMouseEvent[MB_Right] = e
+	case C.NSEventTypeRightMouseUp:
+		log.V("nuxui", "NSEventTypeRightMouseUp")
+		e.button = MB_Right
+		e.action = Action_Up
+		if v, ok := lastMouseEvent[MB_Right]; ok {
+			e.pointer = v.Pointer()
+		}
+	case C.NSEventTypeRightMouseDragged:
+		log.V("nuxui", "NSEventTypeRightMouseDragged")
+		e.button = MB_Right
+		e.action = Action_Move
+		if v, ok := lastMouseEvent[MB_Right]; ok {
+			e.pointer = v.Pointer()
+		}
+	case C.NSEventTypeOtherMouseDown:
+		log.V("nuxui", "NSEventTypeOtherMouseDown")
+		e.button = MB_Other
+		e.action = Action_Down
+		e.pointer = time.Now().UnixNano()
+		lastMouseEvent[MB_Other] = e
+	case C.NSEventTypeOtherMouseUp:
+		log.V("nuxui", "NSEventTypeOtherMouseUp")
+		e.button = MB_Other
+		e.action = Action_Up
+		if v, ok := lastMouseEvent[MB_Other]; ok {
+			e.pointer = v.Pointer()
+		}
+	case C.NSEventTypeOtherMouseDragged:
+		log.V("nuxui", "NSEventTypeOtherMouseDragged")
+		e.button = MB_Other
+		e.action = Action_Move
+		if v, ok := lastMouseEvent[MB_Other]; ok {
+			e.pointer = v.Pointer()
+		}
+	case C.NSEventTypeScrollWheel:
+		log.V("nuxui", "NSEventTypeScrollWheel")
+		e.button = MB_None
+		e.action = Action_Wheel
+		e.pointer = 0
+	case C.NSEventTypePressure:
+		log.V("nuxui", "NSEventTypePressure")
+		// TODO:: stageTransition pressureBehavior NSPressureBehavior
+		e.button = MB_Pressure
+		if stage > 0 {
+			e.action = Action_Down
+		} else {
+			e.action = Action_Up
+		}
+	}
+
+	log.V("pointer", "pointer = %d", e.pointer)
+
+	theApp.sendEventAndWaitDone(e)
 }
 
-// convVirtualKeyCode converts a Carbon/Cocoa virtual key code number
-// into the standard keycodes used by the key package.
-//
-// To get a sense of the key map, see the diagram on
-//	http://boredzo.org/blog/archives/2007-05-22/virtual-key-codes
-func convVirtualKeyCode(vkcode uint16) KeyCode {
-	log.V("keycode", "convVirtualKeyCaode %d", vkcode)
+//export go_keyEvent
+func go_keyEvent(windptr C.uintptr_t, etype uint, keyCode uint16, modifierFlags uint, repeat byte, chars *C.char) {
+	e := &event{
+		window:        theApp.findWindow(windptr),
+		time:          time.Now(),
+		etype:         Type_KeyEvent,
+		action:        Action_None,
+		keyCode:       convertVirtualKeyCode(keyCode),
+		repeat:        false,
+		modifierFlags: convertModifierFlags(modifierFlags),
+		characters:    C.GoString(chars),
+	}
+
+	if repeat == 1 {
+		e.repeat = true
+	}
+
+	switch etype {
+	case C.NSEventTypeKeyDown:
+		e.action = Action_Down
+	case C.NSEventTypeKeyUp:
+		e.action = Action_Up
+	case C.NSEventTypeFlagsChanged:
+		// TODO:: need action ?
+		// if none, _, _, _, _, _ := e.Modifiers(); none {
+		// 	e.action = Action_Up
+		// } else {
+		// 	e.action = Action_Down
+		// }
+	}
+
+	log.V("nuxui", "oldKeyCode=%d, oldFlags=%d %s", keyCode, modifierFlags, e)
+	log.V("nuxui", "Shift=%d, control=%d opt=%d cmd=%d lock=%d mask=%d", Mod_Shift, Mod_Control, Mod_Alt, Mod_Super, Mod_CapsLock, Mod_Mask)
+
+	theApp.sendEventAndWaitDone(e)
+}
+
+func convertModifierFlags(flags uint) uint32 {
+	var mods uint32 = 0
+	if flags&C.NSEventModifierFlagShift == C.NSEventModifierFlagShift {
+		mods |= Mod_Shift
+	}
+	if flags&C.NSEventModifierFlagControl == C.NSEventModifierFlagControl {
+		mods |= Mod_Control
+	}
+	if flags&C.NSEventModifierFlagOption == C.NSEventModifierFlagOption {
+		mods |= Mod_Alt
+	}
+	if flags&C.NSEventModifierFlagCommand == C.NSEventModifierFlagCommand {
+		mods |= Mod_Super
+	}
+	if flags&C.NSEventModifierFlagCapsLock == C.NSEventModifierFlagCapsLock {
+		mods |= Mod_CapsLock
+	}
+
+	return mods
+}
+
+func convertVirtualKeyCode(vkcode uint16) KeyCode {
 	switch vkcode {
 	case C.kVK_ANSI_A:
-		log.V("keycode", fmt.Sprintf("Key_A = %d", vkcode))
 		return Key_A
 	case C.kVK_ANSI_B:
-		log.V("keycode", fmt.Sprintf("Key_B = %d", vkcode))
 		return Key_B
 	case C.kVK_ANSI_C:
-		log.V("keycode", fmt.Sprintf("Key_C = %d", vkcode))
 		return Key_C
 	case C.kVK_ANSI_D:
-		log.V("keycode", fmt.Sprintf("Key_D = %d", vkcode))
 		return Key_D
 	case C.kVK_ANSI_E:
-		log.V("keycode", fmt.Sprintf("Key_E = %d", vkcode))
 		return Key_E
 	case C.kVK_ANSI_F:
-		log.V("keycode", fmt.Sprintf("Key_F = %d", vkcode))
 		return Key_F
 	case C.kVK_ANSI_G:
-		log.V("keycode", fmt.Sprintf("Key_G = %d", vkcode))
 		return Key_G
 	case C.kVK_ANSI_H:
-		log.V("keycode", fmt.Sprintf("Key_H = %d", vkcode))
 		return Key_H
 	case C.kVK_ANSI_I:
-		log.V("keycode", fmt.Sprintf("Key_I = %d", vkcode))
 		return Key_I
 	case C.kVK_ANSI_J:
-		log.V("keycode", fmt.Sprintf("Key_J = %d", vkcode))
 		return Key_J
 	case C.kVK_ANSI_K:
-		log.V("keycode", fmt.Sprintf("Key_K = %d", vkcode))
 		return Key_K
 	case C.kVK_ANSI_L:
-		log.V("keycode", fmt.Sprintf("Key_L = %d", vkcode))
 		return Key_L
 	case C.kVK_ANSI_M:
-		log.V("keycode", fmt.Sprintf("Key_M = %d", vkcode))
 		return Key_M
 	case C.kVK_ANSI_N:
-		log.V("keycode", fmt.Sprintf("Key_N = %d", vkcode))
 		return Key_N
 	case C.kVK_ANSI_O:
-		log.V("keycode", fmt.Sprintf("Key_O = %d", vkcode))
 		return Key_O
 	case C.kVK_ANSI_P:
-		log.V("keycode", fmt.Sprintf("Key_P = %d", vkcode))
 		return Key_P
 	case C.kVK_ANSI_Q:
-		log.V("keycode", fmt.Sprintf("Key_Q = %d", vkcode))
 		return Key_Q
 	case C.kVK_ANSI_R:
-		log.V("keycode", fmt.Sprintf("Key_R = %d", vkcode))
 		return Key_R
 	case C.kVK_ANSI_S:
-		log.V("keycode", fmt.Sprintf("Key_S = %d", vkcode))
 		return Key_S
 	case C.kVK_ANSI_T:
-		log.V("keycode", fmt.Sprintf("Key_T = %d", vkcode))
 		return Key_T
 	case C.kVK_ANSI_U:
-		log.V("keycode", fmt.Sprintf("Key_U = %d", vkcode))
 		return Key_U
 	case C.kVK_ANSI_V:
-		log.V("keycode", fmt.Sprintf("Key_V = %d", vkcode))
 		return Key_V
 	case C.kVK_ANSI_W:
-		log.V("keycode", fmt.Sprintf("Key_W = %d", vkcode))
 		return Key_W
 	case C.kVK_ANSI_X:
-		log.V("keycode", fmt.Sprintf("Key_X = %d", vkcode))
 		return Key_X
 	case C.kVK_ANSI_Y:
-		log.V("keycode", fmt.Sprintf("Key_Y = %d", vkcode))
 		return Key_Y
 	case C.kVK_ANSI_Z:
-		log.V("keycode", fmt.Sprintf("Key_Z = %d", vkcode))
 		return Key_Z
 	case C.kVK_ANSI_1:
-		log.V("keycode", fmt.Sprintf("Key_1 = %d", vkcode))
 		return Key_1
 	case C.kVK_ANSI_2:
-		log.V("keycode", fmt.Sprintf("Key_2 = %d", vkcode))
 		return Key_2
 	case C.kVK_ANSI_3:
-		log.V("keycode", fmt.Sprintf("Key_3 = %d", vkcode))
 		return Key_3
 	case C.kVK_ANSI_4:
-		log.V("keycode", fmt.Sprintf("Key_4 = %d", vkcode))
 		return Key_4
 	case C.kVK_ANSI_5:
-		log.V("keycode", fmt.Sprintf("Key_5 = %d", vkcode))
 		return Key_5
 	case C.kVK_ANSI_6:
-		log.V("keycode", fmt.Sprintf("Key_6 = %d", vkcode))
 		return Key_6
 	case C.kVK_ANSI_7:
-		log.V("keycode", fmt.Sprintf("Key_7 = %d", vkcode))
 		return Key_7
 	case C.kVK_ANSI_8:
-		log.V("keycode", fmt.Sprintf("Key_8 = %d", vkcode))
 		return Key_8
 	case C.kVK_ANSI_9:
-		log.V("keycode", fmt.Sprintf("Key_9 = %d", vkcode))
 		return Key_9
 	case C.kVK_ANSI_0:
-		log.V("keycode", fmt.Sprintf("Key_0 = %d", vkcode))
 		return Key_0
 	case C.kVK_F1:
-		log.V("keycode", fmt.Sprintf("Key_F1 = %d", vkcode))
 		return Key_F1
 	case C.kVK_F2:
-		log.V("keycode", fmt.Sprintf("Key_F2 = %d", vkcode))
 		return Key_F2
 	case C.kVK_F3:
-		log.V("keycode", fmt.Sprintf("Key_F3 = %d", vkcode))
 		return Key_F3
 	case C.kVK_F4:
-		log.V("keycode", fmt.Sprintf("Key_F4 = %d", vkcode))
 		return Key_F4
 	case C.kVK_F5:
-		log.V("keycode", fmt.Sprintf("Key_F5 = %d", vkcode))
 		return Key_F5
 	case C.kVK_F6:
-		log.V("keycode", fmt.Sprintf("Key_F6 = %d", vkcode))
 		return Key_F6
 	case C.kVK_F7:
-		log.V("keycode", fmt.Sprintf("Key_F7 = %d", vkcode))
 		return Key_F7
 	case C.kVK_F8:
-		log.V("keycode", fmt.Sprintf("Key_F8 = %d", vkcode))
 		return Key_F8
 	case C.kVK_F9:
-		log.V("keycode", fmt.Sprintf("Key_F9 = %d", vkcode))
 		return Key_F9
 	case C.kVK_F10:
-		log.V("keycode", fmt.Sprintf("Key_F10 = %d", vkcode))
 		return Key_F10
 	case C.kVK_F11:
-		log.V("keycode", fmt.Sprintf("Key_F11 = %d", vkcode))
 		return Key_F11
 	case C.kVK_F12:
-		log.V("keycode", fmt.Sprintf("Key_F12 = %d", vkcode))
 		return Key_F12
 	case C.kVK_F13:
-		log.V("keycode", fmt.Sprintf("Key_F13 = %d", vkcode))
 		return Key_F13
 	case C.kVK_F14:
-		log.V("keycode", fmt.Sprintf("Key_F14 = %d", vkcode))
 		return Key_F14
 	case C.kVK_F15:
-		log.V("keycode", fmt.Sprintf("Key_F15 = %d", vkcode))
 		return Key_F15
 	case C.kVK_F16:
-		log.V("keycode", fmt.Sprintf("Key_F16 = %d", vkcode))
 		return Key_F16
 	case C.kVK_F17:
-		log.V("keycode", fmt.Sprintf("Key_F17 = %d", vkcode))
 		return Key_F17
 	case C.kVK_F18:
-		log.V("keycode", fmt.Sprintf("Key_F18 = %d", vkcode))
 		return Key_F18
 	case C.kVK_F19:
-		log.V("keycode", fmt.Sprintf("Key_F19 = %d", vkcode))
 		return Key_F19
 	case C.kVK_F20:
-		log.V("keycode", fmt.Sprintf("Key_F20 = %d", vkcode))
 		return Key_F20
 
 	case C.kVK_Return:
-		log.V("keycode", fmt.Sprintf("Key_Return = %d", vkcode))
 		return Key_Return
 	case C.kVK_Tab:
-		log.V("keycode", fmt.Sprintf("Key_Tab = %d", vkcode))
 		return Key_Tab
 	case C.kVK_Space:
-		log.V("keycode", fmt.Sprintf("Key_Space = %d", vkcode))
 		return Key_Space
 	case C.kVK_Delete:
-		log.V("keycode", fmt.Sprintf("Key_Delete = %d", vkcode))
 		return Key_Delete
 	case C.kVK_Escape:
-		log.V("keycode", fmt.Sprintf("Key_Escape = %d", vkcode))
 		return Key_Escape
 	case C.kVK_Command:
-		log.V("keycode", fmt.Sprintf("Key_Command = %d", vkcode))
-		return Key_Command
+		return Key_Super
 	case C.kVK_CapsLock:
-		log.V("keycode", fmt.Sprintf("Key_CapsLock = %d", vkcode))
 		return Key_CapsLock
 	case C.kVK_Option:
-		log.V("keycode", fmt.Sprintf("Key_LAlt = %d", vkcode))
 		return Key_LAlt
 	case C.kVK_RightOption:
-		log.V("keycode", fmt.Sprintf("Key_RAlt = %d", vkcode))
 		return Key_RAlt
 	case C.kVK_Shift:
-		log.V("keycode", fmt.Sprintf("Key_LShift = %d", vkcode))
 		return Key_LShift
 	case C.kVK_RightShift:
-		log.V("keycode", fmt.Sprintf("Key_RShift = %d", vkcode))
 		return Key_RShift
 	case C.kVK_Control:
-		log.V("keycode", fmt.Sprintf("Key_LControl = %d", vkcode))
 		return Key_LControl
 	case C.kVK_RightControl:
-		log.V("keycode", fmt.Sprintf("Key_RControl = %d", vkcode))
 		return Key_RControl
 	case C.kVK_ANSI_Equal:
-		log.V("keycode", fmt.Sprintf("Key_Equal = %d", vkcode))
 		return Key_Equal
 	case C.kVK_ANSI_Minus:
-		log.V("keycode", fmt.Sprintf("Key_Minus = %d", vkcode))
 		return Key_Minus
 	case C.kVK_ANSI_LeftBracket:
-		log.V("keycode", fmt.Sprintf("Key_LBracket = %d", vkcode))
 		return Key_LBracket
 	case C.kVK_ANSI_RightBracket:
-		log.V("keycode", fmt.Sprintf("Key_RBracket = %d", vkcode))
 		return Key_RBracket
 	case C.kVK_ANSI_Quote:
-		log.V("keycode", fmt.Sprintf("Key_Quote = %d", vkcode))
 		return Key_Quote
 	case C.kVK_ANSI_Semicolon:
-		log.V("keycode", fmt.Sprintf("Key_Semicolon = %d", vkcode))
 		return Key_Semicolon
 	case C.kVK_ANSI_Comma:
-		log.V("keycode", fmt.Sprintf("Key_Comma = %d", vkcode))
 		return Key_Comma
 	case C.kVK_ANSI_Slash:
-		log.V("keycode", fmt.Sprintf("Key_Slash = %d", vkcode))
 		return Key_Slash
 	case C.kVK_ANSI_Backslash:
-		log.V("keycode", fmt.Sprintf("Key_Backslash = %d", vkcode))
 		return Key_Backslash
 	case C.kVK_ANSI_Period:
-		log.V("keycode", fmt.Sprintf("Key_Period = %d", vkcode))
 		return Key_Period
 	case C.kVK_ANSI_Grave:
-		log.V("keycode", fmt.Sprintf("Key_Grave = %d", vkcode))
 		return Key_Grave
 
 	case C.kVK_ANSI_Keypad1:
-		log.V("keycode", fmt.Sprintf("Key_Pad1 = %d", vkcode))
 		return Key_Pad1
 	case C.kVK_ANSI_Keypad2:
-		log.V("keycode", fmt.Sprintf("Key_Pad2 = %d", vkcode))
 		return Key_Pad2
 	case C.kVK_ANSI_Keypad3:
-		log.V("keycode", fmt.Sprintf("Key_Pad3 = %d", vkcode))
 		return Key_Pad3
 	case C.kVK_ANSI_Keypad4:
-		log.V("keycode", fmt.Sprintf("Key_Pad4 = %d", vkcode))
 		return Key_Pad4
 	case C.kVK_ANSI_Keypad5:
-		log.V("keycode", fmt.Sprintf("Key_Pad5 = %d", vkcode))
 		return Key_Pad5
 	case C.kVK_ANSI_Keypad6:
-		log.V("keycode", fmt.Sprintf("Key_Pad6 = %d", vkcode))
 		return Key_Pad6
 	case C.kVK_ANSI_Keypad7:
-		log.V("keycode", fmt.Sprintf("Key_Pad7 = %d", vkcode))
 		return Key_Pad7
 	case C.kVK_ANSI_Keypad8:
-		log.V("keycode", fmt.Sprintf("Key_Pad8 = %d", vkcode))
 		return Key_Pad8
 	case C.kVK_ANSI_Keypad9:
-		log.V("keycode", fmt.Sprintf("Key_Pad9 = %d", vkcode))
 		return Key_Pad9
 	case C.kVK_ANSI_Keypad0:
-		log.V("keycode", fmt.Sprintf("Key_Pad0 = %d", vkcode))
 		return Key_Pad0
 	case C.kVK_ANSI_KeypadPlus:
-		log.V("keycode", fmt.Sprintf("Key_PadAdd = %d", vkcode))
 		return Key_PadAdd
 	case C.kVK_ANSI_KeypadMinus:
-		log.V("keycode", fmt.Sprintf("Key_PadSubtract = %d", vkcode))
 		return Key_PadSubtract
 	case C.kVK_ANSI_KeypadMultiply:
-		log.V("keycode", fmt.Sprintf("Key_PadMultiply = %d", vkcode))
 		return Key_PadMultiply
 	case C.kVK_ANSI_KeypadDivide:
-		log.V("keycode", fmt.Sprintf("Key_PadDivide = %d", vkcode))
 		return Key_PadDivide
 	case C.kVK_ANSI_KeypadEquals:
-		log.V("keycode", fmt.Sprintf("Key_PadEquals = %d", vkcode))
 		return Key_PadEquals
 	case C.kVK_ANSI_KeypadClear: // num lock
-		log.V("keycode", fmt.Sprintf("Key_PadClear = %d", vkcode))
 		return Key_PadClear
 	case C.kVK_ANSI_KeypadDecimal:
-		log.V("keycode", fmt.Sprintf("Key_PadDecimal = %d", vkcode))
 		return Key_PadDecimal
 	case C.kVK_ANSI_KeypadEnter:
-		log.V("keycode", fmt.Sprintf("Key_PadEnter = %d", vkcode))
 		return Key_PadEnter
 	case C.kVK_UpArrow:
-		log.V("keycode", fmt.Sprintf("Key_UpArrow = %d", vkcode))
 		return Key_UpArrow
 	case C.kVK_DownArrow:
-		log.V("keycode", fmt.Sprintf("Key_DownArrow = %d", vkcode))
 		return Key_DownArrow
 	case C.kVK_LeftArrow:
-		log.V("keycode", fmt.Sprintf("Key_LeftArrow = %d", vkcode))
 		return Key_LeftArrow
 	case C.kVK_RightArrow:
-		log.V("keycode", fmt.Sprintf("Key_RightArrow = %d", vkcode))
 		return Key_RightArrow
 	case C.kVK_PageUp:
-		log.V("keycode", fmt.Sprintf("Key_PageUp = %d", vkcode))
 		return Key_PageUp
 	case C.kVK_PageDown:
-		log.V("keycode", fmt.Sprintf("Key_PageDown = %d", vkcode))
 		return Key_PageDown
 	case C.kVK_Home:
-		log.V("keycode", fmt.Sprintf("Key_Home = %d", vkcode))
 		return Key_Home
 	case C.kVK_End:
-		log.V("keycode", fmt.Sprintf("Key_End = %d", vkcode))
 		return Key_End
 
 	case C.kVK_Help:
-		log.V("keycode", fmt.Sprintf("Key_Help = %d", vkcode))
 		return Key_Help
 	case C.kVK_ForwardDelete:
-		log.V("keycode", fmt.Sprintf("Key_ForwardDelete = %d", vkcode))
 		return Key_ForwardDelete
 
 	case C.kVK_Mute:
-		log.V("keycode", fmt.Sprintf("Key_Mute = %d", vkcode))
 		return Key_Mute
 	case C.kVK_VolumeUp:
-		log.V("keycode", fmt.Sprintf("Key_VolumeUp = %d", vkcode))
 		return Key_VolumeUp
 	case C.kVK_VolumeDown:
-		log.V("keycode", fmt.Sprintf("Key_VolumeDown = %d", vkcode))
 		return Key_VolumeDown
 
 	// 116: Keyboard Execute
@@ -543,7 +570,6 @@ func convVirtualKeyCode(vkcode uint16) KeyCode {
 	// 134: Keyboard Equal Sign
 	// ...: Bunch of stuff
 	default:
-		log.V("keycode", fmt.Sprintf("Key_Unknown = %d", vkcode))
 		return Key_Unknown
 	}
 }

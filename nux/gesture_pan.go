@@ -78,7 +78,7 @@ const (
 type panGestureRecognizer struct {
 	target    Widget
 	callbacks [][]unsafe.Pointer
-	initEvent PointerEvent
+	initEvent Event
 	state     GestureState
 }
 
@@ -90,7 +90,7 @@ func newPanGestureRecognizer(target Widget) *panGestureRecognizer {
 	return &panGestureRecognizer{
 		target:    target,
 		callbacks: [][]unsafe.Pointer{[]unsafe.Pointer{}, []unsafe.Pointer{}, []unsafe.Pointer{}, []unsafe.Pointer{}, []unsafe.Pointer{}},
-		// initEvent: PointerEvent{Pointer: 0},
+		// initEvent: Event{Pointer: 0},
 		state: GestureState_Ready,
 	}
 }
@@ -127,7 +127,7 @@ func (me *panGestureRecognizer) removeCallback(which int, callback func(Widget))
 	}
 }
 
-func (me *panGestureRecognizer) PointerAllowed(event PointerEvent) bool {
+func (me *panGestureRecognizer) PointerAllowed(event Event) bool {
 	if len(me.callbacks[_ACTION_PAN_DOWN]) == 0 &&
 		len(me.callbacks[_ACTION_PAN_START]) == 0 &&
 		len(me.callbacks[_ACTION_PAN_UPDATE]) == 0 &&
@@ -139,7 +139,7 @@ func (me *panGestureRecognizer) PointerAllowed(event PointerEvent) bool {
 	return true
 }
 
-func (me *panGestureRecognizer) HandlePointerEvent(event PointerEvent) {
+func (me *panGestureRecognizer) HandlePointerEvent(event Event) {
 	if event.IsPrimary() {
 		switch event.Action() {
 		case Action_Down:
@@ -202,7 +202,7 @@ func (me *panGestureRecognizer) invokePanStart(pointer int64) {
 	}
 }
 
-func (me *panGestureRecognizer) invokePanUpdate(event PointerEvent) {
+func (me *panGestureRecognizer) invokePanUpdate(event Event) {
 	log.V("nux", "invokePanUpdate")
 	for _, c := range me.callbacks[_ACTION_PAN_UPDATE] {
 		(*(*(func(Widget)))(c))(me.target)

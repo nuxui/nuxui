@@ -6,28 +6,12 @@
 // +build !ios
 
 #include "_cgo_export.h"
-// #include <pthread.h>
-// #include <stdio.h>
-
-// #include <Carbon/Carbon.h>
 #import <Cocoa/Cocoa.h>
-// #import <Foundation/Foundation.h>
-// #import <OpenGL/gl3.h>
 
-void stopApp(void);
-
-// void makeCurrentContext(GLintptr context) {
-// 	NSOpenGLContext* ctx = (NSOpenGLContext*)context;
-// 	[ctx makeCurrentContext];
-// }
-
-// uint64 threadID() {
-// 	uint64 id;
-// 	if (pthread_threadid_np(pthread_self(), &id)) {
-// 		abort();
-// 	}
-// 	return id;
-// }
+void terminate()
+{
+	[NSApp terminate:nil];
+};
 
 static const NSRange kEmptyRange = { NSNotFound, 0 };
 @interface NuxText : NSView <NSTextInputClient> {}
@@ -133,40 +117,172 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 
 - (void)sendEvent:(NSEvent *)theEvent
 {
-  switch ([theEvent type]) {
+	CGFloat x = [theEvent locationInWindow].x;
+	CGFloat y = [[[theEvent window] contentView] bounds].size.height - [theEvent locationInWindow].y;
+	CGFloat screenX = [NSEvent mouseLocation].x;
+	CGFloat screenY = [[NSScreen mainScreen] frame].size.height-[NSEvent mouseLocation].y;
+	NSEventType etype = [theEvent type];
+	uintptr_t windptr = (uintptr_t)[theEvent window];
+
+  	switch (etype) {
+        case NSEventTypeMouseEntered:
+        case NSEventTypeMouseExited: 
+        // ignore
+        break;
         case NSEventTypeLeftMouseDown:
-        case NSEventTypeOtherMouseDown:
-        case NSEventTypeRightMouseDown:
         case NSEventTypeLeftMouseUp:
-        case NSEventTypeOtherMouseUp:
+        case NSEventTypeRightMouseDown:
         case NSEventTypeRightMouseUp:
+        case NSEventTypeMouseMoved:
         case NSEventTypeLeftMouseDragged:
         case NSEventTypeRightMouseDragged:
-        case NSEventTypeOtherMouseDragged: /* usually middle mouse dragged */
-        case NSEventTypeMouseMoved:
-        case NSEventTypeScrollWheel:
-            NSLog(@"NuxWindow Mouse Event");
-            break;
+		case NSEventTypeOtherMouseDown:
+        case NSEventTypeOtherMouseUp:
+        case NSEventTypeOtherMouseDragged:
+		NSLog(@"###  NuxWindow NSEventTypeAppKitDefined");
+			go_mouseEvent(windptr, etype, x, y, screenX, screenY, 0, 0, 0, 0);
+			break;
+		case NSEventTypeScrollWheel:
+			go_mouseEvent(windptr, etype, x, y, screenX, screenY, [theEvent scrollingDeltaX], [theEvent scrollingDeltaY], 0, 0);
+			break;
+		case NSEventTypePressure:
+			go_mouseEvent(windptr, etype, x, y, screenX, screenY, 0, 0, [theEvent pressure], [theEvent stage]);
+        	break;
         case NSEventTypeKeyDown:
-            NSLog(@"NuxWindow Key Down Event");
-            break;
         case NSEventTypeKeyUp:
-            NSLog(@"NuxWindow Key Up Event");
-            break;
+			go_keyEvent(windptr, etype, [theEvent keyCode], [theEvent modifierFlags], [theEvent isARepeat],  (char *)[[theEvent characters] UTF8String]);
+        	break;
         case NSEventTypeFlagsChanged:
-            NSLog(@"NuxWindow Key Flags Event");
-            break;
+		// NSLog(@"Shift=%d, control=%d opt=%d cmd=%d lock=%d pad=%d help=%d func=%d mask=%d", NSEventModifierFlagShift, NSEventModifierFlagControl, NSEventModifierFlagOption, NSEventModifierFlagCommand, NSEventModifierFlagCapsLock, NSEventModifierFlagNumericPad, NSEventModifierFlagHelp,NSEventModifierFlagFunction, NSEventModifierFlagDeviceIndependentFlagsMask);
+			go_keyEvent(windptr, etype, [theEvent keyCode], [theEvent modifierFlags], 0, "");
+        	break;
+        break;
+        case NSEventTypeAppKitDefined:
+        NSLog(@"###  NSEventTypeAppKitDefined");
+        break;
+        case NSEventTypeSystemDefined:
+        NSLog(@"###  NSEventTypeSystemDefined");
+        break;
+        case NSEventTypeApplicationDefined:
+        NSLog(@"###  NSEventTypeApplicationDefined");
+        break;
+        case NSEventTypePeriodic:
+        NSLog(@"###  NSEventTypePeriodic");
+        break;
+        case NSEventTypeCursorUpdate:
+        NSLog(@"###  NSEventTypeCursorUpdate");
+        break;
+        case NSEventTypeTabletPoint:
+        NSLog(@"###  NSEventTypeTabletPoint");
+        break;
+        case NSEventTypeTabletProximity:
+        NSLog(@"###  NSEventTypeTabletProximity");
+        break;
+
+        case NSEventTypeGesture:
+        NSLog(@"###  ###  NSEventTypeGesture");
+        break;
+        case NSEventTypeMagnify:
+        NSLog(@"###  ###  NSEventTypeMagnify");
+        break;
+        case NSEventTypeSwipe:
+        NSLog(@"###  NSEventTypeSwipe");
+        break;
+        case NSEventTypeRotate:
+        NSLog(@"###  NSEventTypeRotate");
+        break;
+        case NSEventTypeBeginGesture:
+        NSLog(@"###  NSEventTypeBeginGesture");
+        break;
+        case NSEventTypeEndGesture:
+        NSLog(@"###  NSEventTypeEndGesture");
+        break;
+        case NSEventTypeSmartMagnify:
+        NSLog(@"###  NSEventTypeSmartMagnify");
+        break;
+
+        case NSEventTypeDirectTouch:
+        NSLog(@"###  NSEventTypeDirectTouch");
+        break;
+        case NSEventTypeQuickLook:
+        NSLog(@"###  NSEventTypeQuickLook");
+        break;
+        // case NSEventTypeChangeMode:
+        // NSLog(@"###  NSEventTypeChangeMode");
+        // break;
         default:
-            NSLog(@"NuxWindow Other Event");
-            break;
+        NSLog(@"unknow darwin event.");
+        break;
     }
 
     [super sendEvent:theEvent];
 }
-
-// TODO:: draw event
-// TODO:: 
 @end // NuxWindow
+
+
+@interface NuxWindowDelegate : NSObject <NSWindowDelegate>
+@end
+
+@implementation NuxWindowDelegate
+
+// Sizing Windows
+// - (NSSize)windowWillResize:(NSWindow *)sender  toSize:(NSSize)frameSize
+// {
+
+// }
+
+- (void)windowDidResize:(NSNotification *)notification
+{
+	NSWindow* window = [notification object];
+	NSLog(@"NuxWindowDelegate windowDidResize %@, keyWindow=", window);
+	windowResized((uintptr_t)[notification object]);
+}
+
+- (void)windowWillStartLiveResize:(NSNotification *)notification
+{
+	NSLog(@"NuxWindowDelegate windowWillStartLiveResize");
+}
+
+- (void)windowDidEndLiveResize:(NSNotification *)notification
+{
+	NSLog(@"NuxWindowDelegate windowDidEndLiveResize");
+}
+
+// Updating Windows
+
+- (void)windowDidUpdate:(NSNotification *)notification
+{
+	// when has input
+	// NSLog(@"NuxWindowDelegate windowDidUpdate");
+	windowDraw((uintptr_t)[notification object]);
+}
+
+// Exposing Windows
+
+- (void)windowDidExpose:(NSNotification *)notification
+{
+	NSLog(@"NuxWindowDelegate windowDidExpose");
+}
+
+// Managing Key Status
+- (void)windowDidBecomeKey:(NSNotification *)notification
+{
+	NSLog(@"NuxWindowDelegate windowDidBecomeKey");
+}
+
+- (void)windowDidResignKey:(NSNotification *)notification
+{
+	NSLog(@"NuxWindowDelegate windowDidResignKey");
+}
+
+// Managing Occlusion State
+
+- (void)windowDidChangeOcclusionState:(NSNotification *)notification
+{
+	NSLog(@"NuxWindowDelegate windowDidChangeOcclusionState");
+}
+
+@end // NuxWindowDelegate
 
 @interface NuxApplication : NSApplication
 @end
@@ -182,31 +298,12 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 - (void)sendEvent:(NSEvent *)theEvent
 {
     switch ([theEvent type]) {
-        case NSEventTypeLeftMouseDown:
-        case NSEventTypeOtherMouseDown:
-        case NSEventTypeRightMouseDown:
-        case NSEventTypeLeftMouseUp:
-        case NSEventTypeOtherMouseUp:
-        case NSEventTypeRightMouseUp:
-        case NSEventTypeLeftMouseDragged:
-        case NSEventTypeRightMouseDragged:
-        case NSEventTypeOtherMouseDragged: /* usually middle mouse dragged */
-        case NSEventTypeMouseMoved:
-        case NSEventTypeScrollWheel:
-            NSLog(@"NuxApplication Mouse Event");
-            break;
-        case NSEventTypeKeyDown:
-            NSLog(@"NuxApplication Key Down Event");
-            break;
-        case NSEventTypeKeyUp:
-            NSLog(@"NuxApplication Key Up Event");
-            break;
-        case NSEventTypeFlagsChanged:
-            NSLog(@"NuxApplication Key Flags Event");
-            break;
-        default:
-            NSLog(@"NuxApplication Other Event");
-            break;
+		case NSEventTypeRightMouseUp:
+			NSLog(@"window = %@", [[NSApplication sharedApplication] mainWindow]);
+	NSLog(@"window2 = %@", [[[[NSApplication sharedApplication] windows] objectAtIndex:0] title]);
+	NSLog(@"main window title = %@", [[[NSApplication sharedApplication] mainWindow] title]);
+	NSLog(@"key window title = %@", [[[NSApplication sharedApplication] keyWindow] title]);
+		break;
     }
 
     [super sendEvent:theEvent];
@@ -215,255 +312,147 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 @end // NuxApplication 
 
 
-// ################################## begin NuxView ############################################
-@interface NuxView : NSOpenGLView<NSApplicationDelegate, NSWindowDelegate, NSTextInputClient>
-{
-	
-}
+@interface NuxApplicationDelegate : NSObject <NSApplicationDelegate>
 @end
 
-@implementation NuxView
-- (void)prepareOpenGL {
-	[self setWantsBestResolutionOpenGLSurface:YES];
-	GLint swapInt = 1;
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-	[[self openGLContext] setValues:&swapInt forParameter:NSOpenGLCPSwapInterval];
-#pragma clang diagnostic pop
-
-	// Using attribute arrays in OpenGL 3.3 requires the use of a VBA.
-	// But VBAs don't exist in ES 2. So we bind a default one.
-	GLuint vba;
-	glGenVertexArrays(1, &vba);
-	glBindVertexArray(vba);
-
-	// startloop((GLintptr)[self openGLContext]);
-}
-
-- (void)reshape {
-	[super reshape];
-
-	// Calculate screen PPI.
-	//
-	// Note that the backingScaleFactor converts from logical
-	// pixels to actual pixels, but both of these units vary
-	// independently from real world size. E.g.
-	//
-	// 13" Retina Macbook Pro, 2560x1600, 227ppi, backingScaleFactor=2, scale=3.15
-	// 15" Retina Macbook Pro, 2880x1800, 220ppi, backingScaleFactor=2, scale=3.06
-	// 27" iMac,               2560x1440, 109ppi, backingScaleFactor=1, scale=1.51
-	// 27" Retina iMac,        5120x2880, 218ppi, backingScaleFactor=2, scale=3.03
-	NSScreen *screen = [NSScreen mainScreen];
-	double screenPixW = [screen frame].size.width * [screen backingScaleFactor];
-
-	CGDirectDisplayID display = (CGDirectDisplayID)[[[screen deviceDescription] valueForKey:@"NSScreenNumber"] intValue];
-	CGSize screenSizeMM = CGDisplayScreenSize(display); // in millimeters
-	float ppi = 25.4 * screenPixW / screenSizeMM.width;
-	float pixelsPerPt = ppi/72.0;
-
-	// The width and height reported to the geom package are the
-	// bounds of the OpenGL view. Several steps are necessary.
-	// First, [self bounds] gives us the number of logical pixels
-	// in the view. Multiplying this by the backingScaleFactor
-	// gives us the number of actual pixels.
-	NSRect r = [self bounds];
-	int w = r.size.width * [screen backingScaleFactor];
-	int h = r.size.height * [screen backingScaleFactor];
-
-	// setGeom(pixelsPerPt, w, h);
-    // NSLog(@"reshape width = %f , height = %f", r.size.width, r.size.height);
-    // NSLog(@"reshape w = %f , h = %f", w, h);
-}
-
-- (void)drawRect:(NSRect)theRect {
-	// Called during resize. This gets rid of flicker when resizing.
-	// drawgl();
-    NSLog(@"drawRect");
-    windowDraw((uintptr_t)self.window);
-}
-
-- (void)sendEvent:(NSEvent *)theEvent
+@implementation NuxApplicationDelegate
+// Launching Applications
+- (void)applicationWillFinishLaunching:(NSNotification *)notification
 {
-	NSLog(@"sendEvent 0000000000");
-    [super sendEvent:theEvent];
+	NSLog(@"NuxApplicationDelegate applicationWillFinishLaunching");
 }
 
-- (void)insertText:(id)string {
-	NSLog(@"insertText 0000000000");
-    [super insertText:string];  // have superclass insert it
+- (void)applicationDidFinishLaunching:(NSNotification *)notification
+{
+	NSLog(@"NuxApplicationDelegate applicationDidFinishLaunching");
+	// [NSApp activateWithOptions:(NSApplicationActivateAllWindows | NSApplicationActivateIgnoringOtherApps)];
+	// [[NSRunningApplication currentApplication] activateWithOptions:(NSApplicationActivateAllWindows | NSApplicationActivateIgnoringOtherApps)];
+	// [window orderFrontRegardless];
+	// [window makeKeyAndOrderFront:window];
+
+    // windowCreated((uintptr_t)window);
+    // windowResized((uintptr_t)window);
+    // windowDraw((uintptr_t)window);
 }
 
-//https://developer.apple.com/documentation/appkit/nsevent
-- (void)mouseDown:(NSEvent *)theEvent {
-	double scale = [[NSScreen mainScreen] backingScaleFactor];
-	NSPoint p = [theEvent locationInWindow];
-    windowDraw((uintptr_t)[theEvent window]);
+// Managing Active Status
+- (void)applicationWillBecomeActive:(NSNotification *)notification
+{
+	NSLog(@"NuxApplicationDelegate applicationWillBecomeActive");
 }
 
-- (void)mouseUp:(NSEvent *)theEvent {
-	double scale = [[NSScreen mainScreen] backingScaleFactor];
-	NSPoint p = [theEvent locationInWindow];
-	// eventMouseEnd(p.x * scale, p.y * scale);
-	// id contentHeight = [self contentRectForFrameRect: self.frame];
-	// CGFloat titleBarHeight = self.frame.size.height - contentHeight;
-		NSRect r = [self bounds];
+- (void)applicationDidBecomeActive:(NSNotification *)notification
+{
+	NSLog(@"NuxApplicationDelegate applicationDidBecomeActive");
 
+	NSLog(@"window = %@", [[NSApplication sharedApplication] mainWindow]);
+	NSLog(@"window2 = %@", [[[[NSApplication sharedApplication] windows] objectAtIndex:0] title]);
+	NSLog(@"main window title = %@", [[[NSApplication sharedApplication] mainWindow] title]);
+	NSLog(@"nsapp main window title = %@", [[NSApp mainWindow] title]);
+	NSLog(@"key window title = %@", [[[NSApplication sharedApplication] keyWindow] title]);
 
-	NSRect r2 = [[[theEvent window] contentView] bounds];
-    NSLog(@"mouseUp %f, %f, %f, %f, %f", p.x, p.y, r.size.height, r2.size.height, [[theEvent window] frame].size.height);
-    // windowDraw((uintptr_t)[theEvent window]);
-
-	
-	onMouseDown((uintptr_t)[theEvent window], (float)p.x, r2.size.height- (float)p.y);
+	// [[NSApp mainWindow] orderFrontRegardless];
+	// windowCreated((uintptr_t)[NSApp mainWindow]);
+	NSLog(@"### windowCreated");
 }
 
-- (void)mouseDragged:(NSEvent *)theEvent {
-	double scale = [[NSScreen mainScreen] backingScaleFactor];
-	NSPoint p = [theEvent locationInWindow];
-	// eventMouseDragged(p.x * scale, p.y * scale);
-    NSLog(@"mouseDragged");
-    windowDraw((uintptr_t)[theEvent window]);
+- (void)applicationWillResignActive:(NSNotification *)notification
+{
+	NSLog(@"NuxApplicationDelegate applicationWillResignActive");
 }
 
-- (void)windowDidBecomeKey:(NSNotification *)notification {
-	// lifecycleFocused();
+- (void)applicationDidResignActive:(NSNotification *)notification
+{
+	NSLog(@"NuxApplicationDelegate applicationDidResignActive");
 }
 
-- (void)windowDidResignKey:(NSNotification *)notification {
-	if (![NSApp isHidden]) {
-		// lifecycleVisible();
+// // Terminating Applications
+// // - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender
+// // {
+// // 	NSLog(@"NuxApplicationDelegate applicationShouldTerminate");
+// // }
+
+- (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender
+{
+	NSLog(@"NuxApplicationDelegate applicationShouldTerminateAfterLastWindowClosed");
+	return YES;
+}
+
+- (void)applicationWillTerminate:(NSNotification *)notification
+{
+	NSLog(@"NuxApplicationDelegate applicationWillTerminate");
+}
+
+
+// Hiding Applications
+- (void)applicationWillHide:(NSNotification *)notification
+{
+	NSLog(@"NuxApplicationDelegate applicationWillHide");
+}
+
+- (void)applicationDidHide:(NSNotification *)notification
+{
+	NSLog(@"NuxApplicationDelegate applicationDidHide");
+}
+
+- (void)applicationWillUnhide:(NSNotification *)notification
+{
+	NSLog(@"NuxApplicationDelegate applicationWillUnhide");
+}
+
+- (void)applicationDidUnhide:(NSNotification *)notification
+{
+	NSLog(@"NuxApplicationDelegate applicationDidUnhide");
+}
+
+// Managing Windows
+- (void)applicationWillUpdate:(NSNotification *)notification
+{
+	// when has input
+	// NSLog(@"NuxApplicationDelegate applicationWillUpdate");
+}
+
+- (void)applicationDidUpdate:(NSNotification *)notification
+{
+	// when has input
+	// NSLog(@"NuxApplicationDelegate applicationDidUpdate");
+}
+
+- (BOOL)applicationShouldHandleReopen:(NSApplication *)sender hasVisibleWindows:(BOOL)flag
+{
+	NSLog(@"NuxApplicationDelegate applicationShouldHandleReopen");
+	return NO;
+}
+
+@end //NuxApplicationDelegate
+
+
+
+void runApp()
+{
+	@autoreleasepool{
+		[NuxApplication sharedApplication];
+		NSLog(@"go_nativeLoopPrepared");
+		go_nativeLoopPrepared();
+		
+		[NSApp setActivationPolicy:NSApplicationActivationPolicyRegular]; // show icon at docker
+		[NSApp activateIgnoringOtherApps:YES];
+		[NSApp setDelegate:[[NuxApplicationDelegate alloc] init]];
+
+		NSUInteger windowStyle =  NSWindowStyleMaskTitled | NSWindowStyleMaskBorderless | NSWindowStyleMaskClosable |NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable | NSWindowStyleMaskUnifiedTitleAndToolbar | NSWindowStyleMaskDocModalWindow;
+		NSRect windowRect = NSMakeRect(0, 0, 800, 600);
+		NSLog(@"NSWindow alloc");
+		NSWindow * window = [[NuxWindow alloc] initWithContentRect:windowRect
+											styleMask:windowStyle
+											backing:NSBackingStoreBuffered
+											defer:NO];
+		NSLog(@"NSWindow windowCreated %@", window);
+		windowCreated((uintptr_t)window);
+		window.title = @"nuxui title";
+		[window setDelegate:[[NuxWindowDelegate alloc] init]];
+		[window orderFrontRegardless];
+		[window setAcceptsMouseMovedEvents:YES];
+
+		[NSApp run];
 	}
-}
-
-
-
-- (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
-    NSLog(@"applicationDidFinishLaunching");
-	[[NSRunningApplication currentApplication] activateWithOptions:(NSApplicationActivateAllWindows | NSApplicationActivateIgnoringOtherApps)];
-	[self.window makeKeyAndOrderFront:self];
-
-    windowCreated((uintptr_t)self.window);
-    windowResized((uintptr_t)self.window);
-    windowDraw((uintptr_t)self.window);
-}
-
-- (void)applicationWillTerminate:(NSNotification *)aNotification {
-	// lifecycleDead();
-    NSLog(@"applicationWillTerminate");
-}
-
-- (void)applicationDidHide:(NSNotification *)aNotification {
-	// lifecycleAlive();
-    NSLog(@"applicationDidHide");
-}
-
-- (void)applicationWillUnhide:(NSNotification *)notification {
-	// lifecycleVisible();
-    NSLog(@"applicationWillUnhide");
-}
-
-- (void)windowDidResize:(NSNotification *)notification {
-	NSLog(@"windowDidResize");
-    windowResized((uintptr_t)self.window);
-
-	[[NSOpenGLContext currentContext] update];
-}
-
-- (void)windowDidExpose:(NSNotification *)notification {
-	NSLog(@"windowDidExpose");
-}
-
-- (void)windowWillClose:(NSNotification *)notification {
-	// lifecycleAlive();
-    NSLog(@"windowWillClose");
-    stopApp();
-}
-
-- (void)windowDidUpdate:(NSNotification *)notification {
-	// lifecycleAlive();
-    // NSLog(@"windowDidUpdate");
-}
-
-@end
-// ################################## end NuxView ############################################
-
-void window_setTitle(uintptr_t window, char* title){
-    NSLog(@"window_setTitle");
-    NSWindow* w = (NSWindow*)window;
-    w.title = [NSString stringWithUTF8String:title];
-}
-
-void
-runApp(void) {
-	[NSAutoreleasePool new];
-	[NuxApplication sharedApplication];
-	[NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
-
-	id menuBar = [[NSMenu new] autorelease];
-	id menuItem = [[NSMenuItem new] autorelease];
-	id menuItem2 = [[NSMenuItem new] autorelease];
-	[menuBar addItem:menuItem];
-	[menuBar addItem:menuItem2];
-	[NSApp setMainMenu:menuBar];
-
-	id menu = [[NSMenu new] autorelease];
-	id menu2 = [[NSMenu new] autorelease];
-	id name = [[NSProcessInfo processInfo] processName];
-
-	id hideMenuItem = [[[NSMenuItem alloc] initWithTitle:@"Hide"
-		action:@selector(hide:) keyEquivalent:@"h"]
-		autorelease];
-	[menu addItem:hideMenuItem];
-
-	id hideMenuItem2 = [[[NSMenuItem alloc] initWithTitle:@"Hide2"
-		action:@selector(hide:) keyEquivalent:@"h"]
-		autorelease];
-	[menu2 addItem:hideMenuItem2];
-
-	id quitMenuItem = [[[NSMenuItem alloc] initWithTitle:@"Quit"
-		action:@selector(terminate:) keyEquivalent:@"q"]
-		autorelease];
-	[menu addItem:quitMenuItem];
-	[menuItem setSubmenu:menu];
-	[menuItem2 setSubmenu:menu2];
-
-	NSRect rect = NSMakeRect(0, 0, 800, 600);
-
-	NuxWindow* window = [[[NuxWindow alloc] initWithContentRect:rect
-			styleMask:NSWindowStyleMaskTitled
-			backing:NSBackingStoreBuffered
-			defer:NO]
-		autorelease];
-	window.styleMask |= NSWindowStyleMaskResizable;
-	window.styleMask |= NSWindowStyleMaskMiniaturizable;
-	window.styleMask |= NSWindowStyleMaskClosable;
-	window.title = name;
-	[window cascadeTopLeftFromPoint:NSMakePoint(20,20)];
-
-	NSOpenGLPixelFormatAttribute attr[] = {
-		NSOpenGLPFAOpenGLProfile, NSOpenGLProfileVersion3_2Core,
-		NSOpenGLPFAColorSize,     24,
-		NSOpenGLPFAAlphaSize,     8,
-		NSOpenGLPFADepthSize,     16,
-		NSOpenGLPFAAccelerated,
-		NSOpenGLPFADoubleBuffer,
-		NSOpenGLPFAAllowOfflineRenderers,
-		0
-	};
-	id pixFormat = [[NSOpenGLPixelFormat alloc] initWithAttributes:attr];
-	NuxView* view = [[NuxView alloc] initWithFrame:rect pixelFormat:pixFormat];
-	id text = [[NuxText alloc] initWithFrame: NSMakeRect(0, 0, 0, 0)];
-	[window setContentView:view];
-	[window setDelegate:view];
-	[NSApp setDelegate:view];
-
-	[[window contentView] addSubview:text];
-    [window makeFirstResponder: text];
-    nativeLoopPrepared();
-	[NSApp run];
-}
-
-void stopApp(void) {
-	[NSApp terminate:nil];
 }

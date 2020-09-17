@@ -83,7 +83,7 @@ type TapGestureRecognizer interface {
 
 type tapGestureRecognizer struct {
 	callbacks   [][]unsafe.Pointer
-	initEvent   PointerEvent
+	initEvent   Event
 	target      Widget
 	timer       Timer
 	state       GestureState
@@ -97,7 +97,7 @@ func newTapGestureRecognizer(target Widget) TapGestureRecognizer {
 
 	return &tapGestureRecognizer{
 		callbacks: [][]unsafe.Pointer{[]unsafe.Pointer{}, []unsafe.Pointer{}, []unsafe.Pointer{}, []unsafe.Pointer{}},
-		// initEvent:   PointerEvent{Pointer: 0},
+		// initEvent:   Event{Pointer: 0},
 		target:      target,
 		state:       GestureState_Ready,
 		triggerDown: false,
@@ -137,7 +137,7 @@ func (me *tapGestureRecognizer) removeCallback(which int, callback func(Widget))
 	}
 }
 
-func (me *tapGestureRecognizer) PointerAllowed(event PointerEvent) bool {
+func (me *tapGestureRecognizer) PointerAllowed(event Event) bool {
 	if len(me.callbacks[_ACTION_TAP]) == 0 &&
 		len(me.callbacks[_ACTION_TAP_DOWN]) == 0 &&
 		len(me.callbacks[_ACTION_TAP_UP]) == 0 &&
@@ -148,7 +148,7 @@ func (me *tapGestureRecognizer) PointerAllowed(event PointerEvent) bool {
 	return true
 }
 
-func (me *tapGestureRecognizer) HandlePointerEvent(event PointerEvent) {
+func (me *tapGestureRecognizer) HandlePointerEvent(event Event) {
 	if event.IsPrimary() {
 		switch event.Action() {
 		case Action_Down:

@@ -6,6 +6,6 @@ package nux
 
 type GestureRecognizer interface {
 	GestureArenaMember
-	PointerAllowed(event PointerEvent) bool
-	HandlePointerEvent(event PointerEvent)
+	PointerAllowed(event Event) bool
+	HandlePointerEvent(event Event)
 }

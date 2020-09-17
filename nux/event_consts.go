@@ -14,15 +14,16 @@ const (
 	Type_WindowEvent
 	Type_TypingEvent
 	Type_AppExit
-	Type_InputEvent
+	Type_KeyEvent
+	Type_PointerEvent
 )
 
 const (
 	Action_None EventAction = iota
 	Action_Down
 	Action_Move
-	Action_Repeat
 	Action_Up
+	Action_Wheel
 
 	Action_WindowCreating
 	Action_WindowCreated
@@ -31,14 +32,14 @@ const (
 	Action_WindowFocusGained
 	Action_WindowFocusLost
 	Action_WindowActived
-	// Action_Window
 )
 
 const (
 	Kind_None Kind = 0 + iota
 	Kind_Mouse
 	Kind_Touch
-	Kind_Pad
+	Kind_Tablet
+	Kind_Other
 )
 
 const (
@@ -48,4 +49,6 @@ const (
 	MB_Right
 	MB_X1
 	MB_X2
+	MB_Pressure
+	MB_Other
 )

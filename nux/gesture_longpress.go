@@ -90,7 +90,7 @@ const _LONG_PRESS_TIMEOUT = 500
 
 type longPressGestureRecognizer struct {
 	callbacks [][]unsafe.Pointer
-	initEvent PointerEvent
+	initEvent Event
 	target    Widget
 	timer     Timer
 	state     GestureState
@@ -104,7 +104,7 @@ func newLongPressGestureRecognizer(target Widget) *longPressGestureRecognizer {
 
 	return &longPressGestureRecognizer{
 		callbacks: [][]unsafe.Pointer{[]unsafe.Pointer{}, []unsafe.Pointer{}, []unsafe.Pointer{}, []unsafe.Pointer{}, []unsafe.Pointer{}},
-		// initEvent: PointerEvent{Pointer: 0},
+		// initEvent: Event{Pointer: 0},
 		target:   target,
 		state:    GestureState_Ready,
 		accepted: false,
@@ -142,7 +142,7 @@ func (me *longPressGestureRecognizer) removeCallback(which int, callback func(Wi
 	}
 }
 
-func (me *longPressGestureRecognizer) PointerAllowed(event PointerEvent) bool {
+func (me *longPressGestureRecognizer) PointerAllowed(event Event) bool {
 	if len(me.callbacks[_ACTION_LONG_PRESS]) == 0 &&
 		len(me.callbacks[_ACTION_LONG_PRESS_DOWN]) == 0 &&
 		len(me.callbacks[_ACTION_LONG_PRESS_UP]) == 0 &&
@@ -154,7 +154,7 @@ func (me *longPressGestureRecognizer) PointerAllowed(event PointerEvent) bool {
 	return true
 }
 
-func (me *longPressGestureRecognizer) HandlePointerEvent(event PointerEvent) {
+func (me *longPressGestureRecognizer) HandlePointerEvent(event Event) {
 	log.V("nux", "### longPressGestureRecognizer HandlePointerEvent")
 
 	if event.IsPrimary() {

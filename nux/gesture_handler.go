@@ -15,7 +15,7 @@ import (
 type GestureHandler interface {
 	AddGestureRecoginer(recognizer GestureRecognizer)
 	RemoveGestureRecoginer(recognizer GestureRecognizer)
-	HandlePointerEvent(event PointerEvent)
+	HandlePointerEvent(event Event)
 	FindGestureRecognizer(recognizerType GestureRecognizer) GestureRecognizer
 }
 
@@ -61,7 +61,7 @@ func (me *gestureHandler) RemoveGestureRecoginer(recognizer GestureRecognizer) {
 	}
 }
 
-func (me *gestureHandler) HandlePointerEvent(event PointerEvent) {
+func (me *gestureHandler) HandlePointerEvent(event Event) {
 	if me.gestureRecognizers != nil {
 		for _, r := range me.gestureRecognizers {
 			if r.PointerAllowed(event) {

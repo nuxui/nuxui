@@ -15,6 +15,10 @@ package nux
 #include <pthread.h>
 #include <stdlib.h>
 
+char* window_title(uintptr_t window);
+void window_setTitle(uintptr_t window, char* title);
+float window_alpha(uintptr_t window);
+void window_setAlpha(uintptr_t window, float alpha);
 int32_t window_getWidth(uintptr_t window);
 int32_t window_getHeight(uintptr_t window);
 int32_t window_getContentWidth(uintptr_t window);
@@ -155,4 +159,20 @@ func (me *window) UnlockCanvas() error {
 
 func (me *window) Decor() Widget {
 	return me.decor
+}
+
+func (me *window) Alpha() float32 {
+	return float32(C.window_alpha(me.windptr))
+}
+
+func (me *window) SetAlpha(alpha float32) {
+	C.window_setAlpha(me.windptr, C.float(alpha))
+}
+
+func (me *window) Title() string {
+	return C.GoString(C.window_title(me.windptr))
+}
+
+func (me *window) SetTitle(title string) {
+	C.window_setTitle(me.windptr, C.CString(title))
 }

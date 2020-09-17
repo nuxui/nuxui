@@ -23,6 +23,10 @@ type Window interface {
 	Height() int32
 	ContentWidth() int32
 	ContentHeight() int32
+	Alpha() float32
+	SetAlpha(alpha float32)
+	Title() string
+	SetTitle(title string)
 }
 
 func NewWindow() Window {

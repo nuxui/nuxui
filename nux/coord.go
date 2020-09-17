@@ -11,6 +11,7 @@ import (
 	"github.com/nuxui/nuxui/util"
 )
 
+// TODO:: no use
 type Coord interface {
 	X() float32
 	Y() float32

@@ -46,10 +46,10 @@ type Size interface {
 	RemoveOnSizeChanged(callback OnSizeChanged)
 }
 
-type Offset struct {
-	X int32
-	Y int32
-}
+// type Offset struct {
+// 	X int32
+// 	Y int32
+// }
 
 type MeasuredSize struct {
 	Width    int32

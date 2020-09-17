@@ -9,7 +9,7 @@ import "github.com/nuxui/nuxui/log"
 type GestureArenaMember interface {
 	RejectGesture(pointer int64)
 	AccpetGesture(pointer int64)
-	// HandlePointerEvent(event PointerEvent)
+	// HandlePointerEvent(event Event)
 }
 
 type gestureArena struct {

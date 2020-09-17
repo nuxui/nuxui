@@ -4,6 +4,15 @@
 
 package nux
 
+const (
+	Mod_CapsLock uint32 = 0x10000 << iota
+	Mod_Shift    uint32 = 0x10000 << iota
+	Mod_Control  uint32 = 0x10000 << iota
+	Mod_Alt      uint32 = 0x10000 << iota
+	Mod_Super    uint32 = 0x10000 << iota
+	Mod_Mask     uint32 = 0xFFFF0000
+)
+
 //TODO::equalasciicode
 //TODO::codenumber
 const (
@@ -70,7 +79,7 @@ const (
 	Key_Space
 	Key_Delete
 	Key_Escape
-	Key_Command
+	Key_Super
 	Key_CapsLock
 	Key_LAlt
 	Key_RAlt
