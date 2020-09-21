@@ -55,7 +55,7 @@ func (me *window) Creating(attr Attr) {
 func (me *window) Created(data interface{}) {
 	main := data.(string)
 	if main == "" {
-		log.Fatal("nux", "no main widget found.")
+		log.Fatal("nuxui", "no main widget found.")
 	} else {
 		mainWidgetCreator := FindRegistedWidgetCreatorByName(main)
 		widgetTree := RenderWidget(mainWidgetCreator())

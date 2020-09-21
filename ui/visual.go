@@ -59,7 +59,7 @@ func (me *WidgetVisual) Creating(attr nux.Attr) {
 	case "gone":
 		me.visible = Gone
 	default:
-		log.Fatal("nux", "visible should be 'show', 'hide' or 'gone'")
+		log.Fatal("nuxui", "visible should be 'show', 'hide' or 'gone'")
 	}
 }
 
@@ -114,7 +114,7 @@ func (me *WidgetVisual) Visible() Visible {
 }
 func (me *WidgetVisual) SetVisible(visible Visible) {
 	if visible != Show && visible != Hide && visible != Gone {
-		log.Fatal("nux", "visible should be 'Show', 'Hide' or 'Gone'")
+		log.Fatal("nuxui", "visible should be 'Show', 'Hide' or 'Gone'")
 	}
 
 	if me.visible != visible {
@@ -135,7 +135,7 @@ func (me *WidgetVisual) AddOnVisualChanged(callback OnVisualChanged) {
 	p := unsafe.Pointer(&callback)
 	for _, o := range me.onVisualChangedCallbacks {
 		if o == p {
-			log.Fatal("nux", "The OnVisualChanged callback is existed.")
+			log.Fatal("nuxui", "The OnVisualChanged callback is existed.")
 		}
 	}
 
@@ -155,7 +155,7 @@ func (me *WidgetVisual) RemoveOnVisualChanged(callback OnVisualChanged) {
 
 func (me *WidgetVisual) doVisualChanged() {
 	if me.Owner == nil {
-		log.Fatal("nux", "set target for WidgetVisual first.")
+		log.Fatal("nuxui", "set target for WidgetVisual first.")
 	}
 
 	for _, c := range me.onVisualChangedCallbacks {

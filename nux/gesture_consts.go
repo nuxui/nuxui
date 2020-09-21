@@ -4,16 +4,22 @@
 
 package nux
 
+import "time"
+
+type GestureCallback func(Widget)
+
 type GestureState int
 
 const (
 	GestureState_Ready GestureState = 1 + iota
 	GestureState_Possible
 	GestureState_Accepted
+	GestureState_Rejected
 )
 
 const (
-	DOWN_DELAY               = 100
-	DOWN_TO_UP_DELAY         = 100
-	MIN_PAN_DISTANCE float32 = 10 /*use dp*/
+	GESTURE_DOWN_DELAY                = 100 * time.Millisecond
+	GESTURE_DOWN2UP_DELAY             = 100
+	GESTURE_DOUBLETAP_TIMEOUT         = 300 * time.Millisecond
+	GESTURE_MIN_PAN_DISTANCE  float32 = 10 /*use dp*/
 )

@@ -11,9 +11,6 @@ package nux
 #cgo LDFLAGS: -framework Cocoa -framework OpenGL
 #import <Carbon/Carbon.h> // for HIToolbox/Events.h
 #import <Cocoa/Cocoa.h>
-#import <Foundation/Foundation.h>
-#include <pthread.h>
-#include <stdlib.h>
 
 char* window_title(uintptr_t window);
 void window_setTitle(uintptr_t window, char* title);
@@ -42,6 +39,7 @@ type window struct {
 	buffer       unsafe.Pointer
 	bufferWidth  int32
 	bufferHeight int32
+	delegate     WindowDelegate
 }
 
 func newWindow() *window {
@@ -54,6 +52,7 @@ func (me *window) Creating(attr Attr) {
 
 	if me.decor == nil {
 		me.decor = NewDecor()
+		GestureBinding().AddGestureHandler(me.decor, &decorGestureHandler{})
 	}
 
 	if c, ok := me.decor.(Creating); ok {
@@ -64,7 +63,7 @@ func (me *window) Creating(attr Attr) {
 func (me *window) Created(data interface{}) {
 	main := data.(string)
 	if main == "" {
-		log.Fatal("nux", "no main widget found.")
+		log.Fatal("nuxui", "no main widget found.")
 	} else {
 		mainWidgetCreator := FindRegistedWidgetCreatorByName(main)
 		widgetTree := RenderWidget(mainWidgetCreator())
@@ -138,7 +137,7 @@ func (me *window) LockCanvas() (Canvas, error) {
 	w := me.ContentWidth()
 	h := me.ContentHeight()
 	if me.bufferWidth != w || me.bufferHeight != h {
-		log.V("nux", "buffer size changed xxxxx")
+		log.V("nuxui", "buffer size changed xxxxx")
 		if me.buffer != nil {
 			C.free(me.buffer)
 		}
@@ -175,4 +174,23 @@ func (me *window) Title() string {
 
 func (me *window) SetTitle(title string) {
 	C.window_setTitle(me.windptr, C.CString(title))
+}
+
+func (me *window) SetDelegate(delegate WindowDelegate) {
+	me.delegate = delegate
+}
+
+func (me *window) Delegate() WindowDelegate {
+	return me.delegate
+}
+
+func (me *window) handlePointerEvent(e Event) {
+	if me.delegate != nil {
+		if f, ok := me.delegate.(windowDelegate_HandlePointerEvent); ok {
+			f.HandlePointerEvent(e)
+			return
+		}
+	}
+
+	gestureManagerInstance.handlePointerEvent(me.Decor(), e)
 }

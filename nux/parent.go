@@ -39,7 +39,7 @@ func (me *WidgetParent) Creating(attr Attr) {
 
 func (me *WidgetParent) InsertChild(index int, child Widget) {
 	if index < 0 && index > len(me.children) {
-		log.Fatal("nux", "index out of range when insert child to parent")
+		log.Fatal("nuxui", "index out of range when insert child to parent")
 	} else {
 		c := make([]Widget, 0, len(me.children)+1)
 		c = append(c, me.children[:index]...)
@@ -52,7 +52,7 @@ func (me *WidgetParent) InsertChild(index int, child Widget) {
 
 func (me *WidgetParent) AddChild(child Widget) {
 	if child == nil {
-		log.E("nux", "child should not be nil when add child to parent")
+		log.E("nuxui", "child should not be nil when add child to parent")
 		return
 	}
 
@@ -66,7 +66,7 @@ func (me *WidgetParent) AddChild(child Widget) {
 
 func (me *WidgetParent) Remove(index int) {
 	if index < 0 && index >= len(me.children) {
-		log.Fatal("nux", "out of range")
+		log.Fatal("nuxui", "out of range")
 	} else {
 		me.children[index].AssignParent(nil)
 		me.children = append(me.children[:index], me.children[index+1:]...)
@@ -84,7 +84,7 @@ func (me *WidgetParent) RemoveChild(child Widget) int {
 	if index != -1 {
 		me.Remove(index)
 	} else {
-		log.Fatal("nux", "child is not found in parent widget")
+		log.Fatal("nuxui", "child is not found in parent widget")
 	}
 
 	return index
@@ -103,7 +103,7 @@ func (me *WidgetParent) ReplaceChild(src, dest Widget) int {
 		me.children[index].AssignParent(nil)
 		me.children[index] = dest
 	} else {
-		log.Fatal("nux", "child is not found in parent")
+		log.Fatal("nuxui", "child is not found in parent")
 	}
 
 	return index
@@ -117,7 +117,7 @@ func (me *WidgetParent) GetWidget(id string) Widget {
 		}
 	}
 
-	log.Fatal("nux", fmt.Sprintf("The id '%s' was not found\n", id))
+	log.Fatal("nuxui", fmt.Sprintf("The id '%s' was not found\n", id))
 	return nil
 }
 

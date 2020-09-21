@@ -21,7 +21,7 @@ func CreateWidget(widgetType interface{}) Widget {
 	i := reflect.New(reflect.TypeOf(widgetType).Elem()).Interface()
 	w, ok := i.(Widget)
 	if !ok {
-		log.Fatal("nux", fmt.Sprintf("Create widget from widget type %T faild", widgetType))
+		log.Fatal("nuxui", fmt.Sprintf("Create widget from widget type %T faild", widgetType))
 	}
 	return w
 }
@@ -36,20 +36,20 @@ func RegisterWidget(widget interface{}, creator Creator) {
 	// }
 
 	// if w, ok := widget.(Widget); !ok {
-	// 	log.Fatal("nux", fmt.Sprintf("%T %T is not a Widget, register faild.", w, widget))
+	// 	log.Fatal("nuxui", fmt.Sprintf("%T %T is not a Widget, register faild.", w, widget))
 	// }
 
 	t := reflect.TypeOf(widget).Elem()
 	widgetName := t.PkgPath() + "." + t.Name()
 	if _, ok := _widgetList[widgetName]; ok {
-		log.Fatal("nux", fmt.Sprintf("Widget %s is already registed", widgetName))
+		log.Fatal("nuxui", fmt.Sprintf("Widget %s is already registed", widgetName))
 	} else {
 		_widgetList[widgetName] = creator
 	}
 }
 
 func FindRegistedWidgetCreatorByType(widget interface{}) Creator {
-	log.I("nux", "FindRegistedWidgetCreatorByType %T", widget)
+	log.I("nuxui", "FindRegistedWidgetCreatorByType %T", widget)
 	if widgetName, ok := widget.(string); ok {
 		return FindRegistedWidgetCreatorByName(widgetName)
 	}
@@ -63,7 +63,7 @@ func FindRegistedWidgetCreatorByName(name string) Creator {
 	if c, ok := _widgetList[name]; ok {
 		return c
 	}
-	log.Fatal("nux", fmt.Sprintf("widget '%s' can not find, make sure it was registed", name))
+	log.Fatal("nuxui", fmt.Sprintf("widget '%s' can not find, make sure it was registed", name))
 	return nil
 }
 
@@ -73,20 +73,20 @@ func CreateMixin(mixinType interface{}) Mixin {
 	i := reflect.New(reflect.TypeOf(mixinType).Elem()).Interface()
 	m, ok := i.(Mixin)
 	if !ok {
-		log.Fatal("nux", fmt.Sprintf("Create mixin from mixin type %T faild", mixinType))
+		log.Fatal("nuxui", fmt.Sprintf("Create mixin from mixin type %T faild", mixinType))
 	}
 	return m
 }
 
 func RegisterMixin(mixin interface{}, creator MixinCreator) {
 	// if _, ok := mixin.(Mixin); !ok {
-	// 	log.Fatal("nux", fmt.Sprintf("%T is not a Mixin, register faild.", mixin))
+	// 	log.Fatal("nuxui", fmt.Sprintf("%T is not a Mixin, register faild.", mixin))
 	// }
 
 	t := reflect.TypeOf(mixin).Elem()
 	mixinName := t.PkgPath() + "." + t.Name()
 	if _, ok := _mixinList[mixinName]; ok {
-		log.Fatal("nux", fmt.Sprintf("Mixin %s is already registed", mixinName))
+		log.Fatal("nuxui", fmt.Sprintf("Mixin %s is already registed", mixinName))
 	} else {
 		_mixinList[mixinName] = creator
 	}
@@ -106,13 +106,13 @@ func FindRegistedMixinCreatorByName(name string) MixinCreator {
 	if c, ok := _mixinList[name]; ok {
 		return c
 	}
-	log.Fatal("nux", fmt.Sprintf("Mixin '%s' can not find, make sure it was registed", name))
+	log.Fatal("nuxui", fmt.Sprintf("Mixin '%s' can not find, make sure it was registed", name))
 	return nil
 }
 
 func RenderWidget(widget Widget) Widget {
 	if reflect.TypeOf(widget).Kind() != reflect.Ptr {
-		log.Fatal("nux", fmt.Sprintf("Widget %T should a pointer. eg: &MyWidget{}", widget)) // TODO:: tips
+		log.Fatal("nuxui", fmt.Sprintf("Widget %T should a pointer. eg: &MyWidget{}", widget)) // TODO:: tips
 	}
 
 	if IsComponent(widget) {
@@ -126,7 +126,7 @@ func RenderWidget(widget Widget) Widget {
 			executeCreating(widget, attrs)
 			content = RenderTemplate(widget, attrs)
 		} else {
-			log.Fatal("nux", fmt.Sprintf("%T is not a component, the code should not run here", widget))
+			log.Fatal("nuxui", fmt.Sprintf("%T is not a component, the code should not run here", widget))
 		}
 
 		if c, ok := widget.(Created); ok {
@@ -193,17 +193,17 @@ func renderLayout(component Widget, layout Attr) (ret Widget) {
 						}
 					}
 				} else {
-					log.Fatal("nux", fmt.Sprintf("%T is not a WidgetGroup", p))
+					log.Fatal("nuxui", fmt.Sprintf("%T is not a WidgetGroup", p))
 				}
 			} else {
-				log.Fatal("nux", "unknow type for Children.")
+				log.Fatal("nuxui", "unknow type for Children.")
 			}
 		}
 
 		executeCreated(ret)
 
 	} else {
-		log.Fatal("nux", `must specified "widget"`)
+		log.Fatal("nuxui", `must specified "widget"`)
 	}
 	return ret
 }
@@ -315,12 +315,12 @@ func drawWidgetById0(canvas Canvas, widget Widget, id string) {
 // only find
 func Find(widget Widget, id string) Widget {
 	if id == "" {
-		log.Fatal("nux", fmt.Sprintf("the widget %T id must be specified", widget))
+		log.Fatal("nuxui", fmt.Sprintf("the widget %T id must be specified", widget))
 	}
 
 	w := find(widget, id)
 	if w == nil {
-		log.Fatal("nux", fmt.Sprintf("the id '%s' was not found in widget %T\n", id, widget))
+		log.Fatal("nuxui", fmt.Sprintf("the id '%s' was not found in widget %T\n", id, widget))
 	}
 
 	return w
@@ -353,6 +353,6 @@ func find(widget Widget, id string) Widget {
 // 		}
 // 	}
 
-// 	log.Fatal("nux", fmt.Sprintf("the mixin id '%s' was not found in widget %T\n", id, widget))
+// 	log.Fatal("nuxui", fmt.Sprintf("the mixin id '%s' was not found in widget %T\n", id, widget))
 // 	return nil
 // }

@@ -23,11 +23,11 @@ NewComponent component, child not nil
 */
 func NewComponent(compt, content Widget) Component {
 	if compt == nil {
-		log.Fatal("nux", "component can not ne nil")
+		log.Fatal("nuxui", "component can not ne nil")
 	}
 
 	if content == nil {
-		log.Fatal("nux", "child can not ne nil")
+		log.Fatal("nuxui", "child can not ne nil")
 	}
 
 	return &component{

@@ -11,9 +11,6 @@ package nux
 #cgo LDFLAGS: -framework Cocoa -framework OpenGL
 #import <Carbon/Carbon.h> // for HIToolbox/Events.h
 #import <Cocoa/Cocoa.h>
-#import <Foundation/Foundation.h>
-#include <pthread.h>
-#include <stdlib.h>
 
 void runApp();
 void terminate();
@@ -21,8 +18,6 @@ void terminate();
 import "C"
 import (
 	"time"
-
-	"github.com/nuxui/nuxui/log"
 )
 
 var theApp = &application{
@@ -116,7 +111,7 @@ func windowResized(windptr C.uintptr_t) {
 
 //export windowDraw
 func windowDraw(windptr C.uintptr_t) {
-	log.V("nux", "windowDraw")
+	// log.V("nuxui", "windowDraw")
 
 	e := &event{
 		time:   time.Now(),
@@ -126,11 +121,6 @@ func windowDraw(windptr C.uintptr_t) {
 	}
 
 	theApp.sendEventAndWaitDone(e)
-}
-
-//export onMouseDown
-func onMouseDown(windptr C.uintptr_t, x C.float, y C.float) {
-	log.V("nux", "go go go xxxxx onMouseDown x: %f, y: %f", float32(x), float32(y))
 }
 
 func (me *application) findWindow(windptr C.uintptr_t) Window {
@@ -181,90 +171,74 @@ func go_mouseEvent(windptr C.uintptr_t, etype uint, x, y, screenX, screenY, scro
 
 	switch etype {
 	case C.NSEventTypeMouseMoved:
-		log.V("nuxui", "NSEventTypeMouseMoved")
 		e.button = MB_None
-		e.action = Action_Move
+		e.action = Action_Hover
 		e.pointer = 0
 	case C.NSEventTypeLeftMouseDown:
-		log.V("nuxui", "NSEventTypeLeftMouseDown")
 		e.button = MB_Left
 		e.action = Action_Down
 		e.pointer = time.Now().UnixNano()
 		lastMouseEvent[MB_Left] = e
 	case C.NSEventTypeLeftMouseUp:
-		log.V("nuxui", "NSEventTypeLeftMouseUp")
 		e.button = MB_Left
 		e.action = Action_Up
 		if v, ok := lastMouseEvent[MB_Left]; ok {
 			e.pointer = v.Pointer()
 		}
 	case C.NSEventTypeLeftMouseDragged:
-		log.V("nuxui", "NSEventTypeLeftMouseDragged")
 		e.button = MB_Left
 		e.action = Action_Move
 		if v, ok := lastMouseEvent[MB_Left]; ok {
 			e.pointer = v.Pointer()
 		}
 	case C.NSEventTypeRightMouseDown:
-		log.V("nuxui", "NSEventTypeRightMouseDown")
 		e.button = MB_Right
 		e.action = Action_Down
 		e.pointer = time.Now().UnixNano()
 		lastMouseEvent[MB_Right] = e
 	case C.NSEventTypeRightMouseUp:
-		log.V("nuxui", "NSEventTypeRightMouseUp")
 		e.button = MB_Right
 		e.action = Action_Up
 		if v, ok := lastMouseEvent[MB_Right]; ok {
 			e.pointer = v.Pointer()
 		}
 	case C.NSEventTypeRightMouseDragged:
-		log.V("nuxui", "NSEventTypeRightMouseDragged")
 		e.button = MB_Right
 		e.action = Action_Move
 		if v, ok := lastMouseEvent[MB_Right]; ok {
 			e.pointer = v.Pointer()
 		}
 	case C.NSEventTypeOtherMouseDown:
-		log.V("nuxui", "NSEventTypeOtherMouseDown")
 		e.button = MB_Other
 		e.action = Action_Down
 		e.pointer = time.Now().UnixNano()
 		lastMouseEvent[MB_Other] = e
 	case C.NSEventTypeOtherMouseUp:
-		log.V("nuxui", "NSEventTypeOtherMouseUp")
 		e.button = MB_Other
 		e.action = Action_Up
 		if v, ok := lastMouseEvent[MB_Other]; ok {
 			e.pointer = v.Pointer()
 		}
 	case C.NSEventTypeOtherMouseDragged:
-		log.V("nuxui", "NSEventTypeOtherMouseDragged")
 		e.button = MB_Other
 		e.action = Action_Move
 		if v, ok := lastMouseEvent[MB_Other]; ok {
 			e.pointer = v.Pointer()
 		}
 	case C.NSEventTypeScrollWheel:
-		log.V("nuxui", "NSEventTypeScrollWheel")
 		e.button = MB_None
-		e.action = Action_Wheel
+		e.action = Action_Scroll
 		e.pointer = 0
 	case C.NSEventTypePressure:
-		log.V("nuxui", "NSEventTypePressure")
 		// TODO:: stageTransition pressureBehavior NSPressureBehavior
-		e.button = MB_Pressure
-		if stage > 0 {
-			e.action = Action_Down
-		} else {
-			e.action = Action_Up
-		}
+		e.button = MB_None
+		e.action = Action_Pressure
 	}
-
-	log.V("pointer", "pointer = %d", e.pointer)
 
 	theApp.sendEventAndWaitDone(e)
 }
+
+var lastModifierKeyEvent map[KeyCode]bool = map[KeyCode]bool{}
 
 //export go_keyEvent
 func go_keyEvent(windptr C.uintptr_t, etype uint, keyCode uint16, modifierFlags uint, repeat byte, chars *C.char) {
@@ -289,16 +263,17 @@ func go_keyEvent(windptr C.uintptr_t, etype uint, keyCode uint16, modifierFlags 
 	case C.NSEventTypeKeyUp:
 		e.action = Action_Up
 	case C.NSEventTypeFlagsChanged:
-		// TODO:: need action ?
-		// if none, _, _, _, _, _ := e.Modifiers(); none {
-		// 	e.action = Action_Up
-		// } else {
-		// 	e.action = Action_Down
-		// }
+		if down, ok := lastModifierKeyEvent[e.keyCode]; ok && down {
+			lastModifierKeyEvent[e.keyCode] = false
+			e.action = Action_Up
+		} else {
+			lastModifierKeyEvent[e.keyCode] = true
+			e.action = Action_Down
+		}
 	}
 
-	log.V("nuxui", "oldKeyCode=%d, oldFlags=%d %s", keyCode, modifierFlags, e)
-	log.V("nuxui", "Shift=%d, control=%d opt=%d cmd=%d lock=%d mask=%d", Mod_Shift, Mod_Control, Mod_Alt, Mod_Super, Mod_CapsLock, Mod_Mask)
+	// log.V("nuxui", "oldKeyCode=%d, oldFlags=%d %s", keyCode, modifierFlags, e)
+	// log.V("nuxui", "Shift=%d, control=%d opt=%d cmd=%d lock=%d mask=%d", Mod_Shift, Mod_Control, Mod_Alt, Mod_Super, Mod_CapsLock, Mod_Mask)
 
 	theApp.sendEventAndWaitDone(e)
 }

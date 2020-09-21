@@ -8,4 +8,5 @@ type GestureRecognizer interface {
 	GestureArenaMember
 	PointerAllowed(event Event) bool
 	HandlePointerEvent(event Event)
+	//TODO:: Clear(widget Widget) // clear callbacks of widget
 }

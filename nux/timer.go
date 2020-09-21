@@ -6,6 +6,7 @@ package nux
 
 import (
 	"fmt"
+	"math"
 	"sync"
 	"time"
 
@@ -14,16 +15,16 @@ import (
 
 type timerLoop struct {
 	mux     sync.Mutex
-	n       int32
+	seq     uint32
 	ding    chan *timer
-	cancel  map[int32]struct{}
+	cancel  map[uint32]struct{}
 	running bool
 }
 
 var timerLoopInstance = &timerLoop{
-	n:       0,
+	seq:     0,
 	ding:    make(chan *timer),
-	cancel:  map[int32]struct{}{},
+	cancel:  map[uint32]struct{}{},
 	running: false,
 }
 
@@ -41,51 +42,61 @@ func (me *timerLoop) loop() {
 		t := <-me.ding
 
 		me.mux.Lock()
-		if _, ok := me.cancel[t.id]; ok {
-			delete(me.cancel, t.id)
+		if _, ok := me.cancel[t.seq]; ok {
+			delete(me.cancel, t.seq)
 			me.mux.Unlock()
 			continue
 		}
 		me.mux.Unlock()
 
-		//RunOnUI(t.callback)
+		RunOnUI(t.callback)
 	}
 }
 
-func (me *timerLoop) newId() int32 {
+func RunOnUI(callback func()) {
+	e := &event{
+		time:  time.Now(),
+		etype: Type_BackToUI,
+		data:  callback,
+	}
+	App().SendEvent(e)
+}
+
+func (me *timerLoop) newSeq() uint32 {
 	me.mux.Lock()
 	defer me.mux.Unlock()
-	me.n++
-	if me.n == 0 {
-		me.n++
+	if me.seq > math.MaxUint32-2 {
+		me.seq = 0
+	} else {
+		me.seq++
 	}
-	return me.n
+	return me.seq
 }
 
 func (me *timerLoop) cancelTimer(t *timer) {
 	me.mux.Lock()
-	me.cancel[t.id] = struct{}{}
+	me.cancel[t.seq] = struct{}{}
 	me.mux.Unlock()
 }
 
 type Timer interface {
-	Stop()
+	Cancel()
 }
 
 type timer struct {
-	id       int32
+	seq      uint32
 	callback func()
 }
 
-func (me *timer) Stop() {
+func (me *timer) Cancel() {
 	timerLoopInstance.cancelTimer(me)
 }
 
 func NewTimerBackToUI(duration time.Duration, callback func()) Timer {
 	timerLoopInstance.init()
-	log.V("nux", fmt.Sprintf("callback = %p", &callback))
+	log.V("nuxui", fmt.Sprintf("callback = %p", &callback))
 	t := &timer{
-		id:       timerLoopInstance.newId(),
+		seq:      timerLoopInstance.newSeq(),
 		callback: callback,
 	}
 	go func(t *timer) {

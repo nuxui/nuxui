@@ -139,7 +139,6 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 		case NSEventTypeOtherMouseDown:
         case NSEventTypeOtherMouseUp:
         case NSEventTypeOtherMouseDragged:
-		NSLog(@"###  NuxWindow NSEventTypeAppKitDefined");
 			go_mouseEvent(windptr, etype, x, y, screenX, screenY, 0, 0, 0, 0);
 			break;
 		case NSEventTypeScrollWheel:

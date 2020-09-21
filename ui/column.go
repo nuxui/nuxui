@@ -247,7 +247,7 @@ func (me *column) Measure(width, height int32) {
 				}
 			case nux.Ratio:
 				if cs.Width().Mode() == nux.Ratio {
-					log.Fatal("nux", "width and height size mode can not both nux.Ratio, at least one is definited.")
+					log.Fatal("nuxui", "width and height size mode can not both nux.Ratio, at least one is definited.")
 				}
 			case nux.Auto:
 				h := innerHeight - vPxUsed
@@ -366,7 +366,7 @@ func (me *column) Measure(width, height int32) {
 	// height mode is nux.Auto, and child has percent size
 	if nux.MeasureSpecMode(height) == nux.Auto {
 		if vPt < 0 || vPt > 100 {
-			log.Fatal("nux", "children percent size is out of range, it should 0% ~ 100%")
+			log.Fatal("nuxui", "children percent size is out of range, it should 0% ~ 100%")
 		}
 
 		// Accumulate child.height that was not accumulated before to get the total value of vPx
@@ -602,7 +602,7 @@ func (me *column) measureHorizontal(width, height int32, hPPx, hPPt, innerWidth 
 
 			if hPt > 0 {
 				if hPt > 100 {
-					log.Fatal("nux", "percent size out of range, it should between 0% ~ 100%.")
+					log.Fatal("nuxui", "percent size out of range, it should between 0% ~ 100%.")
 				}
 
 				hPx = hPx / (1.0 - hPt/100.0)
@@ -621,7 +621,7 @@ func (me *column) measureHorizontal(width, height int32, hPPx, hPPt, innerWidth 
 // Responsible for determining the position of the widget align, margin
 // TODO measure other mode dimen
 func (me *column) Layout(dx, dy, left, top, right, bottom int32) {
-	log.V("nux", "column layout %d, %d, %d, %d, %d, %d", dx, dy, left, top, right, bottom)
+	log.V("nuxui", "column layout %d, %d, %d, %d, %d, %d", dx, dy, left, top, right, bottom)
 	ms := me.MeasuredSize()
 
 	var l float32 = 0
@@ -687,7 +687,7 @@ func (me *column) Draw(canvas nux.Canvas) {
 	if me.Background() != nil {
 		me.Background().Draw(canvas)
 	}
-	// log.V("nux", "draw Background used time %d", time.Now().Sub(t1).Milliseconds())
+	// log.V("nuxui", "draw Background used time %d", time.Now().Sub(t1).Milliseconds())
 
 	for _, child := range me.Children() {
 		if compt, ok := child.(nux.Component); ok {

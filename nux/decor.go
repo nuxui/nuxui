@@ -302,7 +302,7 @@ func (me *decor) measure(width, height int32, measuredIndex map[int]struct{}) (o
 				case Ratio:
 					// measured when measure height
 					if cs.Height().Mode() == Ratio {
-						log.Fatal("nux", "width and height size mode can not both Ratio, at least one is definited.")
+						log.Fatal("nuxui", "width and height size mode can not both Ratio, at least one is definited.")
 					}
 				case Auto:
 					cms.Width = MeasureSpec(util.Roundi32(hPxRemain), Auto)
@@ -336,7 +336,7 @@ func (me *decor) measure(width, height int32, measuredIndex map[int]struct{}) (o
 					}
 				case Ratio:
 					if cs.Width().Mode() == Ratio {
-						log.Fatal("nux", "width and height size mode can not both Ratio, at least one is definited.")
+						log.Fatal("nuxui", "width and height size mode can not both Ratio, at least one is definited.")
 					}
 				case Auto:
 					cms.Height = MeasureSpec(util.Roundi32(vPxRemain), Auto)
@@ -513,7 +513,7 @@ func (me *decor) Layout(dx, dy, left, top, right, bottom int32) {
 }
 
 func (me *decor) Draw(canvas Canvas) {
-	log.V("nux", "Decor Draw....")
+	// log.V("nuxui", "Decor Draw....")
 	// if me.Background() != nil {
 	// 	me.Background().Draw(canvas)
 	// }
@@ -531,7 +531,7 @@ func (me *decor) Draw(canvas Canvas) {
 				canvas.ClipRect(0, 0, cms.Width, cms.Height)
 				// t1 := time.Now()
 				draw.Draw(canvas)
-				// log.V("nux", "draw used time %d", time.Now().Sub(t1).Milliseconds())
+				// log.V("nuxui", "draw used time %d", time.Now().Sub(t1).Milliseconds())
 				canvas.Restore()
 			}
 		}

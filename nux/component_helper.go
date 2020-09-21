@@ -19,14 +19,14 @@ type ComptHelperPart struct {
 
 func (me *ComptHelperPart) Component() Widget {
 	if me.compt == nil {
-		log.Fatal("nux", "The component is nil, should set it before use")
+		log.Fatal("nuxui", "The component is nil, should set it before use")
 	}
 	return me.compt
 }
 
 func (me *ComptHelperPart) AssignComponent(compt Widget) {
 	if me.compt != nil {
-		log.Fatal("nux", "The component is already assigned.")
+		log.Fatal("nuxui", "The component is already assigned.")
 	}
 	me.compt = compt
 }

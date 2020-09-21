@@ -12,8 +12,6 @@ import (
 	"github.com/nuxui/nuxui/log"
 )
 
-type KeyCode int
-
 type Event interface {
 	Time() time.Time
 	Type() EventType
@@ -39,6 +37,8 @@ type Event interface {
 	Repeat() bool
 	Modifiers() (none, capslock, shift, control, alt, super bool)
 	Rune() rune // rune or 0
+
+	Data() interface{}
 }
 
 type event struct {
@@ -63,6 +63,8 @@ type event struct {
 	repeat        bool
 	modifierFlags uint32
 	characters    string
+
+	data interface{}
 }
 
 func (me *event) Time() time.Time {
@@ -106,14 +108,14 @@ func (me *event) ScreenY() float32 {
 }
 
 func (me *event) ScrollX() float32 {
-	if me.action != Action_Wheel {
+	if me.action != Action_Scroll {
 		log.E("nuxui", "obtain scroll at no wheel")
 	}
 	return me.scrollX
 }
 
 func (me *event) ScrollY() float32 {
-	if me.action != Action_Wheel {
+	if me.action != Action_Scroll {
 		log.E("nuxui", "obtain scroll at no wheel")
 	}
 	return me.scrollY
@@ -166,12 +168,21 @@ func (me *event) Rune() rune {
 	return 0
 }
 
+func (me *event) Data() interface{} {
+	return me.data
+}
+
 func (me *event) String() string {
 	switch me.etype {
 	case Type_PointerEvent:
-		return fmt.Sprintf("Event: {type=PointerEvent, action=%d, x=%.2f, y=%.2f}", me.action, me.x, me.y)
+		return fmt.Sprintf("PointerEvent: {pointer=%d, action=%s, x=%.2f, y=%.2f}", me.pointer, me.action, me.x, me.y)
 	case Type_KeyEvent:
-		return fmt.Sprintf("Event: {type=KeyEvent:, action=%d, x=%.2f, y=%.2f, rune=%c}", me.action, me.x, me.y, me.Rune())
+		return fmt.Sprintf("KeyEvent: {keyCode=%s, action=%s, x=%.2f, y=%.2f, rune='%c'}", me.keyCode, me.action, me.x, me.y, me.Rune())
 	}
-	return fmt.Sprintf("Event: {type:%d, action:%d, x=%.2f, y=%.2f, rune=%c}", me.etype, me.action, me.x, me.y, me.Rune())
+	return fmt.Sprintf("Event: {type:%s, action:%s, x=%.2f, y=%.2f}", me.etype, me.action, me.x, me.y)
 }
+
+// TODO::
+// func RegisterEventAction() EventAction {
+
+// }

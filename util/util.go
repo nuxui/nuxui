@@ -34,19 +34,19 @@ func Absi32(v int32) int32 {
 // TODO:: unit test ptr and args
 func ReflectCall(ptr interface{}, funcName string, args ...interface{}) {
 	if len(funcName) == 0 {
-		log.E("nux", "ReflectCall receive a empty func name")
+		log.E("nuxui", "ReflectCall receive a empty func name")
 		return
 	}
 
 	if r := funcName[0]; r < 'A' || r > 'Z' {
-		log.E("nux", fmt.Sprintf("ReflectCall can not execute '%s' unexport function '%s'", GetTypeName(ptr), funcName))
+		log.E("nuxui", fmt.Sprintf("ReflectCall can not execute '%s' unexport function '%s'", GetTypeName(ptr), funcName))
 		return
 	}
 
 	method := reflect.ValueOf(ptr).MethodByName(funcName)
 
 	if method.Type().NumIn() != len(args) {
-		log.Fatal("nux", fmt.Sprintf("ReflectCall need %d arguments but receive %d aguments", method.Type().NumIn(), len(args)))
+		log.Fatal("nuxui", fmt.Sprintf("ReflectCall need %d arguments but receive %d aguments", method.Type().NumIn(), len(args)))
 	}
 
 	in := make([]reflect.Value, method.Type().NumIn())
@@ -54,4 +54,9 @@ func ReflectCall(ptr interface{}, funcName string, args ...interface{}) {
 		in[i] = reflect.ValueOf(args[i])
 	}
 	method.Call(in)
+}
+
+func Ref2Ptr(ptr interface{}) uintptr {
+	// TODO::
+	return 0
 }

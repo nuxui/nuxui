@@ -33,7 +33,7 @@ func Init(manifest string) {
 
 // Run run application
 func Run() {
-	log.V("nux", "Run...")
+	log.V("nuxui", "Run...")
 	run()
 }
 
@@ -41,7 +41,7 @@ func (me *application) loop() {
 	// application created and started , so here is started?
 	// me.Created(struct{}{})
 
-	log.V("nux", "run go loop...")
+	log.V("nuxui", "run go loop...")
 	var event Event
 	var wait bool
 	for {
@@ -52,19 +52,19 @@ func (me *application) loop() {
 			wait = true
 		}
 
-		// log.V("nux", "select a event wait = %s", wait)
+		// log.V("nuxui", "select a event wait = %s", wait)
 
 		switch event.Type() {
 		case Type_WindowEvent:
 			e := event.(WindowEvent)
 			switch e.Action() {
 			case Action_WindowCreated:
-				log.V("nux", "Action_WindowCreated")
+				log.V("nuxui", "Action_WindowCreated")
 				if f, ok := e.Window().(AnyCreated); ok {
 					f.Created(App().Manifest().Main())
 				}
 			case Action_WindowMeasured:
-				log.V("nux", "Action_WindowMeasured width=%d, height=%d", e.Window().ContentWidth(), e.Window().ContentHeight())
+				log.V("nuxui", "Action_WindowMeasured width=%d, height=%d", e.Window().ContentWidth(), e.Window().ContentHeight())
 				if f, ok := e.Window().(Measure); ok {
 					f.Measure(e.Window().ContentWidth(), e.Window().ContentHeight())
 				}
@@ -80,7 +80,7 @@ func (me *application) loop() {
 					}
 				}
 			case Action_WindowDraw:
-				log.V("nux", "Action_WindowDraw")
+				// log.V("nuxui", "Action_WindowDraw")
 				if f, ok := e.Window().(Draw); ok {
 					if canvas, err := e.Window().LockCanvas(); err == nil {
 						f.Draw(canvas)
@@ -91,19 +91,19 @@ func (me *application) loop() {
 		// App().MainWindow()
 		// App().Manifest().Root()
 		case Type_PointerEvent:
-			log.V("nux", "Type_PointerEvent")
-			if f, ok := App().MainWindow().(Draw); ok {
-				if canvas, err := App().MainWindow().LockCanvas(); err == nil {
-					f.Draw(canvas)
-					App().MainWindow().UnlockCanvas()
-				}
+			event.Window().handlePointerEvent(event)
+		case Type_BackToUI:
+			if f, ok := event.Data().(func()); ok {
+				f()
+			} else {
+				log.Fatal("nuxui", "can not accept type %T for event Type_BackToUI, only supported type func()", event.Data())
 			}
 		case Type_AppExit:
 			goto end
 		}
 
 		if wait {
-			// log.V("nux", "wait event done")
+			// log.V("nuxui", "wait event done")
 			me.eventDone <- struct{}{}
 			wait = false
 		}
@@ -113,7 +113,7 @@ end:
 		me.eventDone <- struct{}{}
 		wait = false
 	}
-	log.V("nux", "end of nux loop")
+	log.V("nuxui", "end of nux loop")
 }
 
 func RequestLayout(widget Widget) {

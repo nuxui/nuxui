@@ -93,7 +93,7 @@ func getPadding(attr Attr, key string, defaultValue string) Dimen {
 	d := attr.GetDimen(key, defaultValue)
 	switch d.Mode() {
 	case Auto, Weight, Unspec, Ratio:
-		log.Fatal("nux", fmt.Sprintf("Unsupported padding dimension mode %s at %s: %s, only supported Pixel, dp, Percent.", d.ModeName(), key, d))
+		log.Fatal("nuxui", fmt.Sprintf("Unsupported padding dimension mode %s at %s: %s, only supported Pixel, dp, Percent.", d.ModeName(), key, d))
 	default:
 		return d
 	}
@@ -127,7 +127,7 @@ func getMargin(attr Attr, key string, defaultValue string) Dimen {
 	d := attr.GetDimen(key, defaultValue)
 	switch d.Mode() {
 	case Auto, Unspec, Ratio:
-		log.Fatal("nux", fmt.Sprintf("Unsupported padding dimension mode %s at %s: %s, only supported Pixel, dp, Percent.", d.ModeName(), key, d))
+		log.Fatal("nuxui", fmt.Sprintf("Unsupported padding dimension mode %s at %s: %s, only supported Pixel, dp, Percent.", d.ModeName(), key, d))
 	default:
 		return d
 	}
@@ -462,7 +462,7 @@ func (me *WidgetSize) AddOnSizeChanged(callback OnSizeChanged) {
 	p := unsafe.Pointer(&callback)
 	for _, o := range me.onSizeChangedCallbacks {
 		if o == p {
-			log.Fatal("nux", "The OnSizeChanged callback is existed.")
+			log.Fatal("nuxui", "The OnSizeChanged callback is existed.")
 		}
 	}
 
@@ -482,7 +482,7 @@ func (me *WidgetSize) RemoveOnSizeChanged(callback OnSizeChanged) {
 
 func (me *WidgetSize) doSizeChanged() {
 	if me.Owner == nil {
-		log.Fatal("nux", "set target to WidgetSize first.")
+		log.Fatal("nuxui", "set target to WidgetSize first.")
 	}
 
 	for _, c := range me.onSizeChangedCallbacks {

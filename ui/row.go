@@ -247,7 +247,7 @@ func (me *row) Measure(width, height int32) {
 				}
 			case nux.Ratio:
 				if cs.Height().Mode() == nux.Ratio {
-					log.Fatal("nux", "width and height size mode can not both Ratio, at least one is definited.")
+					log.Fatal("nuxui", "width and height size mode can not both Ratio, at least one is definited.")
 				}
 			case nux.Auto:
 				w := innerWidth - hPxUsed
@@ -358,7 +358,7 @@ func (me *row) Measure(width, height int32) {
 	// width mode is Auto, and child has percent size
 	if nux.MeasureSpecMode(width) == nux.Auto {
 		if hPt < 0 || hPt > 100 {
-			log.Fatal("nux", "children percent size is out of range, it should 0% ~ 100%")
+			log.Fatal("nuxui", "children percent size is out of range, it should 0% ~ 100%")
 		}
 
 		// Accumulate child.height that was not accumulated before to get the total value of vPx
@@ -594,7 +594,7 @@ func (me *row) measureVertical(width, height int32, vPPx, vPPt, innerHeight floa
 
 			if vPt > 0 {
 				if vPt > 100 {
-					log.Fatal("nux", "percent size out of range, it should between 0% ~ 100%.")
+					log.Fatal("nuxui", "percent size out of range, it should between 0% ~ 100%.")
 				}
 
 				vPx = vPx / (1.0 - vPt/100.0)

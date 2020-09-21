@@ -41,7 +41,7 @@ func (me *WidgetBase) AssignParent(parent Parent) {
 	if me.parent == nil {
 		me.parent = parent
 	} else {
-		log.Fatal("nux", fmt.Sprintf("The parent of widget '%s' is already assigned, can not assign again.", me.ID()))
+		log.Fatal("nuxui", fmt.Sprintf("The parent of widget '%s' is already assigned, can not assign again.", me.ID()))
 	}
 }
 

@@ -35,7 +35,7 @@ func (me *Align) Init(attr nux.Attr) {
 		me.Vertical = Bottom
 	default:
 		me.Vertical = Top
-		log.Fatal("nux", fmt.Sprintf("Unknow alignment '%s' for vertical, only support 'top', 'center', 'bottom'", vertical))
+		log.Fatal("nuxui", fmt.Sprintf("Unknow alignment '%s' for vertical, only support 'top', 'center', 'bottom'", vertical))
 	}
 
 	switch horizontal {
@@ -47,6 +47,6 @@ func (me *Align) Init(attr nux.Attr) {
 		me.Horizontal = Right
 	default:
 		me.Horizontal = Left
-		log.Fatal("nux", fmt.Sprintf("Unknow alignment '%s' for horizontal, only support 'left', 'center', 'right'", horizontal))
+		log.Fatal("nuxui", fmt.Sprintf("Unknow alignment '%s' for horizontal, only support 'left', 'center', 'right'", horizontal))
 	}
 }

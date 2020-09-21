@@ -35,7 +35,7 @@ func (me *WidgetMixin) AssignOwner(owner Widget) {
 	}
 
 	if me.owner != nil && owner != nil && me.owner != owner {
-		log.Fatal("nux", "The mixin is already have a owner")
+		log.Fatal("nuxui", "The mixin is already have a owner")
 	}
 
 	me.owner = owner
@@ -43,7 +43,7 @@ func (me *WidgetMixin) AssignOwner(owner Widget) {
 
 func (me *WidgetMixin) Owner() Widget {
 	if me.owner == nil {
-		log.Fatal("nux", "The owner should assign before use it")
+		log.Fatal("nuxui", "The owner should assign before use it")
 	}
 	return me.owner
 }

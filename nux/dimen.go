@@ -49,7 +49,7 @@ type dimen struct {
 func NewDimen(value float32, mode Mode) Dimen {
 	d := &dimen{mode, value}
 	if !d.valid() {
-		log.Fatal("nux", "invalid dimension "+d.String())
+		log.Fatal("nuxui", "invalid dimension "+d.String())
 	}
 	d.fix()
 	return d
@@ -107,7 +107,7 @@ func ParseDimen(s string) (Dimen, error) {
 		d.value = float32(v)
 	}
 	if !d.valid() {
-		log.Fatal("nux", "invalid dimension "+d.String())
+		log.Fatal("nuxui", "invalid dimension "+d.String())
 	}
 	d.fix()
 	return d, nil
@@ -195,12 +195,12 @@ const measuredDimenValueMask int32 = 0x3FFFFFFF
 
 func MeasureSpec(value int32, mode Mode) int32 {
 	if mode < 0 || mode > 2 {
-		log.Fatal("nux", "error for MeasureSpec mdoe, only support Pixel, Auto, Unspec")
+		log.Fatal("nuxui", "error for MeasureSpec mdoe, only support Pixel, Auto, Unspec")
 	}
 	if value > MaxMeasuredDimen {
-		log.Fatal("nux", "error for MeasureSpec value, cannot be negative")
+		log.Fatal("nuxui", "error for MeasureSpec value, out of range")
 	} else if value < 0 {
-		log.Fatal("nux", "error for MeasureSpec value, cannot be negative")
+		log.Fatal("nuxui", "error for MeasureSpec value, cannot be negative")
 	}
 	return int32(mode)<<30 | value
 }

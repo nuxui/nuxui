@@ -37,14 +37,14 @@ public class NuxActivity extends NativeActivity {
 	// 	} catch (KeyCharacterMap.UnavailableException e) {
 	// 		return -1;
 	// 	} catch (Exception e) {
-	// 		Log.e("nux", "exception reading KeyCharacterMap", e);
+	// 		Log.e("nuxui", "exception reading KeyCharacterMap", e);
 	// 		return -1;
 	// 	}
 	// }
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
-		Log.info("nux", "activity onCreate")
+		Log.info("nuxui", "activity onCreate")
 		// requestWindowFeature(Window.FEATURE_NO_TITLE);
 		// getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
@@ -52,7 +52,7 @@ public class NuxActivity extends NativeActivity {
 
 
 		super.onCreate(savedInstanceState);
-		Log.info("nux", "activity onCreate after super.onCreate(savedInstanceState)")
+		Log.info("nuxui", "activity onCreate after super.onCreate(savedInstanceState)")
 	}
 
 	private void setTranslucentStatus(int on) {

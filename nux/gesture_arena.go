@@ -9,7 +9,6 @@ import "github.com/nuxui/nuxui/log"
 type GestureArenaMember interface {
 	RejectGesture(pointer int64)
 	AccpetGesture(pointer int64)
-	// HandlePointerEvent(event Event)
 }
 
 type gestureArena struct {
@@ -32,7 +31,11 @@ func newGestureArena() *gestureArena {
 
 func (me *gestureArena) add(member GestureArenaMember) {
 	if member == nil {
-		log.Fatal("nux", "Invalid GestureArenaMember, it can not be nil")
+		log.Fatal("nuxui", "Invalid GestureArenaMember, it can not be nil")
+	}
+
+	if !me.isOpen {
+		log.Fatal("nuxui", "GestureArena is already closed, can not add any GestureArenaMember to here")
 	}
 
 	me.members = append(me.members, member)
@@ -47,14 +50,11 @@ func (me *gestureArena) remove(member GestureArenaMember) {
 	}
 }
 
-var gestureArenaManagerInstance *gestureArenaManager
+var gestureArenaManagerInstance *gestureArenaManager = &gestureArenaManager{
+	arenas: map[int64]*gestureArena{},
+}
 
 func GestureArenaManager() *gestureArenaManager {
-	if gestureArenaManagerInstance == nil {
-		gestureArenaManagerInstance = &gestureArenaManager{
-			arenas: map[int64]*gestureArena{},
-		}
-	}
 	return gestureArenaManagerInstance
 }
 
@@ -75,6 +75,7 @@ func (me *gestureArenaManager) Add(pointer int64, member GestureArenaMember) {
 func (me *gestureArenaManager) Close(pointer int64) {
 	if arena, ok := me.arenas[pointer]; ok {
 		arena.isOpen = false
+		me.tryToResolveArena(pointer, arena)
 	}
 }
 
@@ -101,10 +102,18 @@ func (me *gestureArenaManager) Sweep(pointer int64) {
 	}
 }
 
-func (me *gestureArenaManager) Hold(pointer int64) {
+func (me *gestureArenaManager) Hold(pointer int64) (success bool) {
 	if arena, ok := me.arenas[pointer]; ok {
 		arena.isHeld = true
+		success = true
+	} else {
+		// arena := newGestureArena()
+		// me.arenas[pointer] = arena
+		// arena.isHeld = true
+		success = false
+		// log.E("nuxui", "GestureArenaManager hold a nil GestureArena with pointer %d", pointer)
 	}
+	return
 }
 
 func (me *gestureArenaManager) Release(pointer int64) {
@@ -138,6 +147,10 @@ func (me *gestureArenaManager) Resolve(pointer int64, member GestureArenaMember,
 }
 
 func (me *gestureArenaManager) tryToResolveArena(pointer int64, arena *gestureArena) {
+	if arena.isOpen {
+		log.Fatal("nuxui", "the GestureArena should closed at here")
+	}
+
 	if len(arena.members) == 1 {
 		me.resolveByDefault(pointer, arena)
 	} else if len(arena.members) == 0 {
@@ -150,7 +163,7 @@ func (me *gestureArenaManager) tryToResolveArena(pointer int64, arena *gestureAr
 func (me *gestureArenaManager) resolveByDefault(pointer int64, arena *gestureArena) {
 	if arena, ok := me.arenas[pointer]; ok {
 		if len(arena.members) != 1 {
-			log.Fatal("nux", "resolveByDefault called when members number is 1")
+			log.Fatal("nuxui", "resolveByDefault called when members number is 1")
 		}
 
 		delete(me.arenas, pointer)

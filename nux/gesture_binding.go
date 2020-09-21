@@ -27,6 +27,16 @@ func (me *gestureBinding) ClearGestureHandler(widget Widget) {
 	delete(me.widgetGestureHandlers, widget)
 }
 
+func (me *gestureBinding) AddGestureRecognizer(widget Widget, recognizer GestureRecognizer) {
+	if handler, ok := me.widgetGestureHandlers[widget]; ok {
+		handler.AddGestureRecoginer(recognizer)
+	} else {
+		h := NewGestureHandler()
+		h.AddGestureRecoginer(recognizer)
+		me.widgetGestureHandlers[widget] = h
+	}
+}
+
 // recognizer
 func (me *gestureBinding) FindGestureRecognizer(widget Widget, recognizerType GestureRecognizer) GestureRecognizer {
 	if h, ok := me.widgetGestureHandlers[widget]; ok {

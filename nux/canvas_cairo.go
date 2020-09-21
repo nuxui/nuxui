@@ -219,7 +219,7 @@ func NewSurfaceFromData(data unsafe.Pointer, format, width, height, stride int) 
 
 func (me *Surface) GetCanvas() Canvas {
 	if me.canvas == nil {
-		log.Fatal("nux", "create surface by call NewSurface...")
+		log.Fatal("nuxui", "create surface by call NewSurface...")
 	}
 	return me.canvas
 }
@@ -408,7 +408,7 @@ func (me *canvas) DrawColor(color Color) {
 	C.cairo_set_source_rgba(me.ptr, C.double(r), C.double(g), C.double(b), C.double(a))
 	// t1 := time.Now()
 	C.cairo_paint(me.ptr)
-	// log.V("nux", "cairo_paint used time %d", time.Now().Sub(t1).Milliseconds())
+	// log.V("nuxui", "cairo_paint used time %d", time.Now().Sub(t1).Milliseconds())
 }
 
 func (me *canvas) DrawAlpha(alpha float32) {
@@ -442,7 +442,7 @@ func (me *canvas) GetTextRect(text string, fontFamily string, fontSize float32) 
 
 	var extents C.cairo_text_extents_t
 	C.cairo_text_extents(me.ptr, str, (*C.cairo_text_extents_t)(unsafe.Pointer(&extents)))
-	// log.V("nux", fmt.Sprintln("extents: ", extents, extents.x_bearing))
+	// log.V("nuxui", fmt.Sprintln("extents: ", extents, extents.x_bearing))
 	C.free(unsafe.Pointer(str))
 	C.free(unsafe.Pointer(font))
 	return extents
@@ -453,9 +453,9 @@ func (me *canvas) DrawText(text string, font *Font, width, height int32, paint *
 	ctext := C.CString(text)
 	me.SetColor(paint.Color)
 	C.drawText(me.ptr, fontFamily, C.int(font.Weight), C.int(font.Size), ctext, C.int(width), C.int(height))
+	me.drawPaint(paint)
 	C.free(unsafe.Pointer(fontFamily))
 	C.free(unsafe.Pointer(ctext))
-	me.drawPaint(paint)
 }
 
 func (me *canvas) MeasureText(text string, font *Font, width, height int32) (outWidth, outHeight int32) {
@@ -494,9 +494,9 @@ func (me *canvas) userToDevice(x, y float32) {
 	dx := C.double(x)
 	dy := C.double(y)
 	C.cairo_user_to_device(me.ptr, &dx, &dy)
-	log.V("nux", "userToDevice x=%f, y=%f, dx=%f, dy=%f", x, y, dx, dy)
+	log.V("nuxui", "userToDevice x=%f, y=%f, dx=%f, dy=%f", x, y, dx, dy)
 	C.cairo_device_to_user(me.ptr, &dx, &dy)
-	log.V("nux", "deviceToUser x=%f, y=%f, dx=%f, dy=%f", x, y, dx, dy)
+	log.V("nuxui", "deviceToUser x=%f, y=%f, dx=%f, dy=%f", x, y, dx, dy)
 }
 
 func (me *canvas) SetAntialias(a int) {

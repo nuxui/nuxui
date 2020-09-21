@@ -41,7 +41,7 @@ func (me *colorDrawable) Height() int32 {
 func (me *colorDrawable) Draw(canvas nux.Canvas) {
 	// t1 := time.Now()
 	canvas.DrawColor(me.color)
-	// log.V("nux", "draw DrawColor used time %d", time.Now().Sub(t1).Milliseconds())
+	// log.V("nuxui", "draw DrawColor used time %d", time.Now().Sub(t1).Milliseconds())
 }
 
 func (me *colorDrawable) Equal(drawable Drawable) bool {

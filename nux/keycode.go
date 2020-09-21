@@ -4,6 +4,11 @@
 
 package nux
 
+import "github.com/nuxui/nuxui/log"
+
+//go:generate stringer -type=KeyCode
+type KeyCode int
+
 const (
 	Mod_CapsLock uint32 = 0x10000 << iota
 	Mod_Shift    uint32 = 0x10000 << iota
@@ -133,3 +138,238 @@ const (
 	Key_VolumeDown
 	Key_Mute
 )
+
+func (me KeyCode) String() string {
+	switch me {
+	case Key_Unknown:
+		return "Key_Unknown "
+	case Key_A:
+		return "Key_A"
+	case Key_B:
+		return "Key_B"
+	case Key_C:
+		return "Key_C"
+	case Key_D:
+		return "Key_D"
+	case Key_E:
+		return "Key_E"
+	case Key_F:
+		return "Key_F"
+	case Key_G:
+		return "Key_G"
+	case Key_H:
+		return "Key_H"
+	case Key_I:
+		return "Key_I"
+	case Key_J:
+		return "Key_J"
+	case Key_K:
+		return "Key_K"
+	case Key_L:
+		return "Key_L"
+	case Key_M:
+		return "Key_M"
+	case Key_N:
+		return "Key_N"
+	case Key_O:
+		return "Key_O"
+	case Key_P:
+		return "Key_P"
+	case Key_Q:
+		return "Key_Q"
+	case Key_R:
+		return "Key_R"
+	case Key_S:
+		return "Key_S"
+	case Key_T:
+		return "Key_T"
+	case Key_U:
+		return "Key_U"
+	case Key_V:
+		return "Key_V"
+	case Key_W:
+		return "Key_W"
+	case Key_X:
+		return "Key_X"
+	case Key_Y:
+		return "Key_Y"
+	case Key_Z:
+		return "Key_Z"
+	case Key_0:
+		return "Key_0"
+	case Key_1:
+		return "Key_1"
+	case Key_2:
+		return "Key_2"
+	case Key_3:
+		return "Key_3"
+	case Key_4:
+		return "Key_4"
+	case Key_5:
+		return "Key_5"
+	case Key_6:
+		return "Key_6"
+	case Key_7:
+		return "Key_7"
+	case Key_8:
+		return "Key_8"
+	case Key_9:
+		return "Key_9"
+	case Key_F1:
+		return "Key_F1"
+	case Key_F2:
+		return "Key_F2"
+	case Key_F3:
+		return "Key_F3"
+	case Key_F4:
+		return "Key_F4"
+	case Key_F5:
+		return "Key_F5"
+	case Key_F6:
+		return "Key_F6"
+	case Key_F7:
+		return "Key_F7"
+	case Key_F8:
+		return "Key_F8"
+	case Key_F9:
+		return "Key_F9"
+	case Key_F10:
+		return "Key_F10"
+	case Key_F11:
+		return "Key_F11"
+	case Key_F12:
+		return "Key_F12"
+	case Key_F13:
+		return "Key_F13"
+	case Key_F14:
+		return "Key_F14"
+	case Key_F15:
+		return "Key_F15"
+	case Key_F16:
+		return "Key_F16"
+	case Key_F17:
+		return "Key_F17"
+	case Key_F18:
+		return "Key_F18"
+	case Key_F19:
+		return "Key_F19"
+	case Key_F20:
+		return "Key_F20"
+
+	case Key_Return:
+		return "Key_Return"
+	case Key_Tab:
+		return "Key_Tab"
+	case Key_Space:
+		return "Key_Space"
+	case Key_Delete:
+		return "Key_Delete"
+	case Key_Escape:
+		return "Key_Escape"
+	case Key_Super:
+		return "Key_Super"
+	case Key_CapsLock:
+		return "Key_CapsLock"
+	case Key_LAlt:
+		return "Key_LAlt"
+	case Key_RAlt:
+		return "Key_RAlt"
+	case Key_LShift:
+		return "Key_LShift"
+	case Key_RShift:
+		return "Key_RShift"
+	case Key_LControl:
+		return "Key_LControl"
+	case Key_RControl:
+		return "Key_RControl"
+	case Key_Equal:
+		return "Key_Equal"
+	case Key_Minus:
+		return "Key_Minus"
+	case Key_LBracket:
+		return "Key_LBracket"
+	case Key_RBracket:
+		return "Key_RBracket"
+	case Key_Quote:
+		return "Key_Quote"
+	case Key_Semicolon:
+		return "Key_Semicolon"
+	case Key_Comma:
+		return "Key_Comma"
+	case Key_Slash:
+		return "Key_Slash"
+	case Key_Backslash:
+		return "Key_Backslash"
+	case Key_Period:
+		return "Key_Period"
+	case Key_Grave:
+		return "Key_Grave"
+
+	case Key_Pad0:
+		return "Key_Pad0"
+	case Key_Pad1:
+		return "Key_Pad1"
+	case Key_Pad2:
+		return "Key_Pad2"
+	case Key_Pad3:
+		return "Key_Pad3"
+	case Key_Pad4:
+		return "Key_Pad4"
+	case Key_Pad5:
+		return "Key_Pad5"
+	case Key_Pad6:
+		return "Key_Pad6"
+	case Key_Pad7:
+		return "Key_Pad7"
+	case Key_Pad8:
+		return "Key_Pad8"
+	case Key_Pad9:
+		return "Key_Pad9"
+	case Key_PadAdd:
+		return "Key_PadAdd"
+	case Key_PadSubtract:
+		return "Key_PadSubtract"
+	case Key_PadMultiply:
+		return "Key_PadMultiply"
+	case Key_PadDivide:
+		return "Key_PadDivide"
+	case Key_PadEquals:
+		return "Key_PadEquals"
+	case Key_PadClear:
+		return "Key_PadClear"
+	case Key_PadDecimal:
+		return "Key_PadDecimal"
+	case Key_PadEnter:
+		return "Key_PadEnter"
+	case Key_UpArrow:
+		return "Key_UpArrow"
+	case Key_DownArrow:
+		return "Key_DownArrow"
+	case Key_LeftArrow:
+		return "Key_LeftArrow"
+	case Key_RightArrow:
+		return "Key_RightArrow"
+	case Key_PageUp:
+		return "Key_PageUp"
+	case Key_PageDown:
+		return "Key_PageDown"
+	case Key_Home:
+		return "Key_Home"
+	case Key_End:
+		return "Key_End"
+
+	case Key_Help:
+		return "Key_Help"
+	case Key_ForwardDelete:
+		return "Key_ForwardDelete"
+
+	case Key_VolumeUp:
+		return "Key_VolumeUp"
+	case Key_VolumeDown:
+		return "Key_VolumeDown"
+	case Key_Mute:
+		return "Key_Mute"
+	}
+	log.Fatal("nuxui", "KeyCode %d not handled in switch", me)
+	return ""
+}

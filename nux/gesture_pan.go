@@ -11,58 +11,56 @@ import (
 	"github.com/nuxui/nuxui/log"
 )
 
-func OnPanDown(widget Widget, callback func(Widget)) {
+func OnPanDown(widget Widget, callback GestureCallback) {
 	addPanCallback(widget, _ACTION_PAN_DOWN, callback)
 }
 
-func OnPanStart(widget Widget, callback func(Widget)) {
+func OnPanStart(widget Widget, callback GestureCallback) {
 	addPanCallback(widget, _ACTION_PAN_START, callback)
 }
 
-func OnPanUpdate(widget Widget, callback func(Widget)) {
+func OnPanUpdate(widget Widget, callback GestureCallback) {
 	addPanCallback(widget, _ACTION_PAN_UPDATE, callback)
 }
 
-func OnPanEnd(widget Widget, callback func(Widget)) {
+func OnPanEnd(widget Widget, callback GestureCallback) {
 	addPanCallback(widget, _ACTION_PAN_END, callback)
 }
 
-// func RemovePanDownGesture(widget Widget, callback func(Widget)) {
+// func RemovePanDownGesture(widget Widget, callback GestureCallback) {
 // 	removePanCallback(widget, _ACTION_PAN_DOWN, callback)
 // }
 
-// func RemovePanStartGesture(widget Widget, callback func(Widget)) {
+// func RemovePanStartGesture(widget Widget, callback GestureCallback) {
 // 	removePanCallback(widget, _ACTION_PAN_START, callback)
 // }
 
-// func RemovePanUpdateGesture(widget Widget, callback func(Widget)) {
+// func RemovePanUpdateGesture(widget Widget, callback GestureCallback) {
 // 	removePanCallback(widget, _ACTION_PAN_UPDATE, callback)
 // }
 
-// func RemovePanEndGesture(widget Widget, callback func(Widget)) {
+// func RemovePanEndGesture(widget Widget, callback GestureCallback) {
 // 	removePanCallback(widget, _ACTION_PAN_END, callback)
 // }
 
-func addPanCallback(widget Widget, which int, callback func(Widget)) {
+func addPanCallback(widget Widget, which int, callback GestureCallback) {
 	if r := GestureBinding().FindGestureRecognizer(widget, (*panGestureRecognizer)(nil)); r != nil {
-		pan := r.(*panGestureRecognizer)
-		pan.addCallback(which, callback)
+		recognizer := r.(*panGestureRecognizer)
+		recognizer.addCallback(which, callback)
 	} else {
-		pan := newPanGestureRecognizer(widget)
-		pan.addCallback(which, callback)
-		h := NewGestureHandler()
-		h.AddGestureRecoginer(pan)
-		GestureBinding().AddGestureHandler(widget, h)
+		recognizer := newPanGestureRecognizer(widget)
+		recognizer.addCallback(which, callback)
+		GestureBinding().AddGestureRecognizer(widget, recognizer)
 	}
 }
 
-func removePanCallback(widget Widget, which int, callback func(Widget)) {
+func removePanCallback(widget Widget, which int, callback GestureCallback) {
 	if r := GestureBinding().FindGestureRecognizer(widget, (*panGestureRecognizer)(nil)); r != nil {
 		pan := r.(*panGestureRecognizer)
 		pan.removeCallback(which, callback)
 	} /*else {
 		// ignore
-		log.V("nux", "callback is not existed, maybe already removed.")
+		log.V("nuxui", "callback is not existed, maybe already removed.")
 	}*/
 }
 
@@ -84,7 +82,7 @@ type panGestureRecognizer struct {
 
 func newPanGestureRecognizer(target Widget) *panGestureRecognizer {
 	if target == nil {
-		log.Fatal("nux", "target can not be nil")
+		log.Fatal("nuxui", "target can not be nil")
 	}
 
 	return &panGestureRecognizer{
@@ -95,7 +93,7 @@ func newPanGestureRecognizer(target Widget) *panGestureRecognizer {
 	}
 }
 
-func (me *panGestureRecognizer) addCallback(which int, callback func(Widget)) {
+func (me *panGestureRecognizer) addCallback(which int, callback GestureCallback) {
 	if callback == nil {
 		return
 	}
@@ -104,7 +102,7 @@ func (me *panGestureRecognizer) addCallback(which int, callback func(Widget)) {
 	for _, o := range me.callbacks[which] {
 		if o == p {
 			if true /*TODO:: debug*/ {
-				log.Fatal("nux", fmt.Sprintf("The %s callback is already existed.", []string{"OnPanDown", "OnPanUp", "OnPan"}[which]))
+				log.Fatal("nuxui", fmt.Sprintf("The %s callback is already existed.", []string{"OnPanDown", "OnPanUp", "OnPan"}[which]))
 			} else {
 				return
 			}
@@ -114,7 +112,7 @@ func (me *panGestureRecognizer) addCallback(which int, callback func(Widget)) {
 	me.callbacks[which] = append(me.callbacks[which], unsafe.Pointer(&callback))
 }
 
-func (me *panGestureRecognizer) removeCallback(which int, callback func(Widget)) {
+func (me *panGestureRecognizer) removeCallback(which int, callback GestureCallback) {
 	if callback == nil {
 		return
 	}
@@ -136,36 +134,38 @@ func (me *panGestureRecognizer) PointerAllowed(event Event) bool {
 		return false
 	}
 
-	return true
+	if event.IsPrimary() {
+		return true
+	}
+
+	return false
 }
 
 func (me *panGestureRecognizer) HandlePointerEvent(event Event) {
-	if event.IsPrimary() {
-		switch event.Action() {
-		case Action_Down:
-			me.initEvent = event
-			GestureArenaManager().Add(event.Pointer(), me)
-			me.state = GestureState_Possible
-		case Action_Move:
-			if me.initEvent == nil || me.initEvent.Pointer() != event.Pointer() {
-				return
-			}
+	switch event.Action() {
+	case Action_Down:
+		me.initEvent = event
+		GestureArenaManager().Add(event.Pointer(), me)
+		me.state = GestureState_Possible
+	case Action_Move:
+		if me.initEvent == nil || me.initEvent.Pointer() != event.Pointer() {
+			return
+		}
 
-			if me.state == GestureState_Accepted {
-				me.invokePanUpdate(event)
-			} else if me.state == GestureState_Possible {
-				if me.initEvent.Distance(event.X(), event.Y()) >= MIN_PAN_DISTANCE {
-					GestureArenaManager().Resolve(event.Pointer(), me, true)
-				}
+		if me.state == GestureState_Accepted {
+			me.invokePanUpdate(event)
+		} else if me.state == GestureState_Possible {
+			if me.initEvent.Distance(event.X(), event.Y()) >= GESTURE_MIN_PAN_DISTANCE {
+				GestureArenaManager().Resolve(event.Pointer(), me, true)
 			}
+		}
 
-		case Action_Up:
-			if me.state == GestureState_Accepted {
-				me.invokePanEnd()
-				me.reset()
-			} else if me.state == GestureState_Possible {
-				GestureArenaManager().Resolve(event.Pointer(), me, false)
-			}
+	case Action_Up:
+		if me.state == GestureState_Accepted {
+			me.invokePanEnd()
+			me.reset()
+		} else if me.state == GestureState_Possible {
+			GestureArenaManager().Resolve(event.Pointer(), me, false)
 		}
 	}
 }
@@ -178,9 +178,11 @@ func (me *panGestureRecognizer) RejectGesture(pointer int64) {
 }
 
 func (me *panGestureRecognizer) AccpetGesture(pointer int64) {
-	me.state = GestureState_Accepted
-	me.invokePanDown(pointer)
-	me.invokePanStart(pointer)
+	if me.state == GestureState_Possible {
+		me.state = GestureState_Accepted
+		me.invokePanDown(pointer)
+		me.invokePanStart(pointer)
+	}
 }
 
 func (me *panGestureRecognizer) reset() {
@@ -189,35 +191,35 @@ func (me *panGestureRecognizer) reset() {
 }
 
 func (me *panGestureRecognizer) invokePanDown(pointer int64) {
-	log.V("nux", "invokePanDown")
+	log.V("nuxui", "invokePanDown")
 	for _, c := range me.callbacks[_ACTION_PAN_DOWN] {
 		(*(*(func(Widget)))(c))(me.target)
 	}
 }
 
 func (me *panGestureRecognizer) invokePanStart(pointer int64) {
-	log.V("nux", "invokePanStart")
+	log.V("nuxui", "invokePanStart")
 	for _, c := range me.callbacks[_ACTION_PAN_START] {
 		(*(*(func(Widget)))(c))(me.target)
 	}
 }
 
 func (me *panGestureRecognizer) invokePanUpdate(event Event) {
-	log.V("nux", "invokePanUpdate")
+	log.V("nuxui", "invokePanUpdate")
 	for _, c := range me.callbacks[_ACTION_PAN_UPDATE] {
 		(*(*(func(Widget)))(c))(me.target)
 	}
 }
 
 func (me *panGestureRecognizer) invokePanEnd() {
-	log.V("nux", "invokePanEnd")
+	log.V("nuxui", "invokePanEnd")
 	for _, c := range me.callbacks[_ACTION_PAN_END] {
 		(*(*(func(Widget)))(c))(me.target)
 	}
 }
 
 func (me *panGestureRecognizer) invokePanCancel() {
-	log.V("nux", "invokePanCancel")
+	log.V("nuxui", "invokePanCancel")
 	for _, c := range me.callbacks[_ACTION_PAN_CANCEL] {
 		(*(*(func(Widget)))(c))(me.target)
 	}

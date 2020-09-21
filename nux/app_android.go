@@ -126,23 +126,23 @@ func callMain(mainPC uintptr) {
 
 //export onInputEvent
 func onInputEvent(event *C.AInputEvent) int32 {
-	log.V("nux", "onInputEvent")
-	// log.V("nux", "onInputEvent type %d", C.AInputEvent_getType(event))
+	log.V("nuxui", "onInputEvent")
+	// log.V("nuxui", "onInputEvent type %d", C.AInputEvent_getType(event))
 	// // https://developer.android.com/ndk/reference/group/input#group___input_1gaac34dfe6c6b73b43a4656c9dce041034
 	// switch C.AInputEvent_getType(event) {
 	// case C.AINPUT_EVENT_TYPE_KEY:
 	// case C.AINPUT_EVENT_TYPE_MOTION:
 	// 	// events := convertMouseMotionEvent(event)
 	// 	// wind := GetWindowByID(0)
-	// 	log.V("nux", "AINPUT_EVENT_TYPE_MOTION")
+	// 	log.V("nuxui", "AINPUT_EVENT_TYPE_MOTION")
 	// 	for _, e := range events {
-	// 		log.V("nux", "DispatchPointerEvent %s", e)
+	// 		log.V("nuxui", "DispatchPointerEvent %s", e)
 	// 		// ui.DispatchPointerEvent(rootWidget, e)
 	// 	}
 	// 	// case C.AINPUT_EVENT_TYPE_FOCUS:
 	// }
 	// // drawFrame()
-	// log.V("nux", "onInputEvent end")
+	// log.V("nuxui", "onInputEvent end")
 
 	e := &inputEvent{
 		id:     1,
@@ -156,62 +156,62 @@ func onInputEvent(event *C.AInputEvent) int32 {
 
 //export onStart
 func onStart(activity *C.ANativeActivity) {
-	log.V("nux", "onStart")
+	log.V("nuxui", "onStart")
 }
 
 //export onResume
 func onResume(activity *C.ANativeActivity) {
-	log.V("nux", "onResume")
+	log.V("nuxui", "onResume")
 }
 
 //export onPause
 func onPause(activity *C.ANativeActivity) {
-	log.V("nux", "onPause")
+	log.V("nuxui", "onPause")
 }
 
 //export onStop
 func onStop(activity *C.ANativeActivity) {
-	log.V("nux", "onStop")
+	log.V("nuxui", "onStop")
 }
 
 //export onDestroy
 func onDestroy(activity *C.ANativeActivity) {
-	log.V("nux", "go onDestroy")
+	log.V("nuxui", "go onDestroy")
 	e := &event{
 		id:    1,
 		time:  time.Now(),
 		etype: Type_AppExit,
 	}
 	theApp.sendEventAndWaitDone(e)
-	log.V("nux", "go onDestroy end")
+	log.V("nuxui", "go onDestroy end")
 }
 
 //export onLowMemory
 func onLowMemory(activity *C.ANativeActivity) {
-	log.V("nux", "onLowMemory")
+	log.V("nuxui", "onLowMemory")
 }
 
 //export onSaveInstanceState
 func onSaveInstanceState(activity *C.ANativeActivity, outSize *C.size_t) unsafe.Pointer {
-	log.V("nux", "onSaveInstanceState")
+	log.V("nuxui", "onSaveInstanceState")
 	return nil
 }
 
 //export onConfigurationChanged
 func onConfigurationChanged(activity *C.ANativeActivity) {
-	log.V("nux", "onConfigurationChanged")
+	log.V("nuxui", "onConfigurationChanged")
 }
 
 //export onContentRectChanged
 func onContentRectChanged(activity *C.ANativeActivity, rect *C.ARect) {
-	log.V("nux", "onContentRectChanged")
+	log.V("nuxui", "onContentRectChanged")
 }
 
 //------------------------ window events ----------------------------
 
 //export onNativeWindowCreated
 func onNativeWindowCreated(activity *C.ANativeActivity, awindow *C.ANativeWindow) {
-	log.V("nux", "onNativeWindowCreated")
+	log.V("nuxui", "onNativeWindowCreated")
 	theApp.window.actptr = activity
 	theApp.window.windptr = awindow
 
@@ -229,7 +229,7 @@ func onNativeWindowCreated(activity *C.ANativeActivity, awindow *C.ANativeWindow
 
 //export onNativeWindowResized
 func onNativeWindowResized(activity *C.ANativeActivity, awindow *C.ANativeWindow) {
-	log.V("nux", "onNativeWindowResized")
+	log.V("nuxui", "onNativeWindowResized")
 	e := &windowEvent{
 		id:     1,
 		time:   time.Now(),
@@ -242,7 +242,7 @@ func onNativeWindowResized(activity *C.ANativeActivity, awindow *C.ANativeWindow
 
 //export onNativeWindowRedrawNeeded
 func onNativeWindowRedrawNeeded(activity *C.ANativeActivity, awindow *C.ANativeWindow) {
-	log.V("nux", "onNativeWindowRedrawNeeded")
+	log.V("nuxui", "onNativeWindowRedrawNeeded")
 	e := &windowEvent{
 		id:     1,
 		time:   time.Now(),
@@ -255,7 +255,7 @@ func onNativeWindowRedrawNeeded(activity *C.ANativeActivity, awindow *C.ANativeW
 
 //export onWindowFocusChanged
 func onWindowFocusChanged(activity *C.ANativeActivity, hasFocus C.int) {
-	log.V("nux", "onWindowFocusChanged")
+	log.V("nuxui", "onWindowFocusChanged")
 	e := &windowEvent{
 		id:     1,
 		time:   time.Now(),
@@ -272,7 +272,7 @@ func onWindowFocusChanged(activity *C.ANativeActivity, hasFocus C.int) {
 
 //export onNativeWindowDestroyed
 func onNativeWindowDestroyed(activity *C.ANativeActivity, awindow *C.ANativeWindow) {
-	log.V("nux", "onNativeWindowDestroyed")
+	log.V("nuxui", "onNativeWindowDestroyed")
 	e := &windowEvent{
 		id:     1,
 		time:   time.Now(),

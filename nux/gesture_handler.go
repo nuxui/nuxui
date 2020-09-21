@@ -41,7 +41,7 @@ func (me *gestureHandler) AddGestureRecoginer(recognizer GestureRecognizer) {
 		for _, r := range me.gestureRecognizers {
 			n := util.GetTypeName(r)
 			if strings.Compare(name, n) == 0 {
-				log.Fatal("nux", fmt.Sprintf("The gesture recognizer '%s' is already registed.", name))
+				log.Fatal("nuxui", fmt.Sprintf("The gesture recognizer '%s' is already registed.", name))
 			}
 		}
 	}

@@ -14,66 +14,64 @@ import (
 
 // TODO:: widget addMixins auto remove when onDestory,
 // TODO:: When add, judge whether callback has been added or use map[callback]struct{}
-func OnLongPress(widget Widget, callback func(Widget)) {
+func OnLongPress(widget Widget, callback GestureCallback) {
 	addLongPressCallback(widget, _ACTION_LONG_PRESS, callback)
 }
 
-func OnLongPressDown(widget Widget, callback func(Widget)) {
+func OnLongPressDown(widget Widget, callback GestureCallback) {
 	addLongPressCallback(widget, _ACTION_LONG_PRESS_DOWN, callback)
 }
 
-func OnLongPressMove(widget Widget, callback func(Widget)) {
+func OnLongPressMove(widget Widget, callback GestureCallback) {
 	addLongPressCallback(widget, _ACTION_LONG_PRESS_DOWN, callback)
 }
 
-func OnLongPressUp(widget Widget, callback func(Widget)) {
+func OnLongPressUp(widget Widget, callback GestureCallback) {
 	addLongPressCallback(widget, _ACTION_LONG_PRESS_UP, callback)
 }
 
-func OnLongPressCancel(widget Widget, callback func(Widget)) {
+func OnLongPressCancel(widget Widget, callback GestureCallback) {
 	addLongPressCallback(widget, _ACTION_LONG_PRESS_CANCEL, callback)
 }
 
-// func RemoveLongPressGesture(widget Widget, callback func(Widget)) {
+// func RemoveLongPressGesture(widget Widget, callback GestureCallback) {
 // 	removeLongPressCallback(widget, _ACTION_LONG_PRESS, callback)
 // }
 
-// func RemoveLongPressDownGesture(widget Widget, callback func(Widget)) {
+// func RemoveLongPressDownGesture(widget Widget, callback GestureCallback) {
 // 	removeLongPressCallback(widget, _ACTION_LONG_PRESS_DOWN, callback)
 // }
 
-// func RemoveLongPressMoveGesture(widget Widget, callback func(Widget)) {
+// func RemoveLongPressMoveGesture(widget Widget, callback GestureCallback) {
 // 	removeLongPressCallback(widget, _ACTION_LONG_PRESS_Move, callback)
 // }
 
-// func RemoveLongPressUpGesture(widget Widget, callback func(Widget)) {
+// func RemoveLongPressUpGesture(widget Widget, callback GestureCallback) {
 // 	removeLongPressCallback(widget, _ACTION_LONG_PRESS_UP, callback)
 // }
 
-// func RemoveLongPressCancelGesture(widget Widget, callback func(Widget)) {
+// func RemoveLongPressCancelGesture(widget Widget, callback GestureCallback) {
 // 	removeLongPressCallback(widget, _ACTION_LONG_PRESS_CANCEL, callback)
 // }
 
-func addLongPressCallback(widget Widget, which int, callback func(Widget)) {
+func addLongPressCallback(widget Widget, which int, callback GestureCallback) {
 	if r := GestureBinding().FindGestureRecognizer(widget, (*longPressGestureRecognizer)(nil)); r != nil {
-		press := r.(*longPressGestureRecognizer)
-		press.addCallback(which, callback)
+		recognizer := r.(*longPressGestureRecognizer)
+		recognizer.addCallback(which, callback)
 	} else {
-		press := newLongPressGestureRecognizer(widget)
-		press.addCallback(which, callback)
-		h := NewGestureHandler()
-		h.AddGestureRecoginer(press)
-		GestureBinding().AddGestureHandler(widget, h)
+		recognizer := newLongPressGestureRecognizer(widget)
+		recognizer.addCallback(which, callback)
+		GestureBinding().AddGestureRecognizer(widget, recognizer)
 	}
 }
 
-func removeLongPressCallback(widget Widget, which int, callback func(Widget)) {
+func removeLongPressCallback(widget Widget, which int, callback GestureCallback) {
 	if r := GestureBinding().FindGestureRecognizer(widget, (*longPressGestureRecognizer)(nil)); r != nil {
 		press := r.(*longPressGestureRecognizer)
 		press.removeCallback(which, callback)
 	} else {
 		if true /*TODO debug*/ {
-			log.Fatal("nux", "callback is not existed, maybe already removed.")
+			log.Fatal("nuxui", "callback is not existed, maybe already removed.")
 		}
 	}
 }
@@ -99,7 +97,7 @@ type longPressGestureRecognizer struct {
 
 func newLongPressGestureRecognizer(target Widget) *longPressGestureRecognizer {
 	if target == nil {
-		log.Fatal("nux", "target can not be nil")
+		log.Fatal("nuxui", "target can not be nil")
 	}
 
 	return &longPressGestureRecognizer{
@@ -111,8 +109,8 @@ func newLongPressGestureRecognizer(target Widget) *longPressGestureRecognizer {
 	}
 }
 
-func (me *longPressGestureRecognizer) addCallback(which int, callback func(Widget)) {
-	log.V("nux", "longPressGestureRecognizer addCallback")
+func (me *longPressGestureRecognizer) addCallback(which int, callback GestureCallback) {
+	// log.V("nuxui", "longPressGestureRecognizer addCallback")
 	if callback == nil {
 		return
 	}
@@ -120,20 +118,20 @@ func (me *longPressGestureRecognizer) addCallback(which int, callback func(Widge
 	p := unsafe.Pointer(&callback)
 	for _, o := range me.callbacks[which] {
 		if o == p {
-			log.Fatal("nux", fmt.Sprintf("The %s callback is already existed.", []string{"OnLongPressDown", "OnLongPressUp", "OnLongPress"}[which]))
+			log.Fatal("nuxui", fmt.Sprintf("The %s callback is already existed.", []string{"OnLongPressDown", "OnLongPressUp", "OnLongPress"}[which]))
 
 		}
 	}
-	log.V("nux", "longPressGestureRecognizer addCallback end")
+	// log.V("nuxui", "longPressGestureRecognizer addCallback end")
 	me.callbacks[which] = append(me.callbacks[which], unsafe.Pointer(&callback))
 }
 
-func (me *longPressGestureRecognizer) removeCallback(which int, callback func(Widget)) {
+func (me *longPressGestureRecognizer) removeCallback(which int, callback GestureCallback) {
 	if callback == nil {
 		return
 	}
 
-	log.V("nux", "longPressGestureRecognizer removeCallback end")
+	// log.V("nuxui", "longPressGestureRecognizer removeCallback end")
 	p := unsafe.Pointer(&callback)
 	for i, o := range me.callbacks[which] {
 		if o == p {
@@ -151,56 +149,69 @@ func (me *longPressGestureRecognizer) PointerAllowed(event Event) bool {
 		return false
 	}
 
-	return true
+	// if event.Kind() == Kind_Mouse {
+	// 	return false
+	// }
+
+	if event.IsPrimary() {
+		return true
+	}
+
+	return false
 }
 
 func (me *longPressGestureRecognizer) HandlePointerEvent(event Event) {
-	log.V("nux", "### longPressGestureRecognizer HandlePointerEvent")
-
-	if event.IsPrimary() {
-		switch event.Action() {
-		case Action_Down:
-			me.initEvent = event
-			GestureArenaManager().Add(event.Pointer(), me)
-
-			p := me.initEvent.Pointer()
-			me.timer = NewTimerBackToUI(_LONG_PRESS_TIMEOUT*time.Millisecond, func() {
-				me.doLongPressDown(p)
-			})
-		case Action_Move:
-			if me.state == GestureState_Accepted {
-				me.invokeLongPressMove(event.Pointer())
-			}
-		case Action_Up:
-			if me.state == GestureState_Accepted {
-				me.invokeLongPressUp(event.Pointer())
-				me.reset()
-			} else {
+	switch event.Action() {
+	case Action_Down:
+		// log.V("nuxui", "######## down ##########")
+		me.initEvent = event
+		pointer := event.Pointer()
+		GestureArenaManager().Add(pointer, me)
+		me.timer = NewTimerBackToUI(_LONG_PRESS_TIMEOUT*time.Millisecond, func() {
+			me.state = GestureState_Possible
+			GestureArenaManager().Resolve(pointer, me, true)
+		})
+	case Action_Move:
+		// log.V("nuxui", "######## move ##########")
+		if me.state == GestureState_Accepted {
+			me.invokeLongPressMove(event.Pointer())
+		} else {
+			if me.initEvent != nil && me.initEvent.Distance(event.X(), event.Y()) >= GESTURE_MIN_PAN_DISTANCE {
+				// log.V("nuxui", "longPressGestureRecognizer ##### %f", me.initEvent.Distance(event.X(), event.Y()))
 				GestureArenaManager().Resolve(event.Pointer(), me, false)
 			}
+		}
+	case Action_Up:
+		if me.state == GestureState_Accepted {
+			me.invokeLongPressUp(event.Pointer())
+			me.reset()
+		} else {
+			GestureArenaManager().Resolve(event.Pointer(), me, false)
 		}
 	}
 }
 
 func (me *longPressGestureRecognizer) RejectGesture(pointer int64) {
-	if me.state == GestureState_Possible {
-		me.invokeLongPressUCancel(pointer)
-	}
+	// log.V("nuxui", "longPressGestureRecognizer RejectGesture ########")
 	me.reset()
 }
 
 func (me *longPressGestureRecognizer) AccpetGesture(pointer int64) {
-	if me.timer != nil {
-		me.timer.Stop()
-		me.timer = nil
+	if me.state == GestureState_Possible {
+		if me.timer != nil {
+			me.timer.Cancel()
+			me.timer = nil
+		}
+		me.invokeLongPressDown(pointer)
+	} else {
+		// only one gesture, but not long press
+		me.reset()
 	}
-	me.state = GestureState_Accepted
-	me.invokeLongPressDown(pointer)
 }
 
 func (me *longPressGestureRecognizer) reset() {
 	if me.timer != nil {
-		me.timer.Stop()
+		me.timer.Cancel()
 		me.timer = nil
 	}
 
@@ -208,14 +219,9 @@ func (me *longPressGestureRecognizer) reset() {
 	me.initEvent = nil
 }
 
-func (me *longPressGestureRecognizer) doLongPressDown(pointer int64) {
-	log.V("nux", "doLongPressDown")
-	me.state = GestureState_Possible
-	GestureArenaManager().Resolve(pointer, me, true)
-}
-
 func (me *longPressGestureRecognizer) invokeLongPressDown(pointer int64) {
-	log.V("nux", "invokeLongPressDown")
+	// log.V("nuxui", "invokeLongPressDown")
+	me.state = GestureState_Accepted
 	if me.initEvent.Pointer() == pointer {
 		for _, c := range me.callbacks[_ACTION_LONG_PRESS_DOWN] {
 			(*(*(func(Widget)))(c))(me.target)
