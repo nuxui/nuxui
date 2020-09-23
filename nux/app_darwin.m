@@ -8,44 +8,70 @@
 #include "_cgo_export.h"
 #import <Cocoa/Cocoa.h>
 
-void terminate()
-{
-	[NSApp terminate:nil];
-};
 
 static const NSRange kEmptyRange = { NSNotFound, 0 };
-@interface NuxText : NSView <NSTextInputClient> {}
+@interface NuxText : NSView <NSTextInputClient> {
+    NSString *_markedText;
+    NSRange   _markedRange;
+    NSRange   _selectedRange;
+    NSRect _inputRect;
+}
 @end
 
 @implementation NuxText
+- (NSRect)inputRect
+{
+    return _inputRect;
+}
+
+- (void)setInputRect:(NSRect)rect
+{
+    _inputRect = rect;
+}
+
 - (BOOL)hasMarkedText
 {
-    NSLog(@"NuxText hasMarkedText");
-    return NO;  // TODO:: what is 
+    return _markedText != nil;
 }
 
 - (NSRange)markedRange
 {
-    NSLog(@"NuxText markedRange");
-    return kEmptyRange;
+    return _markedRange;
 }
 
 - (NSRange)selectedRange
 {
-    NSLog(@"NuxText selectedRange");
-    return kEmptyRange;
+    return _selectedRange;
 }
 
-- (void)setMarkedText:(id)string selectedRange:(NSRange)selectedRange replacementRange:(NSRange)replacementRange
+- (void)setMarkedText:(id)aString selectedRange:(NSRange)selectedRange replacementRange:(NSRange)replacementRange
 {
-    NSLog(@"NuxText setMarkedText");
-    // do nothing
+    if ([aString isKindOfClass:[NSAttributedString class]]) {
+        aString = [aString string];
+    }
+
+    if ([aString length] == 0) {
+        [self unmarkText];
+        return;
+    }
+
+    if (_markedText != aString) {
+        [_markedText release];
+        _markedText = [aString retain];
+    }
+
+    _selectedRange = selectedRange;
+    _markedRange = NSMakeRange(0, [aString length]);
+
+    go_typingEvent((uintptr_t)[self window], [aString UTF8String], 1, (int) selectedRange.location, (int) selectedRange.length);
 }
 
 - (void)unmarkText
 {
-    NSLog(@"NuxText unmarkText");
-    // do nothing
+    [_markedText release];
+    _markedText = nil;
+
+    go_typingEvent((uintptr_t)[self window], "", 1, 0, 0);
 }
 
 - (NSArray<NSAttributedStringKey> *)validAttributesForMarkedText
@@ -60,13 +86,10 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 
 - (void)insertText:(id)aString replacementRange:(NSRange)replacementRange
 {
-    const char *str;
-    if ([aString isKindOfClass: [NSAttributedString class]]) {
-        str = [[aString string] UTF8String];
-    } else {
-        str = [aString UTF8String];
+    if ([aString isKindOfClass:[NSAttributedString class]]) {
+        aString = [aString string];
     }
-    NSLog(@"NuxText insertText %@", aString);
+    go_typingEvent((uintptr_t)[self window], [aString UTF8String], 0, 0, 0);
 }
 
 - (NSUInteger)characterIndexForPoint:(NSPoint)point
@@ -77,8 +100,12 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 
 - (NSRect)firstRectForCharacterRange:(NSRange)range actualRange:(NSRangePointer)actualRange
 {
-    NSLog(@"NuxText firstRectForCharacterRange");
-    return NSZeroRect;
+    // convert to screen rect
+    return NSMakeRect(
+        _inputRect.origin.x + [[self window] frame].origin.x, 
+        _inputRect.origin.y + [[self window] frame].origin.y,
+        _inputRect.size.width, 
+        _inputRect.size.height);
 }
 
 - (void)doCommandBySelector:(SEL)selector
@@ -97,6 +124,7 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 
 
 @interface NuxWindow : NSWindow
+@property (nonatomic, strong, readwrite) id nuxtext;
 @end
 
 @implementation NuxWindow
@@ -296,15 +324,6 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 
 - (void)sendEvent:(NSEvent *)theEvent
 {
-    switch ([theEvent type]) {
-		case NSEventTypeRightMouseUp:
-			NSLog(@"window = %@", [[NSApplication sharedApplication] mainWindow]);
-	NSLog(@"window2 = %@", [[[[NSApplication sharedApplication] windows] objectAtIndex:0] title]);
-	NSLog(@"main window title = %@", [[[NSApplication sharedApplication] mainWindow] title]);
-	NSLog(@"key window title = %@", [[[NSApplication sharedApplication] keyWindow] title]);
-		break;
-    }
-
     [super sendEvent:theEvent];
 }
 
@@ -451,7 +470,62 @@ void runApp()
 		[window setDelegate:[[NuxWindowDelegate alloc] init]];
 		[window orderFrontRegardless];
 		[window setAcceptsMouseMovedEvents:YES];
+        [window center];
 
 		[NSApp run];
 	}
 }
+// ######################  begin  #####################
+
+void terminate()
+{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        @autoreleasepool{
+	        [NSApp terminate:nil];
+        }
+    });
+}
+
+// TODO:: windptr
+void startTextInput()
+{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        @autoreleasepool{
+            NuxWindow* nuxWindow = (NuxWindow*)[NSApp keyWindow];
+            if(nuxWindow.nuxtext != nil){
+                [nuxWindow.nuxtext removeFromSuperview];
+            }
+            nuxWindow.nuxtext = [[[NuxText alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)] autorelease];
+            [[nuxWindow contentView] addSubview:nuxWindow.nuxtext];
+            [nuxWindow makeFirstResponder:nuxWindow.nuxtext];
+        }
+    });
+}
+
+void stopTextInput()
+{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        @autoreleasepool{
+            NuxWindow* nuxWindow = (NuxWindow*)[NSApp keyWindow];
+            if(nuxWindow.nuxtext != nil){
+                [nuxWindow.nuxtext removeFromSuperview];
+            }
+        }
+    });
+}
+
+void setTextInputRect(float x, float y, float w, float h)
+{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        @autoreleasepool{
+            NuxWindow* nuxWindow = (NuxWindow*)[NSApp keyWindow];
+            if(nuxWindow.nuxtext != nil){
+                float fixy = [[nuxWindow contentView] bounds].size.height - y;
+                [nuxWindow.nuxtext setInputRect:NSMakeRect(x,fixy,w,h)];
+            }
+        }
+    });
+}
+
+
+// ######################  end  #####################

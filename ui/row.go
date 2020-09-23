@@ -34,6 +34,7 @@ func NewRow() Row {
 	me := &row{
 		Align: Align{Vertical: Top, Horizontal: Left},
 	}
+	me.WidgetParent.Owner = me
 	me.WidgetSize.Owner = me
 	me.WidgetSize.AddOnSizeChanged(me.onSizeChanged)
 	me.WidgetVisual.Owner = me

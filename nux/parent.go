@@ -30,11 +30,15 @@ type Parent interface {
 }
 
 type WidgetParent struct {
+	Owner Parent
 	WidgetBase
 	children []Widget
 }
 
 func (me *WidgetParent) Creating(attr Attr) {
+	if me.Owner == nil {
+		log.Fatal("nuxui", "set Owner to WidgetParent before use")
+	}
 }
 
 func (me *WidgetParent) InsertChild(index int, child Widget) {
@@ -45,7 +49,7 @@ func (me *WidgetParent) InsertChild(index int, child Widget) {
 		c = append(c, me.children[:index]...)
 		c = append(c, child)
 		c = append(c, me.children[index:]...)
-		child.AssignParent(me)
+		child.AssignParent(me.Owner)
 		me.children = c
 	}
 }
@@ -60,7 +64,7 @@ func (me *WidgetParent) AddChild(child Widget) {
 		me.children = make([]Widget, 0, 10)
 	}
 
-	child.AssignParent(me)
+	child.AssignParent(me.Owner)
 	me.children = append(me.children, child)
 }
 
@@ -99,7 +103,7 @@ func (me *WidgetParent) ReplaceChild(src, dest Widget) int {
 	}
 
 	if index != -1 {
-		dest.AssignParent(me)
+		dest.AssignParent(me.Owner)
 		me.children[index].AssignParent(nil)
 		me.children[index] = dest
 	} else {

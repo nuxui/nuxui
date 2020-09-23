@@ -14,6 +14,9 @@ package nux
 
 void runApp();
 void terminate();
+void startTextInput();
+void stopTextInput();
+void setTextInputRect(float x, float y, float w, float h);
 */
 import "C"
 import (
@@ -145,6 +148,15 @@ func go_nativeLoopPrepared() {
 }
 
 func startTextInput() {
+	C.startTextInput()
+}
+
+func stopTextInput() {
+	C.stopTextInput()
+}
+
+func setTextInputRect(x, y, w, h float32) {
+	C.setTextInputRect(C.float(x), C.float(y), C.float(w), C.float(h))
 }
 
 var lastMouseEvent map[MouseButton]Event = map[MouseButton]Event{}
@@ -274,6 +286,25 @@ func go_keyEvent(windptr C.uintptr_t, etype uint, keyCode uint16, modifierFlags 
 
 	// log.V("nuxui", "oldKeyCode=%d, oldFlags=%d %s", keyCode, modifierFlags, e)
 	// log.V("nuxui", "Shift=%d, control=%d opt=%d cmd=%d lock=%d mask=%d", Mod_Shift, Mod_Control, Mod_Alt, Mod_Super, Mod_CapsLock, Mod_Mask)
+
+	theApp.sendEventAndWaitDone(e)
+}
+
+//export go_typingEvent
+func go_typingEvent(windptr C.uintptr_t, chars *C.char, action, location, length C.int) {
+	// 0 = Action_Input, 1 = Action_Typing,
+	act := Action_Input
+	if action == 1 {
+		act = Action_Typing
+	}
+
+	e := &event{
+		window: theApp.findWindow(windptr),
+		time:   time.Now(),
+		etype:  Type_TypingEvent,
+		action: act,
+		text:   C.GoString(chars),
+	}
 
 	theApp.sendEventAndWaitDone(e)
 }

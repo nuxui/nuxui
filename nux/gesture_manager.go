@@ -65,7 +65,7 @@ func (me *gestureManager) dispatchEvent(event Event, hitTestResult HitTestResult
 
 func (me *gestureManager) hitTest(widget Widget, hitTestResult HitTestResult, event Event) {
 	if s, ok := widget.(Size); ok {
-		pos := &s.MeasuredSize().Position
+		ms := s.MeasuredSize()
 
 		if p, ok := widget.(Parent); ok {
 			children := p.Children()
@@ -82,8 +82,8 @@ func (me *gestureManager) hitTest(widget Widget, hitTestResult HitTestResult, ev
 		// log.V("hitTest", fmt.Sprintf("id = %s", widget.ID()))
 
 		// is event in widget
-		if event.X() >= float32(pos.X) && event.X() <= float32(pos.X+pos.Right-pos.Left) &&
-			event.Y() >= float32(pos.Y) && event.Y() <= float32(pos.Y+pos.Bottom-pos.Top) {
+		if event.X() >= float32(ms.Position.X) && event.X() <= float32(ms.Position.X+ms.Width) &&
+			event.Y() >= float32(ms.Position.Y) && event.Y() <= float32(ms.Position.Y+ms.Height) {
 			if h := GestureBinding().FindGestureHandler(widget); h != nil {
 				hitTestResult.Add(widget)
 			}

@@ -5,7 +5,6 @@
 package nux
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -38,7 +37,7 @@ func ParseColor(color string, defaultValue Color) Color {
 
 	i, e := strconv.ParseUint(color, 16, 32)
 	if e != nil {
-		log.E("color", fmt.Sprintln(e))
+		log.E("color", "%s", e)
 		return defaultValue
 	}
 

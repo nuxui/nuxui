@@ -18,8 +18,9 @@ const (
 )
 
 const (
-	GESTURE_DOWN_DELAY                = 100 * time.Millisecond
-	GESTURE_DOWN2UP_DELAY             = 100
-	GESTURE_DOUBLETAP_TIMEOUT         = 300 * time.Millisecond
-	GESTURE_MIN_PAN_DISTANCE  float32 = 10 /*use dp*/
+	GESTURE_DOWN_DELAY                 = 100 * time.Millisecond
+	GESTURE_DOWN2UP_DELAY              = 100
+	GESTURE_LONG_PRESS_TIMEOUT         = 500 * time.Millisecond
+	GESTURE_DOUBLETAP_TIMEOUT          = 300 * time.Millisecond
+	GESTURE_MIN_PAN_DISTANCE   float32 = 10 /*use dp*/
 )

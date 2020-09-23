@@ -32,6 +32,9 @@ type Window interface {
 
 	// private methods
 	handlePointerEvent(event Event)
+	handleKeyEvent(event Event)
+	handleTypingEvent(event Event)
+	requestFocus(widget Widget)
 }
 
 type WindowDelegate interface {

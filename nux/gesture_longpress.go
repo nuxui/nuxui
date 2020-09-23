@@ -6,7 +6,6 @@ package nux
 
 import (
 	"fmt"
-	"time"
 	"unsafe"
 
 	"github.com/nuxui/nuxui/log"
@@ -83,8 +82,6 @@ const (
 	_ACTION_LONG_PRESS_Move
 	_ACTION_LONG_PRESS_CANCEL
 )
-
-const _LONG_PRESS_TIMEOUT = 500
 
 type longPressGestureRecognizer struct {
 	callbacks [][]unsafe.Pointer
@@ -167,7 +164,7 @@ func (me *longPressGestureRecognizer) HandlePointerEvent(event Event) {
 		me.initEvent = event
 		pointer := event.Pointer()
 		GestureArenaManager().Add(pointer, me)
-		me.timer = NewTimerBackToUI(_LONG_PRESS_TIMEOUT*time.Millisecond, func() {
+		me.timer = NewTimerBackToUI(GESTURE_LONG_PRESS_TIMEOUT, func() {
 			me.state = GestureState_Possible
 			GestureArenaManager().Resolve(pointer, me, true)
 		})

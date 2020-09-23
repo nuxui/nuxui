@@ -12,7 +12,7 @@ func init() {
 	// RegisterWidget((*Layer)(nil), func() Widget { return NewLayer() })
 	nux.RegisterWidget((*Text)(nil), func() nux.Widget { return NewText() })
 	// RegisterWidget((*Image)(nil), func() Widget { return NewImage() })
-	// RegisterWidget((*Editor)(nil), func() Widget { return NewEditor() })
+	nux.RegisterWidget((*Editor)(nil), func() nux.Widget { return NewEditor() })
 	// RegisterWidget((*Pager)(nil), func() Widget { return NewPager() })
 
 	// RegisterMixin((*GestureMixin)(nil), func() Mixin { return NewGestureMixin() })

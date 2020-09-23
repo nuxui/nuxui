@@ -37,6 +37,7 @@ type Event interface {
 	Repeat() bool
 	Modifiers() (none, capslock, shift, control, alt, super bool)
 	Rune() rune // rune or 0
+	Text() string
 
 	Data() interface{}
 }
@@ -63,6 +64,7 @@ type event struct {
 	repeat        bool
 	modifierFlags uint32
 	characters    string
+	text          string
 
 	data interface{}
 }
@@ -166,6 +168,10 @@ func (me *event) Rune() rune {
 		return r[0]
 	}
 	return 0
+}
+
+func (me *event) Text() string {
+	return me.text
 }
 
 func (me *event) Data() interface{} {

@@ -3,3 +3,11 @@
 // license that can be found in the LICENSE file.
 
 package nux
+
+type KeyEventHandler interface {
+	OnKeyEvent(event Event) bool
+}
+
+type TypingEventHandler interface {
+	OnTypingEvent(event Event) bool
+}

@@ -51,40 +51,38 @@ func (me *application) loop() {
 		case event = <-me.eventWaitDone:
 			wait = true
 		}
-
 		// log.V("nuxui", "select a event wait = %s", wait)
 
 		switch event.Type() {
 		case Type_WindowEvent:
-			e := event.(WindowEvent)
-			switch e.Action() {
+			switch event.Action() {
 			case Action_WindowCreated:
 				log.V("nuxui", "Action_WindowCreated")
-				if f, ok := e.Window().(AnyCreated); ok {
+				if f, ok := event.Window().(AnyCreated); ok {
 					f.Created(App().Manifest().Main())
 				}
 			case Action_WindowMeasured:
-				log.V("nuxui", "Action_WindowMeasured width=%d, height=%d", e.Window().ContentWidth(), e.Window().ContentHeight())
-				if f, ok := e.Window().(Measure); ok {
-					f.Measure(e.Window().ContentWidth(), e.Window().ContentHeight())
+				log.V("nuxui", "Action_WindowMeasured width=%d, height=%d", event.Window().ContentWidth(), event.Window().ContentHeight())
+				if f, ok := event.Window().(Measure); ok {
+					f.Measure(event.Window().ContentWidth(), event.Window().ContentHeight())
 				}
 
-				if f, ok := e.Window().(Layout); ok {
-					f.Layout(0, 0, 0, 0, e.Window().ContentWidth(), e.Window().ContentHeight())
+				if f, ok := event.Window().(Layout); ok {
+					f.Layout(0, 0, 0, 0, event.Window().ContentWidth(), event.Window().ContentHeight())
 				}
 
-				if f, ok := e.Window().(Draw); ok {
-					if canvas, err := e.Window().LockCanvas(); err == nil {
+				if f, ok := event.Window().(Draw); ok {
+					if canvas, err := event.Window().LockCanvas(); err == nil {
 						f.Draw(canvas)
-						e.Window().UnlockCanvas()
+						event.Window().UnlockCanvas()
 					}
 				}
 			case Action_WindowDraw:
 				// log.V("nuxui", "Action_WindowDraw")
-				if f, ok := e.Window().(Draw); ok {
-					if canvas, err := e.Window().LockCanvas(); err == nil {
+				if f, ok := event.Window().(Draw); ok {
+					if canvas, err := event.Window().LockCanvas(); err == nil {
 						f.Draw(canvas)
-						e.Window().UnlockCanvas()
+						event.Window().UnlockCanvas()
 					}
 				}
 			}
@@ -92,6 +90,10 @@ func (me *application) loop() {
 		// App().Manifest().Root()
 		case Type_PointerEvent:
 			event.Window().handlePointerEvent(event)
+		case Type_KeyEvent:
+			event.Window().handleKeyEvent(event)
+		case Type_TypingEvent:
+			event.Window().handleTypingEvent(event)
 		case Type_BackToUI:
 			if f, ok := event.Data().(func()); ok {
 				f()
@@ -104,24 +106,64 @@ func (me *application) loop() {
 
 		if wait {
 			// log.V("nuxui", "wait event done")
-			me.eventDone <- struct{}{}
 			wait = false
+			me.eventDone <- struct{}{}
 		}
 	}
 end:
 	if wait {
-		me.eventDone <- struct{}{}
 		wait = false
+		me.eventDone <- struct{}{}
 	}
 	log.V("nuxui", "end of nux loop")
 }
 
 func RequestLayout(widget Widget) {
+	e := &event{
+		etype:  Type_WindowEvent,
+		action: Action_WindowMeasured,
+		window: GetWidgetWindow(widget),
+	}
+	go func() {
+		App().sendEventAndWaitDone(e)
+	}()
 }
 
 func RequestRedraw(widget Widget) {
+	e := &event{
+		etype:  Type_WindowEvent,
+		action: Action_WindowMeasured,
+		window: GetWidgetWindow(widget),
+	}
+	go func() {
+		App().sendEventAndWaitDone(e)
+	}()
 }
 
 func StartTextInput() {
 	startTextInput()
+}
+
+func StopTextInput() {
+	stopTextInput()
+}
+
+func SetTextInputRect(x, y, w, h float32) {
+	setTextInputRect(x, y, w, h)
+}
+
+func RequestFocus(widget Widget) {
+	GetWidgetWindow(widget).requestFocus(widget)
+}
+
+func GetWidgetWindow(widget Widget) Window {
+	if widget.Parent() == nil {
+		if decor, ok := widget.(Decor); ok {
+			return decor.Window()
+		} else {
+			log.Fatal("nuxui", "can not run here %T", widget)
+			return nil
+		}
+	}
+	return GetWidgetWindow(widget.Parent())
 }

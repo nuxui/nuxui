@@ -34,6 +34,7 @@ func NewColumn() Column {
 	me := &column{
 		Align: Align{Vertical: Top, Horizontal: Left},
 	}
+	me.WidgetParent.Owner = me
 	me.WidgetSize.Owner = me
 	me.WidgetSize.AddOnSizeChanged(me.onSizeChanged)
 	me.WidgetVisual.Owner = me

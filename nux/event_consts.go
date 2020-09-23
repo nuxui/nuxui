@@ -30,6 +30,10 @@ const (
 	Action_Scroll
 	Action_Pressure
 
+	// typing
+	Action_Input
+	Action_Typing
+
 	Action_WindowCreating
 	Action_WindowCreated
 	Action_WindowMeasured

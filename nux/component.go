@@ -7,13 +7,13 @@ package nux
 import "github.com/nuxui/nuxui/log"
 
 type Component interface {
-	Widget
+	Parent
 	Component() Widget
 	Content() Widget
 }
 
 type component struct {
-	WidgetBase
+	WidgetParent
 	component Widget
 	content   Widget
 }
@@ -30,10 +30,13 @@ func NewComponent(compt, content Widget) Component {
 		log.Fatal("nuxui", "child can not ne nil")
 	}
 
-	return &component{
+	me := &component{
 		component: compt,
 		content:   content,
 	}
+	me.WidgetParent.Owner = me
+	content.AssignParent(me)
+	return me
 }
 
 func (me *component) Component() Widget {

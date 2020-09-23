@@ -12,16 +12,20 @@ import (
 type Decor interface {
 	Parent
 	Size
+	Window() Window
 }
 
 type decor struct {
 	WidgetParent
 	WidgetBase
 	WidgetSize
+	window Window
 }
 
-func NewDecor() Decor {
+func newDecor(window Window) Decor {
 	me := &decor{}
+	me.window = window
+	me.WidgetParent.Owner = me
 	me.WidgetSize.Owner = me
 	me.WidgetSize.AddOnSizeChanged(me.onSizeChanged)
 	return me
@@ -31,6 +35,10 @@ func (me *decor) Creating(attr Attr) {
 	me.WidgetBase.Creating(attr)
 	me.WidgetSize.Creating(attr)
 	me.WidgetParent.Creating(attr)
+}
+
+func (me *decor) Window() Window {
+	return me.window
 }
 
 func (me *decor) onSizeChanged(widget Widget) {

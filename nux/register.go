@@ -110,6 +110,7 @@ func FindRegistedMixinCreatorByName(name string) MixinCreator {
 	return nil
 }
 
+// ########################## render widget ###############################
 func RenderWidget(widget Widget) Widget {
 	if reflect.TypeOf(widget).Kind() != reflect.Ptr {
 		log.Fatal("nuxui", fmt.Sprintf("Widget %T should a pointer. eg: &MyWidget{}", widget)) // TODO:: tips
@@ -193,7 +194,7 @@ func renderLayout(component Widget, layout Attr) (ret Widget) {
 						}
 					}
 				} else {
-					log.Fatal("nuxui", fmt.Sprintf("%T is not a WidgetGroup", p))
+					log.Fatal("nuxui", fmt.Sprintf("%T is not a WidgetParent but has children node", p))
 				}
 			} else {
 				log.Fatal("nuxui", "unknow type for Children.")

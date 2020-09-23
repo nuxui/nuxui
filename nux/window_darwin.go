@@ -40,6 +40,10 @@ type window struct {
 	bufferWidth  int32
 	bufferHeight int32
 	delegate     WindowDelegate
+	focusWidget  Widget
+
+	initEvent Event
+	timer     Timer
 }
 
 func newWindow() *window {
@@ -51,7 +55,7 @@ func (me *window) Creating(attr Attr) {
 	// create decor widget
 
 	if me.decor == nil {
-		me.decor = NewDecor()
+		me.decor = newDecor(me)
 		GestureBinding().AddGestureHandler(me.decor, &decorGestureHandler{})
 	}
 
@@ -185,6 +189,8 @@ func (me *window) Delegate() WindowDelegate {
 }
 
 func (me *window) handlePointerEvent(e Event) {
+	me.switchFocusIfPossible(e)
+
 	if me.delegate != nil {
 		if f, ok := me.delegate.(windowDelegate_HandlePointerEvent); ok {
 			f.HandlePointerEvent(e)
@@ -193,4 +199,96 @@ func (me *window) handlePointerEvent(e Event) {
 	}
 
 	gestureManagerInstance.handlePointerEvent(me.Decor(), e)
+}
+
+func (me *window) handleKeyEvent(e Event) {
+	if me.focusWidget != nil {
+		if f, ok := me.focusWidget.(KeyEventHandler); ok {
+			if f.OnKeyEvent(e) {
+				return
+			}
+		}
+	}
+
+	// TODO:: handle key event
+}
+
+func (me *window) handleTypingEvent(e Event) {
+	if me.focusWidget != nil {
+		if f, ok := me.focusWidget.(TypingEventHandler); ok {
+			f.OnTypingEvent(e)
+			return
+		}
+	}
+
+	log.E("nuxui", "none widget handle typing event")
+}
+
+func (me *window) requestFocus(widget Widget) {
+	if me.focusWidget == widget {
+		return
+	}
+
+	if me.focusWidget != nil {
+		if f, ok := me.focusWidget.(Focus); ok && f.HasFocus() {
+			f.FocusChanged(false)
+		}
+	}
+
+	if f, ok := widget.(Focus); ok {
+		if f.Focusable() {
+			me.focusWidget = widget
+			if !f.HasFocus() {
+				f.FocusChanged(true)
+			}
+		}
+	}
+}
+
+func (me *window) switchFocusIfPossible(event Event) {
+	if event.Type() != Type_PointerEvent || !event.IsPrimary() {
+		return
+	}
+
+	switch event.Action() {
+	case Action_Down:
+		me.initEvent = event
+		if event.Kind() == Kind_Mouse {
+			me.switchFocusAtPoint(event.X(), event.Y())
+		}
+	case Action_Move:
+		if event.Kind() == Kind_Touch {
+			if me.timer != nil {
+				if me.initEvent.Distance(event.X(), event.Y()) >= GESTURE_MIN_PAN_DISTANCE {
+					me.switchFocusAtPoint(me.initEvent.X(), me.initEvent.Y())
+				}
+			}
+		}
+	case Action_Up:
+		if event.Kind() == Kind_Touch {
+			if event.Time().UnixNano()-me.initEvent.Time().UnixNano() < GESTURE_LONG_PRESS_TIMEOUT.Nanoseconds() {
+				me.switchFocusAtPoint(event.X(), event.Y())
+			}
+		}
+	}
+
+}
+
+func (me *window) switchFocusAtPoint(x, y float32) {
+	if me.focusWidget != nil {
+		if s, ok := me.focusWidget.(Size); ok {
+			ms := s.MeasuredSize()
+			if x >= float32(ms.Position.X) && x <= float32(ms.Position.X+ms.Width) &&
+				y >= float32(ms.Position.Y) && y <= float32(ms.Position.Y+ms.Height) {
+				// point is in current focus widget, do not need change focus
+				return
+			}
+		}
+
+		if f, ok := me.focusWidget.(Focus); ok && f.HasFocus() {
+			me.focusWidget = nil
+			f.FocusChanged(false)
+		}
+	}
+
 }

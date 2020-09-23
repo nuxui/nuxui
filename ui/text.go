@@ -38,7 +38,6 @@ type text struct {
 	text      string
 	Font      nux.Font
 	ellipsize int
-	canvas    nux.Canvas
 
 	downTime time.Time
 }
