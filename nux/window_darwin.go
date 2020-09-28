@@ -12,17 +12,15 @@ package nux
 #import <Carbon/Carbon.h> // for HIToolbox/Events.h
 #import <Cocoa/Cocoa.h>
 
-char* window_title(uintptr_t window);
-void window_setTitle(uintptr_t window, char* title);
-float window_alpha(uintptr_t window);
-void window_setAlpha(uintptr_t window, float alpha);
+char*   window_title(uintptr_t window);
+void    window_setTitle(uintptr_t window, char* title);
+float   window_alpha(uintptr_t window);
+void    window_setAlpha(uintptr_t window, float alpha);
 int32_t window_getWidth(uintptr_t window);
 int32_t window_getHeight(uintptr_t window);
 int32_t window_getContentWidth(uintptr_t window);
 int32_t window_getContentHeight(uintptr_t window);
-uint8_t* renew_buffer(int32_t width, int32_t height);
-size_t get_pitch(int32_t width);
-void flush_buffer(uintptr_t window, void* buffer0);
+void*   window_getCGContext(uintptr_t window);
 */
 import "C"
 
@@ -44,10 +42,16 @@ type window struct {
 
 	initEvent Event
 	timer     Timer
+
+	surface        *Surface
+	surfaceResized bool
+	cgContext      uintptr
 }
 
 func newWindow() *window {
-	return &window{}
+	return &window{
+		surfaceResized: true,
+	}
 }
 
 func (me *window) Creating(attr Attr) {
@@ -85,9 +89,15 @@ func (me *window) Measure(width, height int32) {
 	}
 
 	if s, ok := me.decor.(Size); ok {
+		if s.MeasuredSize().Width == width && s.MeasuredSize().Height == height {
+			return
+		}
+
 		s.MeasuredSize().Width = width
 		s.MeasuredSize().Height = height
 	}
+
+	me.surfaceResized = true
 
 	if f, ok := me.decor.(Measure); ok {
 		f.Measure(width, height)
@@ -110,6 +120,8 @@ func (me *window) Draw(canvas Canvas) {
 		if f, ok := me.decor.(Draw); ok {
 			canvas.Save()
 			// TODO:: canvas clip
+			canvas.Translate(0, me.ContentHeight())
+			canvas.Scale(1, -1)
 			f.Draw(canvas)
 			canvas.Restore()
 		}
@@ -137,26 +149,26 @@ func (me *window) ContentHeight() int32 {
 }
 
 func (me *window) LockCanvas() (Canvas, error) {
-	// buffer size changed
 	w := me.ContentWidth()
 	h := me.ContentHeight()
-	if me.bufferWidth != w || me.bufferHeight != h {
-		log.V("nuxui", "buffer size changed xxxxx")
-		if me.buffer != nil {
-			C.free(me.buffer)
+	if me.surface == nil {
+		me.cgContext = uintptr(C.window_getCGContext(me.windptr))
+		me.surface = newSurfaceQuartzWithCGContext(me.cgContext, w, h)
+	} else {
+		// TODO:: did cairo_surface has method to resize instead of recreate
+		if me.surfaceResized {
+			me.surface.Destory()
+			me.cgContext = uintptr(C.window_getCGContext(me.windptr))
+			me.surface = newSurfaceQuartzWithCGContext(me.cgContext, w, h)
+			me.surfaceResized = false
 		}
-
-		me.buffer = unsafe.Pointer(C.renew_buffer(C.int32_t(w), C.int32_t(h)))
-		me.bufferWidth = w
-		me.bufferHeight = h
 	}
-
-	surface := NewSurfaceFromData(unsafe.Pointer(me.buffer), FORMAT_ARGB32, int(w), int(h), int(C.get_pitch(C.int32_t(w))))
-	return surface.GetCanvas(), nil
+	return me.surface.GetCanvas(), nil
 }
 
 func (me *window) UnlockCanvas() error {
-	C.flush_buffer(me.windptr, me.buffer)
+	// me.surface.WriteToPng("./a.png")
+	me.surface.Flush()
 	return nil
 }
 

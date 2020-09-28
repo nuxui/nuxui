@@ -622,7 +622,7 @@ func (me *column) measureHorizontal(width, height int32, hPPx, hPPt, innerWidth 
 // Responsible for determining the position of the widget align, margin
 // TODO measure other mode dimen
 func (me *column) Layout(dx, dy, left, top, right, bottom int32) {
-	log.V("nuxui", "column layout %d, %d, %d, %d, %d, %d", dx, dy, left, top, right, bottom)
+	// log.V("nuxui", "column layout %d, %d, %d, %d, %d, %d", dx, dy, left, top, right, bottom)
 	ms := me.MeasuredSize()
 
 	var l float32 = 0

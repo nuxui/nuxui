@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nuxui/nuxui/log"
 	"github.com/nuxui/nuxui/nux"
 	"github.com/nuxui/nuxui/util"
 )
@@ -79,7 +78,6 @@ func (me *text) Created(content nux.Widget) {
 }
 
 func (me *text) onTapDown(widget nux.Widget) {
-	log.V("nuxui", "###### text onTapDown")
 	me.SetBackgroundColor(0xFF938276)
 	me.downTime = time.Now()
 	nux.NewTimerBackToUI(nux.GESTURE_DOWN2UP_DELAY*time.Millisecond, func() {
@@ -88,7 +86,6 @@ func (me *text) onTapDown(widget nux.Widget) {
 }
 
 func (me *text) onTapUp(widget nux.Widget) {
-	log.V("nuxui", "###### text onTapUp")
 	if sub := time.Now().Sub(me.downTime); sub < nux.GESTURE_DOWN2UP_DELAY*time.Millisecond {
 		nux.NewTimerBackToUI(nux.GESTURE_DOWN2UP_DELAY*time.Millisecond-sub, func() {
 			me.doTapUp(widget)
@@ -122,7 +119,7 @@ func (me *text) SetText(text string) {
 
 // Responsible for determining the position of the widget align, margin...
 func (me *text) Layout(dx, dy, left, top, right, bottom int32) {
-	log.V("nuxui", "text layout %d, %d, %d, %d, %d, %d", dx, dy, left, top, right, bottom)
+	// log.V("nuxui", "text layout %d, %d, %d, %d, %d, %d", dx, dy, left, top, right, bottom)
 }
 
 func (me *text) Measure(width, height int32) {

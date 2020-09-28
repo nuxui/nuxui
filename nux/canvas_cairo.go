@@ -14,6 +14,7 @@ package nux
 #include <cairo/cairo-pdf.h>
 #include <cairo/cairo-ps.h>
 #include <cairo/cairo-svg.h>
+#include <cairo/cairo-quartz.h>
 
 #cgo pkg-config: pango
 #cgo pkg-config: pangocairo
@@ -25,36 +26,11 @@ package nux
 #include <stdint.h>
 
 #include <stdio.h>
+#include <AppKit/NSGraphicsContext.h>
+#import <Cocoa/Cocoa.h>
 
-void pangotest(cairo_t* cr){
-	PangoLayout *layout;
-	PangoFontDescription *font_description;
-
-	font_description = pango_font_description_new ();
-	pango_font_description_set_family (font_description, "Helvetica,Verdana,Arial,sans-serif"); // Roboto
-	pango_font_description_set_weight (font_description, PANGO_WEIGHT_NORMAL);
-	pango_font_description_set_absolute_size (font_description, 14 * PANGO_SCALE);
-
-	layout = pango_cairo_create_layout (cr);
-	pango_layout_set_font_description (layout, font_description);
-	pango_layout_set_text (layout, "hello pangolayout", -1);
-
-	printf("pango_layout_get_width = %d, pango_layout_get_height = %d\n", pango_layout_get_width(layout) , pango_layout_get_height(layout) );
-
-	PangoRectangle ink_rect;
-	PangoRectangle logical_rect;
-
-	// pango_layout_get_pixel_extents result is  0, 0, 0, 0
-	pango_layout_get_extents(layout, &ink_rect, &logical_rect);
-	printf("%d, %d, %d, %d\n", ink_rect.x/PANGO_SCALE, ink_rect.y/PANGO_SCALE, ink_rect.width/PANGO_SCALE, ink_rect.height/PANGO_SCALE);
-	printf("%d, %d, %d, %d, %d\n", logical_rect.x/PANGO_SCALE, logical_rect.y/PANGO_SCALE, logical_rect.width/PANGO_SCALE, logical_rect.height/PANGO_SCALE, PANGO_SCALE);
-
-	cairo_set_source_rgb (cr, 0.0, 0.0, 1.0);
-	cairo_move_to (cr, 0.0, 0.0);
-	pango_cairo_show_layout (cr, layout);
-
-	g_object_unref (layout);
-	pango_font_description_free (font_description);
+cairo_surface_t * nux_cairo_quartz_surface_create_for_cg_context(uintptr_t cgContext, unsigned int width, unsigned int height){
+    return cairo_quartz_surface_create_for_cg_context(((NSGraphicsContext *)cgContext).CGContext, width, height);
 }
 
 void measureText(cairo_t* cr, char* fontFamily, int fontWeight, int fontSize,
@@ -77,8 +53,8 @@ void measureText(cairo_t* cr, char* fontFamily, int fontWeight, int fontSize,
 
 	pango_layout_get_size(layout, outWidth, outHeight);
 
-	g_object_unref (layout);
 	pango_font_description_free (font_description);
+	g_object_unref (layout);
 }
 
 void drawText(cairo_t* cr, char* fontFamily, int fontWeight, int fontSize,
@@ -101,8 +77,8 @@ void drawText(cairo_t* cr, char* fontFamily, int fontWeight, int fontSize,
 
 	pango_cairo_show_layout (cr, layout);
 
-	g_object_unref (layout);
 	pango_font_description_free (font_description);
+	g_object_unref (layout);
 }
 
 void drawImage(cairo_t* cr, char* src, double width, double height){
@@ -139,6 +115,7 @@ void drawImage2(cairo_t* cr, cairo_surface_t *image){
 	cairo_set_source_surface (cr, image, 0, 0);
 	cairo_paint (cr);
 }
+
 */
 import "C"
 
@@ -203,12 +180,6 @@ type Surface struct {
 	canvas  *canvas
 }
 
-func (me *Surface) WriteToPng(fileName string) {
-	name := C.CString(fileName)
-	defer C.free(unsafe.Pointer(name))
-	C.cairo_surface_write_to_png(me.surface, name)
-}
-
 func NewSurfaceFromData(data unsafe.Pointer, format, width, height, stride int) *Surface {
 	s := C.cairo_image_surface_create_for_data((*C.uchar)(data), C.cairo_format_t(format),
 		C.int(width), C.int(height), C.int(stride))
@@ -217,11 +188,41 @@ func NewSurfaceFromData(data unsafe.Pointer, format, width, height, stride int) 
 	return &Surface{surface: s, canvas: &canvas{ptr: cairo}}
 }
 
+func newSurfaceQuartzWithCGContext(context uintptr, width, height int32) *Surface {
+	s := C.nux_cairo_quartz_surface_create_for_cg_context(C.uintptr_t(context), C.uint(width), C.uint(height))
+	cairo := C.cairo_create(s)
+	return &Surface{surface: s, canvas: &canvas{ptr: cairo}}
+}
+
+func newSurfaceQuartz(width, height int32) *Surface {
+	s := C.cairo_quartz_surface_create(C.CAIRO_FORMAT_ARGB32, C.uint(width), C.uint(height))
+	cairo := C.cairo_create(s)
+	return &Surface{surface: s, canvas: &canvas{ptr: cairo}}
+}
+
+func (me *Surface) WriteToPng(fileName string) {
+	name := C.CString(fileName)
+	defer C.free(unsafe.Pointer(name))
+	C.cairo_surface_write_to_png(me.surface, name)
+}
+
 func (me *Surface) GetCanvas() Canvas {
 	if me.canvas == nil {
 		log.Fatal("nuxui", "create surface by call NewSurface...")
 	}
 	return me.canvas
+}
+
+func (me *Surface) Flush() {
+	C.cairo_surface_flush(me.surface)
+}
+
+func (me *Surface) Destory() {
+	me.Flush()
+	C.cairo_surface_finish(me.surface)
+	C.cairo_surface_destroy(me.surface)
+	me.surface = nil
+	me.canvas = nil
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////

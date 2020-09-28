@@ -60,7 +60,6 @@ func (me *decorGestureHandler) RemoveGestureRecoginer(recognizer GestureRecogniz
 }
 
 func (me *decorGestureHandler) HandlePointerEvent(event Event) {
-	// log.V("decorGestureHandler", "####### decorGestureHandler HandlePointerEvent")
 	switch event.Action() {
 	case Action_Down:
 		GestureArenaManager().Close(event.Pointer())

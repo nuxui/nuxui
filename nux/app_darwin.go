@@ -17,10 +17,15 @@ void terminate();
 void startTextInput();
 void stopTextInput();
 void setTextInputRect(float x, float y, float w, float h);
+void invalidate();
+void loop_event();
 */
 import "C"
 import (
+	"runtime"
 	"time"
+
+	"github.com/nuxui/nuxui/log"
 )
 
 var theApp = &application{
@@ -77,7 +82,7 @@ func (me *application) SendEvent(event Event) {
 	me.event <- event
 }
 
-func (me *application) sendEventAndWaitDone(event Event) {
+func (me *application) SendEventAndWait(event Event) {
 	me.eventWaitDone <- event
 	<-me.eventDone
 }
@@ -97,7 +102,7 @@ func windowCreated(windptr C.uintptr_t) {
 		window: theApp.findWindow(windptr),
 	}
 
-	theApp.sendEventAndWaitDone(e)
+	theApp.handleEvent(e)
 }
 
 //export windowResized
@@ -109,12 +114,12 @@ func windowResized(windptr C.uintptr_t) {
 		window: theApp.findWindow(windptr),
 	}
 
-	theApp.sendEventAndWaitDone(e)
+	theApp.handleEvent(e)
 }
 
 //export windowDraw
 func windowDraw(windptr C.uintptr_t) {
-	// log.V("nuxui", "windowDraw")
+	log.V("nuxui", "windowDraw")
 
 	e := &event{
 		time:   time.Now(),
@@ -123,7 +128,7 @@ func windowDraw(windptr C.uintptr_t) {
 		window: theApp.findWindow(windptr),
 	}
 
-	theApp.sendEventAndWaitDone(e)
+	theApp.handleEvent(e)
 }
 
 func (me *application) findWindow(windptr C.uintptr_t) Window {
@@ -133,11 +138,20 @@ func (me *application) findWindow(windptr C.uintptr_t) Window {
 	return nil
 }
 
+func (me *application) RequestRedraw(widget Widget) {
+	// TODO:: schedule draw
+	// e := &event{
+	// 	etype:  Type_WindowEvent,
+	// 	action: Action_WindowDraw,
+	// 	window: GetWidgetWindow(widget),
+	// }
+	// me.handleEvent(e)
+	requestRedraw()
+}
+
 func run() {
-	go func() {
-		<-theApp.nativeLoopPrepared
-		theApp.loop()
-	}()
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
 
 	C.runApp()
 }
@@ -162,7 +176,7 @@ func setTextInputRect(x, y, w, h float32) {
 var lastMouseEvent map[MouseButton]Event = map[MouseButton]Event{}
 
 //export go_mouseEvent
-func go_mouseEvent(windptr C.uintptr_t, etype uint, x, y, screenX, screenY, scrollX, scrollY float32, pressure float32, stage int32) {
+func go_mouseEvent(windptr C.uintptr_t, etype uint, x, y, screenX, screenY, scrollX, scrollY float32, buttonNumber int32, pressure float32, stage int32) {
 	e := &event{
 		window:   theApp.findWindow(windptr),
 		time:     time.Now(),
@@ -221,18 +235,45 @@ func go_mouseEvent(windptr C.uintptr_t, etype uint, x, y, screenX, screenY, scro
 			e.pointer = v.Pointer()
 		}
 	case C.NSEventTypeOtherMouseDown:
-		e.button = MB_Other
+		switch buttonNumber {
+		case 2:
+			e.button = MB_Middle
+		case 3:
+			e.button = MB_X1
+		case 4:
+			e.button = MB_X2
+		default:
+			e.button = MouseButton(buttonNumber)
+		}
 		e.action = Action_Down
 		e.pointer = time.Now().UnixNano()
 		lastMouseEvent[MB_Other] = e
 	case C.NSEventTypeOtherMouseUp:
-		e.button = MB_Other
+		switch buttonNumber {
+		case 2:
+			e.button = MB_Middle
+		case 3:
+			e.button = MB_X1
+		case 4:
+			e.button = MB_X2
+		default:
+			e.button = MouseButton(buttonNumber)
+		}
 		e.action = Action_Up
 		if v, ok := lastMouseEvent[MB_Other]; ok {
 			e.pointer = v.Pointer()
 		}
 	case C.NSEventTypeOtherMouseDragged:
-		e.button = MB_Other
+		switch buttonNumber {
+		case 2:
+			e.button = MB_Middle
+		case 3:
+			e.button = MB_X1
+		case 4:
+			e.button = MB_X2
+		default:
+			e.button = MouseButton(buttonNumber)
+		}
 		e.action = Action_Move
 		if v, ok := lastMouseEvent[MB_Other]; ok {
 			e.pointer = v.Pointer()
@@ -247,10 +288,22 @@ func go_mouseEvent(windptr C.uintptr_t, etype uint, x, y, screenX, screenY, scro
 		e.action = Action_Pressure
 	}
 
-	theApp.sendEventAndWaitDone(e)
+	theApp.handleEvent(e)
 }
 
 var lastModifierKeyEvent map[KeyCode]bool = map[KeyCode]bool{}
+
+//export go_drawEvent
+func go_drawEvent(windptr C.uintptr_t) {
+	e := &event{
+		window: theApp.findWindow(windptr),
+		time:   time.Now(),
+		etype:  Type_WindowEvent,
+		action: Action_WindowDraw,
+	}
+
+	theApp.handleEvent(e)
+}
 
 //export go_keyEvent
 func go_keyEvent(windptr C.uintptr_t, etype uint, keyCode uint16, modifierFlags uint, repeat byte, chars *C.char) {
@@ -284,10 +337,7 @@ func go_keyEvent(windptr C.uintptr_t, etype uint, keyCode uint16, modifierFlags 
 		}
 	}
 
-	// log.V("nuxui", "oldKeyCode=%d, oldFlags=%d %s", keyCode, modifierFlags, e)
-	// log.V("nuxui", "Shift=%d, control=%d opt=%d cmd=%d lock=%d mask=%d", Mod_Shift, Mod_Control, Mod_Alt, Mod_Super, Mod_CapsLock, Mod_Mask)
-
-	theApp.sendEventAndWaitDone(e)
+	theApp.handleEvent(e)
 }
 
 //export go_typingEvent
@@ -306,7 +356,11 @@ func go_typingEvent(windptr C.uintptr_t, chars *C.char, action, location, length
 		text:   C.GoString(chars),
 	}
 
-	theApp.sendEventAndWaitDone(e)
+	theApp.handleEvent(e)
+}
+
+func requestRedraw() {
+	C.invalidate()
 }
 
 func convertModifierFlags(flags uint) uint32 {

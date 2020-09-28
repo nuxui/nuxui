@@ -52,10 +52,10 @@ const (
 )
 
 const (
-	MB_None MouseButton = iota
+	MB_None MouseButton = -1 + iota
 	MB_Left
-	MB_Middle
 	MB_Right
+	MB_Middle
 	MB_X1
 	MB_X2
 	MB_Other
@@ -110,6 +110,27 @@ func (me EventAction) String() string {
 		return "Action_WindowFocusLost"
 	case Action_WindowActived:
 		return "Action_WindowActived"
+	}
+	log.Fatal("nuxui", "EventAction %d not handled in switch", me)
+	return ""
+}
+
+func (me MouseButton) String() string {
+	switch me {
+	case MB_None:
+		return "MB_None"
+	case MB_Left:
+		return "MB_Left"
+	case MB_Middle:
+		return "MB_Middle"
+	case MB_Right:
+		return "MB_Right"
+	case MB_X1:
+		return "MB_X1"
+	case MB_X2:
+		return "MB_X2"
+	case MB_Other:
+		return "MB_Other"
 	}
 	log.Fatal("nuxui", "EventAction %d not handled in switch", me)
 	return ""

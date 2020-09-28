@@ -181,7 +181,7 @@ func (me *event) Data() interface{} {
 func (me *event) String() string {
 	switch me.etype {
 	case Type_PointerEvent:
-		return fmt.Sprintf("PointerEvent: {pointer=%d, action=%s, x=%.2f, y=%.2f}", me.pointer, me.action, me.x, me.y)
+		return fmt.Sprintf("PointerEvent: {pointer=%d, button=%s:%d, action=%s, x=%.2f, y=%.2f}", me.pointer, me.button, me.button, me.action, me.x, me.y)
 	case Type_KeyEvent:
 		return fmt.Sprintf("KeyEvent: {keyCode=%s, action=%s, x=%.2f, y=%.2f, rune='%c'}", me.keyCode, me.action, me.x, me.y, me.Rune())
 	}

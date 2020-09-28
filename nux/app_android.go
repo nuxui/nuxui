@@ -84,7 +84,7 @@ func (me *application) SendEvent(event Event) {
 	me.event <- event
 }
 
-func (me *application) sendEventAndWaitDone(event Event) {
+func (me *application) SendEventAndWait(event Event) {
 	me.eventWaitDone <- event
 	<-me.eventDone
 }
@@ -182,7 +182,7 @@ func onDestroy(activity *C.ANativeActivity) {
 		time:  time.Now(),
 		etype: Type_AppExit,
 	}
-	theApp.sendEventAndWaitDone(e)
+	theApp.SendEventAndWait(e)
 	log.V("nuxui", "go onDestroy end")
 }
 
@@ -224,7 +224,7 @@ func onNativeWindowCreated(activity *C.ANativeActivity, awindow *C.ANativeWindow
 		window: theApp.findWindow(activity, awindow),
 	}
 
-	theApp.sendEventAndWaitDone(e)
+	theApp.SendEventAndWait(e)
 }
 
 //export onNativeWindowResized
@@ -237,7 +237,7 @@ func onNativeWindowResized(activity *C.ANativeActivity, awindow *C.ANativeWindow
 		window: theApp.findWindow(activity, awindow),
 	}
 
-	theApp.sendEventAndWaitDone(e)
+	theApp.SendEventAndWait(e)
 }
 
 //export onNativeWindowRedrawNeeded
@@ -250,7 +250,7 @@ func onNativeWindowRedrawNeeded(activity *C.ANativeActivity, awindow *C.ANativeW
 		window: theApp.findWindow(activity, awindow),
 	}
 
-	theApp.sendEventAndWaitDone(e)
+	theApp.SendEventAndWait(e)
 }
 
 //export onWindowFocusChanged
@@ -267,7 +267,7 @@ func onWindowFocusChanged(activity *C.ANativeActivity, hasFocus C.int) {
 		e.action = Action_WindowFocusLost
 	}
 
-	theApp.sendEventAndWaitDone(e)
+	theApp.SendEventAndWait(e)
 }
 
 //export onNativeWindowDestroyed
@@ -280,5 +280,5 @@ func onNativeWindowDestroyed(activity *C.ANativeActivity, awindow *C.ANativeWind
 		window: theApp.findWindow(activity, awindow),
 	}
 
-	theApp.sendEventAndWaitDone(e)
+	theApp.SendEventAndWait(e)
 }

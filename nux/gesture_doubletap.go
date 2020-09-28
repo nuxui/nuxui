@@ -113,7 +113,6 @@ func (me *doubleTapGestureRecognizer) HandlePointerEvent(event Event) {
 	switch event.Action() {
 	case Action_Down:
 		GestureArenaManager().Add(event.Pointer(), me)
-		// log.V("nuxui", "#########  double tap ======== %d", event.Time().UnixNano())
 	case Action_Up:
 		if me.rejectFirstPointer == event.Pointer() {
 			GestureArenaManager().Resolve(event.Pointer(), me, false)
@@ -166,7 +165,6 @@ func (me *doubleTapGestureRecognizer) reset() {
 }
 
 func (me *doubleTapGestureRecognizer) invokeDoubleTap() {
-	// log.V("nuxui", "#########  double tap invokeDoubleTap")
 	for _, c := range me.callbacks[_ACTION_DOUBLETAP] {
 		(*(*(func(Widget)))(c))(me.target)
 	}

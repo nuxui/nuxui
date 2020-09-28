@@ -160,7 +160,6 @@ func (me *longPressGestureRecognizer) PointerAllowed(event Event) bool {
 func (me *longPressGestureRecognizer) HandlePointerEvent(event Event) {
 	switch event.Action() {
 	case Action_Down:
-		// log.V("nuxui", "######## down ##########")
 		me.initEvent = event
 		pointer := event.Pointer()
 		GestureArenaManager().Add(pointer, me)
@@ -169,12 +168,10 @@ func (me *longPressGestureRecognizer) HandlePointerEvent(event Event) {
 			GestureArenaManager().Resolve(pointer, me, true)
 		})
 	case Action_Move:
-		// log.V("nuxui", "######## move ##########")
 		if me.state == GestureState_Accepted {
 			me.invokeLongPressMove(event.Pointer())
 		} else {
 			if me.initEvent != nil && me.initEvent.Distance(event.X(), event.Y()) >= GESTURE_MIN_PAN_DISTANCE {
-				// log.V("nuxui", "longPressGestureRecognizer ##### %f", me.initEvent.Distance(event.X(), event.Y()))
 				GestureArenaManager().Resolve(event.Pointer(), me, false)
 			}
 		}
@@ -189,7 +186,6 @@ func (me *longPressGestureRecognizer) HandlePointerEvent(event Event) {
 }
 
 func (me *longPressGestureRecognizer) RejectGesture(pointer int64) {
-	// log.V("nuxui", "longPressGestureRecognizer RejectGesture ########")
 	me.reset()
 }
 

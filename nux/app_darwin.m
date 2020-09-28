@@ -7,9 +7,13 @@
 
 #include "_cgo_export.h"
 #import <Cocoa/Cocoa.h>
-
+#include <cairo/cairo.h>
+#include <cairo/cairo-quartz.h>
 
 static const NSRange kEmptyRange = { NSNotFound, 0 };
+
+
+
 @interface NuxText : NSView <NSTextInputClient> {
     NSString *_markedText;
     NSRange   _markedRange;
@@ -63,7 +67,7 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
     _selectedRange = selectedRange;
     _markedRange = NSMakeRange(0, [aString length]);
 
-    go_typingEvent((uintptr_t)[self window], [aString UTF8String], 1, (int) selectedRange.location, (int) selectedRange.length);
+    go_typingEvent((uintptr_t)[self window], (char*)[aString UTF8String], 1, (int) selectedRange.location, (int) selectedRange.length);
 }
 
 - (void)unmarkText
@@ -89,7 +93,16 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
     if ([aString isKindOfClass:[NSAttributedString class]]) {
         aString = [aString string];
     }
-    go_typingEvent((uintptr_t)[self window], [aString UTF8String], 0, 0, 0);
+
+    char* text = (char*)[aString UTF8String];
+    
+    // Don't post text events for unprintable characters
+    if ((unsigned char)*text < ' ' || *text == 127) {
+        return ;
+    }
+
+    NSLog(@"insertText %@", aString);
+    go_typingEvent((uintptr_t)[self window], text, 0, 0, 0);
 }
 
 - (NSUInteger)characterIndexForPoint:(NSPoint)point
@@ -125,6 +138,9 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 
 @interface NuxWindow : NSWindow
 @property (nonatomic, strong, readwrite) id nuxtext;
+@property (nonatomic, strong, readwrite) id nuxview;
+@property (nonatomic, readwrite) cairo_t* cairo;
+@property (nonatomic, readwrite) CGContextRef cgContext;
 @end
 
 @implementation NuxWindow
@@ -167,20 +183,19 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 		case NSEventTypeOtherMouseDown:
         case NSEventTypeOtherMouseUp:
         case NSEventTypeOtherMouseDragged:
-			go_mouseEvent(windptr, etype, x, y, screenX, screenY, 0, 0, 0, 0);
+			go_mouseEvent(windptr, etype, x, y, screenX, screenY, 0, 0, [theEvent buttonNumber], 0, 0);
 			break;
 		case NSEventTypeScrollWheel:
-			go_mouseEvent(windptr, etype, x, y, screenX, screenY, [theEvent scrollingDeltaX], [theEvent scrollingDeltaY], 0, 0);
+			go_mouseEvent(windptr, etype, x, y, screenX, screenY, [theEvent scrollingDeltaX], [theEvent scrollingDeltaY], [theEvent buttonNumber],0, 0);
 			break;
 		case NSEventTypePressure:
-			go_mouseEvent(windptr, etype, x, y, screenX, screenY, 0, 0, [theEvent pressure], [theEvent stage]);
+			go_mouseEvent(windptr, etype, x, y, screenX, screenY, 0, 0, [theEvent buttonNumber], [theEvent pressure], [theEvent stage]);
         	break;
         case NSEventTypeKeyDown:
         case NSEventTypeKeyUp:
 			go_keyEvent(windptr, etype, [theEvent keyCode], [theEvent modifierFlags], [theEvent isARepeat],  (char *)[[theEvent characters] UTF8String]);
         	break;
         case NSEventTypeFlagsChanged:
-		// NSLog(@"Shift=%d, control=%d opt=%d cmd=%d lock=%d pad=%d help=%d func=%d mask=%d", NSEventModifierFlagShift, NSEventModifierFlagControl, NSEventModifierFlagOption, NSEventModifierFlagCommand, NSEventModifierFlagCapsLock, NSEventModifierFlagNumericPad, NSEventModifierFlagHelp,NSEventModifierFlagFunction, NSEventModifierFlagDeviceIndependentFlagsMask);
 			go_keyEvent(windptr, etype, [theEvent keyCode], [theEvent modifierFlags], 0, "");
         	break;
         break;
@@ -246,6 +261,19 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 }
 @end // NuxWindow
 
+@interface NuxView : NSView{}
+@end
+
+int cg_changed = 0;
+
+@implementation NuxView
+- (void)drawRect:(NSRect)dirtyRect
+{
+    NuxWindow* w = (NuxWindow*)[self window];
+    go_drawEvent((uintptr_t)w);
+}
+@end
+
 
 @interface NuxWindowDelegate : NSObject <NSWindowDelegate>
 @end
@@ -281,7 +309,7 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 {
 	// when has input
 	// NSLog(@"NuxWindowDelegate windowDidUpdate");
-	windowDraw((uintptr_t)[notification object]);
+	// windowDraw((uintptr_t)[notification object]);
 }
 
 // Exposing Windows
@@ -371,7 +399,6 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 
 	// [[NSApp mainWindow] orderFrontRegardless];
 	// windowCreated((uintptr_t)[NSApp mainWindow]);
-	NSLog(@"### windowCreated");
 }
 
 - (void)applicationWillResignActive:(NSNotification *)notification
@@ -450,8 +477,8 @@ void runApp()
 {
 	@autoreleasepool{
 		[NuxApplication sharedApplication];
-		NSLog(@"go_nativeLoopPrepared");
-		go_nativeLoopPrepared();
+		//NSLog(@"go_nativeLoopPrepared");
+		//go_nativeLoopPrepared();
 		
 		[NSApp setActivationPolicy:NSApplicationActivationPolicyRegular]; // show icon at docker
 		[NSApp activateIgnoringOtherApps:YES];
@@ -460,12 +487,17 @@ void runApp()
 		NSUInteger windowStyle =  NSWindowStyleMaskTitled | NSWindowStyleMaskBorderless | NSWindowStyleMaskClosable |NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable | NSWindowStyleMaskUnifiedTitleAndToolbar | NSWindowStyleMaskDocModalWindow;
 		NSRect windowRect = NSMakeRect(0, 0, 800, 600);
 		NSLog(@"NSWindow alloc");
-		NSWindow * window = [[NuxWindow alloc] initWithContentRect:windowRect
+		NuxWindow * window = [[NuxWindow alloc] initWithContentRect:windowRect
 											styleMask:windowStyle
 											backing:NSBackingStoreBuffered
 											defer:NO];
 		NSLog(@"NSWindow windowCreated %@", window);
 		windowCreated((uintptr_t)window);
+
+        NuxView* nuxview = (NuxView*)[[[NuxView alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)] autorelease]; 
+        [window setContentView:nuxview];
+        window.nuxview = nuxview;
+
 		window.title = @"nuxui title";
 		[window setDelegate:[[NuxWindowDelegate alloc] init]];
 		[window orderFrontRegardless];
@@ -476,6 +508,13 @@ void runApp()
 	}
 }
 // ######################  begin  #####################
+
+void loop_event(){
+    NSEvent* event = [NSApp nextEventMatchingMask:NSEventMaskAny untilDate:nil inMode:NSDefaultRunLoopMode dequeue:YES];
+    if (event != NULL){
+        [NSApp sendEvent: event];
+    }
+}
 
 void terminate()
 {
@@ -527,5 +566,62 @@ void setTextInputRect(float x, float y, float w, float h)
     });
 }
 
+void invalidate(){
+    dispatch_async(dispatch_get_main_queue(), ^{
+        @autoreleasepool{
+            NuxWindow* nuxWindow = (NuxWindow*)[NSApp keyWindow];
+            if(nuxWindow.nuxview != nil){
+                [nuxWindow.nuxview setNeedsDisplay:YES];
+            }
+        }
+    });
+}
+
 
 // ######################  end  #####################
+
+
+
+
+// ######################### nuxwindow ###########################
+
+char* window_title(uintptr_t window){
+    return (char *)[[(NSWindow*)window title] UTF8String];
+}
+
+void window_setTitle(uintptr_t window, char* title){
+    ((NSWindow*)window).title = [NSString stringWithUTF8String:title];
+}
+
+float window_alpha(uintptr_t window){
+    return (float)([(NSWindow*)window alphaValue]);
+}
+
+void window_setAlpha(uintptr_t window, float alpha){
+    ((NSWindow*)window).alphaValue = alpha;
+}
+
+int32_t window_getWidth(uintptr_t window){
+    return (int32_t)([(NSWindow*)window frame].size.width);
+}
+
+int32_t window_getHeight(uintptr_t window){
+    return (int32_t)([(NSWindow*)window frame].size.height);
+}
+
+int32_t window_getContentWidth(uintptr_t window){
+    return (int32_t)([[(NSWindow*)window contentView] bounds].size.width);
+}
+
+int32_t window_getContentHeight(uintptr_t window){
+    return (int32_t)([[(NSWindow*)window contentView] bounds].size.height);
+}
+
+uintptr_t window_getCGContext(uintptr_t window){
+    // NSWindow* w = (NSWindow*)window;
+    // [w graphicsContext] Deprecated macOS 10.0~10.14
+    // NSLog(@"1 gc=%@, ref=%@", [w graphicsContext], [w graphicsContext].CGContext);
+    // NSLog(@"2 gc=%@, ref=%@", [NSGraphicsContext currentContext], [NSGraphicsContext currentContext].CGContext);
+    return (uintptr_t)[NSGraphicsContext currentContext];
+}
+// ############################### nuxwindow end #################################
