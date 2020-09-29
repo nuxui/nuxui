@@ -169,3 +169,7 @@ func GetWidgetWindow(widget Widget) Window {
 	}
 	return GetWidgetWindow(widget.Parent())
 }
+
+func RunOnUI(callback func()) {
+	runOnUI(callback)
+}

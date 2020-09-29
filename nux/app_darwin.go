@@ -19,6 +19,7 @@ void stopTextInput();
 void setTextInputRect(float x, float y, float w, float h);
 void invalidate();
 void loop_event();
+void backToUI();
 */
 import "C"
 import (
@@ -32,6 +33,7 @@ var theApp = &application{
 	event:              make(chan Event),
 	eventWaitDone:      make(chan Event),
 	eventDone:          make(chan struct{}),
+	runOnUI:            make(chan func()),
 	nativeLoopPrepared: make(chan struct{}),
 }
 
@@ -40,10 +42,12 @@ func app() Application {
 }
 
 type application struct {
-	manifest           Manifest
-	window             *window
-	event              chan Event
-	eventWaitDone      chan Event
+	manifest      Manifest
+	window        *window
+	event         chan Event
+	eventWaitDone chan Event
+	runOnUI       chan func()
+
 	eventDone          chan struct{}
 	nativeLoopPrepared chan struct{}
 }
@@ -359,6 +363,24 @@ func go_typingEvent(windptr C.uintptr_t, chars *C.char, action, location, length
 	theApp.handleEvent(e)
 }
 
+//export go_backToUI
+func go_backToUI() {
+	log.V("nuxui", "go_backToUI ..........")
+	select {
+	case f := <-theApp.runOnUI:
+		f()
+		// case e := <-theApp.event:
+		// case e := <-theApp.eventWaitDone:
+	}
+}
+
+func runOnUI(callback func()) {
+	go func() {
+		theApp.runOnUI <- callback
+	}()
+	C.backToUI()
+}
+
 func requestRedraw() {
 	C.invalidate()
 }
@@ -514,25 +536,25 @@ func convertVirtualKeyCode(vkcode uint16) KeyCode {
 	case C.kVK_CapsLock:
 		return Key_CapsLock
 	case C.kVK_Option:
-		return Key_LAlt
+		return Key_AltLeft
 	case C.kVK_RightOption:
-		return Key_RAlt
+		return Key_AltRight
 	case C.kVK_Shift:
-		return Key_LShift
+		return Key_ShiftLeft
 	case C.kVK_RightShift:
-		return Key_RShift
+		return Key_ShiftRight
 	case C.kVK_Control:
-		return Key_LControl
+		return Key_ControlLeft
 	case C.kVK_RightControl:
-		return Key_RControl
+		return Key_ControlRight
 	case C.kVK_ANSI_Equal:
 		return Key_Equal
 	case C.kVK_ANSI_Minus:
 		return Key_Minus
 	case C.kVK_ANSI_LeftBracket:
-		return Key_LBracket
+		return Key_BracketLeft
 	case C.kVK_ANSI_RightBracket:
-		return Key_RBracket
+		return Key_BracketRight
 	case C.kVK_ANSI_Quote:
 		return Key_Quote
 	case C.kVK_ANSI_Semicolon:
@@ -585,13 +607,13 @@ func convertVirtualKeyCode(vkcode uint16) KeyCode {
 	case C.kVK_ANSI_KeypadEnter:
 		return Key_PadEnter
 	case C.kVK_UpArrow:
-		return Key_UpArrow
+		return Key_ArrowUp
 	case C.kVK_DownArrow:
-		return Key_DownArrow
+		return Key_ArrowDown
 	case C.kVK_LeftArrow:
-		return Key_LeftArrow
+		return Key_ArrowLeft
 	case C.kVK_RightArrow:
-		return Key_RightArrow
+		return Key_ArrowRight
 	case C.kVK_PageUp:
 		return Key_PageUp
 	case C.kVK_PageDown:

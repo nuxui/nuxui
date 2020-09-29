@@ -40,8 +40,13 @@ void measureText(cairo_t* cr, char* fontFamily, int fontWeight, int fontSize,
 
 	font_description = pango_font_description_new ();
 	pango_font_description_set_family (font_description, fontFamily);
-	pango_font_description_set_weight (font_description, fontWeight);
-	pango_font_description_set_absolute_size (font_description, fontSize * PANGO_SCALE);
+	// pango_font_description_set_family_static (font_description, "Apple Color Emoji");
+	// pango_font_description_set_weight (font_description, fontWeight);
+	// pango_font_description_set_absolute_size (font_description, fontSize * PANGO_SCALE);
+	// pango_font_description_set_stretch(font_description, PANGO_STRETCH_NORMAL);
+	// pango_font_description_set_style(font_description, PANGO_STYLE_ITALIC);
+	// pango_font_description_set_variant(font_description, PANGO_VARIANT_SMALL_CAPS);
+	// pango_font_description_set_gravity(font_description, PANGO_GRAVITY_NORTH);
 
 	layout = pango_cairo_create_layout (cr);
 	pango_layout_set_font_description (layout, font_description);
@@ -49,7 +54,11 @@ void measureText(cairo_t* cr, char* fontFamily, int fontWeight, int fontSize,
 	pango_layout_set_height (layout, height * PANGO_SCALE);
 	pango_layout_set_text (layout, text, -1);
 	pango_layout_set_wrap (layout, PANGO_WRAP_WORD_CHAR);
+	// pango_layout_set_justify(layout, TRUE);
 	// pango_layout_set_indent(layout, 4);
+	// pango_layout_set_markup(layout, "*", 10);
+	// pango_layout_set_single_paragraph_mode(layout, TRUE);
+	// pango_layout_set_alignment(layout,PANGO_ALIGN_RIGHT);
 
 	pango_layout_get_size(layout, outWidth, outHeight);
 
@@ -64,8 +73,15 @@ void drawText(cairo_t* cr, char* fontFamily, int fontWeight, int fontSize,
 
 	font_description = pango_font_description_new ();
 	pango_font_description_set_family (font_description, fontFamily);
-	pango_font_description_set_weight (font_description, fontWeight);
-	pango_font_description_set_absolute_size (font_description, fontSize * PANGO_SCALE);
+	// pango_font_description_set_family_static (font_description, "Apple Color Emoji");
+	// pango_font_description_set_weight (font_description, fontWeight);
+	// pango_font_description_set_absolute_size (font_description, fontSize * PANGO_SCALE);
+	// pango_font_description_set_stretch(font_description, PANGO_STRETCH_NORMAL);
+	// pango_font_description_set_style(font_description, PANGO_STYLE_ITALIC);
+	// pango_font_description_set_variant(font_description, PANGO_VARIANT_SMALL_CAPS);
+	// pango_font_description_set_gravity(font_description, PANGO_GRAVITY_NORTH);
+
+	printf("text = %s, family = %s\n", text, pango_font_description_get_family(font_description));
 
 	layout = pango_cairo_create_layout (cr);
 	pango_layout_set_font_description (layout, font_description);
@@ -73,7 +89,11 @@ void drawText(cairo_t* cr, char* fontFamily, int fontWeight, int fontSize,
 	pango_layout_set_height (layout, height * PANGO_SCALE);
 	pango_layout_set_text (layout, text, -1);
 	pango_layout_set_wrap (layout, PANGO_WRAP_WORD_CHAR);
+	// pango_layout_set_justify(layout, TRUE);
 	// pango_layout_set_indent(layout, 4);
+	// pango_layout_set_markup(layout, "*", 10);
+	// pango_layout_set_single_paragraph_mode(layout, TRUE);
+	// pango_layout_set_alignment(layout,PANGO_ALIGN_RIGHT);
 
 	pango_cairo_show_layout (cr, layout);
 

@@ -29,8 +29,7 @@ type Editor interface {
 func NewEditor() Editor {
 	me := &editor{
 		cursorPosition: 0,
-		flicker:        true,
-		flickerStarted: false,
+		flicker:        false,
 	}
 	me.WidgetSize.Owner = me
 	me.WidgetVisual.Owner = me
@@ -51,7 +50,7 @@ type editor struct {
 
 	cursorPosition int
 	flicker        bool
-	flickerStarted bool
+	flickerTimer   nux.Timer
 	focus          bool
 }
 
@@ -97,6 +96,7 @@ func (me *editor) FocusChanged(focus bool) {
 		me.startTick()
 	} else {
 		nux.StopTextInput()
+		me.stopTick()
 	}
 }
 
@@ -197,19 +197,31 @@ func (me *editor) Draw(canvas nux.Canvas) {
 }
 
 func (me *editor) startTick() {
-	return
-	if me.flickerStarted {
-		return
+	log.V("nuxui", "startTick ...")
+	if me.flickerTimer != nil {
+		me.flickerTimer.Cancel()
+		me.flickerTimer = nil
 	}
 
-	me.flickerStarted = true
-	go func() {
-		for true /*TODO tag*/ {
-			time.Sleep(500 * time.Millisecond)
-			me.flicker = !me.flicker
-			nux.RequestRedraw(me)
-		}
-	}()
+	if me.flicker != true {
+		me.flicker = true // make first is show
+		nux.RequestRedraw(me)
+	}
+
+	me.flickerTimer = nux.NewInterval(500*time.Millisecond, func() {
+		me.flicker = !me.flicker
+		nux.RequestRedraw(me)
+	})
+}
+
+func (me *editor) stopTick() {
+	if me.flickerTimer != nil {
+		me.flickerTimer.Cancel()
+		me.flickerTimer = nil
+	}
+
+	me.flicker = false
+	nux.RequestRedraw(me)
 }
 
 func (me *editor) OnTypingEvent(event nux.Event) bool {
@@ -218,6 +230,7 @@ func (me *editor) OnTypingEvent(event nux.Event) bool {
 		me.editingText = event.Text()
 		nux.RequestLayout(me)
 		nux.RequestRedraw(me)
+		me.startTick()
 	case nux.Action_Input:
 		me.editingText = ""
 		runes := []rune(me.text)
@@ -226,13 +239,15 @@ func (me *editor) OnTypingEvent(event nux.Event) bool {
 		ret := fmt.Sprintf("%s%s%s", front, event.Text(), end)
 		me.cursorPosition += len([]rune(event.Text()))
 		me.SetText(ret)
+		me.startTick()
 	}
 	log.V("nuxui", "OnTypingEvent editingText=%s text=%s", me.editingText, me.text)
 	return true
 }
 
 func (me *editor) OnKeyEvent(event nux.Event) bool {
-	if event.KeyCode() == nux.Key_Delete {
+	switch event.KeyCode() {
+	case nux.Key_Delete:
 		if event.Action() == nux.Action_Down {
 			if len(me.text) == 0 {
 				return false
@@ -249,8 +264,52 @@ func (me *editor) OnKeyEvent(event nux.Event) bool {
 			end := string(runes[me.cursorPosition+1 : len(runes)])
 			ret := fmt.Sprintf("%s%s", front, end)
 			me.SetText(ret)
+			me.startTick()
 			return true
 		}
+	case nux.Key_ForwardDelete:
+		if event.Action() == nux.Action_Down {
+			if len(me.text) == 0 {
+				return false
+			}
+
+			runes := []rune(me.text)
+			if me.cursorPosition+1 > len(runes) {
+				me.cursorPosition = len(runes)
+				return true
+			}
+
+			front := string(runes[:me.cursorPosition])
+			end := string(runes[me.cursorPosition+1 : len(runes)])
+			ret := fmt.Sprintf("%s%s", front, end)
+			me.SetText(ret)
+			me.startTick()
+			return true
+		}
+	case nux.Key_ArrowLeft:
+		if event.Action() == nux.Action_Down {
+			me.cursorPosition--
+			if me.cursorPosition < 0 {
+				me.cursorPosition = 0
+				return true
+			}
+			nux.RequestRedraw(me)
+			me.startTick()
+		}
+	case nux.Key_ArrowRight:
+		if event.Action() == nux.Action_Down {
+			me.cursorPosition++
+			maxlen := len([]rune(me.text))
+			if me.cursorPosition > maxlen {
+				me.cursorPosition = maxlen
+				return true
+			}
+			nux.RequestRedraw(me)
+			me.startTick()
+		}
+	case nux.Key_ArrowUp:
+	case nux.Key_ArrowDown:
+	case nux.Key_V:
 	}
 	return true
 }

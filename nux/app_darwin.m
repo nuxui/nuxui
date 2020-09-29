@@ -95,13 +95,13 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
     }
 
     char* text = (char*)[aString UTF8String];
+    NSLog(@"insertText %@", aString);
     
     // Don't post text events for unprintable characters
     if ((unsigned char)*text < ' ' || *text == 127) {
         return ;
     }
 
-    NSLog(@"insertText %@", aString);
     go_typingEvent((uintptr_t)[self window], text, 0, 0, 0);
 }
 
@@ -340,6 +340,10 @@ int cg_changed = 0;
 @end // NuxWindowDelegate
 
 @interface NuxApplication : NSApplication
+- (void)terminate:(id)sender;
+- (void)sendEvent:(NSEvent *)theEvent;
+
++ (void)registerUserDefaults;
 @end
 
 @implementation NuxApplication
@@ -352,7 +356,32 @@ int cg_changed = 0;
 
 - (void)sendEvent:(NSEvent *)theEvent
 {
-    [super sendEvent:theEvent];
+    switch ([theEvent type]) {
+    case NSEventTypeApplicationDefined:
+        if([theEvent timestamp] == 0 && 
+        [theEvent data1] == 20180101 && 
+        [theEvent data2] == 20201120 && 
+        [theEvent subtype] == 0 && 
+        [theEvent windowNumber] == 0){
+            go_backToUI();
+        }else{
+            [super sendEvent:theEvent];
+        }
+        break;
+    default:
+        [super sendEvent:theEvent];
+    }
+}
+
++ (void)registerUserDefaults
+{
+    NSDictionary *appDefaults = [[NSDictionary alloc] initWithObjectsAndKeys:
+                                 [NSNumber numberWithBool:NO], @"AppleMomentumScrollSupported",
+                                 [NSNumber numberWithBool:NO], @"ApplePressAndHoldEnabled",
+                                 [NSNumber numberWithBool:YES], @"ApplePersistenceIgnoreState",
+                                 nil];
+    [[NSUserDefaults standardUserDefaults] registerDefaults:appDefaults];
+    [appDefaults release];
 }
 
 @end // NuxApplication 
@@ -371,7 +400,13 @@ int cg_changed = 0;
 - (void)applicationDidFinishLaunching:(NSNotification *)notification
 {
 	NSLog(@"NuxApplicationDelegate applicationDidFinishLaunching");
+    if(true/*TODO:: background*/){
+        [NSApp activateIgnoringOtherApps:YES];
+    }
+
+    [NuxApplication registerUserDefaults];
 	// [NSApp activateWithOptions:(NSApplicationActivateAllWindows | NSApplicationActivateIgnoringOtherApps)];
+    // [NSApp activateIgnoringOtherApps:YES];
 	// [[NSRunningApplication currentApplication] activateWithOptions:(NSApplicationActivateAllWindows | NSApplicationActivateIgnoringOtherApps)];
 	// [window orderFrontRegardless];
 	// [window makeKeyAndOrderFront:window];
@@ -481,7 +516,7 @@ void runApp()
 		//go_nativeLoopPrepared();
 		
 		[NSApp setActivationPolicy:NSApplicationActivationPolicyRegular]; // show icon at docker
-		[NSApp activateIgnoringOtherApps:YES];
+		// [NSApp activateIgnoringOtherApps:YES];
 		[NSApp setDelegate:[[NuxApplicationDelegate alloc] init]];
 
 		NSUInteger windowStyle =  NSWindowStyleMaskTitled | NSWindowStyleMaskBorderless | NSWindowStyleMaskClosable |NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable | NSWindowStyleMaskUnifiedTitleAndToolbar | NSWindowStyleMaskDocModalWindow;
@@ -500,9 +535,9 @@ void runApp()
 
 		window.title = @"nuxui title";
 		[window setDelegate:[[NuxWindowDelegate alloc] init]];
-		[window orderFrontRegardless];
 		[window setAcceptsMouseMovedEvents:YES];
         [window center];
+        [window makeKeyAndOrderFront:nil];
 
 		[NSApp run];
 	}
@@ -573,6 +608,23 @@ void invalidate(){
             if(nuxWindow.nuxview != nil){
                 [nuxWindow.nuxview setNeedsDisplay:YES];
             }
+        }
+    });
+}
+
+void backToUI(){
+    dispatch_async(dispatch_get_main_queue(), ^{
+        @autoreleasepool{
+            NSEvent* event = [NSEvent otherEventWithType:NSEventTypeApplicationDefined
+                                        location:NSMakePoint(0, 0)
+                                   modifierFlags:0
+                                       timestamp:0
+                                    windowNumber:0
+                                         context:nil
+                                         subtype:0
+                                           data1:20180101
+                                           data2:20201120];
+            [NSApp sendEvent:event];
         }
     });
 }

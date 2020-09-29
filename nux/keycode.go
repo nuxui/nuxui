@@ -86,23 +86,23 @@ const (
 	Key_Escape
 	Key_Super
 	Key_CapsLock
-	Key_LAlt
-	Key_RAlt
-	Key_LShift
-	Key_RShift
-	Key_LControl
-	Key_RControl
-	Key_Equal     //=+
-	Key_Minus     //-_ TODO:: sub
-	Key_LBracket  //[{
-	Key_RBracket  //]}
-	Key_Quote     //'"
-	Key_Semicolon //;:
-	Key_Comma     //,<
-	Key_Slash     // / ?
-	Key_Backslash // | \
-	Key_Period    //.>
-	Key_Grave     //`~
+	Key_AltLeft
+	Key_AltRight
+	Key_ShiftLeft
+	Key_ShiftRight
+	Key_ControlLeft
+	Key_ControlRight
+	Key_Equal        //=+
+	Key_Minus        //-_ TODO:: sub
+	Key_BracketLeft  //[{
+	Key_BracketRight //]}
+	Key_Quote        //'"
+	Key_Semicolon    //;:
+	Key_Comma        //,<
+	Key_Slash        // / ?
+	Key_Backslash    // | \
+	Key_Period       //.>
+	Key_Grave        //`~
 
 	Key_Pad0
 	Key_Pad1
@@ -122,10 +122,10 @@ const (
 	Key_PadClear    //num_lockTODO::
 	Key_PadDecimal  //.
 	Key_PadEnter
-	Key_UpArrow
-	Key_DownArrow
-	Key_LeftArrow
-	Key_RightArrow
+	Key_ArrowUp
+	Key_ArrowDown
+	Key_ArrowLeft
+	Key_ArrowRight
 	Key_PageUp
 	Key_PageDown
 	Key_Home
@@ -270,26 +270,26 @@ func (me KeyCode) String() string {
 		return "Key_Super"
 	case Key_CapsLock:
 		return "Key_CapsLock"
-	case Key_LAlt:
-		return "Key_LAlt"
-	case Key_RAlt:
-		return "Key_RAlt"
-	case Key_LShift:
-		return "Key_LShift"
-	case Key_RShift:
-		return "Key_RShift"
-	case Key_LControl:
-		return "Key_LControl"
-	case Key_RControl:
-		return "Key_RControl"
+	case Key_AltLeft:
+		return "Key_AltLeft"
+	case Key_AltRight:
+		return "Key_AltRight"
+	case Key_ShiftLeft:
+		return "Key_ShiftLeft"
+	case Key_ShiftRight:
+		return "Key_ShiftRight"
+	case Key_ControlLeft:
+		return "Key_ControlLeft"
+	case Key_ControlRight:
+		return "Key_ControlRight"
 	case Key_Equal:
 		return "Key_Equal"
 	case Key_Minus:
 		return "Key_Minus"
-	case Key_LBracket:
-		return "Key_LBracket"
-	case Key_RBracket:
-		return "Key_RBracket"
+	case Key_BracketLeft:
+		return "Key_BracketLeft"
+	case Key_BracketRight:
+		return "Key_BracketRight"
 	case Key_Quote:
 		return "Key_Quote"
 	case Key_Semicolon:
@@ -341,14 +341,14 @@ func (me KeyCode) String() string {
 		return "Key_PadDecimal"
 	case Key_PadEnter:
 		return "Key_PadEnter"
-	case Key_UpArrow:
-		return "Key_UpArrow"
-	case Key_DownArrow:
-		return "Key_DownArrow"
-	case Key_LeftArrow:
-		return "Key_LeftArrow"
-	case Key_RightArrow:
-		return "Key_RightArrow"
+	case Key_ArrowUp:
+		return "Key_ArrowUp"
+	case Key_ArrowDown:
+		return "Key_ArrowDown"
+	case Key_ArrowLeft:
+		return "Key_ArrowLeft"
+	case Key_ArrowRight:
+		return "Key_ArrowRight"
 	case Key_PageUp:
 		return "Key_PageUp"
 	case Key_PageDown:

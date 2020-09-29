@@ -49,17 +49,12 @@ func (me *timerLoop) loop() {
 		}
 		me.mux.Unlock()
 
-		RunOnUI(t.callback)
+		if t.ui {
+			RunOnUI(t.callback)
+		} else {
+			t.callback()
+		}
 	}
-}
-
-func RunOnUI(callback func()) {
-	e := &event{
-		time:  time.Now(),
-		etype: Type_BackToUI,
-		data:  callback,
-	}
-	App().SendEvent(e)
 }
 
 func (me *timerLoop) newSeq() uint32 {
@@ -84,18 +79,40 @@ type Timer interface {
 }
 
 type timer struct {
+	ui       bool
+	running  bool
 	seq      uint32
 	callback func()
 }
 
 func (me *timer) Cancel() {
 	timerLoopInstance.cancelTimer(me)
+	me.running = false
+}
+
+func NewInterval(duration time.Duration, callback func()) Timer {
+	t := &timer{
+		ui:       false,
+		running:  true,
+		seq:      timerLoopInstance.newSeq(),
+		callback: callback,
+	}
+
+	go func(t *timer) {
+		for t.running {
+			time.Sleep(duration)
+			timerLoopInstance.ding <- t
+		}
+	}(t)
+
+	return t
 }
 
 func NewTimerBackToUI(duration time.Duration, callback func()) Timer {
-	timerLoopInstance.init()
 	log.V("nuxui", fmt.Sprintf("callback = %p", &callback))
 	t := &timer{
+		ui:       true,
+		running:  true,
 		seq:      timerLoopInstance.newSeq(),
 		callback: callback,
 	}
