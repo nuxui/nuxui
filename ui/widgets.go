@@ -9,7 +9,7 @@ import "github.com/nuxui/nuxui/nux"
 func init() {
 	nux.RegisterWidget((*Row)(nil), func() nux.Widget { return NewRow() })
 	nux.RegisterWidget((*Column)(nil), func() nux.Widget { return NewColumn() })
-	// RegisterWidget((*Layer)(nil), func() Widget { return NewLayer() })
+	nux.RegisterWidget((*Layer)(nil), func() nux.Widget { return NewLayer() })
 	nux.RegisterWidget((*Text)(nil), func() nux.Widget { return NewText() })
 	// RegisterWidget((*Image)(nil), func() Widget { return NewImage() })
 	nux.RegisterWidget((*Editor)(nil), func() nux.Widget { return NewEditor() })

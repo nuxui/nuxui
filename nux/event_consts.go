@@ -44,11 +44,13 @@ const (
 )
 
 const (
-	Kind_None Kind = 0 + iota
-	Kind_Mouse
-	Kind_Touch
-	Kind_Tablet
-	Kind_Other
+	Kind_None           Kind = 0 + iota //
+	Kind_Mouse                          // A mouse-based pointer device.
+	Kind_Touch                          // A touch-based pointer device.
+	Kind_Stylus                         // Kind_Stylus A pointer device with a stylus that has been inverted.
+	Kind_InvertedStylus                 // A pointer device with a stylus that has been inverted.
+	Kind_Tablet                         // An tablet pointer device, same with mouse?
+	Kind_Other                          // An other unknown pointer device.
 )
 
 const (
@@ -60,6 +62,27 @@ const (
 	MB_X2
 	MB_Other
 )
+
+func (me Kind) String() string {
+	switch me {
+	case Kind_None:
+		return "Kind_None"
+	case Kind_Mouse:
+		return "Kind_Mouse"
+	case Kind_Touch:
+		return "Kind_Touch"
+	case Kind_Stylus:
+		return "Kind_Stylus"
+	case Kind_InvertedStylus:
+		return "Kind_InvertedStylus"
+	case Kind_Tablet:
+		return "Kind_Tablet"
+	case Kind_Other:
+		return "Kind_Other"
+	}
+	log.Fatal("nuxui", "Kind %d not handled in switch", me)
+	return ""
+}
 
 func (me EventType) String() string {
 	switch me {

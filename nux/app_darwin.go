@@ -319,7 +319,7 @@ func go_keyEvent(windptr C.uintptr_t, etype uint, keyCode uint16, modifierFlags 
 		keyCode:       convertVirtualKeyCode(keyCode),
 		repeat:        false,
 		modifierFlags: convertModifierFlags(modifierFlags),
-		characters:    C.GoString(chars),
+		keyRune:       C.GoString(chars),
 	}
 
 	if repeat == 1 {
@@ -353,11 +353,12 @@ func go_typingEvent(windptr C.uintptr_t, chars *C.char, action, location, length
 	}
 
 	e := &event{
-		window: theApp.findWindow(windptr),
-		time:   time.Now(),
-		etype:  Type_TypingEvent,
-		action: act,
-		text:   C.GoString(chars),
+		window:   theApp.findWindow(windptr),
+		time:     time.Now(),
+		etype:    Type_TypingEvent,
+		action:   act,
+		text:     C.GoString(chars),
+		location: int32(location),
 	}
 
 	theApp.handleEvent(e)

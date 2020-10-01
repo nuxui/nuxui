@@ -661,8 +661,8 @@ func (me *row) Layout(dx, dy, left, top, right, bottom int32) {
 
 			cms.Position.Left = util.Roundi32(l)
 			cms.Position.Top = util.Roundi32(t)
-			cms.Position.Right = util.Roundi32(l) + cms.Width
-			cms.Position.Bottom = util.Roundi32(t) + cms.Height
+			cms.Position.Right = cms.Position.Left + cms.Width
+			cms.Position.Bottom = cms.Position.Top + cms.Height
 			cms.Position.X = dx + int32(l)
 			cms.Position.Y = dy + int32(t)
 			if cl, ok := child.(nux.Layout); ok {

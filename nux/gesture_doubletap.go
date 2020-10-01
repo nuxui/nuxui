@@ -159,7 +159,10 @@ func (me *doubleTapGestureRecognizer) reset() {
 		me.timer = nil
 	}
 
-	me.firstTap = nil
+	if me.firstTap != nil {
+		GestureArenaManager().Release(me.firstTap.Pointer())
+		me.firstTap = nil
+	}
 	me.secondTap = nil
 	me.rejectFirstPointer = 0
 }

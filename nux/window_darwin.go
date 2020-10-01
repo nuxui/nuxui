@@ -90,7 +90,7 @@ func (me *window) Measure(width, height int32) {
 
 	if s, ok := me.decor.(Size); ok {
 		if s.MeasuredSize().Width == width && s.MeasuredSize().Height == height {
-			return
+			// return
 		}
 
 		s.MeasuredSize().Width = width

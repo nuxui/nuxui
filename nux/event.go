@@ -38,6 +38,7 @@ type Event interface {
 	Modifiers() (none, capslock, shift, control, alt, super bool)
 	Rune() rune // rune or 0
 	Text() string
+	Location() int32
 
 	Data() interface{}
 }
@@ -63,8 +64,9 @@ type event struct {
 	keyCode       KeyCode
 	repeat        bool
 	modifierFlags uint32
-	characters    string
+	keyRune       string
 	text          string
+	location      int32
 
 	data interface{}
 }
@@ -163,7 +165,7 @@ func (me *event) Modifiers() (none, capslock, shift, control, alt, super bool) {
 }
 
 func (me *event) Rune() rune {
-	r := []rune(me.characters)
+	r := []rune(me.keyRune)
 	if len(r) > 0 {
 		return r[0]
 	}
@@ -172,6 +174,10 @@ func (me *event) Rune() rune {
 
 func (me *event) Text() string {
 	return me.text
+}
+
+func (me *event) Location() int32 {
+	return me.location
 }
 
 func (me *event) Data() interface{} {

@@ -200,7 +200,7 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
         	break;
         break;
         case NSEventTypeAppKitDefined:
-        NSLog(@"###  NSEventTypeAppKitDefined");
+        // NSLog(@"###  NSEventTypeAppKitDefined");
         break;
         case NSEventTypeSystemDefined:
         NSLog(@"###  NSEventTypeSystemDefined");
@@ -426,11 +426,11 @@ int cg_changed = 0;
 {
 	NSLog(@"NuxApplicationDelegate applicationDidBecomeActive");
 
-	NSLog(@"window = %@", [[NSApplication sharedApplication] mainWindow]);
-	NSLog(@"window2 = %@", [[[[NSApplication sharedApplication] windows] objectAtIndex:0] title]);
-	NSLog(@"main window title = %@", [[[NSApplication sharedApplication] mainWindow] title]);
-	NSLog(@"nsapp main window title = %@", [[NSApp mainWindow] title]);
-	NSLog(@"key window title = %@", [[[NSApplication sharedApplication] keyWindow] title]);
+	// NSLog(@"window = %@", [[NSApplication sharedApplication] mainWindow]);
+	// NSLog(@"window2 = %@", [[[[NSApplication sharedApplication] windows] objectAtIndex:0] title]);
+	// NSLog(@"main window title = %@", [[[NSApplication sharedApplication] mainWindow] title]);
+	// NSLog(@"nsapp main window title = %@", [[NSApp mainWindow] title]);
+	// NSLog(@"key window title = %@", [[[NSApplication sharedApplication] keyWindow] title]);
 
 	// [[NSApp mainWindow] orderFrontRegardless];
 	// windowCreated((uintptr_t)[NSApp mainWindow]);
@@ -512,21 +512,16 @@ void runApp()
 {
 	@autoreleasepool{
 		[NuxApplication sharedApplication];
-		//NSLog(@"go_nativeLoopPrepared");
-		//go_nativeLoopPrepared();
 		
 		[NSApp setActivationPolicy:NSApplicationActivationPolicyRegular]; // show icon at docker
-		// [NSApp activateIgnoringOtherApps:YES];
 		[NSApp setDelegate:[[NuxApplicationDelegate alloc] init]];
 
 		NSUInteger windowStyle =  NSWindowStyleMaskTitled | NSWindowStyleMaskBorderless | NSWindowStyleMaskClosable |NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable | NSWindowStyleMaskUnifiedTitleAndToolbar | NSWindowStyleMaskDocModalWindow;
 		NSRect windowRect = NSMakeRect(0, 0, 800, 600);
-		NSLog(@"NSWindow alloc");
 		NuxWindow * window = [[NuxWindow alloc] initWithContentRect:windowRect
 											styleMask:windowStyle
 											backing:NSBackingStoreBuffered
 											defer:NO];
-		NSLog(@"NSWindow windowCreated %@", window);
 		windowCreated((uintptr_t)window);
 
         NuxView* nuxview = (NuxView*)[[[NuxView alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)] autorelease]; 
