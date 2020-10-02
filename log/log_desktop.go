@@ -20,17 +20,14 @@ func new(out io.Writer, prefix string, flags int, depth int) Logger {
 		out:    out,
 		flags:  flags,
 		prefix: prefix,
+		logs:   make(chan string, lBufferSize),
 	}
 
-	logsMux.Lock()
-	if !logsRun {
-		go func() {
-			for {
-				me.out.Write([]byte(<-logs))
-			}
-		}()
-	}
-	logsMux.Unlock()
+	go func() {
+		for {
+			me.out.Write([]byte(<-me.logs))
+		}
+	}()
 
 	return me
 }
@@ -93,7 +90,7 @@ func (me *logger) output(depth int, level int, levelTag string, tag string, form
 	} else {
 		log = fmt.Sprintf("%s %s%s %s %s\n", now.Format(dformat), levelTag, prefix, tag, fmt.Sprintf(format, msg...))
 	}
-	logs <- log
+	me.logs <- log
 
 }
 

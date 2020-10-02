@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"sync"
+	"time"
 )
 
 const (
@@ -32,9 +33,10 @@ type Logger interface {
 	SetFlags(flag int)
 	Prefix() string
 	SetPrefix(prefix string)
+	Finish() // defer call at main function, cause panic will drop logs
 }
 
-const bufferSize = 10
+const lBufferSize = 20
 
 const (
 	Ldate         = 1 << iota // the date in the local time zone: 2009/01/23
@@ -47,16 +49,14 @@ const (
 )
 
 type logger struct {
+	size   uint
 	flags  int
 	depth  int
 	prefix string
 	mux    sync.Mutex
 	out    io.Writer
+	logs   chan string
 }
-
-var logs = make(chan string, bufferSize)
-var logsRun = false
-var logsMux sync.Mutex
 
 func New(out io.Writer, prefix string, flags int) Logger {
 	return new(out, prefix, flags, 1)
@@ -88,37 +88,33 @@ func (me *logger) Fatal(tag string, format string, msg ...interface{}) {
 }
 
 func (me *logger) SetOutput(w io.Writer) {
-	me.mux.Lock()
 	me.out = w
-	me.mux.Unlock()
 }
 
 // Flags returns the output flags for the logger.
 func (me *logger) Flags() int {
-	me.mux.Lock()
-	defer me.mux.Unlock()
 	return me.flags
 }
 
 // SetFlags sets the output flags for the logger.
 func (me *logger) SetFlags(flags int) {
-	me.mux.Lock()
 	me.flags = flags
-	me.mux.Unlock()
 }
 
 // Prefix returns the output prefix for the logger.
 func (me *logger) Prefix() string {
-	me.mux.Lock()
-	defer me.mux.Unlock()
 	return me.prefix
 }
 
 // SetPrefix sets the output prefix for the logger.
 func (me *logger) SetPrefix(prefix string) {
-	me.mux.Lock()
 	me.prefix = prefix
-	me.mux.Unlock()
+}
+
+func (me *logger) Finish() {
+	if len(me.logs) > 0 {
+		time.Sleep(15 * time.Millisecond)
+	}
 }
 
 var std = new(os.Stdout, "", LstdFlags, 2)
@@ -169,4 +165,8 @@ func Prefix() string {
 // SetPrefix sets the output prefix for the standard logger.
 func SetPrefix(prefix string) {
 	std.SetPrefix(prefix)
+}
+
+func Finish() {
+	std.Finish()
 }

@@ -29,6 +29,7 @@ func new(out io.Writer, prefix string, flags int, depth int) Logger {
 		out:    out,
 		flags:  flags,
 		prefix: prefix,
+		logs:   make(chan string, lBufferSize),
 	}
 
 	return me
