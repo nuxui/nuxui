@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nuxui/nuxui/log"
 	"github.com/nuxui/nuxui/nux"
 	"github.com/nuxui/nuxui/util"
 )

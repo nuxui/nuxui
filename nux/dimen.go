@@ -22,11 +22,11 @@ type Dimen int32
 type Mode byte
 
 const (
-	Pixel   Mode = iota // 1111 or 0000 is px or 7 1px
+	Pixel   Mode = iota // 1 means 1px
 	Auto                // wrap content
 	Weight              // 1wt >= 0
 	Ratio               // 16:9, no zero, no negative
-	Percent             // 50% => match_parent * 50% => parent.size - parent.padding
+	Percent             // 50% means (parent.size - parent.padding)*0.5
 	Unspec              // Unspec
 	Default             // default nux unit
 	pixel               // negative pixel
@@ -47,9 +47,15 @@ func ADimen(value float32, mode Mode) Dimen {
 		log.Fatal("nuxui", "Invalide dimen mode")
 	}
 
-	if mode == Ratio || mode == Weight {
+	if mode == Weight {
 		if value < 0 {
-			log.Fatal("nuxui", "Invalide dimen value, the value of %s must be positive", mode)
+			log.Fatal("nuxui", "Invalide dimen value, the value of Weight can not be negative")
+		}
+	}
+
+	if mode == Ratio {
+		if value <= 0 {
+			log.Fatal("nuxui", "Invalide dimen value, the value of Ratio must be positive")
 		}
 	}
 
