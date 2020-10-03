@@ -24,9 +24,9 @@ type gestureMixin struct {
 
 func (me *gestureMixin) Creating(attr Attr) {
 	if onTap := attr.GetString("onTap", ""); onTap != "" {
-		// log.V("nuxui", fmt.Sprintf("xxxxxxxxx onTap = %s", onTap))
+		// log.V("nuxui", "xxxxxxxxx onTap = %s", onTap)
 		OnTap(me.Owner(), func(widget Widget) {
-			// log.V("nuxui", fmt.Sprintf("xxxxxxxxx onTap 2 = %s", onTap))
+			// log.V("nuxui", "xxxxxxxxx onTap 2 = %s", onTap)
 			util.ReflectCall(me.Component(), onTap, widget)
 		})
 	}

@@ -5,7 +5,6 @@
 package nux
 
 import (
-	"fmt"
 	"math"
 	"sync"
 	"time"
@@ -109,7 +108,7 @@ func NewInterval(duration time.Duration, callback func()) Timer {
 }
 
 func NewTimerBackToUI(duration time.Duration, callback func()) Timer {
-	log.V("nuxui", fmt.Sprintf("callback = %p", &callback))
+	log.V("nuxui", "callback = %p", &callback)
 	t := &timer{
 		ui:       true,
 		running:  true,

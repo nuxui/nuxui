@@ -93,11 +93,11 @@ func getPadding(attr Attr, key string, defaultValue string) Dimen {
 	d := attr.GetDimen(key, defaultValue)
 	switch d.Mode() {
 	case Auto, Weight, Unspec, Ratio:
-		log.Fatal("nuxui", fmt.Sprintf("Unsupported padding dimension mode %s at %s: %s, only supported Pixel, dp, Percent.", d.ModeName(), key, d))
+		log.Fatal("nuxui", "Unsupported padding dimension mode %s at %s: %s, only supported Pixel, dp, Percent.", d.Mode(), key, d)
 	default:
 		return d
 	}
-	return &dimen{0, 0}
+	return 0
 }
 
 // margin: !auto 10px 10dp 1wt 5% !ratio !unlimit
@@ -127,11 +127,11 @@ func getMargin(attr Attr, key string, defaultValue string) Dimen {
 	d := attr.GetDimen(key, defaultValue)
 	switch d.Mode() {
 	case Auto, Unspec, Ratio:
-		log.Fatal("nuxui", fmt.Sprintf("Unsupported padding dimension mode %s at %s: %s, only supported Pixel, dp, Percent.", d.ModeName(), key, d))
+		log.Fatal("nuxui", "Unsupported padding dimension mode %s at %s: %s, only supported Pixel, dp, Percent.", d.Mode(), key, d)
 	default:
 		return d
 	}
-	return &dimen{0, 0}
+	return 0
 }
 
 type WidgetSize struct {
@@ -161,38 +161,22 @@ func (me *WidgetSize) Creating(attr Attr) {
 }
 
 func (me *WidgetSize) Width() Dimen {
-	if me.width == nil {
-		me.width = NewDimen(0, Pixel)
-	}
-
 	return me.width
 }
 
 func (me *WidgetSize) SetWidth(width Dimen) {
-	if me.width == nil {
-		me.width = NewDimen(0, Pixel)
-	}
-
-	if !me.width.Equal(width) {
+	if me.width != width {
 		me.width = width
 		me.doSizeChanged()
 	}
 }
 
 func (me *WidgetSize) Height() Dimen {
-	if me.height == nil {
-		me.height = NewDimen(0, Pixel)
-	}
-
 	return me.height
 }
 
 func (me *WidgetSize) SetHeight(height Dimen) {
-	if me.height == nil {
-		me.height = NewDimen(0, Pixel)
-	}
-
-	if !me.height.Equal(height) {
+	if me.height != height {
 		me.height = height
 		me.doSizeChanged()
 	}
@@ -204,7 +188,7 @@ func (me *WidgetSize) HasMargin() bool {
 
 func (me *WidgetSize) MarginLeft() Dimen {
 	if me.margin == nil {
-		return NewDimen(0, Pixel)
+		return 0
 	}
 
 	return me.margin.Left
@@ -212,7 +196,7 @@ func (me *WidgetSize) MarginLeft() Dimen {
 
 func (me *WidgetSize) MarginTop() Dimen {
 	if me.margin == nil {
-		return NewDimen(0, Pixel)
+		return 0
 	}
 
 	return me.margin.Top
@@ -220,7 +204,7 @@ func (me *WidgetSize) MarginTop() Dimen {
 
 func (me *WidgetSize) MarginRight() Dimen {
 	if me.margin == nil {
-		return NewDimen(0, Pixel)
+		return 0
 	}
 
 	return me.margin.Right
@@ -228,7 +212,7 @@ func (me *WidgetSize) MarginRight() Dimen {
 
 func (me *WidgetSize) MarginBottom() Dimen {
 	if me.margin == nil {
-		return NewDimen(0, Pixel)
+		return 0
 	}
 
 	return me.margin.Bottom
@@ -244,7 +228,7 @@ func (me *WidgetSize) SetMargin(left, top, right, bottom Dimen) {
 		}
 		me.doSizeChanged()
 	} else {
-		if !me.margin.Left.Equal(left) || !me.margin.Top.Equal(top) || !me.margin.Right.Equal(right) || !me.margin.Bottom.Equal(bottom) {
+		if me.margin.Left != left || me.margin.Top != top || me.margin.Right != right || me.margin.Bottom != bottom {
 			me.margin.Left = left
 			me.margin.Top = top
 			me.margin.Right = right
@@ -258,13 +242,13 @@ func (me *WidgetSize) SetMarginLeft(left Dimen) {
 	if me.margin == nil {
 		me.margin = &Margin{
 			Left:   left,
-			Top:    NewDimen(0, Pixel),
-			Right:  NewDimen(0, Pixel),
-			Bottom: NewDimen(0, Pixel),
+			Top:    0,
+			Right:  0,
+			Bottom: 0,
 		}
 		me.doSizeChanged()
 	} else {
-		if !me.margin.Left.Equal(left) {
+		if me.margin.Left != left {
 			me.margin.Left = left
 			me.doSizeChanged()
 		}
@@ -274,14 +258,14 @@ func (me *WidgetSize) SetMarginLeft(left Dimen) {
 func (me *WidgetSize) SetMarginTop(top Dimen) {
 	if me.margin == nil {
 		me.margin = &Margin{
-			Left:   NewDimen(0, Pixel),
+			Left:   0,
 			Top:    top,
-			Right:  NewDimen(0, Pixel),
-			Bottom: NewDimen(0, Pixel),
+			Right:  0,
+			Bottom: 0,
 		}
 		me.doSizeChanged()
 	} else {
-		if !me.margin.Top.Equal(top) {
+		if me.margin.Top != top {
 			me.margin.Top = top
 			me.doSizeChanged()
 		}
@@ -291,14 +275,14 @@ func (me *WidgetSize) SetMarginTop(top Dimen) {
 func (me *WidgetSize) SetMarginRight(right Dimen) {
 	if me.margin == nil {
 		me.margin = &Margin{
-			Left:   NewDimen(0, Pixel),
-			Top:    NewDimen(0, Pixel),
+			Left:   0,
+			Top:    0,
 			Right:  right,
-			Bottom: NewDimen(0, Pixel),
+			Bottom: 0,
 		}
 		me.doSizeChanged()
 	} else {
-		if !me.margin.Right.Equal(right) {
+		if me.margin.Right != right {
 			me.margin.Right = right
 			me.doSizeChanged()
 		}
@@ -308,14 +292,14 @@ func (me *WidgetSize) SetMarginRight(right Dimen) {
 func (me *WidgetSize) SetMarginBottom(bottom Dimen) {
 	if me.margin == nil {
 		me.margin = &Margin{
-			Left:   NewDimen(0, Pixel),
-			Top:    NewDimen(0, Pixel),
-			Right:  NewDimen(0, Pixel),
+			Left:   0,
+			Top:    0,
+			Right:  0,
 			Bottom: bottom,
 		}
 		me.doSizeChanged()
 	} else {
-		if !me.margin.Bottom.Equal(bottom) {
+		if me.margin.Bottom != bottom {
 			me.margin.Bottom = bottom
 			me.doSizeChanged()
 		}
@@ -328,7 +312,7 @@ func (me *WidgetSize) HasPadding() bool {
 
 func (me *WidgetSize) PaddingLeft() Dimen {
 	if me.padding == nil {
-		return NewDimen(0, Pixel)
+		return 0
 	}
 
 	return me.padding.Left
@@ -336,7 +320,7 @@ func (me *WidgetSize) PaddingLeft() Dimen {
 
 func (me *WidgetSize) PaddingTop() Dimen {
 	if me.padding == nil {
-		return NewDimen(0, Pixel)
+		return 0
 	}
 
 	return me.padding.Top
@@ -344,7 +328,7 @@ func (me *WidgetSize) PaddingTop() Dimen {
 
 func (me *WidgetSize) PaddingRight() Dimen {
 	if me.padding == nil {
-		return NewDimen(0, Pixel)
+		return 0
 	}
 
 	return me.padding.Right
@@ -352,7 +336,7 @@ func (me *WidgetSize) PaddingRight() Dimen {
 
 func (me *WidgetSize) PaddingBottom() Dimen {
 	if me.padding == nil {
-		return NewDimen(0, Pixel)
+		return 0
 	}
 
 	return me.padding.Bottom
@@ -368,7 +352,7 @@ func (me *WidgetSize) SetPadding(left, top, right, bottom Dimen) {
 		}
 		me.doSizeChanged()
 	} else {
-		if !me.padding.Left.Equal(left) || !me.padding.Top.Equal(top) || !me.padding.Right.Equal(right) || !me.padding.Bottom.Equal(bottom) {
+		if me.padding.Left != left || me.padding.Top != top || me.padding.Right != right || me.padding.Bottom != bottom {
 			me.padding.Left = left
 			me.padding.Top = top
 			me.padding.Right = right
@@ -382,13 +366,13 @@ func (me *WidgetSize) SetPaddingLeft(left Dimen) {
 	if me.padding == nil {
 		me.padding = &Padding{
 			Left:   left,
-			Top:    NewDimen(0, Pixel),
-			Right:  NewDimen(0, Pixel),
-			Bottom: NewDimen(0, Pixel),
+			Top:    0,
+			Right:  0,
+			Bottom: 0,
 		}
 		me.doSizeChanged()
 	} else {
-		if !me.padding.Left.Equal(left) {
+		if me.padding.Left != left {
 			me.padding.Left = left
 			me.doSizeChanged()
 		}
@@ -398,14 +382,14 @@ func (me *WidgetSize) SetPaddingLeft(left Dimen) {
 func (me *WidgetSize) SetPaddingTop(top Dimen) {
 	if me.padding == nil {
 		me.padding = &Padding{
-			Left:   NewDimen(0, Pixel),
+			Left:   0,
 			Top:    top,
-			Right:  NewDimen(0, Pixel),
-			Bottom: NewDimen(0, Pixel),
+			Right:  0,
+			Bottom: 0,
 		}
 		me.doSizeChanged()
 	} else {
-		if !me.padding.Top.Equal(top) {
+		if me.padding.Top != top {
 			me.padding.Top = top
 			me.doSizeChanged()
 		}
@@ -415,14 +399,14 @@ func (me *WidgetSize) SetPaddingTop(top Dimen) {
 func (me *WidgetSize) SetPaddingRight(right Dimen) {
 	if me.padding == nil {
 		me.padding = &Padding{
-			Left:   NewDimen(0, Pixel),
-			Top:    NewDimen(0, Pixel),
+			Left:   0,
+			Top:    0,
 			Right:  right,
-			Bottom: NewDimen(0, Pixel),
+			Bottom: 0,
 		}
 		me.doSizeChanged()
 	} else {
-		if !me.padding.Right.Equal(right) {
+		if me.padding.Right != right {
 			me.padding.Right = right
 			me.doSizeChanged()
 		}
@@ -432,14 +416,14 @@ func (me *WidgetSize) SetPaddingRight(right Dimen) {
 func (me *WidgetSize) SetPaddingBottom(bottom Dimen) {
 	if me.padding == nil {
 		me.padding = &Padding{
-			Left:   NewDimen(0, Pixel),
-			Top:    NewDimen(0, Pixel),
-			Right:  NewDimen(0, Pixel),
+			Left:   0,
+			Top:    0,
+			Right:  0,
 			Bottom: bottom,
 		}
 		me.doSizeChanged()
 	} else {
-		if !me.padding.Bottom.Equal(bottom) {
+		if me.padding.Bottom != bottom {
 			me.padding.Bottom = bottom
 			me.doSizeChanged()
 		}

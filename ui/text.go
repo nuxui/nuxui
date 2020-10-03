@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/nuxui/nuxui/log"
 	"github.com/nuxui/nuxui/nux"
 	"github.com/nuxui/nuxui/util"
 )
@@ -47,6 +48,8 @@ func NewText() Text {
 	me.WidgetVisual.Owner = me
 	me.WidgetSize.AddOnSizeChanged(me.onSizeChanged)
 	me.WidgetVisual.AddOnVisualChanged(me.onVisualChanged)
+
+	me.Creating(nux.Attr{})
 	return me
 }
 
@@ -202,7 +205,7 @@ func (me *text) Measure(width, height int32) {
 		h := int32(height)
 
 		outW, outH := nux.MeasureText(me.text, &me.Font, w, h)
-		// log.V("nuxui", fmt.Sprintf("Text '%s' Measure: %d, %d\n", me.text, outW, outH))
+		// log.V("nuxui", "Text '%s' Measure: %d, %d\n", me.text, outW, outH)
 		ms := me.MeasuredSize()
 		if nux.MeasureSpecMode(width) == nux.Auto {
 			w := (float32(outW) + hPPx) / (1.0 - hPPt/100.0)

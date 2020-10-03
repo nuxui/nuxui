@@ -5,8 +5,6 @@
 package ui
 
 import (
-	"fmt"
-
 	"github.com/nuxui/nuxui/log"
 	"github.com/nuxui/nuxui/nux"
 )
@@ -35,7 +33,7 @@ func (me *Align) Init(attr nux.Attr) {
 		me.Vertical = Bottom
 	default:
 		me.Vertical = Top
-		log.Fatal("nuxui", fmt.Sprintf("Unknow alignment '%s' for vertical, only support 'top', 'center', 'bottom'", vertical))
+		log.Fatal("nuxui", "Unknow alignment '%s' for vertical, only support 'top', 'center', 'bottom'", vertical)
 	}
 
 	switch horizontal {
@@ -47,6 +45,6 @@ func (me *Align) Init(attr nux.Attr) {
 		me.Horizontal = Right
 	default:
 		me.Horizontal = Left
-		log.Fatal("nuxui", fmt.Sprintf("Unknow alignment '%s' for horizontal, only support 'left', 'center', 'right'", horizontal))
+		log.Fatal("nuxui", "Unknow alignment '%s' for horizontal, only support 'left', 'center', 'right'", horizontal)
 	}
 }

@@ -48,6 +48,7 @@ func (me *application) handleEvent(event Event) {
 			if f, ok := event.Window().(AnyCreated); ok {
 				f.Created(App().Manifest().Main())
 			}
+			log.V("nuxui", "Action_WindowCreated end")
 		case Action_WindowMeasured:
 			log.V("nuxui", "Action_WindowMeasured width=%d, height=%d", event.Window().ContentWidth(), event.Window().ContentHeight())
 			if f, ok := event.Window().(Measure); ok {
@@ -65,7 +66,7 @@ func (me *application) handleEvent(event Event) {
 			// 	}
 			// }
 		case Action_WindowDraw:
-			log.V("nuxui", "Action_WindowDraw")
+			// log.V("nuxui", "Action_WindowDraw")
 			if f, ok := event.Window().(Draw); ok {
 				if canvas, err := event.Window().LockCanvas(); err == nil {
 					f.Draw(canvas)
@@ -95,12 +96,14 @@ func (me *application) handleEvent(event Event) {
 
 func (me *application) RequestLayout(widget Widget) {
 	// TODO:: schedule layout
-	e := &event{
-		etype:  Type_WindowEvent,
-		action: Action_WindowMeasured,
-		window: GetWidgetWindow(widget),
+	if w := GetWidgetWindow(widget); w != nil {
+		e := &event{
+			etype:  Type_WindowEvent,
+			action: Action_WindowMeasured,
+			window: w,
+		}
+		me.handleEvent(e)
 	}
-	me.handleEvent(e)
 }
 
 func (me *application) loop2() {
@@ -155,16 +158,20 @@ func SetTextInputRect(x, y, w, h float32) {
 }
 
 func RequestFocus(widget Widget) {
-	GetWidgetWindow(widget).requestFocus(widget)
+	if w := GetWidgetWindow(widget); w != nil {
+		w.requestFocus(widget)
+	}
 }
 
+// GetWidgetWindow get the window of widget  return can be nil
 func GetWidgetWindow(widget Widget) Window {
 	if widget.Parent() == nil {
 		if decor, ok := widget.(Decor); ok {
 			return decor.Window()
 		}
 
-		log.Fatal("nuxui", "can not run here %T", widget)
+		// log.Fatal("nuxui", "can not run here %T", widget)
+		// widget not attached to window yet
 		return nil
 	}
 	return GetWidgetWindow(widget.Parent())

@@ -5,7 +5,6 @@
 package nux
 
 import (
-	"fmt"
 	"unsafe"
 
 	"github.com/nuxui/nuxui/log"
@@ -115,7 +114,7 @@ func (me *longPressGestureRecognizer) addCallback(which int, callback GestureCal
 	p := unsafe.Pointer(&callback)
 	for _, o := range me.callbacks[which] {
 		if o == p {
-			log.Fatal("nuxui", fmt.Sprintf("The %s callback is already existed.", []string{"OnLongPressDown", "OnLongPressUp", "OnLongPress"}[which]))
+			log.Fatal("nuxui", "The %s callback is already existed.", []string{"OnLongPressDown", "OnLongPressUp", "OnLongPress"}[which])
 
 		}
 	}

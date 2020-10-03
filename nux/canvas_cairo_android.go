@@ -363,7 +363,6 @@ func (me *canvas) GetTextRect(text string, fontFamily string, fontSize float32) 
 
 	var extents C.cairo_text_extents_t
 	C.cairo_text_extents(me.ptr, str, (*C.cairo_text_extents_t)(unsafe.Pointer(&extents)))
-	// log.V("nuxui", fmt.Sprintln("extents: ", extents, extents.x_bearing))
 	C.free(unsafe.Pointer(str))
 	C.free(unsafe.Pointer(font))
 	return extents

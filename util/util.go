@@ -39,14 +39,14 @@ func ReflectCall(ptr interface{}, funcName string, args ...interface{}) {
 	}
 
 	if r := funcName[0]; r < 'A' || r > 'Z' {
-		log.E("nuxui", fmt.Sprintf("ReflectCall can not execute '%s' unexport function '%s'", GetTypeName(ptr), funcName))
+		log.E("nuxui", "ReflectCall can not execute '%s' unexport function '%s'", GetTypeName(ptr), funcName)
 		return
 	}
 
 	method := reflect.ValueOf(ptr).MethodByName(funcName)
 
 	if method.Type().NumIn() != len(args) {
-		log.Fatal("nuxui", fmt.Sprintf("ReflectCall need %d arguments but receive %d aguments", method.Type().NumIn(), len(args)))
+		log.Fatal("nuxui", "ReflectCall need %d arguments but receive %d aguments", method.Type().NumIn(), len(args))
 	}
 
 	in := make([]reflect.Value, method.Type().NumIn())

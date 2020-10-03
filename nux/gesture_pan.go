@@ -5,7 +5,6 @@
 package nux
 
 import (
-	"fmt"
 	"time"
 	"unsafe"
 
@@ -131,7 +130,7 @@ func (me *panGestureRecognizer) addCallback(which int, callback PanGestureCallba
 	for _, o := range me.callbacks[which] {
 		if o == p {
 			if true /*TODO:: debug*/ {
-				log.Fatal("nuxui", fmt.Sprintf("The %s callback is already existed.", []string{"OnPanDown", "OnPanUp", "OnPan"}[which]))
+				log.Fatal("nuxui", "The %s callback is already existed.", []string{"OnPanDown", "OnPanUp", "OnPan"}[which])
 			} else {
 				return
 			}

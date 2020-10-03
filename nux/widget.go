@@ -5,8 +5,6 @@
 package nux
 
 import (
-	"fmt"
-
 	"github.com/nuxui/nuxui/log"
 )
 
@@ -41,7 +39,7 @@ func (me *WidgetBase) AssignParent(parent Parent) {
 	if me.parent == nil {
 		me.parent = parent
 	} else {
-		log.Fatal("nuxui", fmt.Sprintf("The parent of widget '%s' is already assigned, can not assign again.", me.ID()))
+		log.Fatal("nuxui", "The parent of widget '%s' is already assigned, can not assign again.", me.ID())
 	}
 }
 

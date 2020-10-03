@@ -5,7 +5,6 @@
 package nux
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/nuxui/nuxui/log"
@@ -66,6 +65,8 @@ func (me *WidgetParent) AddChild(child Widget) {
 
 	child.AssignParent(me.Owner)
 	me.children = append(me.children, child)
+	// RequestLayout(me.Owner)
+	// RequestRedraw(me.Owner)
 }
 
 func (me *WidgetParent) Remove(index int) {
@@ -121,7 +122,7 @@ func (me *WidgetParent) GetWidget(id string) Widget {
 		}
 	}
 
-	log.Fatal("nuxui", fmt.Sprintf("The id '%s' was not found\n", id))
+	log.Fatal("nuxui", "The id '%s' was not found\n", id)
 	return nil
 }
 

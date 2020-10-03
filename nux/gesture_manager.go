@@ -32,7 +32,7 @@ func (me *gestureManager) handlePointerEvent(widget Widget, event Event) {
 		hitTestResult = NewHitTestResult()
 		me.hitTest(widget, hitTestResult, event)
 		me.hitTestResults[event.Pointer()] = hitTestResult
-		// log.V("hitTest", fmt.Sprintf("len = %d", len(me.hitTestResults[event.Pointer()].Results())))
+		// log.V("hitTest", "len = %d", len(me.hitTestResults[event.Pointer()].Results()))
 	case Action_Up:
 		hitTestResult = me.hitTestResults[event.Pointer()]
 		delete(me.hitTestResults, event.Pointer())
@@ -79,7 +79,7 @@ func (me *gestureManager) hitTest(widget Widget, hitTestResult HitTestResult, ev
 			}
 		}
 
-		// log.V("hitTest", fmt.Sprintf("id = %s", widget.ID()))
+		// log.V("hitTest", "id = %s", widget.ID())
 
 		// is event in widget
 		if event.X() >= float32(ms.Position.X) && event.X() <= float32(ms.Position.X+ms.Width) &&

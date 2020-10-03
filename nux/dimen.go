@@ -6,185 +6,177 @@ package nux
 
 import (
 	"fmt"
-	"math"
 	"strconv"
 	"strings"
+	"unsafe"
 
 	"github.com/nuxui/nuxui/log"
 )
 
 /*
-width: auto 100px 100dp 50% 16:9 1wt unlimit
-margin: !auto 10px 10dp 1wt 5% !ratio !unlimit
-padding: !auto 10px 10dp 5% !wt !ratio !unlimit
+ var a dimen = 10 // 10px
+ var a dimen = -10 // -10px
 */
 
-type Mode int32
+type Dimen int32
+type Mode byte
 
 const (
-	// EXACTLY
-	Pixel   Mode = 0 // 1111 or 0000 is px or 7 1px
-	Auto    Mode = 1 // wrap content
-	Unspec  Mode = 2
-	Ratio   Mode = 3 // 16:9, no zero, no negative
-	Percent Mode = 4 // 50% => match_parent * 50% => parent.size - parent.padding
-	Weight  Mode = 5 // 1wt >= 0
-	Default Mode = 6 // default nux unit
+	Pixel   Mode = iota // 1111 or 0000 is px or 7 1px
+	Auto                // wrap content
+	Weight              // 1wt >= 0
+	Ratio               // 16:9, no zero, no negative
+	Percent             // 50% => match_parent * 50% => parent.size - parent.padding
+	Unspec              // Unspec
+	Default             // default nux unit
+	pixel               // negative pixel
 )
 
-// TODO:: interface or struct
-type Dimen interface {
-	Mode() Mode
-	Value() float32
-	Equal(dimen Dimen) bool
-	ModeName() string
-	String() string
-}
+const (
+	MaxDimen    Dimen  = 0x0FFFFFFF // 00001111111111111111111111111111
+	MinDimen    Dimen  = -268435456 // 11110000000000000000000000000000
+	dimenSMask  uint32 = 0x80000000 // 10000000000000000000000000000000
+	dimenMMask  uint32 = 0x70000000 // 01110000000000000000000000000000
+	dimenVMask  uint32 = 0x8FFFFFFF // 10001111111111111111111111111111
+	dimenFMask  uint32 = 0x7FFFFFF8 // 01111111111111111111111111111000
+	dimenFRMask uint32 = 0x0FFFFFFF // 00001111111111111111111111111111
+)
 
-type dimen struct {
-	mode  Mode
-	value float32
-}
-
-func NewDimen(value float32, mode Mode) Dimen {
-	d := &dimen{mode, value}
-	if !d.valid() {
-		log.Fatal("nuxui", "invalid dimension "+d.String())
+func ADimen(value float32, mode Mode) Dimen {
+	if mode < Pixel || mode > pixel {
+		log.Fatal("nuxui", "Invalide dimen mode")
 	}
-	d.fix()
-	return d
-}
 
-func ParseDimen(s string) (Dimen, error) {
-	d := &dimen{}
-	if s == "" || strings.Compare(s, "auto") == 0 {
-		d.mode = Auto
-		d.value = 0
-	} else if strings.HasSuffix(s, "%") {
-		d.mode = Percent
-		v, e := strconv.ParseFloat(string(s[0:len(s)-1]), 32)
-		if e != nil {
-			return d, fmt.Errorf(`invalid percent dimension format: "%s"`, s)
+	if mode == Ratio || mode == Weight {
+		if value < 0 {
+			log.Fatal("nuxui", "Invalide dimen value, the value of %s must be positive", mode)
 		}
-		d.value = float32(v)
-	} else if strings.Compare(s, "0") == 0 {
-		d.mode = Pixel
-		d.value = 0
-	} else if strings.HasSuffix(s, "px") {
-		d.mode = Pixel
-		v, e := strconv.ParseFloat(string(s[0:len(s)-2]), 32)
-		if e != nil {
-			return d, fmt.Errorf(`invalid pixel dimension format: "%s"`, s)
-		}
-		if v > 0 { // math.round
-			d.value = float32(int32(v + 0.5))
+	}
+
+	switch mode {
+	case Ratio, Percent:
+		v := *(*uint32)(unsafe.Pointer(&value))
+		return Dimen(dimenSMask&v | uint32(mode)<<28 | (dimenFMask&v)>>3)
+	default:
+		var v int32
+		if value >= 0 {
+			v = int32(value + 0.5)
 		} else {
-			d.value = float32(int32(v - 0.5))
+			v = int32(value - 0.5)
 		}
-
-	} else if strings.HasSuffix(s, "wt") {
-		d.mode = Weight
-		v, e := strconv.ParseFloat(string(s[0:len(s)-2]), 32)
-		if e != nil || v <= 0 {
-			return d, fmt.Errorf(`invalid weight dimension format: "%s"`, s)
-		}
-		d.value = float32(v)
-	} else if strings.Contains(s, ":") {
-		d.mode = Ratio
-		v := strings.Split(s, ":")
-		w, e1 := strconv.ParseFloat(v[0], 32)
-		h, e2 := strconv.ParseFloat(v[1], 32)
-		if len(v) != 2 || e1 != nil || e2 != nil || w <= 0 || h <= 0 {
-			return d, fmt.Errorf(`invalid ratio dimension format: "%s"`, s)
-		}
-		d.value = float32(w / h)
-	} else {
-		d.mode = Default
-		v, e := strconv.ParseFloat(s, 32)
-		if e != nil {
-			return d, fmt.Errorf(`invalid default dimension format: "%s"`, s)
-		}
-		d.value = float32(v)
+		return Dimen(dimenSMask&uint32(v) | uint32(mode)<<28 | (dimenVMask & uint32(v)))
 	}
-	if !d.valid() {
-		log.Fatal("nuxui", "invalid dimension "+d.String())
+}
+
+func (me Dimen) Mode() Mode {
+	return Mode(dimenMMask & uint32(me) >> 28)
+}
+
+func (me Dimen) Value() float32 {
+	switch me.Mode() {
+	case Percent, Ratio:
+		v := dimenSMask&uint32(me) | (dimenFRMask&uint32(me))<<3
+		return *(*float32)(unsafe.Pointer(&v))
+	default:
+		if dimenSMask&uint32(me) == dimenSMask {
+			return float32(int32(dimenSMask&uint32(me) | dimenMMask | (dimenVMask & uint32(me))))
+		}
+		return float32(int32(dimenSMask&uint32(me) | (dimenVMask & uint32(me))))
 	}
-	d.fix()
-	return d, nil
 }
 
-func (me *dimen) Mode() Mode {
-	return me.mode
-}
-
-func (me *dimen) Value() float32 {
-	return me.value
-}
-
-func (me *dimen) Equal(d Dimen) bool {
-	return me.mode == d.Mode() && math.Abs(float64(me.value-d.Value())) <= math.SmallestNonzeroFloat32
-}
-
-func (me *dimen) ModeName() string {
-	switch me.mode {
-	case Pixel:
+func (me Mode) String() string {
+	switch me {
+	case Pixel, pixel:
 		return "Pixel"
 	case Auto:
 		return "Auto"
-	case Percent:
-		return "Percent"
 	case Weight:
 		return "Weight"
 	case Ratio:
 		return "Ratio"
+	case Percent:
+		return "Percent"
+	case Unspec:
+		return "Unspec"
 	case Default:
 		return "Default"
 	}
-	return "Unlimit"
+	log.Fatal("nuxui", "can not run here.")
+	return ""
 }
 
-func (me *dimen) String() string {
-	if me == nil {
-		return "nil"
-	}
-
-	switch me.mode {
-	case Pixel:
-		return fmt.Sprintf(`%dpx`, int32(me.value))
+func (me Dimen) String() string {
+	switch me.Mode() {
+	case Pixel, pixel:
+		return fmt.Sprintf(`%dpx`, int32(me.Value()))
 	case Auto:
 		return "auto"
-	case Percent:
-		return fmt.Sprintf(`%.2f%%`, me.value)
 	case Weight:
-		return fmt.Sprintf(`%dwt`, int32(me.value))
+		return fmt.Sprintf(`%dwt`, int32(me.Value()))
 	case Ratio:
-		return fmt.Sprintf(`%.2f`, me.value)
+		return fmt.Sprintf(`%.2f`, me.Value())
+	case Percent:
+		return fmt.Sprintf(`%.2f%%`, me.Value())
+	case Unspec:
+		return "Unspec"
 	case Default:
-		return "default"
+		return "Default"
 	}
-	return "unlimit"
+	log.Fatal("nuxui", "can not run here.")
+	return ""
 }
 
-func (me *dimen) fix() {
-	if me.mode == Pixel {
-		//TODO if me.value == 0 || math.IsNaN(me.value) || math.IsInf(me.value, 0) {
-		// }
-		if me.value >= 0 {
-			me.value = float32(int32(me.value + 0.5))
-		} else {
-			me.value = float32(int32(me.value - 0.5))
+func SDimen(s string) Dimen {
+	d, e := ParseDimen(s)
+	if e != nil {
+		log.Fatal("nuxui", e.Error())
+	}
+
+	return d
+}
+func ParseDimen(s string) (Dimen, error) {
+	if s == "" || strings.Compare(s, "auto") == 0 {
+		return ADimen(0, Auto), nil
+	} else if strings.HasSuffix(s, "%") {
+		v, e := strconv.ParseFloat(string(s[0:len(s)-1]), 32)
+		if e != nil {
+			return 0, fmt.Errorf(`invalid Percent dimension format: "%s"`, s)
 		}
+		return ADimen(float32(v), Percent), nil
+	} else if strings.Compare(s, "0") == 0 {
+		return 0, nil
+	} else if strings.HasSuffix(s, "px") {
+		v, e := strconv.ParseFloat(string(s[0:len(s)-2]), 32)
+		if e != nil {
+			return 0, fmt.Errorf(`invalid Pixel dimension format: "%s"`, s)
+		}
+		return ADimen(float32(v), Pixel), nil
+	} else if strings.HasSuffix(s, "wt") {
+		v, e := strconv.ParseFloat(string(s[0:len(s)-2]), 32)
+		if e != nil {
+			return 0, fmt.Errorf(`invalid Weight dimension format: "%s"`, s)
+		}
+		if v <= 0 {
+			return 0, fmt.Errorf(`invalid Weight dimension format: "%s", the weight must be positive number`, s)
+		}
+		return ADimen(float32(v), Weight), nil
+	} else if strings.Contains(s, ":") {
+		v := strings.Split(s, ":")
+		w, e1 := strconv.ParseFloat(v[0], 32)
+		h, e2 := strconv.ParseFloat(v[1], 32)
+		if e1 != nil || e2 != nil || len(v) != 2 {
+			return 0, fmt.Errorf(`invalid Ratio dimension format: "%s"`, s)
+		}
+		if w <= 0 || h <= 0 {
+			return 0, fmt.Errorf(`invalid Ratio dimension format: "%s", the ratio must be positive`, s)
+		}
+		return ADimen(float32(w/h), Ratio), nil
 	}
+	return 0, fmt.Errorf(`invalid dimension format: "%s"`, s)
 }
 
-func (me *dimen) valid() bool {
-	switch me.mode {
-	case Percent, Weight, Ratio, Unspec:
-		return me.value >= 0
-	default:
-		return true
-	}
-}
+//------------------  MeasuredDimen ------------------------------------
 
 // Non-negative and only support Pixel, Auto, Unlimit
 type MeasuredDimen int32
@@ -194,7 +186,7 @@ const measuredDimenModeMask int32 = -1073741824 //0xC0000000
 const measuredDimenValueMask int32 = 0x3FFFFFFF
 
 func MeasureSpec(value int32, mode Mode) int32 {
-	if mode < 0 || mode > 2 {
+	if !(mode == Pixel || mode == Auto || mode == Unspec) {
 		log.Fatal("nuxui", "error for MeasureSpec mdoe, only support Pixel, Auto, Unspec")
 	}
 	if value > MaxMeasuredDimen {

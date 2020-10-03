@@ -5,7 +5,6 @@
 package nux
 
 import (
-	"fmt"
 	"unsafe"
 
 	"github.com/nuxui/nuxui/log"
@@ -108,7 +107,7 @@ func (me *tapGestureRecognizer) addCallback(which int, callback GestureCallback)
 	for _, o := range me.callbacks[which] {
 		if o == p {
 			if true /*TODO:: debug*/ {
-				log.Fatal("nuxui", fmt.Sprintf("The %s callback is already existed.", []string{"OnTapDown", "OnTapUp", "OnTap"}[which]))
+				log.Fatal("nuxui", "The %s callback is already existed.", []string{"OnTapDown", "OnTapUp", "OnTap"}[which])
 
 			} else {
 				return

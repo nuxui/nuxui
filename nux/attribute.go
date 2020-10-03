@@ -36,7 +36,7 @@ func (me Attr) GetAttr(key string, defaultValue Attr) Attr {
 		case map[string]interface{}:
 			ret = *(*Attr)(unsafe.Pointer(&t))
 		default:
-			log.E("nuxui", fmt.Sprintf("Error: unsupport convert %T to Attr, use default value instead\n", t))
+			log.E("nuxui", "Error: unsupport convert %T to Attr, use default value instead\n", t)
 
 		}
 	}
@@ -52,7 +52,7 @@ func (me Attr) GetString(key string, defaultValue string) string {
 			return fmt.Sprintf("%s", t)
 		default:
 
-			log.E("nuxui", fmt.Sprintf("Error: unsupport convert %s %T:%s to string, use default value instead\n", key, t, t))
+			log.E("nuxui", "Error: unsupport convert %s %T:%s to string, use default value instead\n", key, t, t)
 		}
 	}
 	return defaultValue
@@ -67,23 +67,24 @@ func (me Attr) GetBool(key string, defaultValue bool) bool {
 			} else if strings.Compare("false", t) == 0 {
 				return false
 			}
-			log.E("nuxui", fmt.Sprintf("Error: unsupport convert %s %T:%s to bool, use default value instead\n", key, t, t))
+			log.E("nuxui", "Error: unsupport convert %s %T:%s to bool, use default value instead\n", key, t, t)
 		case bool:
 			return t
 		default:
-			log.E("nuxui", fmt.Sprintf("Error: unsupport convert %s %T:%s to bool, use default value instead\n", key, t, t))
+			log.E("nuxui", "Error: unsupport convert %s %T:%s to bool, use default value instead\n", key, t, t)
 		}
 	}
 	return defaultValue
 }
 
 func (me Attr) GetColor(key string, defaultValue Color) (result Color) {
+	result = defaultValue
 	if attr, ok := me[key]; ok {
 		switch t := attr.(type) {
 		case string:
 			t = strings.TrimSpace(t)
 			if !strings.HasPrefix(t, "#") {
-				log.E("nuxui", fmt.Sprintf("Error: color value of %s should start with #, use default value instead\n", key))
+				log.E("nuxui", "Error: color value of %s should start with #, use default value instead\n", key)
 				result = defaultValue
 			} else {
 				t = strings.TrimPrefix(t, "#")
@@ -92,7 +93,7 @@ func (me Attr) GetColor(key string, defaultValue Color) (result Color) {
 				}
 				v, e := strconv.ParseUint(t, 16, 32)
 				if e != nil {
-					log.E("nuxui", fmt.Sprintf("Error: cannot convert %s %T:%s to Color, use default value instead\n", key, t, t))
+					log.E("nuxui", "Error: cannot convert %s %T:%s to Color, use default value instead\n", key, t, t)
 					result = defaultValue
 				} else {
 					result = Color(v)
@@ -110,13 +111,13 @@ func (me Attr) GetColor(key string, defaultValue Color) (result Color) {
 		case uint32:
 			result = Color(t)
 		default:
-			log.E("nuxui", fmt.Sprintf("Error: unsupport convert %s %T:%s to Color, use default value instead\n", key, t, t))
+			log.E("nuxui", "Error: unsupport convert %s %T:%s to Color, use default value instead\n", key, t, t)
 			result = defaultValue
 		}
 	}
 
 	if result > math.MaxUint32 {
-		log.E("nuxui", fmt.Sprintf("Error: %s %d overflow to Color, use default value instead\n", key, result))
+		log.E("nuxui", "Error: %s %d overflow to Color, use default value instead\n", key, result)
 		result = defaultValue
 	}
 
@@ -124,12 +125,13 @@ func (me Attr) GetColor(key string, defaultValue Color) (result Color) {
 }
 
 func (me Attr) GetUint32(key string, defaultValue uint32) (result uint32) {
+	result = defaultValue
 	if attr, ok := me[key]; ok {
 		switch t := attr.(type) {
 		case string:
 			v, e := strconv.ParseFloat(t, 64)
 			if e != nil {
-				log.E("nuxui", fmt.Sprintf("Error: cannot convert %s %T:%s to uint32, use default value instead\n", key, t, t))
+				log.E("nuxui", "Error: cannot convert %s %T:%s to uint32, use default value instead\n", key, t, t)
 				result = defaultValue
 			} else {
 				result = uint32(v)
@@ -145,13 +147,13 @@ func (me Attr) GetUint32(key string, defaultValue uint32) (result uint32) {
 		case uint32:
 			result = uint32(t)
 		default:
-			log.E("nuxui", fmt.Sprintf("Error: unsupport convert %s %T:%s to uint32, use default value instead\n", key, t, t))
+			log.E("nuxui", "Error: unsupport convert %s %T:%s to uint32, use default value instead\n", key, t, t)
 			result = defaultValue
 		}
 	}
 
 	if result > math.MaxUint32 {
-		log.E("nuxui", fmt.Sprintf("Error: %s %d overflow to uint32, use default value instead\n", key, result))
+		log.E("nuxui", "Error: %s %d overflow to uint32, use default value instead\n", key, result)
 		result = defaultValue
 	}
 
@@ -164,7 +166,7 @@ func (me Attr) GetInt32(key string, defaultValue int32) int32 {
 		case string:
 			v, e := strconv.ParseFloat(t, 64)
 			if e != nil {
-				log.E("nuxui", fmt.Sprintf("Error: cannot convert %s %T:%s to int32, use default value instead\n", key, t, t))
+				log.E("nuxui", "Error: cannot convert %s %T:%s to int32, use default value instead\n", key, t, t)
 				return defaultValue
 			}
 			return int32(v)
@@ -179,7 +181,7 @@ func (me Attr) GetInt32(key string, defaultValue int32) int32 {
 		case uint32:
 			return int32(t)
 		default:
-			log.E("nuxui", fmt.Sprintf("Error: unsupport convert %s %T:%s to int32, use default value instead\n", key, t, t))
+			log.E("nuxui", "Error: unsupport convert %s %T:%s to int32, use default value instead\n", key, t, t)
 		}
 	}
 	return defaultValue
@@ -191,7 +193,7 @@ func (me Attr) GetInt(key string, defaultValue int) int {
 		case string:
 			v, e := strconv.ParseFloat(t, 64)
 			if e != nil {
-				log.E("nuxui", fmt.Sprintf("Error: cannot convert %s %T:%s to int32, use default value instead\n", key, t, t))
+				log.E("nuxui", "Error: cannot convert %s %T:%s to int32, use default value instead\n", key, t, t)
 				return defaultValue
 			}
 			return int(v)
@@ -206,7 +208,7 @@ func (me Attr) GetInt(key string, defaultValue int) int {
 		case uint32:
 			return int(t)
 		default:
-			log.E("nuxui", fmt.Sprintf("Error: unsupport convert %s %T:%s to int32, use default value instead\n", key, t, t))
+			log.E("nuxui", "Error: unsupport convert %s %T:%s to int32, use default value instead\n", key, t, t)
 		}
 	}
 	return defaultValue
@@ -218,7 +220,7 @@ func (me Attr) GetInt64(key string, defaultValue int64) int64 {
 		case string:
 			v, e := strconv.ParseFloat(t, 64)
 			if e != nil {
-				log.E("nuxui", fmt.Sprintf("Error: cannot convert %s %T:%s to int64, use default value instead\n", key, t, t))
+				log.E("nuxui", "Error: cannot convert %s %T:%s to int64, use default value instead\n", key, t, t)
 				return defaultValue
 			}
 
@@ -234,7 +236,7 @@ func (me Attr) GetInt64(key string, defaultValue int64) int64 {
 		case uint32:
 			return int64(t)
 		default:
-			log.E("nuxui", fmt.Sprintf("Error: unsupport convert %s %T:%s to int64, use default value instead\n", key, t, t))
+			log.E("nuxui", "Error: unsupport convert %s %T:%s to int64, use default value instead\n", key, t, t)
 		}
 	}
 	return defaultValue
@@ -246,7 +248,7 @@ func (me Attr) GetFloat32(key string, defaultValue float32) float32 {
 		case string:
 			v, e := strconv.ParseFloat(t, 64)
 			if e != nil {
-				log.E("nuxui", fmt.Sprintf("Error: cannot convert %s %T:%s to float32, use default value instead\n", key, t, t))
+				log.E("nuxui", "Error: cannot convert %s %T:%s to float32, use default value instead\n", key, t, t)
 				return defaultValue
 			}
 
@@ -264,7 +266,7 @@ func (me Attr) GetFloat32(key string, defaultValue float32) float32 {
 		case uint32:
 			return float32(t)
 		default:
-			log.E("nuxui", fmt.Sprintf("Error: unsupport convert %s %T:%s to float32, use default value instead\n", key, t, t))
+			log.E("nuxui", "Error: unsupport convert %s %T:%s to float32, use default value instead\n", key, t, t)
 		}
 	}
 	return defaultValue
@@ -276,7 +278,7 @@ func (me Attr) GetFloat64(key string, defaultValue float64) float64 {
 		case string:
 			v, e := strconv.ParseFloat(t, 64)
 			if e != nil {
-				log.E("nuxui", fmt.Sprintf("Error: cannot convert %s %T:%s to float64, use default value instead\n", key, t, t))
+				log.E("nuxui", "Error: cannot convert %s %T:%s to float64, use default value instead\n", key, t, t)
 				return defaultValue
 			}
 
@@ -294,7 +296,7 @@ func (me Attr) GetFloat64(key string, defaultValue float64) float64 {
 		case uint32:
 			return float64(t)
 		default:
-			log.E("nuxui", fmt.Sprintf("Error: unsupport convert %s %T:%s to float64, use default value instead\n", key, t, t))
+			log.E("nuxui", "Error: unsupport convert %s %T:%s to float64, use default value instead\n", key, t, t)
 		}
 	}
 	return defaultValue
@@ -306,7 +308,7 @@ func (me Attr) GetArray(key string, defaultValue []interface{}) []interface{} {
 		case []interface{}:
 			return t
 		default:
-			log.E("nuxui", fmt.Sprintf("Error: unsupport convert %s %T:%s to array, use default value instead\n", key, t, t))
+			log.E("nuxui", "Error: unsupport convert %s %T:%s to array, use default value instead\n", key, t, t)
 		}
 	}
 	return defaultValue
@@ -323,13 +325,13 @@ func (me Attr) GetStringArray(key string, defaultValue []string) []string {
 				if str, ok := any.(string); ok {
 					ret[i] = str
 				} else {
-					log.E("nuxui", fmt.Sprintf("Error: unsupport convert %s %T:%s to []string, use default value instead\n", key, t, t))
+					log.E("nuxui", "Error: unsupport convert %s %T:%s to []string, use default value instead\n", key, t, t)
 					return defaultValue
 				}
 			}
 			return ret
 		default:
-			log.E("nuxui", fmt.Sprintf("Error: unsupport convert %s %T:%s to []string, use default value instead\n", key, t, t))
+			log.E("nuxui", "Error: unsupport convert %s %T:%s to []string, use default value instead\n", key, t, t)
 		}
 	}
 	return defaultValue
@@ -382,29 +384,29 @@ func (me Attr) GetDimen(key string, defaultValue string) Dimen {
 		case string:
 			ret, e := ParseDimen(t)
 			if e != nil {
-				log.E("nuxui", fmt.Sprintf("Error: Can't convert %s to Dimen, use default value instead, %s\n", t, e.Error()))
+				log.E("nuxui", "Error: Can't convert %s to Dimen, use default value instead, %s\n", t, e.Error())
 				ret, e = ParseDimen(defaultValue)
 				if e != nil {
-					log.E("nuxui", fmt.Sprintf("Error: Can't convert default value %s to Dimen, %s\n", defaultValue, e.Error()))
+					log.E("nuxui", "Error: Can't convert default value %s to Dimen, %s\n", defaultValue, e.Error())
 					goto end
 				}
 				return ret
 			}
 			return ret
 		default:
-			log.E("nuxui", fmt.Sprintf("Error: unsupport convert %T to Dimen, use default value instead\n", t))
+			log.E("nuxui", "Error: unsupport convert %T to Dimen, use default value instead\n", t)
 		}
 	} else {
 		ret, e := ParseDimen(defaultValue)
 		if e != nil {
-			log.E("nuxui", fmt.Sprintf("Error: Can't convert default value %s to Dimen, %s\n", defaultValue, e.Error()))
+			log.E("nuxui", "Error: Can't convert default value %s to Dimen, %s\n", defaultValue, e.Error())
 			goto end
 		}
 		return ret
 	}
 
 end:
-	ret := NewDimen(0, Auto)
+	ret := ADimen(0, Auto)
 	return ret
 }
 
@@ -604,7 +606,7 @@ func (me *attr) skipComment() {
 func (me *attr) nextKey() string {
 	p := me.pos
 	if me.r < 'A' || (me.r > 'Z' && me.r < 'a') || me.r > 'z' {
-		log.Fatal("Attr", fmt.Sprintf("nux", "Invalid key name, the first letter must be [A-Za-z].", me.r, me.r))
+		log.Fatal("nuxui", "Invalid key name, the first letter must be [A-Za-z]")
 	}
 	me.next()
 	for (me.r >= 'a' && me.r <= 'z') || (me.r >= 'A' && me.r <= 'Z') || (me.r >= '0' && me.r <= '9') || me.r == '_' {
@@ -613,7 +615,7 @@ func (me *attr) nextKey() string {
 	key := string(me.data[p:me.pos])
 	me.skipBlank()
 	if me.r != ':' {
-		log.Fatal("nuxui", fmt.Sprintf("Invalid format after key name %s, missing ':'", key))
+		log.Fatal("nuxui", "Invalid format after key name %s, missing ':'", key)
 	}
 	return key
 }

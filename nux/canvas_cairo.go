@@ -81,7 +81,6 @@ void drawText(cairo_t* cr, char* fontFamily, int fontWeight, int fontSize,
 	// pango_font_description_set_variant(font_description, PANGO_VARIANT_SMALL_CAPS);
 	// pango_font_description_set_gravity(font_description, PANGO_GRAVITY_NORTH);
 
-	printf("text = %s, family = %s\n", text, pango_font_description_get_family(font_description));
 
 	layout = pango_cairo_create_layout (cr);
 	pango_layout_set_font_description (layout, font_description);
@@ -463,7 +462,6 @@ func (me *canvas) GetTextRect(text string, fontFamily string, fontSize float32) 
 
 	var extents C.cairo_text_extents_t
 	C.cairo_text_extents(me.ptr, str, (*C.cairo_text_extents_t)(unsafe.Pointer(&extents)))
-	// log.V("nuxui", fmt.Sprintln("extents: ", extents, extents.x_bearing))
 	C.free(unsafe.Pointer(str))
 	C.free(unsafe.Pointer(font))
 	return extents

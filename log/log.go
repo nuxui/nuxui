@@ -33,7 +33,7 @@ type Logger interface {
 	SetFlags(flag int)
 	Prefix() string
 	SetPrefix(prefix string)
-	Finish() // defer call at main function, cause panic will drop logs
+	Close() // defer call at main function, cause panic will drop logs
 }
 
 const lBufferSize = 20
@@ -111,9 +111,9 @@ func (me *logger) SetPrefix(prefix string) {
 	me.prefix = prefix
 }
 
-func (me *logger) Finish() {
-	if len(me.logs) > 0 {
-		time.Sleep(15 * time.Millisecond)
+func (me *logger) Close() {
+	for len(me.logs) > 0 {
+		time.Sleep(100 * time.Millisecond)
 	}
 }
 
@@ -167,6 +167,6 @@ func SetPrefix(prefix string) {
 	std.SetPrefix(prefix)
 }
 
-func Finish() {
-	std.Finish()
+func Close() {
+	std.Close()
 }
