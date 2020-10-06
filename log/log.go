@@ -13,6 +13,10 @@ import (
 )
 
 const (
+	colorTemplate = "%s \x1b[%sm%s\x1b[0m"
+)
+
+const (
 	VERBOSE = iota + 2
 	DEBUG
 	INFO
@@ -28,6 +32,8 @@ type Logger interface {
 	W(tag string, format string, msg ...interface{})
 	E(tag string, format string, msg ...interface{})
 	Fatal(tag string, format string, msg ...interface{}) // TODO:: print log, print stack, exit
+	Time() (id uint32)
+	TimeEnd(tag string, msg string, id uint32)
 	SetOutput(w io.Writer)
 	Flags() int
 	SetFlags(flag int)
@@ -36,7 +42,7 @@ type Logger interface {
 	Close() // defer call at main function, cause panic will drop logs
 }
 
-const lBufferSize = 20
+const lBufferSize = 50
 
 const (
 	Ldate         = 1 << iota // the date in the local time zone: 2009/01/23
@@ -49,13 +55,15 @@ const (
 )
 
 type logger struct {
-	size   uint
-	flags  int
-	depth  int
-	prefix string
-	mux    sync.Mutex
-	out    io.Writer
-	logs   chan string
+	size       uint
+	flags      int
+	depth      int
+	prefix     string
+	mux        sync.Mutex
+	out        io.Writer
+	logs       chan string
+	timer      map[uint32]time.Time
+	timerIndex uint32
 }
 
 func New(out io.Writer, prefix string, flags int) Logger {
@@ -63,28 +71,52 @@ func New(out io.Writer, prefix string, flags int) Logger {
 }
 
 func (me *logger) V(tag string, format string, msg ...interface{}) {
-	me.output(me.depth, VERBOSE, "V", tag, format, msg...)
+	me.output(me.depth, VERBOSE, "V", "", tag, format, msg...)
 }
 
 func (me *logger) D(tag string, format string, msg ...interface{}) {
-	me.output(me.depth, DEBUG, "D", tag, format, msg...)
+	me.output(me.depth, DEBUG, "D", "0;36", tag, format, msg...)
 }
 
 func (me *logger) I(tag string, format string, msg ...interface{}) {
-	me.output(me.depth, INFO, "I", tag, format, msg...)
+	me.output(me.depth, INFO, "I", "0;32", tag, format, msg...)
 }
 
 func (me *logger) W(tag string, format string, msg ...interface{}) {
-	me.output(me.depth, WARN, "W", tag, format, msg...)
+	me.output(me.depth, WARN, "W", "1;33", tag, format, msg...)
 }
 
 func (me *logger) E(tag string, format string, msg ...interface{}) {
-	me.output(me.depth, ERROR, "E", tag, format, msg...)
+	me.output(me.depth, ERROR, "E", "1;31", tag, format, msg...)
 }
 
 func (me *logger) Fatal(tag string, format string, msg ...interface{}) {
-	me.output(me.depth, ERROR, "Fatal", tag, format, msg...)
+	me.output(me.depth, ERROR, "Fatal", "97;41", tag, format, msg...)
 	panic(fmt.Sprintf(format, msg...))
+}
+
+func (me *logger) Time() (id uint32) {
+	me.mux.Lock()
+	id = me.timerIndex
+	me.timer[id] = time.Now()
+	me.timerIndex++
+	me.mux.Unlock()
+	return
+}
+
+func (me *logger) TimeEnd(tag string, msg string, id uint32) {
+	var t time.Time
+	var ok bool
+	me.mux.Lock()
+	t, ok = me.timer[id]
+	me.mux.Unlock()
+
+	if ok {
+		dur := time.Now().UnixNano() - t.UnixNano()
+		me.output(me.depth, DEBUG, "D", "0;36", tag, "%s: %dns,%dus", msg, dur, dur/1000)
+	} else {
+		me.output(me.depth, WARN, "W", "1;33", tag, "%s: has no timer found.", msg)
+	}
 }
 
 func (me *logger) SetOutput(w io.Writer) {
@@ -141,6 +173,14 @@ func E(tag string, format string, msg ...interface{}) {
 
 func Fatal(tag string, format string, msg ...interface{}) {
 	std.Fatal(tag, format, msg...)
+}
+
+func Time() (id uint32) {
+	return std.Time()
+}
+
+func TimeEnd(tag string, msg string, id uint32) {
+	std.TimeEnd(tag, msg, id)
 }
 
 func SetOutput(w io.Writer) {

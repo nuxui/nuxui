@@ -10,6 +10,7 @@ package log
 import (
 	"fmt"
 	"io"
+	"os"
 	"runtime"
 	"time"
 )
@@ -21,6 +22,7 @@ func new(out io.Writer, prefix string, flags int, depth int) Logger {
 		flags:  flags,
 		prefix: prefix,
 		logs:   make(chan string, lBufferSize),
+		timer:  map[uint32]time.Time{},
 	}
 
 	go func() {
@@ -32,7 +34,7 @@ func new(out io.Writer, prefix string, flags int, depth int) Logger {
 	return me
 }
 
-func (me *logger) output(depth int, level int, levelTag string, tag string, format string, msg ...interface{}) {
+func (me *logger) output(depth int, level int, levelTag string, color string, tag string, format string, msg ...interface{}) {
 	now := time.Now()
 
 	me.mux.Lock()
@@ -83,12 +85,24 @@ func (me *logger) output(depth int, level int, levelTag string, tag string, form
 			file = short
 		}
 
-		log = fmt.Sprintf("%s %s%s %s %s %s\n", now.Format(dformat), levelTag, prefix, file, tag, fmt.Sprintf(format, msg...))
+		if me.out == os.Stdout {
+			log = fmt.Sprintf(colorTemplate, now.Format(dformat), color, fmt.Sprintf("%s%s %s %s %s\n", levelTag, prefix, file, tag, fmt.Sprintf(format, msg...)))
+		} else {
+			log = fmt.Sprintf("%s %s%s %s %s %s\n", now.Format(dformat), levelTag, prefix, file, tag, fmt.Sprintf(format, msg...))
+		}
 	} else if me.flags&Llongfile != 0 {
 		frame := getFrameName(depth)
-		log = fmt.Sprintf("%s %s%s %s %s %s\n", now.Format(dformat), levelTag, prefix, frame, tag, fmt.Sprintf(format, msg...))
+		if me.out == os.Stdout {
+			log = fmt.Sprintf(colorTemplate, now.Format(dformat), color, fmt.Sprintf("%s%s %s %s %s\n", levelTag, prefix, frame, tag, fmt.Sprintf(format, msg...)))
+		} else {
+			log = fmt.Sprintf("%s %s%s %s %s %s\n", now.Format(dformat), levelTag, prefix, frame, tag, fmt.Sprintf(format, msg...))
+		}
 	} else {
-		log = fmt.Sprintf("%s %s%s %s %s\n", now.Format(dformat), levelTag, prefix, tag, fmt.Sprintf(format, msg...))
+		if me.out == os.Stdout {
+			log = fmt.Sprintf(colorTemplate, now.Format(dformat), color, fmt.Sprintf("%s%s %s %s\n", levelTag, prefix, tag, fmt.Sprintf(format, msg...)))
+		} else {
+			log = fmt.Sprintf("%s %s%s %s %s\n", now.Format(dformat), levelTag, prefix, tag, fmt.Sprintf(format, msg...))
+		}
 	}
 	me.logs <- log
 
