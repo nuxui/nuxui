@@ -34,7 +34,7 @@ func new(out io.Writer, prefix string, flags int, depth int) Logger {
 	return me
 }
 
-func (me *logger) output(depth int, level int, levelTag string, color string, tag string, format string, msg ...interface{}) {
+func (me *logger) output(depth int, color string, level int, levelTag string, tag string, format string, msg ...interface{}) {
 	now := time.Now()
 
 	me.mux.Lock()
