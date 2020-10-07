@@ -24,12 +24,12 @@ type Mode byte
 const (
 	Pixel   Mode = iota // 1 means 1px
 	Auto                // wrap content
+	Unlimit             // MeasuredDimen used Pixel, Auto, Unlimit
 	Weight              // 1wt >= 0
 	Ratio               // 16:9, no zero, no negative
 	Percent             // 50% means (parent.size - parent.padding)*0.5
-	Unspec              // Unspec
-	Default             // default nux unit
-	pixel               // negative pixel
+	spare               // default nux unit
+	pixel               // negative pixel 111
 )
 
 const (
@@ -44,18 +44,23 @@ const (
 
 func ADimen(value float32, mode Mode) Dimen {
 	if mode < Pixel || mode > pixel {
-		log.Fatal("nuxui", "Invalide dimen mode")
+		log.Fatal("nuxui", "Invalid dimen mode")
 	}
 
-	if mode == Weight {
-		if value < 0 {
-			log.Fatal("nuxui", "Invalide dimen value, the value of Weight can not be negative")
+	switch mode {
+	case Weight:
+		if value == 0 {
+			mode = Pixel
+		} else if value < 0 {
+			log.Fatal("nuxui", "Invalid dimen value, the value of Weight can not be negative")
 		}
-	}
-
-	if mode == Ratio {
+	case Ratio:
 		if value <= 0 {
-			log.Fatal("nuxui", "Invalide dimen value, the value of Ratio must be positive")
+			log.Fatal("nuxui", "Invalid dimen value, the value of Ratio must be positive")
+		}
+	case Percent:
+		if value == 0 {
+			mode = Pixel
 		}
 	}
 
@@ -103,10 +108,10 @@ func (me Mode) String() string {
 		return "Ratio"
 	case Percent:
 		return "Percent"
-	case Unspec:
-		return "Unspec"
-	case Default:
-		return "Default"
+	case Unlimit:
+		return "Unlimit"
+	case spare:
+		return "spare"
 	}
 	log.Fatal("nuxui", "can not run here.")
 	return ""
@@ -124,10 +129,10 @@ func (me Dimen) String() string {
 		return fmt.Sprintf(`%.2f`, me.Value())
 	case Percent:
 		return fmt.Sprintf(`%.2f%%`, me.Value())
-	case Unspec:
-		return "Unspec"
-	case Default:
-		return "Default"
+	case Unlimit:
+		return "Unlimit"
+	case spare:
+		return "spare"
 	}
 	log.Fatal("nuxui", "can not run here.")
 	return ""
@@ -142,15 +147,17 @@ func SDimen(s string) Dimen {
 	return d
 }
 func ParseDimen(s string) (Dimen, error) {
-	if s == "" || strings.Compare(s, "auto") == 0 {
+	if s == "" || s == "auto"  {
 		return ADimen(0, Auto), nil
+	} else if s == "unlimit"  {
+		return ADimen(0, Unlimit), nil
 	} else if strings.HasSuffix(s, "%") {
 		v, e := strconv.ParseFloat(string(s[0:len(s)-1]), 32)
 		if e != nil {
 			return 0, fmt.Errorf(`invalid Percent dimension format: "%s"`, s)
 		}
 		return ADimen(float32(v), Percent), nil
-	} else if strings.Compare(s, "0") == 0 {
+	} else if s == "0"  {
 		return 0, nil
 	} else if strings.HasSuffix(s, "px") {
 		v, e := strconv.ParseFloat(string(s[0:len(s)-2]), 32)
@@ -163,7 +170,7 @@ func ParseDimen(s string) (Dimen, error) {
 		if e != nil {
 			return 0, fmt.Errorf(`invalid Weight dimension format: "%s"`, s)
 		}
-		if v <= 0 {
+		if v < 0 {
 			return 0, fmt.Errorf(`invalid Weight dimension format: "%s", the weight must be positive number`, s)
 		}
 		return ADimen(float32(v), Weight), nil
@@ -192,8 +199,8 @@ const measuredDimenModeMask int32 = -1073741824 //0xC0000000
 const measuredDimenValueMask int32 = 0x3FFFFFFF
 
 func MeasureSpec(value int32, mode Mode) int32 {
-	if !(mode == Pixel || mode == Auto || mode == Unspec) {
-		log.Fatal("nuxui", "error for MeasureSpec mdoe, only support Pixel, Auto, Unspec")
+	if !(mode == Pixel || mode == Auto || mode == Unlimit) {
+		log.Fatal("nuxui", "error for MeasureSpec mdoe, only support Pixel, Auto, Unlimit")
 	}
 	if value > MaxMeasuredDimen {
 		log.Fatal("nuxui", "error for MeasureSpec value, out of range")
@@ -212,11 +219,5 @@ func MeasureSpecValue(size int32) int32 {
 }
 
 func MeasureSpecString(size int32) string {
-	switch MeasureSpecMode(size) {
-	case Pixel:
-		return fmt.Sprintf(`%dpx`, MeasureSpecValue(size))
-	case Auto:
-		return fmt.Sprintf(`%dat`, MeasureSpecValue(size))
-	}
-	return "Unspec"
+	return fmt.Sprintf(`%d %s`, MeasureSpecValue(size), MeasureSpecMode(size))
 }

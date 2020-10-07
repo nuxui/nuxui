@@ -25,8 +25,8 @@ type RectXY struct {
 	Top    int32
 	Right  int32
 	Bottom int32
-	X      int32
-	Y      int32
+	X      int32 // x in window
+	Y      int32 // y in window
 }
 
 func (me *Rect) Width() int32 {

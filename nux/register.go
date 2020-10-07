@@ -6,7 +6,6 @@ package nux
 
 import (
 	"reflect"
-	"strings"
 
 	"github.com/nuxui/nuxui/log"
 )
@@ -272,14 +271,14 @@ func DrawWidget2(canvas Canvas, widget Widget) {
 }
 
 func drawWidgetById0(canvas Canvas, widget Widget, id string) {
-	if strings.Compare("title", widget.ID()) == 0 {
+	if "title" == widget.ID() {
 		if s, ok := widget.(Size); ok {
 			if d, ok := widget.(Draw); ok {
 				ms := s.MeasuredSize()
 				canvas.Save()
 				canvas.Translate(ms.Position.Left, ms.Position.Top)
 				canvas.ClipRect(0, 0, ms.Width, ms.Height)
-				if strings.Compare("title", widget.ID()) == 0 {
+				if "title" == widget.ID() {
 					d.Draw(canvas)
 				}
 				canvas.Restore()
@@ -327,7 +326,7 @@ func Find(widget Widget, id string) Widget {
 }
 
 func find(widget Widget, id string) Widget {
-	if strings.Compare(id, widget.ID()) == 0 {
+	if id == widget.ID() {
 		return widget
 	}
 
@@ -348,7 +347,7 @@ func find(widget Widget, id string) Widget {
 
 // func FindMixin(widget Widget, id string) Mixin {
 // 	for _, mixin := range Mixins(widget) {
-// 		if strings.Compare(id, mixin.ID()) == 0 {
+// 		if id == mixin.ID()  {
 // 			return mixin
 // 		}
 // 	}

@@ -173,8 +173,8 @@ func (me *row) Measure(width, height int32) {
 		if cs, ok := child.(nux.Size); ok {
 			cms := cs.MeasuredSize()
 
-			cms.Width = nux.MeasureSpec(0, nux.Unspec)
-			cms.Height = nux.MeasureSpec(0, nux.Unspec)
+			cms.Width = nux.MeasureSpec(0, nux.Unlimit)
+			cms.Height = nux.MeasureSpec(0, nux.Unlimit)
 
 			if cs.HasMargin() {
 				switch cs.MarginLeft().Mode() {
@@ -254,7 +254,7 @@ func (me *row) Measure(width, height int32) {
 				w := innerWidth - hPxUsed
 				cms.Width = nux.MeasureSpec(util.Roundi32(w), nux.Auto)
 				setRatioHeight(cs, cms, w, nux.Pixel)
-			case nux.Default, nux.Unspec:
+			case nux.Unlimit:
 				// nothing
 			}
 
@@ -477,7 +477,7 @@ func (me *row) measureVertical(width, height int32, vPPx, vPPt, innerHeight floa
 			// measured when measure height
 		case nux.Auto:
 			// measure later
-		case nux.Default, nux.Unspec:
+		case nux.Unlimit:
 			// ignore
 		}
 
@@ -545,7 +545,7 @@ func (me *row) measureVertical(width, height int32, vPPx, vPPt, innerHeight floa
 			setRatioWidth(cs, cms, h, nux.Pixel)
 		}
 
-		if nux.MeasureSpecMode(cms.Width) != nux.Unspec && nux.MeasureSpecMode(cms.Height) != nux.Unspec &&
+		if nux.MeasureSpecMode(cms.Width) != nux.Unlimit && nux.MeasureSpecMode(cms.Height) != nux.Unlimit &&
 			!(nux.MeasureSpecMode(height) == nux.Auto && cs.Height().Mode() == nux.Percent) {
 			if m, ok := child.(nux.Measure); ok {
 				measuredIndex[index] = struct{}{}

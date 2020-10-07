@@ -54,13 +54,13 @@ func (me *layer) onVisualChanged(widget nux.Widget) {
 func (me *layer) Measure(width, height int32) {
 	ms := me.MeasuredSize()
 	measuredIndex := map[int]struct{}{}
-	if nux.MeasureSpecMode(width) == nux.Auto || nux.MeasureSpecMode(height) == nux.Auto {
+	if nux.MeasureSpecMode(width) == nux.Pixel && nux.MeasureSpecMode(height) == nux.Pixel {
+		me.measure(width, height, measuredIndex)
+	} else {
 		w, h := me.measure(width, height, measuredIndex)
 		w, h = me.measure(w, h, measuredIndex)
 		ms.Width = w
 		ms.Height = h
-	} else if nux.MeasureSpecMode(width) == nux.Pixel && nux.MeasureSpecMode(height) == nux.Pixel {
-		me.measure(width, height, measuredIndex)
 	}
 }
 
@@ -187,8 +187,8 @@ func (me *layer) measure(width, height int32, measuredIndex map[int]struct{}) (o
 		if cs, ok := child.(nux.Size); ok {
 			cms := cs.MeasuredSize()
 			if _, ok := measuredIndex[index]; !ok {
-				cms.Width = nux.MeasureSpec(0, nux.Unspec)
-				cms.Height = nux.MeasureSpec(0, nux.Unspec)
+				cms.Width = nux.MeasureSpec(0, nux.Unlimit)
+				cms.Height = nux.MeasureSpec(0, nux.Unlimit)
 			}
 
 			if cs.HasMargin() {
@@ -317,7 +317,7 @@ func (me *layer) measure(width, height int32, measuredIndex map[int]struct{}) (o
 				case nux.Auto:
 					cms.Width = nux.MeasureSpec(util.Roundi32(hPxRemain), nux.Auto)
 					setRatioHeight(cs, cms, hPxRemain, nux.Pixel)
-				case nux.Default, nux.Unspec:
+				case nux.Unlimit:
 					// ignore
 				}
 
@@ -351,11 +351,11 @@ func (me *layer) measure(width, height int32, measuredIndex map[int]struct{}) (o
 				case nux.Auto:
 					cms.Height = nux.MeasureSpec(util.Roundi32(vPxRemain), nux.Auto)
 					setRatioWidth(cs, cms, vPxRemain, nux.Pixel)
-				case nux.Default, nux.Unspec:
+				case nux.Unlimit:
 					// nothing
 				}
 
-				if nux.MeasureSpecMode(cms.Height) != nux.Unspec && nux.MeasureSpecMode(cms.Width) != nux.Unspec {
+				if nux.MeasureSpecMode(cms.Height) != nux.Unlimit && nux.MeasureSpecMode(cms.Width) != nux.Unlimit {
 					if m, ok := child.(nux.Measure); ok {
 						m.Measure(cms.Width, cms.Height)
 

@@ -46,11 +46,6 @@ type Size interface {
 	RemoveOnSizeChanged(callback OnSizeChanged)
 }
 
-// type Offset struct {
-// 	X int32
-// 	Y int32
-// }
-
 type MeasuredSize struct {
 	Width    int32
 	Height   int32
@@ -64,8 +59,6 @@ func (me *MeasuredSize) String() string {
 		me.Height, me.Padding.Left, me.Padding.Top, me.Padding.Right, me.Padding.Bottom, me.Margin.Left, me.Margin.Top, me.Margin.Right, me.Margin.Bottom)
 }
 
-// TODO Margin padding width height gravity{vertical: @parent.left} align{vertical: @parent.left} position: {left: @parent}
-// width: @me.height height: @me. $parent.right $boxRoot.left
 // padding: !auto 10px 10dp 5% !wt !ratio !unlimit
 type Padding struct {
 	Left   Dimen
@@ -92,7 +85,7 @@ func (me *Padding) Creating(attr Attr) {
 func getPadding(attr Attr, key string, defaultValue string) Dimen {
 	d := attr.GetDimen(key, defaultValue)
 	switch d.Mode() {
-	case Auto, Weight, Unspec, Ratio:
+	case Auto, Weight, Unlimit, Ratio:
 		log.Fatal("nuxui", "Unsupported padding dimension mode %s at %s: %s, only supported Pixel, dp, Percent.", d.Mode(), key, d)
 	default:
 		return d
@@ -126,8 +119,8 @@ func (me *Margin) Creating(attr Attr) {
 func getMargin(attr Attr, key string, defaultValue string) Dimen {
 	d := attr.GetDimen(key, defaultValue)
 	switch d.Mode() {
-	case Auto, Unspec, Ratio:
-		log.Fatal("nuxui", "Unsupported padding dimension mode %s at %s: %s, only supported Pixel, dp, Percent.", d.Mode(), key, d)
+	case Auto, Unlimit, Ratio:
+		log.Fatal("nuxui", "Unsupported padding dimension mode %s at %s: %s, only supported Pixel, dp, Weight, Percent.", d.Mode(), key, d)
 	default:
 		return d
 	}

@@ -59,7 +59,7 @@ func (me *window) Creating(attr Attr) {
 	// create decor widget
 
 	if me.decor == nil {
-		me.decor = newDecor(me)
+		me.CreatDecor(attr)
 		GestureBinding().AddGestureHandler(me.decor, &decorGestureHandler{})
 	}
 
@@ -81,6 +81,20 @@ func (me *window) Created(data interface{}) {
 	if c, ok := me.decor.(Created); ok {
 		c.Created(me.decor)
 	}
+}
+
+func (me *window) CreatDecor(attr Attr) Widget {
+	creator := FindRegistedWidgetCreatorByName("github.com/nuxui/nuxui/ui.Layer")
+	w := creator()
+	if p, ok := w.(Parent); ok {
+		me.decor = p
+	} else {
+		log.Fatal("nuxui", "decor must is a Parent")
+	}
+
+	decorWindowList[w] = me
+
+	return me.decor
 }
 
 func (me *window) Measure(width, height int32) {

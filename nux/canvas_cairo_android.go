@@ -210,8 +210,8 @@ func (me *canvas) ClipRect(left, top, right, bottom int32) {
 }
 
 func (me *canvas) ClipRectF(left, top, right, bottom float32) {
-	if right <= left || bottom <= top {
-		return
+	if right < left || bottom < top {
+		log.Fatal("nuxui", "invalid rect for clip")
 	}
 	C.cairo_rectangle(me.ptr, C.double(left), C.double(top), C.double(right-left), C.double(bottom-top))
 	C.cairo_clip(me.ptr)

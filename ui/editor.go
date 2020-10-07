@@ -6,7 +6,6 @@ package ui
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/nuxui/nuxui/nux"
@@ -131,7 +130,7 @@ func (me *editor) Text() string {
 }
 
 func (me *editor) SetText(text string) {
-	if strings.Compare(me.text, text) != 0 {
+	if me.text != text {
 		me.text = text
 		nux.RequestLayout(me)
 		nux.RequestRedraw(me)

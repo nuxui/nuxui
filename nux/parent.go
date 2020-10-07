@@ -5,8 +5,6 @@
 package nux
 
 import (
-	"strings"
-
 	"github.com/nuxui/nuxui/log"
 )
 
@@ -117,7 +115,7 @@ func (me *WidgetParent) ReplaceChild(src, dest Widget) int {
 func (me *WidgetParent) GetWidget(id string) Widget {
 	// TODO:: need check me.children is nil?
 	for _, child := range me.children {
-		if strings.Compare(child.ID(), id) == 0 {
+		if child.ID() == id {
 			return child
 		}
 	}

@@ -7,7 +7,6 @@ package ui
 // TODO Text can automatically fine-tune the spacing to ensure that the font occupies the entire line. Basic Text does not do this and uses the new AlignedText
 
 import (
-	"strings"
 	"time"
 
 	"github.com/nuxui/nuxui/nux"
@@ -113,7 +112,7 @@ func (me *text) Text() string {
 }
 
 func (me *text) SetText(text string) {
-	if strings.Compare(me.text, text) != 0 {
+	if me.text != text {
 		me.text = text
 		nux.RequestLayout(me)
 	}
@@ -125,6 +124,9 @@ func (me *text) Layout(dx, dy, left, top, right, bottom int32) {
 }
 
 func (me *text) Measure(width, height int32) {
+	// measuredDuration := log.Time()
+	// defer log.TimeEnd("nuxui", "ui.Text Measure", measuredDuration)
+
 	var vPPt float32 // horizontal padding percent
 	var vPPx float32 // horizontal padding pixel
 	var hPPt float32

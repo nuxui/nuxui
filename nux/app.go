@@ -4,7 +4,10 @@
 
 package nux
 
-import "github.com/nuxui/nuxui/log"
+import (
+	"github.com/nuxui/nuxui/log"
+	"github.com/nuxui/nuxui/util"
+)
 
 // Application app
 type Application interface {
@@ -163,11 +166,15 @@ func RequestFocus(widget Widget) {
 	}
 }
 
+var decorWindowList map[Widget]Window = map[Widget]Window{}
+
 // GetWidgetWindow get the window of widget  return can be nil
 func GetWidgetWindow(widget Widget) Window {
 	if widget.Parent() == nil {
-		if decor, ok := widget.(Decor); ok {
-			return decor.Window()
+		if util.GetTypeName(widget) == "github.com/nuxui/nuxui/ui.layer" {
+			if w, ok := decorWindowList[widget]; ok {
+				return w
+			}
 		}
 
 		// log.Fatal("nuxui", "can not run here %T", widget)

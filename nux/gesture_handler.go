@@ -5,8 +5,6 @@
 package nux
 
 import (
-	"strings"
-
 	"github.com/nuxui/nuxui/log"
 	"github.com/nuxui/nuxui/util"
 )
@@ -39,7 +37,7 @@ func (me *gestureHandler) AddGestureRecoginer(recognizer GestureRecognizer) {
 		name := util.GetTypeName(recognizer)
 		for _, r := range me.gestureRecognizers {
 			n := util.GetTypeName(r)
-			if strings.Compare(name, n) == 0 {
+			if name == n {
 				log.Fatal("nuxui", "The gesture recognizer '%s' is already registed.", name)
 			}
 		}
@@ -73,7 +71,7 @@ func (me *gestureHandler) HandlePointerEvent(event Event) {
 func (me *gestureHandler) FindGestureRecognizer(recognizerType GestureRecognizer) GestureRecognizer {
 	name := util.GetTypeName(recognizerType)
 	for _, r := range me.gestureRecognizers {
-		if strings.Compare(util.GetTypeName(r), name) == 0 {
+		if util.GetTypeName(r) == name  {
 			return r
 		}
 	}

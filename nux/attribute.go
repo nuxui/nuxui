@@ -62,9 +62,9 @@ func (me Attr) GetBool(key string, defaultValue bool) bool {
 	if attr, ok := me[key]; ok {
 		switch t := attr.(type) {
 		case string:
-			if strings.Compare("true", t) == 0 {
+			if "true" == t {
 				return true
-			} else if strings.Compare("false", t) == 0 {
+			} else if "false" == t {
 				return false
 			}
 			log.E("nuxui", "Error: unsupport convert %s %T:%s to bool, use default value instead\n", key, t, t)
@@ -486,7 +486,7 @@ func (me *attr) nextStruct() Attr {
 		value := me.nextValue()
 		data[key] = value
 
-		if me.i == nil && strings.Compare("import", key) == 0 {
+		if me.i == nil && "import" == key  {
 			if i, ok := value.(Attr); ok {
 				me.i = i
 			}
