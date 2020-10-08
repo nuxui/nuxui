@@ -55,8 +55,8 @@ type MeasuredSize struct {
 }
 
 func (me *MeasuredSize) String() string {
-	return fmt.Sprintf("{width: %d, height: %d, padding:{left: %d, top: %d, right: %d, bottom: %d}, margin:{left: %d, top: %d, right: %d, bottom: %d}", me.Width,
-		me.Height, me.Padding.Left, me.Padding.Top, me.Padding.Right, me.Padding.Bottom, me.Margin.Left, me.Margin.Top, me.Margin.Right, me.Margin.Bottom)
+	return fmt.Sprintf("{width: %s, height: %s, padding:{left: %d, top: %d, right: %d, bottom: %d}, margin:{left: %d, top: %d, right: %d, bottom: %d}", MeasureSpecString(me.Width),
+		MeasureSpecString(me.Height), me.Padding.Left, me.Padding.Top, me.Padding.Right, me.Padding.Bottom, me.Margin.Left, me.Margin.Top, me.Margin.Right, me.Margin.Bottom)
 }
 
 // padding: !auto 10px 10dp 5% !wt !ratio !unlimit

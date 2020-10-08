@@ -94,9 +94,14 @@ func (me *column) onVisualChanged(widget nux.Widget) {
 
 const (
 	hMeasuredWidth byte = 1 << iota
+	hMeasuredHeight
 	hMeasuredMarginLeft
 	hMeasuredMarginRight
-	hMeasuredComplete = hMeasuredWidth | hMeasuredMarginLeft | hMeasuredMarginRight
+	hMeasuredMarginTop
+	hMeasuredMarginBottom
+	hMeasuredWidthComplete  = hMeasuredWidth | hMeasuredMarginLeft | hMeasuredMarginRight
+	hMeasuredHeightComplete = hMeasuredHeight | hMeasuredMarginTop | hMeasuredMarginBottom
+	hMeasuredComplete       = hMeasuredWidth | hMeasuredHeight | hMeasuredMarginLeft | hMeasuredMarginRight | hMeasuredMarginTop | hMeasuredMarginBottom
 )
 
 func (me *column) Measure(width, height int32) {
@@ -125,7 +130,7 @@ func (me *column) Measure(width, height int32) {
 	originWidth := width
 	originHeight := height
 
-	childrenMeasuredFlags := map[int]byte{}
+	childrenMeasuredFlags := make([]byte, len(me.Children()))
 	maxWidthChanged := false
 
 	ms := me.MeasuredSize()
@@ -373,16 +378,9 @@ func (me *column) Measure(width, height int32) {
 
 	// log.TimeEnd(measureDuration_1lun, "nuxui", "ui.Column Measure measureDuration_1lun %s", me.ID())
 
-	// TODO:: Optimize the number of traverses
-	// if len(waitMeasuredIndex) == me.ChildrenCount() {
-	// 	if nux.MeasureSpecMode(width) == nux.Auto {
-
-	// 	}
-	// 	return
-	// }
-
 	// Use the maximum width found in the first traversal as the width in auto mode, and calculate the percent size
-	if nux.MeasureSpecMode(width) == nux.Auto || nux.MeasureSpecMode(width) == nux.Unlimit {
+	switch nux.MeasureSpecMode(width) {
+	case nux.Auto, nux.Unlimit:
 		innerWidth = hPxMax
 		w := (innerWidth + hPPx) / (1 - hPPt/100.0)
 		width = nux.MeasureSpec(util.Roundi32(w), nux.Pixel)
@@ -461,7 +459,7 @@ func (me *column) Measure(width, height int32) {
 				}
 			}
 
-			if measuredFlags, _ := childrenMeasuredFlags[index]; (measuredFlags&hMeasuredComplete != hMeasuredComplete || maxWidthChanged) && canMeasureHeight {
+			if measuredFlags := childrenMeasuredFlags[index]; (measuredFlags&hMeasuredWidthComplete != hMeasuredWidthComplete || maxWidthChanged) && canMeasureHeight {
 				// now width mode is must be nux.Pixel
 				if nux.MeasureSpecMode(width) != nux.Pixel {
 					log.Fatal("nuxui", "can not run here")
@@ -469,8 +467,8 @@ func (me *column) Measure(width, height int32) {
 
 				needMeasure := true
 				if maxWidthChanged {
-					if measuredFlags&hMeasuredComplete == hMeasuredComplete {
-						log.I("nuxui", "hMeasuredComplete child:%s hpx=%d", child.ID(), (cms.Width + cms.Margin.Left + cms.Margin.Right))
+					if measuredFlags&hMeasuredWidthComplete == hMeasuredWidthComplete {
+						log.I("nuxui", "hMeasuredWidthComplete child:%s hpx=%d", child.ID(), (cms.Width + cms.Margin.Left + cms.Margin.Right))
 						if cms.Width+cms.Margin.Left+cms.Margin.Right == util.Roundi32(innerWidth) {
 							needMeasure = false
 						}
@@ -546,12 +544,12 @@ func (me *column) Measure(width, height int32) {
 						setRatioWidth(cs, cms, ch, nux.Pixel)
 					}
 
-					if measuredFlags, _ := childrenMeasuredFlags[index]; measuredFlags != hMeasuredComplete {
+					if measuredFlags := childrenMeasuredFlags[index]; measuredFlags != hMeasuredWidthComplete {
 						// now width mode is must be nux.Pixel
 						log.I("nuxui", "measureHorizontal 3 width:%s, height:%s, hPPx:%.2f, hPPt:%.2f, innerWidth:%.2f, canMeasureHeight:%t, measuredFlags:%d", nux.MeasureSpecString(width), nux.MeasureSpecString(height), hPPx, hPPt, innerWidth, true, measuredFlags)
 						newMeasuredFlags, _ := me.measureHorizontal(width, height, hPPx, hPPt, innerWidth, child, true, measuredFlags)
 
-						if newMeasuredFlags != hMeasuredComplete {
+						if newMeasuredFlags != hMeasuredWidthComplete {
 							log.Fatal("nuxui", "can not run here")
 						}
 
@@ -605,7 +603,7 @@ func (me *column) measureHorizontal(width, height int32, hPPx, hPPt, innerWidth 
 		cms := cs.MeasuredSize()
 
 		// if alrady measured complete, return
-		if hasMeasuredFlags == hMeasuredComplete {
+		if hasMeasuredFlags == hMeasuredWidthComplete {
 			if hpx := cms.Width + cms.Margin.Left + cms.Margin.Right; hpx == nux.MeasureSpecValue(width) {
 				return hasMeasuredFlags, float32(hpx)
 			}
