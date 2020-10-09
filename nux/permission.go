@@ -4,8 +4,6 @@
 
 package nux
 
-// https://blog.csdn.net/generallizhong/article/details/99716283
-
 const (
 	permission_granted = 0 + iota
 	permission_denied

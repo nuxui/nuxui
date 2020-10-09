@@ -17,3 +17,15 @@ const (
 	Right  = 3
 	Bottom = 4
 )
+
+const (
+	hMeasuredWidth byte = 1 << iota
+	hMeasuredHeight
+	hMeasuredMarginLeft
+	hMeasuredMarginRight
+	hMeasuredMarginTop
+	hMeasuredMarginBottom
+	hMeasuredWidthComplete  = hMeasuredWidth | hMeasuredMarginLeft | hMeasuredMarginRight
+	hMeasuredHeightComplete = hMeasuredHeight | hMeasuredMarginTop | hMeasuredMarginBottom
+	hMeasuredComplete       = hMeasuredWidth | hMeasuredHeight | hMeasuredMarginLeft | hMeasuredMarginRight | hMeasuredMarginTop | hMeasuredMarginBottom
+)

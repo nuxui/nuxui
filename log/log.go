@@ -16,8 +16,10 @@ const (
 	colorTemplate = "%s \x1b[%sm%s\x1b[0m"
 )
 
+type Level int
+
 const (
-	VERBOSE = iota + 2
+	VERBOSE Level = iota + 2
 	DEBUG
 	INFO
 	WARN
@@ -39,6 +41,8 @@ type Logger interface {
 	SetFlags(flag int)
 	Prefix() string
 	SetPrefix(prefix string)
+	Level() Level
+	SetLevel(level Level)
 	Close() // defer call at main function, cause panic will drop logs
 }
 
@@ -59,6 +63,7 @@ type logger struct {
 	flags      int
 	depth      int
 	prefix     string
+	level      Level
 	mux        sync.Mutex
 	out        io.Writer
 	logs       chan string
@@ -143,6 +148,14 @@ func (me *logger) SetPrefix(prefix string) {
 	me.prefix = prefix
 }
 
+func (me *logger) Level() Level {
+	return me.level
+}
+
+func (me *logger) SetLevel(level Level) {
+	me.level = level
+}
+
 func (me *logger) Close() {
 	for len(me.logs) > 0 {
 		time.Sleep(100 * time.Millisecond)
@@ -205,6 +218,14 @@ func Prefix() string {
 // SetPrefix sets the output prefix for the standard logger.
 func SetPrefix(prefix string) {
 	std.SetPrefix(prefix)
+}
+
+func LogLevel() Level {
+	return std.Level()
+}
+
+func SetLevel(level Level) {
+	std.SetLevel(level)
 }
 
 func Close() {

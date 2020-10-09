@@ -29,13 +29,14 @@ func new(out io.Writer, prefix string, flags int, depth int) Logger {
 		out:    out,
 		flags:  flags,
 		prefix: prefix,
+		level:  VERBOSE,
 		logs:   make(chan string, lBufferSize),
 	}
 
 	return me
 }
 
-func (me *logger) output(depth int, level int, levelTag string, tag string, format string, msg ...interface{}) {
+func (me *logger) output(depth int, level Level, levelTag string, tag string, format string, msg ...interface{}) {
 	ctag := C.CString(tag)
 	str := fmt.Sprintf(format, msg...)
 	cmsg := C.CString(str)

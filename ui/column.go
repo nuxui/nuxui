@@ -62,48 +62,6 @@ func (me *column) onVisualChanged(widget nux.Widget) {
 
 }
 
-/*
-| Width   | parent Width                                          | Height         | parent Height                                            | measure |
-| ------- | ----------------------------------------------------- | -------------- | -------------------------------------------------------- | ------- |
-| Pixel   |                                                       | Pixel          |                                                          | ok      |
-| Pixel   |                                                       | Auto           |                                                          | ok      |
-| Pixel   |                                                       | Weight         |                                                          | ==      |
-| Pixel   |                                                       | Ratio -> Pixel |                                                          | ok      |
-| Pixel   |                                                       | Percent        | Pixel ok  ,   Auto ->auto% ==,   Infinite->infinite% ==, | ==      |
-| Auto    | Pixel ok  ,   Auto->auto  ok  ,   Infinite->Infinite  | Pixel          |                                                          | ok      |
-| Auto    |                                                       | Auto           | Pixel ok  ,   Auto  ok,   Infinite->Infinite,            | ok      |
-| Auto    |                                                       | Weight         |                                                          | ==      |
-| Auto    |                                                       | Ratio          | X2, measure once, if not equal, log.Warn                 | ok      |
-| Auto    |                                                       | Percent        | Pixel ok  ,   Auto  ==,   Infinite ==,                   | ==      |
-| Weight  | Pixel ok,  Auto  maxWidth/wt=,  Infinite maxWidth/wt= | Pixel          |                                                          | ok      |
-| Weight  | Pixel ok,  Auto  maxWidth/wt=,  Infinite maxWidth/wt= | Auto           |                                                          | ok      |
-| Weight  | Pixel ok,  Auto  maxWidth/wt=,  Infinite maxWidth/wt= | Weight         |                                                          | ==      |
-| Weight  | Pixel ok,  Auto  maxWidth/wt=,  Infinite maxWidth/wt= | Ratio-> Pixel  |                                                          | ok      |
-| Weight  | Pixel ok,  Auto  maxWidth/wt=,  Infinite maxWidth/wt= | Percent        | Pixel ok  ,   Auto ->auto% ==,   Infinite->infinite% ==, | ==      |
-| Ratio   |                                                       | Pixel          |                                                          | ok      |
-| Ratio   |                                                       | Auto           | X2, measure once, if not equal, log.Warn                 | ok      |
-| Ratio   |                                                       | Weight         |                                                          | ==      |
-| Ratio   |                                                       | Ratio          | panic                                                    | X       |
-| Ratio   |                                                       | Percent        | Pixel ok  ,   Auto ->auto% ==,   Infinite->infinite% ==  | ==      |
-| Percent | Pixel ok,  Auto ->maxWidth%= ,  Infinite->maxWidth%=  | Pixel          |                                                          | ok      |
-| Percent | Pixel ok,  Auto ->maxWidth%= ,  Infinite->maxWidth%=  | Auto           |                                                          | ok      |
-| Percent | Pixel ok,  Auto ->maxWidth%= ,  Infinite->maxWidth%=  | Weight         |                                                          | ==      |
-| Percent | Pixel ok,  Auto ->maxWidth%= ,  Infinite->maxWidth%=  | Ratio          | X2, measure once, if not equal, log.Warn                 | ok      |
-| Percent | Pixel ok,  Auto ->maxWidth%= ,  Infinite->maxWidth%=  | Percent        | Pixel ok  ,   Auto ->auto% ==,   Infinite->infinite% ==  | ==      |
-*/
-
-const (
-	hMeasuredWidth byte = 1 << iota
-	hMeasuredHeight
-	hMeasuredMarginLeft
-	hMeasuredMarginRight
-	hMeasuredMarginTop
-	hMeasuredMarginBottom
-	hMeasuredWidthComplete  = hMeasuredWidth | hMeasuredMarginLeft | hMeasuredMarginRight
-	hMeasuredHeightComplete = hMeasuredHeight | hMeasuredMarginTop | hMeasuredMarginBottom
-	hMeasuredComplete       = hMeasuredWidth | hMeasuredHeight | hMeasuredMarginLeft | hMeasuredMarginRight | hMeasuredMarginTop | hMeasuredMarginBottom
-)
-
 func (me *column) Measure(width, height int32) {
 	log.I("nuxui", "ui.Column %s Measure width=%s, height=%s", me.ID(), nux.MeasureSpecString(width), nux.MeasureSpecString(height))
 	measureDuration := log.Time()
@@ -345,7 +303,7 @@ func (me *column) Measure(width, height int32) {
 				// ok
 			case nux.Ratio:
 				if cs.Width().Mode() == nux.Ratio {
-					log.Fatal("nuxui", "width and height size mode can not both nux.Ratio")
+					log.Fatal("nuxui", "width and height size mode can not both Ratio")
 				}
 				// ok
 			case nux.Auto, nux.Unlimit:
@@ -425,6 +383,7 @@ func (me *column) Measure(width, height int32) {
 
 			canMeasureHeight := true
 
+			// Vertical weight only works for Pixel Mode
 			switch nux.MeasureSpecMode(height) {
 			case nux.Pixel:
 				// Vertical weight only works for nux.Pixel Mode
@@ -445,6 +404,9 @@ func (me *column) Measure(width, height int32) {
 				if cs.Height().Mode() == nux.Weight {
 					if vWt > 0 && vPxRemain > 0 {
 						h := cs.Height().Value() / vWt * vPxRemain
+						if h < 0 {
+							h = 0
+						}
 						cms.Height = nux.MeasureSpec(util.Roundi32(h), nux.Pixel)
 						setRatioWidth(cs, cms, h, nux.Pixel)
 					} else {
@@ -501,6 +463,9 @@ func (me *column) Measure(width, height int32) {
 
 		innerHeight = vPx / (1.0 - vPt/100.0)
 		h := (innerHeight + vPPx) / (1.0 - vPPt/100.0)
+		if h < 0 {
+			h = 0
+		}
 		height = nux.MeasureSpec(util.Roundi32(h), nux.Pixel)
 
 		if vPPt > 0 {
@@ -552,7 +517,6 @@ func (me *column) Measure(width, height int32) {
 						if newMeasuredFlags != hMeasuredWidthComplete {
 							log.Fatal("nuxui", "can not run here")
 						}
-
 					}
 				}
 			}
@@ -590,7 +554,7 @@ func (me *column) Measure(width, height int32) {
 
 // return hpx in innerWidth
 func (me *column) measureHorizontal(width, height int32, hPPx, hPPt, innerWidth float32,
-	child nux.Widget, canMeasureHeight bool, hasMeasuredFlags byte) (measuredFlags byte, hpxtotal float32) {
+	child nux.Widget, canMeasureHeight bool, hasMeasuredFlags byte) (measuredFlags byte, hpxmax float32) {
 	// measuredDuration := log.Time()
 	// defer log.TimeEnd("nuxui", "ui.Column measureHorizontal", measuredDuration)
 	var hWt float32

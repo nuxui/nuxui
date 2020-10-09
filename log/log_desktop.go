@@ -21,6 +21,7 @@ func new(out io.Writer, prefix string, flags int, depth int) Logger {
 		out:    out,
 		flags:  flags,
 		prefix: prefix,
+		level:  VERBOSE,
 		logs:   make(chan string, lBufferSize),
 		timer:  map[uint32]time.Time{},
 	}
@@ -34,7 +35,11 @@ func new(out io.Writer, prefix string, flags int, depth int) Logger {
 	return me
 }
 
-func (me *logger) output(depth int, color string, level int, levelTag string, tag string, format string, msg ...interface{}) {
+func (me *logger) output(depth int, color string, level Level, levelTag string, tag string, format string, msg ...interface{}) {
+	if me.level > level {
+		return
+	}
+
 	now := time.Now()
 
 	me.mux.Lock()
