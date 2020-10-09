@@ -392,22 +392,16 @@ func (me *layer) measure(width, height int32, childrenMeasuredFlags []byte) (out
 				switch cs.Width().Mode() {
 				case nux.Pixel:
 					w := cs.Width().Value()
-					if w < 0 {
-						w = 0
-					}
 					cms.Width = nux.MeasureSpec(util.Roundi32(w), nux.Pixel)
-					setRatioHeight(cs, cms, w, nux.Pixel)
+					setRatioHeight(cs, cms, nux.Pixel)
 					// ok
 				case nux.Weight:
 					switch nux.MeasureSpecMode(width) {
 					case nux.Pixel:
 						wt := hWt + cs.Width().Value()
 						w := cs.Width().Value() / wt * hPxRemain
-						if w < 0 {
-							w = 0
-						}
 						cms.Width = nux.MeasureSpec(util.Roundi32(w), nux.Pixel)
-						setRatioHeight(cs, cms, w, nux.Pixel)
+						setRatioHeight(cs, cms, nux.Pixel)
 						// ok
 					case nux.Auto, nux.Unlimit:
 						canMeasureWidth = false
@@ -419,23 +413,17 @@ func (me *layer) measure(width, height int32, childrenMeasuredFlags []byte) (out
 					case nux.Pixel:
 						log.V("nuxui", "child:%s parent,px width -> child percent width", child.ID())
 						w := cs.Width().Value() / 100 * innerWidth
-						if w < 0 {
-							w = 0
-						}
 						cms.Width = nux.MeasureSpec(util.Roundi32(w), nux.Pixel)
-						setRatioHeight(cs, cms, w, nux.Pixel)
+						setRatioHeight(cs, cms, nux.Pixel)
 						// ok
 					case nux.Auto, nux.Unlimit:
 						hPt += cs.Width().Value()
 						if hPx > 0 {
 							_innerWidth := hPx / (1.0 - hPt/100.0)
 							w := cs.Width().Value() / 100 * _innerWidth
-							if w < 0 {
-								w = 0
-							}
 							log.V("nuxui", "child:%s parent,auto width -> child percent width %f", child.ID(), w)
 							cms.Width = nux.MeasureSpec(util.Roundi32(w), nux.Pixel)
-							setRatioWidth(cs, cms, w, nux.Pixel)
+							setRatioWidth(cs, cms, nux.Pixel)
 							// ok
 						} else {
 							canMeasureWidth = false
@@ -450,7 +438,7 @@ func (me *layer) measure(width, height int32, childrenMeasuredFlags []byte) (out
 					}
 				case nux.Auto, nux.Unlimit:
 					cms.Width = nux.MeasureSpec(util.Roundi32(hPxRemain), cs.Width().Mode())
-					setRatioHeight(cs, cms, hPxRemain, nux.Pixel)
+					setRatioHeight(cs, cms, nux.Pixel)
 					// ok
 				}
 			}
@@ -459,22 +447,16 @@ func (me *layer) measure(width, height int32, childrenMeasuredFlags []byte) (out
 				switch cs.Height().Mode() {
 				case nux.Pixel:
 					h := cs.Height().Value()
-					if h < 0 {
-						h = 0
-					}
 					cms.Height = nux.MeasureSpec(util.Roundi32(h), nux.Pixel)
-					setRatioWidth(cs, cms, h, nux.Pixel)
+					setRatioWidth(cs, cms, nux.Pixel)
 					// ok
 				case nux.Weight:
 					switch nux.MeasureSpecMode(height) {
 					case nux.Pixel:
 						wt := vWt + cs.Height().Value()
 						h := cs.Height().Value() / wt * vPxRemain
-						if h < 0 {
-							h = 0
-						}
 						cms.Height = nux.MeasureSpec(util.Roundi32(h), nux.Pixel)
-						setRatioWidth(cs, cms, h, nux.Pixel)
+						setRatioWidth(cs, cms, nux.Pixel)
 						// ok
 					case nux.Auto, nux.Unlimit:
 						canMeasureHeight = false
@@ -484,22 +466,16 @@ func (me *layer) measure(width, height int32, childrenMeasuredFlags []byte) (out
 					switch nux.MeasureSpecMode(height) {
 					case nux.Pixel:
 						h := cs.Height().Value() / 100 * innerHeight
-						if h < 0 {
-							h = 0
-						}
 						cms.Height = nux.MeasureSpec(util.Roundi32(h), nux.Pixel)
-						setRatioWidth(cs, cms, h, nux.Pixel)
+						setRatioWidth(cs, cms, nux.Pixel)
 						// ok
 					case nux.Auto, nux.Unlimit:
 						vPt += cs.Height().Value()
 						if vPx > 0 {
 							_innerHeight := vPx / (1.0 - vPt/100.0)
 							h := cs.Height().Value() / 100 * _innerHeight
-							if h < 0 {
-								h = 0
-							}
 							cms.Height = nux.MeasureSpec(util.Roundi32(h), nux.Pixel)
-							setRatioWidth(cs, cms, h, nux.Pixel)
+							setRatioWidth(cs, cms, nux.Pixel)
 							// ok
 						} else {
 							canMeasureHeight = false
@@ -512,7 +488,7 @@ func (me *layer) measure(width, height int32, childrenMeasuredFlags []byte) (out
 					}
 				case nux.Auto, nux.Unlimit:
 					cms.Height = nux.MeasureSpec(util.Roundi32(vPxRemain), cs.Height().Mode())
-					setRatioWidth(cs, cms, vPxRemain, nux.Pixel)
+					setRatioWidth(cs, cms, nux.Pixel)
 					// ok
 				}
 			}

@@ -268,11 +268,8 @@ func (me *column) Measure(width, height int32) {
 			switch cs.Height().Mode() {
 			case nux.Pixel:
 				h := cs.Height().Value()
-				if h < 0 {
-					h = 0
-				}
 				cms.Height = nux.MeasureSpec(util.Roundi32(h), nux.Pixel)
-				setRatioWidth(cs, cms, h, nux.Pixel)
+				setRatioWidth(cs, cms, nux.Pixel)
 				// ok
 			case nux.Weight:
 				switch nux.MeasureSpecMode(height) {
@@ -282,18 +279,15 @@ func (me *column) Measure(width, height int32) {
 					canMeasureHeight = false
 				case nux.Auto, nux.Unlimit:
 					cms.Height = nux.MeasureSpec(0, nux.Pixel)
-					setRatioWidth(cs, cms, 0, nux.Pixel)
+					setRatioWidth(cs, cms, nux.Pixel)
 					// ok
 				}
 			case nux.Percent:
 				switch nux.MeasureSpecMode(height) {
 				case nux.Pixel:
 					h := cs.Height().Value() / 100 * innerHeight
-					if h < 0 {
-						h = 0
-					}
 					cms.Height = nux.MeasureSpec(util.Roundi32(h), nux.Pixel)
-					setRatioWidth(cs, cms, h, nux.Pixel)
+					setRatioWidth(cs, cms, nux.Pixel)
 					// ok
 				case nux.Auto, nux.Unlimit:
 					vPt += cs.Height().Value()
@@ -308,11 +302,8 @@ func (me *column) Measure(width, height int32) {
 				// ok
 			case nux.Auto, nux.Unlimit:
 				h := innerHeight - vPxUsed
-				if h < 0 {
-					h = 0
-				}
 				cms.Height = nux.MeasureSpec(util.Roundi32(h), cs.Height().Mode())
-				setRatioWidth(cs, cms, h, nux.Pixel)
+				setRatioWidth(cs, cms, nux.Pixel)
 				// ok
 			}
 
@@ -404,14 +395,11 @@ func (me *column) Measure(width, height int32) {
 				if cs.Height().Mode() == nux.Weight {
 					if vWt > 0 && vPxRemain > 0 {
 						h := cs.Height().Value() / vWt * vPxRemain
-						if h < 0 {
-							h = 0
-						}
 						cms.Height = nux.MeasureSpec(util.Roundi32(h), nux.Pixel)
-						setRatioWidth(cs, cms, h, nux.Pixel)
+						setRatioWidth(cs, cms, nux.Pixel)
 					} else {
 						cms.Height = nux.MeasureSpec(0, nux.Pixel)
-						setRatioWidth(cs, cms, 0, nux.Pixel)
+						setRatioWidth(cs, cms, nux.Pixel)
 					}
 				}
 			case nux.Auto, nux.Unlimit:
@@ -463,9 +451,6 @@ func (me *column) Measure(width, height int32) {
 
 		innerHeight = vPx / (1.0 - vPt/100.0)
 		h := (innerHeight + vPPx) / (1.0 - vPPt/100.0)
-		if h < 0 {
-			h = 0
-		}
 		height = nux.MeasureSpec(util.Roundi32(h), nux.Pixel)
 
 		if vPPt > 0 {
@@ -506,7 +491,7 @@ func (me *column) Measure(width, height int32) {
 					if cs.Height().Mode() == nux.Percent {
 						ch := cs.Height().Value() / 100 * innerHeight
 						cms.Height = nux.MeasureSpec(util.Roundi32(ch), nux.Pixel)
-						setRatioWidth(cs, cms, ch, nux.Pixel)
+						setRatioWidth(cs, cms, nux.Pixel)
 					}
 
 					if measuredFlags := childrenMeasuredFlags[index]; measuredFlags != hMeasuredWidthComplete {
@@ -580,11 +565,8 @@ func (me *column) measureHorizontal(width, height int32, hPPx, hPPt, innerWidth 
 			switch cs.Width().Mode() {
 			case nux.Pixel:
 				w := cs.Width().Value()
-				if w < 0 {
-					w = 0
-				}
 				cms.Width = nux.MeasureSpec(util.Roundi32(w), nux.Pixel)
-				setRatioHeight(cs, cms, w, nux.Pixel)
+				setRatioHeight(cs, cms, nux.Pixel)
 				measuredFlags |= hMeasuredWidth
 				// ok
 			case nux.Weight:
@@ -599,11 +581,8 @@ func (me *column) measureHorizontal(width, height int32, hPPx, hPPt, innerWidth 
 				switch nux.MeasureSpecMode(width) {
 				case nux.Pixel:
 					w := cs.Width().Value() / 100 * innerWidth
-					if w < 0 {
-						w = 0
-					}
 					cms.Width = nux.MeasureSpec(util.Roundi32(w), nux.Pixel)
-					setRatioHeight(cs, cms, w, nux.Pixel)
+					setRatioHeight(cs, cms, nux.Pixel)
 					measuredFlags |= hMeasuredWidth
 					// ok
 				case nux.Auto, nux.Unlimit:
@@ -713,11 +692,8 @@ func (me *column) measureHorizontal(width, height int32, hPPx, hPPt, innerWidth 
 				switch nux.MeasureSpecMode(width) {
 				case nux.Pixel:
 					w := cs.Width().Value() / hWt * hPxRemain
-					if w < 0 {
-						w = 0
-					}
 					cms.Width = nux.MeasureSpec(util.Roundi32(w), nux.Pixel)
-					setRatioHeight(cs, cms, w, nux.Pixel)
+					setRatioHeight(cs, cms, nux.Pixel)
 					measuredFlags |= hMeasuredWidth
 					// ok
 				case nux.Auto, nux.Unlimit:
@@ -736,7 +712,7 @@ func (me *column) measureHorizontal(width, height int32, hPPx, hPPt, innerWidth 
 			// case nux.Ratio: has measured
 			case nux.Auto, nux.Unlimit:
 				cms.Width = nux.MeasureSpec(util.Roundi32(hPxRemain), cs.Width().Mode())
-				setRatioHeight(cs, cms, hPxRemain, nux.Pixel)
+				setRatioHeight(cs, cms, nux.Pixel)
 				// ok
 			}
 		}

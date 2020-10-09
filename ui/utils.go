@@ -9,14 +9,14 @@ import (
 	"github.com/nuxui/nuxui/util"
 )
 
-func setRatioHeight(cs nux.Size, cms *nux.MeasuredSize, width float32, mode nux.Mode) {
+func setRatioHeight(cs nux.Size, cms *nux.MeasuredSize, mode nux.Mode) {
 	if cs.Height().Mode() == nux.Ratio {
-		cms.Height = nux.MeasureSpec(util.Roundi32(width/cs.Height().Value()), mode)
+		cms.Height = nux.MeasureSpec(util.Roundi32(float32(cms.Width)/cs.Height().Value()), mode)
 	}
 }
 
-func setRatioWidth(cs nux.Size, cms *nux.MeasuredSize, height float32, mode nux.Mode) {
+func setRatioWidth(cs nux.Size, cms *nux.MeasuredSize, mode nux.Mode) {
 	if cs.Width().Mode() == nux.Ratio {
-		cms.Width = nux.MeasureSpec(util.Roundi32(height*cs.Width().Value()), mode)
+		cms.Width = nux.MeasureSpec(util.Roundi32(float32(cms.Height)*cs.Width().Value()), mode)
 	}
 }

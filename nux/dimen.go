@@ -147,9 +147,9 @@ func SDimen(s string) Dimen {
 	return d
 }
 func ParseDimen(s string) (Dimen, error) {
-	if s == "" || s == "auto"  {
+	if s == "" || s == "auto" {
 		return ADimen(0, Auto), nil
-	} else if s == "unlimit"  {
+	} else if s == "unlimit" {
 		return ADimen(0, Unlimit), nil
 	} else if strings.HasSuffix(s, "%") {
 		v, e := strconv.ParseFloat(string(s[0:len(s)-1]), 32)
@@ -157,7 +157,7 @@ func ParseDimen(s string) (Dimen, error) {
 			return 0, fmt.Errorf(`invalid Percent dimension format: "%s"`, s)
 		}
 		return ADimen(float32(v), Percent), nil
-	} else if s == "0"  {
+	} else if s == "0" {
 		return 0, nil
 	} else if strings.HasSuffix(s, "px") {
 		v, e := strconv.ParseFloat(string(s[0:len(s)-2]), 32)
@@ -205,7 +205,8 @@ func MeasureSpec(value int32, mode Mode) int32 {
 	if value > MaxMeasuredDimen {
 		log.Fatal("nuxui", "error for MeasureSpec value, out of range")
 	} else if value < 0 {
-		log.Fatal("nuxui", "error for MeasureSpec value, cannot be negative")
+		// log.Fatal("nuxui", "error for MeasureSpec value, cannot be negative")
+		value = 0
 	}
 	return int32(mode)<<30 | value
 }
