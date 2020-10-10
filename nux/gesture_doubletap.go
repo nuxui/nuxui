@@ -5,9 +5,8 @@
 package nux
 
 import (
-	"unsafe"
-
 	"github.com/nuxui/nuxui/log"
+	"github.com/nuxui/nuxui/util"
 )
 
 func OnDoubleTap(widget Widget, callback GestureCallback) {
@@ -40,7 +39,7 @@ type DoubleTapGestureRecognizer interface {
 }
 
 type doubleTapGestureRecognizer struct {
-	callbacks          [][]unsafe.Pointer
+	callbacks          [][]GestureCallback
 	rejectFirstPointer int64
 	firstTap           Event
 	secondTap          Event
@@ -54,7 +53,7 @@ func newDoubleTapGestureRecognizer(target Widget) *doubleTapGestureRecognizer {
 	}
 
 	return &doubleTapGestureRecognizer{
-		callbacks:          [][]unsafe.Pointer{[]unsafe.Pointer{}, []unsafe.Pointer{}, []unsafe.Pointer{}, []unsafe.Pointer{}},
+		callbacks:          [][]GestureCallback{[]GestureCallback{}, []GestureCallback{}, []GestureCallback{}, []GestureCallback{}},
 		rejectFirstPointer: 0,
 		firstTap:           nil,
 		secondTap:          nil,
@@ -68,19 +67,13 @@ func (me *doubleTapGestureRecognizer) addCallback(which int, callback GestureCal
 		return
 	}
 
-	p := unsafe.Pointer(&callback)
-	for _, o := range me.callbacks[which] {
-		if o == p {
-			if true /*TODO:: debug*/ {
-				log.Fatal("nuxui", "The %s callback is already existed.", []string{"OnTap2Down", "OnTap2Up", "OnTap2"}[which])
-
-			} else {
-				return
-			}
+	for _, cb := range me.callbacks[which] {
+		if util.SameFunc(cb, callback) {
+			log.Fatal("nuxui", "The %s callback is already existed.", []string{"OnTap2Down", "OnTap2Up", "OnTap2"}[which])
 		}
 	}
 
-	me.callbacks[which] = append(me.callbacks[which], unsafe.Pointer(&callback))
+	me.callbacks[which] = append(me.callbacks[which], callback)
 }
 
 func (me *doubleTapGestureRecognizer) removeCallback(which int, callback GestureCallback) {
@@ -88,9 +81,8 @@ func (me *doubleTapGestureRecognizer) removeCallback(which int, callback Gesture
 		return
 	}
 
-	p := unsafe.Pointer(&callback)
-	for i, o := range me.callbacks[which] {
-		if o == p {
+	for i, cb := range me.callbacks[which] {
+		if util.SameFunc(cb, callback) {
 			me.callbacks[which] = append(me.callbacks[which][:i], me.callbacks[which][i+1:]...)
 		}
 	}
@@ -167,7 +159,7 @@ func (me *doubleTapGestureRecognizer) reset() {
 }
 
 func (me *doubleTapGestureRecognizer) invokeDoubleTap() {
-	for _, c := range me.callbacks[_ACTION_DOUBLETAP] {
-		(*(*(func(Widget)))(c))(me.target)
+	for _, cb := range me.callbacks[_ACTION_DOUBLETAP] {
+		cb(eventToDetail(me.secondTap, me.target))
 	}
 }

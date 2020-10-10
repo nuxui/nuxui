@@ -6,8 +6,6 @@ package nux
 
 import "time"
 
-type GestureCallback func(Widget)
-
 type GestureState int
 
 const (

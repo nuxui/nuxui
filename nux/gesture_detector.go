@@ -25,24 +25,24 @@ type gestureMixin struct {
 func (me *gestureMixin) Creating(attr Attr) {
 	if onTap := attr.GetString("onTap", ""); onTap != "" {
 		// log.V("nuxui", "xxxxxxxxx onTap = %s", onTap)
-		OnTap(me.Owner(), func(widget Widget) {
+		OnTap(me.Owner(), func(detail GestureDetail) {
 			// log.V("nuxui", "xxxxxxxxx onTap 2 = %s", onTap)
-			util.ReflectCall(me.Component(), onTap, widget)
+			util.ReflectCall(me.Component(), onTap, detail.Target())
 		})
 	}
 	if onTapDown := attr.GetString("onTapDown", ""); onTapDown != "" {
-		OnTapDown(me.Owner(), func(widget Widget) {
-			util.ReflectCall(me.Component(), onTapDown, widget)
+		OnTapDown(me.Owner(), func(detail GestureDetail) {
+			util.ReflectCall(me.Component(), onTapDown, detail.Target())
 		})
 	}
 	if onTapUp := attr.GetString("onTapUp", ""); onTapUp != "" {
-		OnTapUp(me.Owner(), func(widget Widget) {
-			util.ReflectCall(me.Component(), onTapUp, widget)
+		OnTapUp(me.Owner(), func(detail GestureDetail) {
+			util.ReflectCall(me.Component(), onTapUp, detail.Target())
 		})
 	}
 	if onTapCancel := attr.GetString("onTapCancel", ""); onTapCancel != "" {
-		OnTapCancel(me.Owner(), func(widget Widget) {
-			util.ReflectCall(me.Component(), onTapCancel, widget)
+		OnTapCancel(me.Owner(), func(detail GestureDetail) {
+			util.ReflectCall(me.Component(), onTapCancel, detail.Target())
 		})
 	}
 }

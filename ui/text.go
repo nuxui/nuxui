@@ -78,7 +78,7 @@ func (me *text) Created(content nux.Widget) {
 	nux.OnTapCancel(me, me.onTapUp)
 }
 
-func (me *text) onTapDown(widget nux.Widget) {
+func (me *text) onTapDown(detail nux.GestureDetail) {
 	me.SetBackgroundColor(0xFF938276)
 	me.downTime = time.Now()
 	nux.NewTimerBackToUI(nux.GESTURE_DOWN2UP_DELAY*time.Millisecond, func() {
@@ -86,17 +86,17 @@ func (me *text) onTapDown(widget nux.Widget) {
 	})
 }
 
-func (me *text) onTapUp(widget nux.Widget) {
+func (me *text) onTapUp(detail nux.GestureDetail) {
 	if sub := time.Now().Sub(me.downTime); sub < nux.GESTURE_DOWN2UP_DELAY*time.Millisecond {
 		nux.NewTimerBackToUI(nux.GESTURE_DOWN2UP_DELAY*time.Millisecond-sub, func() {
-			me.doTapUp(widget)
+			me.doTapUp(detail)
 		})
 	} else {
-		me.doTapUp(widget)
+		me.doTapUp(detail)
 	}
 }
 
-func (me *text) doTapUp(widget nux.Widget) {
+func (me *text) doTapUp(detail nux.GestureDetail) {
 	me.SetBackgroundColor(0xFFFFFFFF)
 }
 

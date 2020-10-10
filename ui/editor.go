@@ -80,18 +80,18 @@ func (me *editor) Created(content nux.Widget) {
 	nux.OnPanUpdate(me, me.OnPanUpdate)
 }
 
-func (me *editor) onTapDown(widget nux.Widget) {
+func (me *editor) onTapDown(detail nux.GestureDetail) {
 	// TODO:: x, y --> font position
 	me.cursorPosition = len([]rune(me.text))
 	nux.RequestFocus(me)
 }
 
-func (me *editor) onPanStart(detail nux.PanDetail) {
+func (me *editor) onPanStart(detail nux.GestureDetail) {
 	me.cursorPosition = len([]rune(me.text))
 	nux.RequestFocus(me)
 }
 
-func (me *editor) OnPanUpdate(detail nux.PanDetail) {
+func (me *editor) OnPanUpdate(detail nux.GestureDetail) {
 
 }
 

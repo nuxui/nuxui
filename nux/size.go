@@ -6,9 +6,9 @@ package nux
 
 import (
 	"fmt"
-	"unsafe"
 
 	"github.com/nuxui/nuxui/log"
+	"github.com/nuxui/nuxui/util"
 )
 
 type Watcher func()
@@ -42,6 +42,10 @@ type Size interface {
 	SetPaddingRight(right Dimen)
 	SetPaddingBottom(bottom Dimen)
 	MeasuredSize() *MeasuredSize // not nil
+	ScrollX() int32
+	ScrollY() int32
+	SetScroll(x, y int32)
+	ScrollTo(x, y int32)
 	AddOnSizeChanged(callback OnSizeChanged)
 	RemoveOnSizeChanged(callback OnSizeChanged)
 }
@@ -135,10 +139,18 @@ type WidgetSize struct {
 	margin                 *Margin
 	position               interface{} // layout params
 	measured               MeasuredSize
-	onSizeChangedCallbacks []unsafe.Pointer
+	scrollX                int32
+	scrollY                int32
+	onSizeChangedCallbacks []OnSizeChanged
 }
 
 func (me *WidgetSize) Creating(attr Attr) {
+	if me.Owner == nil {
+		log.Fatal("nuxui", "set WidgetSize Owner before to use")
+	}
+
+	me.onSizeChangedCallbacks = []OnSizeChanged{}
+
 	me.width = attr.GetDimen("width", "auto")
 	me.height = attr.GetDimen("height", "auto")
 
@@ -423,6 +435,24 @@ func (me *WidgetSize) SetPaddingBottom(bottom Dimen) {
 	}
 }
 
+func (me *WidgetSize) ScrollX() int32 {
+	return me.scrollX
+}
+
+func (me *WidgetSize) ScrollY() int32 {
+	return me.scrollY
+}
+
+func (me *WidgetSize) SetScroll(x, y int32) {
+	me.scrollX = x
+	me.scrollY = y
+}
+
+func (me *WidgetSize) ScrollTo(x, y int32) {
+	me.scrollX += x
+	me.scrollY += y
+}
+
 func (me *WidgetSize) MeasuredSize() *MeasuredSize {
 	return &me.measured
 }
@@ -432,25 +462,19 @@ func (me *WidgetSize) AddOnSizeChanged(callback OnSizeChanged) {
 		return
 	}
 
-	if me.onSizeChangedCallbacks == nil {
-		me.onSizeChangedCallbacks = []unsafe.Pointer{}
-	}
-
-	p := unsafe.Pointer(&callback)
-	for _, o := range me.onSizeChangedCallbacks {
-		if o == p {
+	for _, cb := range me.onSizeChangedCallbacks {
+		if util.SameFunc(cb, callback) {
 			log.Fatal("nuxui", "The OnSizeChanged callback is existed.")
 		}
 	}
 
-	me.onSizeChangedCallbacks = append(me.onSizeChangedCallbacks, unsafe.Pointer(&callback))
+	me.onSizeChangedCallbacks = append(me.onSizeChangedCallbacks, callback)
 }
 
 func (me *WidgetSize) RemoveOnSizeChanged(callback OnSizeChanged) {
-	if me.onSizeChangedCallbacks != nil && callback != nil {
-		p := unsafe.Pointer(&callback)
-		for i, o := range me.onSizeChangedCallbacks {
-			if o == p {
+	if callback != nil {
+		for i, cb := range me.onSizeChangedCallbacks {
+			if util.SameFunc(cb, callback) {
 				me.onSizeChangedCallbacks = append(me.onSizeChangedCallbacks[:i], me.onSizeChangedCallbacks[i+1:]...)
 			}
 		}
@@ -459,10 +483,10 @@ func (me *WidgetSize) RemoveOnSizeChanged(callback OnSizeChanged) {
 
 func (me *WidgetSize) doSizeChanged() {
 	if me.Owner == nil {
-		log.Fatal("nuxui", "set target to WidgetSize first.")
+		log.Fatal("nuxui", "set WidgetSize Owner before to use")
 	}
 
-	for _, c := range me.onSizeChangedCallbacks {
-		(*(*OnSizeChanged)(c))(me.Owner)
+	for _, cb := range me.onSizeChangedCallbacks {
+		cb(me.Owner)
 	}
 }

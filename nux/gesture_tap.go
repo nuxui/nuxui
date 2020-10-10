@@ -5,9 +5,8 @@
 package nux
 
 import (
-	"unsafe"
-
 	"github.com/nuxui/nuxui/log"
+	"github.com/nuxui/nuxui/util"
 )
 
 func OnTap(widget Widget, callback GestureCallback) {
@@ -75,7 +74,7 @@ type TapGestureRecognizer interface {
 }
 
 type tapGestureRecognizer struct {
-	callbacks   [][]unsafe.Pointer
+	callbacks   [][]GestureCallback
 	initEvent   Event
 	target      Widget
 	timer       Timer
@@ -89,7 +88,7 @@ func newTapGestureRecognizer(target Widget) *tapGestureRecognizer {
 	}
 
 	return &tapGestureRecognizer{
-		callbacks:   [][]unsafe.Pointer{[]unsafe.Pointer{}, []unsafe.Pointer{}, []unsafe.Pointer{}, []unsafe.Pointer{}},
+		callbacks:   [][]GestureCallback{[]GestureCallback{}, []GestureCallback{}, []GestureCallback{}, []GestureCallback{}},
 		initEvent:   nil,
 		target:      target,
 		timer:       nil,
@@ -103,19 +102,13 @@ func (me *tapGestureRecognizer) addCallback(which int, callback GestureCallback)
 		return
 	}
 
-	p := unsafe.Pointer(&callback)
-	for _, o := range me.callbacks[which] {
-		if o == p {
-			if true /*TODO:: debug*/ {
-				log.Fatal("nuxui", "The %s callback is already existed.", []string{"OnTapDown", "OnTapUp", "OnTap"}[which])
-
-			} else {
-				return
-			}
+	for _, cb := range me.callbacks[which] {
+		if util.SameFunc(cb, callback) {
+			log.Fatal("nuxui", "The %s callback is already existed.", []string{"OnTapDown", "OnTapUp", "OnTap"}[which])
 		}
 	}
 
-	me.callbacks[which] = append(me.callbacks[which], unsafe.Pointer(&callback))
+	me.callbacks[which] = append(me.callbacks[which], callback)
 }
 
 func (me *tapGestureRecognizer) removeCallback(which int, callback GestureCallback) {
@@ -123,9 +116,8 @@ func (me *tapGestureRecognizer) removeCallback(which int, callback GestureCallba
 		return
 	}
 
-	p := unsafe.Pointer(&callback)
-	for i, o := range me.callbacks[which] {
-		if o == p {
+	for i, cb := range me.callbacks[which] {
+		if util.SameFunc(cb, callback) {
 			me.callbacks[which] = append(me.callbacks[which][:i], me.callbacks[which][i+1:]...)
 		}
 	}
@@ -210,16 +202,16 @@ func (me *tapGestureRecognizer) invokeTapDown(pointer int64) {
 	me.triggerDown = true
 	me.state = GestureState_Possible
 	if me.initEvent.Pointer() == pointer {
-		for _, c := range me.callbacks[_ACTION_TAP_DOWN] {
-			(*(*(func(Widget)))(c))(me.target)
+		for _, cb := range me.callbacks[_ACTION_TAP_DOWN] {
+			cb(eventToDetail(me.initEvent, me.target))
 		}
 	}
 }
 
 func (me *tapGestureRecognizer) invokeTapCancel() {
 	if me.triggerDown {
-		for _, c := range me.callbacks[_ACTION_TAP_CANCEL] {
-			(*(*(func(Widget)))(c))(me.target)
+		for _, cb := range me.callbacks[_ACTION_TAP_CANCEL] {
+			cb(eventToDetail(nil, me.target))
 		}
 	}
 }
@@ -231,11 +223,11 @@ func (me *tapGestureRecognizer) invokeTapUpAndTap(pointer int64) {
 
 	me.state = GestureState_Accepted
 
-	for _, c := range me.callbacks[_ACTION_TAP_UP] {
-		(*(*(func(Widget)))(c))(me.target)
+	for _, cb := range me.callbacks[_ACTION_TAP_UP] {
+		cb(eventToDetail(me.initEvent, me.target))
 	}
 
-	for _, c := range me.callbacks[_ACTION_TAP] {
-		(*(*(func(Widget)))(c))(me.target)
+	for _, cb := range me.callbacks[_ACTION_TAP] {
+		cb(eventToDetail(me.initEvent, me.target))
 	}
 }

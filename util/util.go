@@ -60,3 +60,11 @@ func Ref2Ptr(ptr interface{}) uintptr {
 	// TODO::
 	return 0
 }
+
+// SameFunc compare two func and return true if equal
+func SameFunc(a, b interface{}) bool {
+	if a == nil || b == nil {
+		return a == b
+	}
+	return reflect.ValueOf(a).Pointer() == reflect.ValueOf(b).Pointer()
+}
