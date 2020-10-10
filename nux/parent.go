@@ -16,7 +16,7 @@ import (
 type Parent interface {
 	Widget
 	InsertChild(index int, child Widget)
-	AddChild(child Widget)
+	AddChild(child Widget) //TODO:: AddChild(child Widget...)
 	Remove(index int)
 	RemoveChild(child Widget) (index int)
 	ReplaceChild(src, dest Widget) (index int)

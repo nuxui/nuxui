@@ -10,6 +10,7 @@ func init() {
 	nux.RegisterWidget((*Row)(nil), func() nux.Widget { return NewRow() })
 	nux.RegisterWidget((*Column)(nil), func() nux.Widget { return NewColumn() })
 	nux.RegisterWidget((*Layer)(nil), func() nux.Widget { return NewLayer() })
+	nux.RegisterWidget((*Scroll)(nil), func() nux.Widget { return NewScroll() })
 	nux.RegisterWidget((*Text)(nil), func() nux.Widget { return NewText() })
 	// RegisterWidget((*Image)(nil), func() Widget { return NewImage() })
 	nux.RegisterWidget((*Editor)(nil), func() nux.Widget { return NewEditor() })
