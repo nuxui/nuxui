@@ -30,12 +30,15 @@ func (me *gestureManager) handlePointerEvent(widget Widget, event Event) {
 		}
 
 		hitTestResult = NewHitTestResult()
-		me.hitTest(widget, hitTestResult, event)
+		me.hitTest(widget, 0, 0, hitTestResult, event)
 		me.hitTestResults[event.Pointer()] = hitTestResult
 		// log.V("hitTest", "len = %d", len(me.hitTestResults[event.Pointer()].Results()))
 	case Action_Up:
 		hitTestResult = me.hitTestResults[event.Pointer()]
 		delete(me.hitTestResults, event.Pointer())
+	case Action_Scroll:
+		log.I("nuxui", "ScrollX=%f, ScrollY=%f", event.ScrollX(), event.ScrollY())
+		handleScrollEvent(event)
 	default:
 		hitTestResult = me.hitTestResults[event.Pointer()]
 	}
@@ -63,27 +66,25 @@ func (me *gestureManager) dispatchEvent(event Event, hitTestResult HitTestResult
 	}
 }
 
-func (me *gestureManager) hitTest(widget Widget, hitTestResult HitTestResult, event Event) {
+func (me *gestureManager) hitTest(widget Widget, offsetX, offsetY int32, hitTestResult HitTestResult, event Event) {
 	if s, ok := widget.(Size); ok {
 		ms := s.MeasuredSize()
 
 		if p, ok := widget.(Parent); ok {
-			children := p.Children()
-			for i := len(children) - 1; i >= 0; i-- {
-				child := children[i]
+			for _, child := range p.Children() {
 				if compt, ok := child.(Component); ok {
 					child = compt.Content()
 				}
 
-				me.hitTest(child, hitTestResult, event)
+				me.hitTest(child, offsetX+s.ScrollX(), offsetY+s.ScrollY(), hitTestResult, event)
 			}
 		}
 
 		// log.V("hitTest", "id = %s", widget.ID())
 
 		// is event in widget
-		if event.X() >= float32(ms.Position.X) && event.X() <= float32(ms.Position.X+ms.Width) &&
-			event.Y() >= float32(ms.Position.Y) && event.Y() <= float32(ms.Position.Y+ms.Height) {
+		if event.X() >= float32(ms.Position.X+offsetX) && event.X() <= float32(ms.Position.X+offsetX+ms.Width) &&
+			event.Y() >= float32(ms.Position.Y+offsetY) && event.Y() <= float32(ms.Position.Y+offsetY+ms.Height) {
 			if h := GestureBinding().FindGestureHandler(widget); h != nil {
 				hitTestResult.Add(widget)
 			}

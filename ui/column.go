@@ -874,6 +874,9 @@ func (me *column) Draw(canvas nux.Canvas) {
 		me.Background().Draw(canvas)
 	}
 
+	canvas.Save()
+	canvas.Translate(me.ScrollX(), me.ScrollY())
+
 	for _, child := range me.Children() {
 		if compt, ok := child.(nux.Component); ok {
 			child = compt.Content()
@@ -891,6 +894,8 @@ func (me *column) Draw(canvas nux.Canvas) {
 			}
 		}
 	}
+
+	canvas.Restore()
 
 	if me.Foreground() != nil {
 		me.Foreground().Draw(canvas)

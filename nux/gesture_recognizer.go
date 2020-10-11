@@ -29,6 +29,8 @@ type GestureDetail interface {
 	ScreenY() float32
 	WindowX() float32
 	WindowY() float32
+	ScrollX() float32
+	ScrollY() float32
 }
 
 type gestureDetail struct {
@@ -41,6 +43,8 @@ type gestureDetail struct {
 	screenY float32
 	windowX float32
 	windowY float32
+	scrollX float32
+	scrollY float32
 }
 
 func (me *gestureDetail) Target() Widget   { return me.target }
@@ -52,6 +56,8 @@ func (me *gestureDetail) ScreenX() float32 { return me.screenX }
 func (me *gestureDetail) ScreenY() float32 { return me.screenY }
 func (me *gestureDetail) WindowX() float32 { return me.windowX }
 func (me *gestureDetail) WindowY() float32 { return me.windowY }
+func (me *gestureDetail) ScrollX() float32 { return me.scrollX }
+func (me *gestureDetail) ScrollY() float32 { return me.scrollY }
 
 func eventToDetail(event Event, target Widget) GestureDetail {
 	if target == nil {
@@ -80,5 +86,7 @@ func eventToDetail(event Event, target Widget) GestureDetail {
 		screenY: event.ScreenY(),
 		windowX: event.X(),
 		windowY: event.Y(),
+		scrollX: event.ScrollX(),
+		scrollY: event.ScrollY(),
 	}
 }
