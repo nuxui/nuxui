@@ -15,8 +15,8 @@ import (
 
 type Parent interface {
 	Widget
-	InsertChild(index int, child Widget)
-	AddChild(child Widget) //TODO:: AddChild(child Widget...)
+	InsertChild(index int, child ...Widget)
+	AddChild(child ...Widget)
 	Remove(index int)
 	RemoveChild(child Widget) (index int)
 	ReplaceChild(src, dest Widget) (index int)
@@ -36,33 +36,43 @@ func (me *WidgetParent) Creating(attr Attr) {
 	if me.Owner == nil {
 		log.Fatal("nuxui", "set Owner to WidgetParent before use")
 	}
+
+	if me.children == nil {
+		me.children = make([]Widget, 0)
+	}
 }
 
-func (me *WidgetParent) InsertChild(index int, child Widget) {
+func (me *WidgetParent) InsertChild(index int, child ...Widget) {
 	if index < 0 && index > len(me.children) {
 		log.Fatal("nuxui", "index out of range when insert child to parent")
 	} else {
-		c := make([]Widget, 0, len(me.children)+1)
+		for _, c := range child {
+			c.AssignParent(me.Owner)
+		}
+
+		c := make([]Widget, len(me.children)+len(child))
 		c = append(c, me.children[:index]...)
-		c = append(c, child)
+		c = append(c, child...)
 		c = append(c, me.children[index:]...)
-		child.AssignParent(me.Owner)
 		me.children = c
 	}
 }
 
-func (me *WidgetParent) AddChild(child Widget) {
+func (me *WidgetParent) AddChild(child ...Widget) {
 	if child == nil {
 		log.E("nuxui", "child should not be nil when add child to parent")
 		return
 	}
 
 	if me.children == nil {
-		me.children = make([]Widget, 0, 10)
+		log.Fatal("nuxui", "call creating before use.")
 	}
 
-	child.AssignParent(me.Owner)
-	me.children = append(me.children, child)
+	for _, c := range child {
+		c.AssignParent(me.Owner)
+	}
+
+	me.children = append(me.children, child...)
 	// RequestLayout(me.Owner)
 	// RequestRedraw(me.Owner)
 }

@@ -35,6 +35,26 @@ var theApp = &application{
 	eventDone:          make(chan struct{}),
 	runOnUI:            make(chan func()),
 	nativeLoopPrepared: make(chan struct{}),
+	drawSignal:         make(chan struct{}, drawSignalSize),
+}
+
+const (
+	drawSignalSize = 50
+)
+
+func init() {
+	go func() {
+		var i, l int
+		for {
+			<-theApp.drawSignal
+			l = len(theApp.drawSignal)
+			for i = 0; i != l; i++ {
+				<-theApp.drawSignal
+			}
+			requestRedraw()
+			time.Sleep(16 * time.Millisecond)
+		}
+	}()
 }
 
 func app() Application {
@@ -50,6 +70,7 @@ type application struct {
 
 	eventDone          chan struct{}
 	nativeLoopPrepared chan struct{}
+	drawSignal         chan struct{}
 }
 
 func (me *application) Creating(attr Attr) {
@@ -143,14 +164,12 @@ func (me *application) findWindow(windptr C.uintptr_t) Window {
 }
 
 func (me *application) RequestRedraw(widget Widget) {
-	// TODO:: schedule draw
-	// e := &event{
-	// 	etype:  Type_WindowEvent,
-	// 	action: Action_WindowDraw,
-	// 	window: GetWidgetWindow(widget),
-	// }
-	// me.handleEvent(e)
-	requestRedraw()
+	if l := len(theApp.drawSignal); l >= drawSignalSize {
+		for i := 0; i != l-1; i++ {
+			<-theApp.drawSignal
+		}
+	}
+	theApp.drawSignal <- struct{}{}
 }
 
 func run() {
@@ -299,6 +318,7 @@ var lastModifierKeyEvent map[KeyCode]bool = map[KeyCode]bool{}
 
 //export go_drawEvent
 func go_drawEvent(windptr C.uintptr_t) {
+	log.V("nuxui", "go_drawEvent -----")
 	e := &event{
 		window: theApp.findWindow(windptr),
 		time:   time.Now(),
@@ -383,6 +403,7 @@ func runOnUI(callback func()) {
 }
 
 func requestRedraw() {
+	log.V("nuxui", "requestRedraw invalidate")
 	C.invalidate()
 }
 
