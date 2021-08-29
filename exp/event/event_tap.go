@@ -70,7 +70,7 @@ const (
 )
 
 // https://developer.apple.com/documentation/coregraphics/1454426-cgeventtapcreate
-type EventTapCallBack func(event Event, data interface{})
+type EventTapCallBack func(event Event)
 
 type MachPort interface{}
 
@@ -78,12 +78,7 @@ type machPort struct {
 	ptr C.CFMachPortRef
 }
 
-type callbackAndData struct {
-	callback EventTapCallBack
-	data     interface{}
-}
-
-var callbacks map[uint64]callbackAndData = map[uint64]callbackAndData{}
+var callbacks map[uint64]EventTapCallBack = map[uint64]EventTapCallBack{}
 var callbackIndex uint64 = 0
 var callbackIndexMutex sync.Mutex
 
@@ -94,14 +89,10 @@ func newIndex() uint64 {
 	return callbackIndex
 }
 
-func NewEventTap(tap EventTapLocation, place EventTapPlacement, options EventTapOptions, eventsOfInterest EventMask, callback EventTapCallBack, userInfo interface{}) MachPort {
+func NewEventTap(tap EventTapLocation, place EventTapPlacement, options EventTapOptions, eventsOfInterest EventMask, callback EventTapCallBack) MachPort {
 	m := &machPort{}
-	// t.ptr = C.CGEventTapCreate(C.CGEventTapLocation(tap), C.CGEventTapPlacement(place), C.CGEventTapOptions(options), C.uint64_t(eventsOfInterest), C.eventCallback, unsafe.Pointer(t))
 	index := newIndex()
-	callbacks[index] = callbackAndData{
-		callback: callback,
-		data:     userInfo,
-	}
+	callbacks[index] = callback
 	m.ptr = C.newEventTap(C.CGEventTapLocation(tap), C.CGEventTapPlacement(place), C.CGEventTapOptions(options), C.uint64_t(eventsOfInterest), C.uint64_t(index))
 	return m
 }
@@ -109,8 +100,8 @@ func NewEventTap(tap EventTapLocation, place EventTapPlacement, options EventTap
 //export eventCallback_go
 func eventCallback_go(proxy C.CGEventTapProxy, eventRef C.CGEventRef, index C.uint64_t) C.CGEventRef {
 	e := &event{ptr: eventRef}
-	cbAndData := callbacks[uint64(index)]
-	cbAndData.callback(e, cbAndData.data)
+	callback := callbacks[uint64(index)]
+	callback(e)
 	return eventRef
 }
 
