@@ -18,6 +18,7 @@ const (
 	Type_AppExit
 	Type_KeyEvent
 	Type_PointerEvent
+	Type_ScrollEvent
 	Type_BackToUI
 )
 
@@ -25,6 +26,7 @@ const (
 	Action_None EventAction = iota
 	Action_Down
 	Action_Move
+	Action_Drag
 	Action_Up
 	Action_Hover
 	Action_Scroll
@@ -111,6 +113,8 @@ func (me EventAction) String() string {
 		return "Action_Down"
 	case Action_Move:
 		return "Action_Move"
+	case Action_Drag:
+		return "Action_Drag"
 	case Action_Up:
 		return "Action_Up"
 	case Action_Hover:

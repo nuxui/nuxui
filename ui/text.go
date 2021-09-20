@@ -47,7 +47,7 @@ func NewText() Text {
 	me.WidgetSize.AddOnSizeChanged(me.onSizeChanged)
 	me.WidgetVisual.AddOnVisualChanged(me.onVisualChanged)
 
-	me.Creating(nux.Attr{})
+	// me.Creating(nux.Attr{})
 	return me
 }
 

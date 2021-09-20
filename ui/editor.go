@@ -234,7 +234,7 @@ func (me *editor) stopTick() {
 	nux.RequestRedraw(me)
 }
 
-func (me *editor) OnTypingEvent(event nux.Event) bool {
+func (me *editor) OnTypingEvent(event nux.TypingEvent) bool {
 	switch event.Action() {
 	case nux.Action_Typing:
 		me.editingText = event.Text()
@@ -257,7 +257,7 @@ func (me *editor) OnTypingEvent(event nux.Event) bool {
 	return true
 }
 
-func (me *editor) OnKeyEvent(event nux.Event) bool {
+func (me *editor) OnKeyEvent(event nux.KeyEvent) bool {
 	switch event.KeyCode() {
 	case nux.Key_Delete:
 		if event.Action() == nux.Action_Down {

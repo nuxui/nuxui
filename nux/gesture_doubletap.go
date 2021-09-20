@@ -41,8 +41,8 @@ type DoubleTapGestureRecognizer interface {
 type doubleTapGestureRecognizer struct {
 	callbacks          [][]GestureCallback
 	rejectFirstPointer int64
-	firstTap           Event
-	secondTap          Event
+	firstTap           PointerEvent
+	secondTap          PointerEvent
 	target             Widget
 	timer              Timer
 }
@@ -88,7 +88,7 @@ func (me *doubleTapGestureRecognizer) removeCallback(which int, callback Gesture
 	}
 }
 
-func (me *doubleTapGestureRecognizer) PointerAllowed(event Event) bool {
+func (me *doubleTapGestureRecognizer) PointerAllowed(event PointerEvent) bool {
 	if len(me.callbacks[_ACTION_DOUBLETAP]) == 0 {
 		return false
 	}
@@ -100,7 +100,7 @@ func (me *doubleTapGestureRecognizer) PointerAllowed(event Event) bool {
 	return false
 }
 
-func (me *doubleTapGestureRecognizer) HandlePointerEvent(event Event) {
+func (me *doubleTapGestureRecognizer) HandlePointerEvent(event PointerEvent) {
 	switch event.Action() {
 	case Action_Down:
 		GestureArenaManager().Add(event.Pointer(), me)
@@ -160,6 +160,6 @@ func (me *doubleTapGestureRecognizer) reset() {
 
 func (me *doubleTapGestureRecognizer) invokeDoubleTap() {
 	for _, cb := range me.callbacks[_ACTION_DOUBLETAP] {
-		cb(eventToDetail(me.secondTap, me.target))
+		cb(pointerEventToDetail(me.secondTap, me.target))
 	}
 }

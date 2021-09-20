@@ -83,7 +83,7 @@ const (
 
 type longPressGestureRecognizer struct {
 	callbacks [][]GestureCallback
-	initEvent Event
+	initEvent PointerEvent
 	target    Widget
 	timer     Timer
 	state     GestureState
@@ -133,7 +133,7 @@ func (me *longPressGestureRecognizer) removeCallback(which int, callback Gesture
 	}
 }
 
-func (me *longPressGestureRecognizer) PointerAllowed(event Event) bool {
+func (me *longPressGestureRecognizer) PointerAllowed(event PointerEvent) bool {
 	if len(me.callbacks[_ACTION_LONG_PRESS]) == 0 &&
 		len(me.callbacks[_ACTION_LONG_PRESS_DOWN]) == 0 &&
 		len(me.callbacks[_ACTION_LONG_PRESS_UP]) == 0 &&
@@ -153,7 +153,7 @@ func (me *longPressGestureRecognizer) PointerAllowed(event Event) bool {
 	return false
 }
 
-func (me *longPressGestureRecognizer) HandlePointerEvent(event Event) {
+func (me *longPressGestureRecognizer) HandlePointerEvent(event PointerEvent) {
 	switch event.Action() {
 	case Action_Down:
 		me.initEvent = event
@@ -213,11 +213,11 @@ func (me *longPressGestureRecognizer) invokeLongPressDown(pointer int64) {
 	me.state = GestureState_Accepted
 	if me.initEvent.Pointer() == pointer {
 		for _, cb := range me.callbacks[_ACTION_LONG_PRESS_DOWN] {
-			cb(eventToDetail(me.initEvent, me.target))
+			cb(pointerEventToDetail(me.initEvent, me.target))
 		}
 
 		for _, cb := range me.callbacks[_ACTION_LONG_PRESS] {
-			cb(eventToDetail(me.initEvent, me.target))
+			cb(pointerEventToDetail(me.initEvent, me.target))
 		}
 	}
 }
@@ -225,7 +225,7 @@ func (me *longPressGestureRecognizer) invokeLongPressDown(pointer int64) {
 func (me *longPressGestureRecognizer) invokeLongPressMove(pointer int64) {
 	if me.initEvent.Pointer() == pointer {
 		for _, cb := range me.callbacks[_ACTION_LONG_PRESS_Move] {
-			cb(eventToDetail(me.initEvent, me.target))
+			cb(pointerEventToDetail(me.initEvent, me.target))
 		}
 	}
 }
@@ -233,7 +233,7 @@ func (me *longPressGestureRecognizer) invokeLongPressMove(pointer int64) {
 func (me *longPressGestureRecognizer) invokeLongPressUp(pointer int64) {
 	if me.initEvent.Pointer() == pointer {
 		for _, cb := range me.callbacks[_ACTION_LONG_PRESS_UP] {
-			cb(eventToDetail(me.initEvent, me.target))
+			cb(pointerEventToDetail(me.initEvent, me.target))
 		}
 	}
 }
@@ -241,7 +241,7 @@ func (me *longPressGestureRecognizer) invokeLongPressUp(pointer int64) {
 func (me *longPressGestureRecognizer) invokeLongPressUCancel(pointer int64) {
 	if me.initEvent.Pointer() == pointer {
 		for _, cb := range me.callbacks[_ACTION_LONG_PRESS_CANCEL] {
-			cb(eventToDetail(me.initEvent, me.target))
+			cb(pointerEventToDetail(me.initEvent, me.target))
 		}
 	}
 }

@@ -40,7 +40,7 @@ type window struct {
 	delegate     WindowDelegate
 	focusWidget  Widget
 
-	initEvent Event
+	initEvent PointerEvent
 	timer     Timer
 
 	surface        *Surface
@@ -128,18 +128,21 @@ func (me *window) Layout(dx, dy, left, top, right, bottom int32) {
 	}
 }
 
-// this canvas is nil
 func (me *window) Draw(canvas Canvas) {
+	log.V("nuxui", "window Draw start")
 	if me.decor != nil {
 		if f, ok := me.decor.(Draw); ok {
+			log.V("nuxui", "window Draw canvas save")
 			canvas.Save()
 			// TODO:: canvas clip
 			canvas.Translate(0, me.ContentHeight())
 			canvas.Scale(1, -1)
+			log.V("nuxui", "window Draw canvas scale then draw")
 			f.Draw(canvas)
 			canvas.Restore()
 		}
 	}
+	log.V("nuxui", "window Draw end")
 }
 
 func (me *window) ID() uint64 {
@@ -214,7 +217,7 @@ func (me *window) Delegate() WindowDelegate {
 	return me.delegate
 }
 
-func (me *window) handlePointerEvent(e Event) {
+func (me *window) handlePointerEvent(e PointerEvent) {
 	me.switchFocusIfPossible(e)
 
 	if me.delegate != nil {
@@ -227,19 +230,61 @@ func (me *window) handlePointerEvent(e Event) {
 	gestureManagerInstance.handlePointerEvent(me.Decor(), e)
 }
 
-func (me *window) handleKeyEvent(e Event) {
+func (me *window) handleScrollEvent(e ScrollEvent) {
+	gestureManagerInstance.handleScrollEvent(me.Decor(), e)
+}
+
+func (me *window) handleKeyEvent(e KeyEvent) {
 	if me.focusWidget != nil {
 		if f, ok := me.focusWidget.(KeyEventHandler); ok {
 			if f.OnKeyEvent(e) {
 				return
+			} else {
+				goto other
+			}
+		}
+	} else {
+		goto other
+	}
+
+other:
+	if me.decor != nil {
+		me.handleOtherWidgetKeyEvent(me.decor, e)
+	}
+}
+
+func (me *window) handleOtherWidgetKeyEvent(p Parent, e KeyEvent) bool {
+	if p.ChildrenCount() > 0 {
+		var compt Widget
+		for _, c := range p.Children() {
+			compt = nil
+			if cpt, ok := c.(Component); ok {
+				c = cpt.Content()
+				compt = cpt.Component()
+			}
+			if cp, ok := c.(Parent); ok {
+				if me.handleOtherWidgetKeyEvent(cp, e) {
+					return true
+				}
+			} else if f, ok := c.(KeyEventHandler); ok {
+				if f.OnKeyEvent(e) {
+					return true
+				}
+			}
+
+			if compt != nil {
+				if f, ok := compt.(KeyEventHandler); ok {
+					if f.OnKeyEvent(e) {
+						return true
+					}
+				}
 			}
 		}
 	}
-
-	// TODO:: handle key event
+	return false
 }
 
-func (me *window) handleTypingEvent(e Event) {
+func (me *window) handleTypingEvent(e TypingEvent) {
 	if me.focusWidget != nil {
 		if f, ok := me.focusWidget.(TypingEventHandler); ok {
 			f.OnTypingEvent(e)
@@ -271,7 +316,7 @@ func (me *window) requestFocus(widget Widget) {
 	}
 }
 
-func (me *window) switchFocusIfPossible(event Event) {
+func (me *window) switchFocusIfPossible(event PointerEvent) {
 	if event.Type() != Type_PointerEvent || !event.IsPrimary() {
 		return
 	}

@@ -75,7 +75,7 @@ type TapGestureRecognizer interface {
 
 type tapGestureRecognizer struct {
 	callbacks   [][]GestureCallback
-	initEvent   Event
+	initEvent   PointerEvent
 	target      Widget
 	timer       Timer
 	state       GestureState
@@ -123,7 +123,7 @@ func (me *tapGestureRecognizer) removeCallback(which int, callback GestureCallba
 	}
 }
 
-func (me *tapGestureRecognizer) PointerAllowed(event Event) bool {
+func (me *tapGestureRecognizer) PointerAllowed(event PointerEvent) bool {
 	if len(me.callbacks[_ACTION_TAP]) == 0 &&
 		len(me.callbacks[_ACTION_TAP_DOWN]) == 0 &&
 		len(me.callbacks[_ACTION_TAP_UP]) == 0 &&
@@ -138,7 +138,7 @@ func (me *tapGestureRecognizer) PointerAllowed(event Event) bool {
 	return false
 }
 
-func (me *tapGestureRecognizer) HandlePointerEvent(event Event) {
+func (me *tapGestureRecognizer) HandlePointerEvent(event PointerEvent) {
 	switch event.Action() {
 	case Action_Down:
 		me.initEvent = event
@@ -203,7 +203,7 @@ func (me *tapGestureRecognizer) invokeTapDown(pointer int64) {
 	me.state = GestureState_Possible
 	if me.initEvent.Pointer() == pointer {
 		for _, cb := range me.callbacks[_ACTION_TAP_DOWN] {
-			cb(eventToDetail(me.initEvent, me.target))
+			cb(pointerEventToDetail(me.initEvent, me.target))
 		}
 	}
 }
@@ -211,7 +211,7 @@ func (me *tapGestureRecognizer) invokeTapDown(pointer int64) {
 func (me *tapGestureRecognizer) invokeTapCancel() {
 	if me.triggerDown {
 		for _, cb := range me.callbacks[_ACTION_TAP_CANCEL] {
-			cb(eventToDetail(nil, me.target))
+			cb(pointerEventToDetail(nil, me.target))
 		}
 	}
 }
@@ -224,10 +224,10 @@ func (me *tapGestureRecognizer) invokeTapUpAndTap(pointer int64) {
 	me.state = GestureState_Accepted
 
 	for _, cb := range me.callbacks[_ACTION_TAP_UP] {
-		cb(eventToDetail(me.initEvent, me.target))
+		cb(pointerEventToDetail(me.initEvent, me.target))
 	}
 
 	for _, cb := range me.callbacks[_ACTION_TAP] {
-		cb(eventToDetail(me.initEvent, me.target))
+		cb(pointerEventToDetail(me.initEvent, me.target))
 	}
 }

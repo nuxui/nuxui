@@ -16,7 +16,7 @@ type gestureManager struct {
 	hitTestResults map[int64]HitTestResult
 }
 
-func (me *gestureManager) handlePointerEvent(widget Widget, event Event) {
+func (me *gestureManager) handlePointerEvent(widget Widget, event PointerEvent) {
 	if event.Type() != Type_PointerEvent {
 		return
 	}
@@ -37,8 +37,7 @@ func (me *gestureManager) handlePointerEvent(widget Widget, event Event) {
 		hitTestResult = me.hitTestResults[event.Pointer()]
 		delete(me.hitTestResults, event.Pointer())
 	case Action_Scroll:
-		log.I("nuxui", "ScrollX=%f, ScrollY=%f", event.ScrollX(), event.ScrollY())
-		handleScrollEvent(event)
+		log.E("gestureManager", "can not run here")
 	default:
 		hitTestResult = me.hitTestResults[event.Pointer()]
 	}
@@ -48,7 +47,11 @@ func (me *gestureManager) handlePointerEvent(widget Widget, event Event) {
 	}
 }
 
-func (me *gestureManager) dispatchEvent(event Event, hitTestResult HitTestResult) {
+func (me *gestureManager) handleScrollEvent(widget Widget, event ScrollEvent) {
+	handleScrollEvent(event)
+}
+
+func (me *gestureManager) dispatchEvent(event PointerEvent, hitTestResult HitTestResult) {
 	if hitTestResult == nil {
 		// route event
 		return
@@ -66,7 +69,7 @@ func (me *gestureManager) dispatchEvent(event Event, hitTestResult HitTestResult
 	}
 }
 
-func (me *gestureManager) hitTest(widget Widget, offsetX, offsetY int32, hitTestResult HitTestResult, event Event) {
+func (me *gestureManager) hitTest(widget Widget, offsetX, offsetY int32, hitTestResult HitTestResult, event PointerEvent) {
 	if s, ok := widget.(Size); ok {
 		ms := s.MeasuredSize()
 

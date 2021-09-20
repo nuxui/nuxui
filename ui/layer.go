@@ -52,7 +52,7 @@ func (me *layer) onVisualChanged(widget nux.Widget) {
 }
 
 func (me *layer) Measure(width, height int32) {
-	log.I("nuxui", "layer:%s Measure width=%s, height=%s", me.ID(), nux.MeasureSpecString(width), nux.MeasureSpecString(height))
+	// log.I("nuxui", "layer:%s Measure width=%s, height=%s", me.ID(), nux.MeasureSpecString(width), nux.MeasureSpecString(height))
 	measureDuration := log.Time()
 	defer log.TimeEnd(measureDuration, "nuxui", "ui.Layer %s Measure", me.ID())
 

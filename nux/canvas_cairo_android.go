@@ -24,36 +24,6 @@ package nux
 
 #include <stdio.h>
 
-void drawImage(cairo_t* cr, char* src, double width, double height){
-	int              w, h;
-	cairo_surface_t *image;
-
-	image = cairo_image_surface_create_from_png (src);
-	w = cairo_image_surface_get_width (image);
-	h = cairo_image_surface_get_height (image);
-
-	//cairo_scale (cr, width/w, height/h);
-
-	cairo_set_source_surface (cr, image, 0, 0);
-	cairo_paint (cr);
-	cairo_surface_destroy (image);
-}
-
-typedef struct png{
-	cairo_surface_t* image;
-	int32_t width;
-	int32_t height;
-}png_t;
-
-png_t * create_png(char* src){
-	png_t* png = malloc (sizeof (png_t));
-	memset(png, 0, sizeof(png_t));
-	png->image = cairo_image_surface_create_from_png (src);
-	png->width = cairo_image_surface_get_width (png->image);
-	png->height = cairo_image_surface_get_height (png->image);
-	return png;
-}
-
 void drawImage2(cairo_t* cr, cairo_surface_t *image){
 	cairo_set_source_surface (cr, image, 0, 0);
 	cairo_paint (cr);
@@ -93,24 +63,6 @@ const (
 	PI2    = PI * 2
 	DEGREE = PI / 180.0
 )
-
-/////////////////////////////////////////////////////////////////////////////////////////
-/////////////                        Image                          ///////////////////
-/////////////////////////////////////////////////////////////////////////////////////////
-
-type cPNGImage struct {
-	image  *C.cairo_surface_t
-	width  int32
-	height int32
-}
-
-// TODO:: release something like cairo_surface_t
-// TODO:: handle error
-func create_png(src string) *cPNGImage {
-	csrc := C.CString(src)
-	png := (*cPNGImage)(unsafe.Pointer(C.create_png(csrc)))
-	return png
-}
 
 /////////////////////////////////////////////////////////////////////////////////////////
 /////////////                        Surface                          ///////////////////
@@ -404,14 +356,8 @@ func (me *canvas) MeasureText(text string, font *Font, width, height int32) (out
 	return
 }
 
-func (me *canvas) DrawImage(src string, width, height int32) {
-	csrc := C.CString(src)
-	C.drawImage(me.ptr, csrc, C.double(width), C.double(height))
-	C.free(unsafe.Pointer(csrc))
-}
-
-func (me *canvas) DrawPNG(png *cPNGImage) {
-	C.drawImage2(me.ptr, png.image)
+func (me *canvas) DrawImage(img Image) {
+	C.drawImage2(me.ptr, img.Buffer())
 }
 
 func (me *canvas) deviceToUser(x, y float32) {

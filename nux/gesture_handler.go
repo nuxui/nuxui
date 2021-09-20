@@ -12,7 +12,7 @@ import (
 type GestureHandler interface {
 	AddGestureRecoginer(recognizer GestureRecognizer)
 	RemoveGestureRecoginer(recognizer GestureRecognizer)
-	HandlePointerEvent(event Event)
+	HandlePointerEvent(event PointerEvent)
 	FindGestureRecognizer(recognizerType GestureRecognizer) GestureRecognizer
 }
 
@@ -58,7 +58,7 @@ func (me *gestureHandler) RemoveGestureRecoginer(recognizer GestureRecognizer) {
 	}
 }
 
-func (me *gestureHandler) HandlePointerEvent(event Event) {
+func (me *gestureHandler) HandlePointerEvent(event PointerEvent) {
 	if me.gestureRecognizers != nil {
 		for _, r := range me.gestureRecognizers {
 			if r.PointerAllowed(event) {
@@ -71,7 +71,7 @@ func (me *gestureHandler) HandlePointerEvent(event Event) {
 func (me *gestureHandler) FindGestureRecognizer(recognizerType GestureRecognizer) GestureRecognizer {
 	name := util.GetTypeName(recognizerType)
 	for _, r := range me.gestureRecognizers {
-		if util.GetTypeName(r) == name  {
+		if util.GetTypeName(r) == name {
 			return r
 		}
 	}

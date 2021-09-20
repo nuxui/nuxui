@@ -7,7 +7,7 @@ package ui
 import "github.com/nuxui/nuxui/nux"
 
 type Drawable interface {
-	//TODO  Draw(Reect, Canvas)
+	//TODO  Draw(Rect, Canvas)
 	Width() int32
 	Height() int32
 	Draw(nux.Canvas)

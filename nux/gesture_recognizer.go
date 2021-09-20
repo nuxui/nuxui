@@ -12,8 +12,8 @@ import (
 
 type GestureRecognizer interface {
 	GestureArenaMember
-	PointerAllowed(event Event) bool
-	HandlePointerEvent(event Event)
+	PointerAllowed(event PointerEvent) bool
+	HandlePointerEvent(event PointerEvent)
 	//TODO:: Clear(widget Widget) // clear callbacks of widget
 }
 
@@ -59,7 +59,7 @@ func (me *gestureDetail) WindowY() float32 { return me.windowY }
 func (me *gestureDetail) ScrollX() float32 { return me.scrollX }
 func (me *gestureDetail) ScrollY() float32 { return me.scrollY }
 
-func eventToDetail(event Event, target Widget) GestureDetail {
+func pointerEventToDetail(event PointerEvent, target Widget) GestureDetail {
 	if target == nil {
 		log.Fatal("nuxui", "target can not be nil")
 	}
@@ -80,6 +80,38 @@ func eventToDetail(event Event, target Widget) GestureDetail {
 		target:  target,
 		time:    event.Time(),
 		kind:    event.Kind(),
+		x:       x,
+		y:       y,
+		screenX: event.ScreenX(),
+		screenY: event.ScreenY(),
+		windowX: event.X(),
+		windowY: event.Y(),
+		// scrollX: event.ScrollX(),
+		// scrollY: event.ScrollY(),
+	}
+}
+
+func scrollEventToDetail(event ScrollEvent, target Widget) GestureDetail {
+	if target == nil {
+		log.Fatal("nuxui", "target can not be nil")
+	}
+
+	if event == nil {
+		return &gestureDetail{target: target}
+	}
+
+	x := event.X()
+	y := event.Y()
+	if s, ok := target.(Size); ok {
+		ms := s.MeasuredSize()
+		x = event.X() - float32(ms.Position.X)
+		y = event.Y() - float32(ms.Position.Y)
+	}
+
+	return &gestureDetail{
+		target:  target,
+		time:    event.Time(),
+		kind:    Kind_None,
 		x:       x,
 		y:       y,
 		screenX: event.ScreenX(),

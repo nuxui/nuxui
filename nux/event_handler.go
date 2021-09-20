@@ -5,9 +5,9 @@
 package nux
 
 type KeyEventHandler interface {
-	OnKeyEvent(event Event) bool
+	OnKeyEvent(event KeyEvent) bool
 }
 
 type TypingEventHandler interface {
-	OnTypingEvent(event Event) bool
+	OnTypingEvent(event TypingEvent) bool
 }

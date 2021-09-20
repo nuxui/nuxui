@@ -16,31 +16,56 @@ type Event interface {
 	Time() time.Time
 	Type() EventType
 	Action() EventAction
-	Window() Window //TODO:: if global save a event, then window will not release
+	Window() Window    // TODO:: if global save a event, then window will not release
+	Data() interface{} // TODO:: for user event
+}
 
-	// pointer event
+type WindowEvent interface {
+	Event
+	windowEvent()
+}
+
+type PointerEvent interface {
+	Event
+
 	Pointer() int64
 	Kind() Kind
 	X() float32
 	Y() float32
 	ScreenX() float32
 	ScreenY() float32
-	ScrollX() float32
-	ScrollY() float32
+
 	Pressure() float32
 	Stage() int32
 	IsPrimary() bool
 	Distance(x, y float32) float32
+}
 
-	// key event
+type ScrollEvent interface {
+	Event
+
+	X() float32
+	Y() float32
+	ScreenX() float32
+	ScreenY() float32
+
+	ScrollX() float32
+	ScrollY() float32
+}
+
+type KeyEvent interface {
+	Event
+
 	KeyCode() KeyCode
 	Repeat() bool
 	Modifiers() (none, capslock, shift, control, alt, super bool)
 	Rune() rune // rune or 0
 	Text() string
 	Location() int32
+}
 
-	Data() interface{}
+type TypingEvent interface {
+	KeyEvent
 }
 
 type event struct {
@@ -48,25 +73,6 @@ type event struct {
 	etype  EventType
 	action EventAction
 	window Window
-
-	pointer  int64
-	kind     Kind
-	x        float32
-	y        float32
-	screenX  float32
-	screenY  float32
-	scrollX  float32
-	scrollY  float32
-	pressure float32
-	stage    int32
-	button   MouseButton
-
-	keyCode       KeyCode
-	repeat        bool
-	modifierFlags uint32
-	keyRune       string
-	text          string
-	location      int32
 
 	data interface{}
 }
@@ -87,74 +93,127 @@ func (me *event) Window() Window {
 	return me.window
 }
 
-func (me *event) Pointer() int64 {
+type pointerEvent struct {
+	event
+
+	pointer  int64
+	kind     Kind
+	x        float32
+	y        float32
+	screenX  float32
+	screenY  float32
+	pressure float32
+	stage    int32
+	button   MouseButton
+}
+
+func (me *pointerEvent) Pointer() int64 {
 	return me.pointer
 }
 
-func (me *event) Kind() Kind {
+func (me *pointerEvent) Kind() Kind {
 	return me.kind
 }
 
-func (me *event) X() float32 {
+func (me *pointerEvent) X() float32 {
 	return me.x
 }
 
-func (me *event) Y() float32 {
+func (me *pointerEvent) Y() float32 {
 	return me.y
 }
 
-func (me *event) ScreenX() float32 {
+func (me *pointerEvent) ScreenX() float32 {
 	return me.screenX
 }
 
-func (me *event) ScreenY() float32 {
+func (me *pointerEvent) ScreenY() float32 {
 	return me.screenY
 }
 
-func (me *event) ScrollX() float32 {
-	if me.action != Action_Scroll {
-		log.E("nuxui", "obtain scroll at no wheel")
-	}
-	return me.scrollX
-}
-
-func (me *event) ScrollY() float32 {
-	if me.action != Action_Scroll {
-		log.E("nuxui", "obtain scroll at no wheel")
-	}
-	return me.scrollY
-}
-
-func (me *event) Pressure() float32 {
+func (me *pointerEvent) Pressure() float32 {
 	return me.pressure
 }
 
-func (me *event) Stage() int32 {
+func (me *pointerEvent) Stage() int32 {
 	return me.stage
 }
 
-func (me *event) IsPrimary() bool {
+func (me *pointerEvent) IsPrimary() bool {
 	if me.kind == Kind_Mouse {
 		return me.button == MB_Left
 	}
 	return true // TODO:: multi finger
 }
 
-func (me *event) Distance(x, y float32) float32 {
+func (me *pointerEvent) Distance(x, y float32) float32 {
 	dx := me.x - x
 	dy := me.y - y
 	return float32(math.Sqrt(float64(dx)*float64(dx) + float64(dy)*float64(dy)))
 }
 
-func (me *event) KeyCode() KeyCode {
+type scrollEvent struct {
+	event
+
+	x       float32
+	y       float32
+	screenX float32
+	screenY float32
+	scrollX float32
+	scrollY float32
+}
+
+func (me *scrollEvent) X() float32 {
+	return me.x
+}
+
+func (me *scrollEvent) Y() float32 {
+	return me.y
+}
+
+func (me *scrollEvent) ScreenX() float32 {
+	return me.screenX
+}
+
+func (me *scrollEvent) ScreenY() float32 {
+	return me.screenY
+}
+
+func (me *scrollEvent) ScrollX() float32 {
+	if me.action != Action_Scroll {
+		log.E("nuxui", "obtain scroll at no wheel")
+	}
+	return me.scrollX
+}
+
+func (me *scrollEvent) ScrollY() float32 {
+	if me.action != Action_Scroll {
+		log.E("nuxui", "obtain scroll at no wheel")
+	}
+	return me.scrollY
+}
+
+type keyEvent struct {
+	event
+
+	keyCode       KeyCode
+	repeat        bool
+	modifierFlags uint32
+	keyRune       string
+	text          string
+	location      int32
+}
+type typingEvent keyEvent
+
+func (me *keyEvent) KeyCode() KeyCode {
 	return me.keyCode
 }
 
-func (me *event) Repeat() bool {
+func (me *keyEvent) Repeat() bool {
 	return me.repeat
 }
 
-func (me *event) Modifiers() (none, capslock, shift, control, alt, super bool) {
+func (me *keyEvent) Modifiers() (none, capslock, shift, control, alt, super bool) {
 	capslock = me.modifierFlags&Mod_CapsLock == Mod_CapsLock
 	shift = me.modifierFlags&Mod_Shift == Mod_Shift
 	control = me.modifierFlags&Mod_Control == Mod_Control
@@ -164,7 +223,7 @@ func (me *event) Modifiers() (none, capslock, shift, control, alt, super bool) {
 	return
 }
 
-func (me *event) Rune() rune {
+func (me *keyEvent) Rune() rune {
 	r := []rune(me.keyRune)
 	if len(r) > 0 {
 		return r[0]
@@ -172,11 +231,11 @@ func (me *event) Rune() rune {
 	return 0
 }
 
-func (me *event) Text() string {
+func (me *keyEvent) Text() string {
 	return me.text
 }
 
-func (me *event) Location() int32 {
+func (me *keyEvent) Location() int32 {
 	return me.location
 }
 
@@ -185,16 +244,12 @@ func (me *event) Data() interface{} {
 }
 
 func (me *event) String() string {
-	switch me.etype {
-	case Type_PointerEvent:
-		return fmt.Sprintf("PointerEvent: {pointer=%d, button=%s:%d, action=%s, x=%.2f, y=%.2f}", me.pointer, me.button, me.button, me.action, me.x, me.y)
-	case Type_KeyEvent:
-		return fmt.Sprintf("KeyEvent: {keyCode=%s, action=%s, x=%.2f, y=%.2f, rune='%c'}", me.keyCode, me.action, me.x, me.y, me.Rune())
-	}
-	return fmt.Sprintf("Event: {type:%s, action:%s, x=%.2f, y=%.2f}", me.etype, me.action, me.x, me.y)
+	return fmt.Sprintf("Event: {type:%s, action:%s}", me.etype, me.action)
 }
 
-// TODO::
-// func RegisterEventAction() EventAction {
-
-// }
+func (me *pointerEvent) String() string {
+	return fmt.Sprintf("PointerEvent: {pointer=%d, button=%s:%d, action=%s, x=%.2f, y=%.2f}", me.pointer, me.button, me.button, me.action, me.x, me.y)
+}
+func (me *keyEvent) String() string {
+	return fmt.Sprintf("KeyEvent: {keyCode=%s, action=%s, rune='%c'}", me.keyCode, me.action, me.Rune())
+}

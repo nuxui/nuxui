@@ -186,7 +186,7 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 			go_mouseEvent(windptr, etype, x, y, screenX, screenY, 0, 0, [theEvent buttonNumber], 0, 0);
 			break;
 		case NSEventTypeScrollWheel:
-			go_mouseEvent(windptr, etype, x, y, screenX, screenY, [theEvent scrollingDeltaX], [theEvent scrollingDeltaY], [theEvent buttonNumber],0, 0);
+			go_scrollEvent(windptr, etype, x, y, screenX, screenY, [theEvent scrollingDeltaX], [theEvent scrollingDeltaY], [theEvent buttonNumber],0, 0);
 			break;
 		case NSEventTypePressure:
 			go_mouseEvent(windptr, etype, x, y, screenX, screenY, 0, 0, [theEvent buttonNumber], [theEvent pressure], [theEvent stage]);
@@ -291,6 +291,15 @@ int cg_changed = 0;
 	NSWindow* window = [notification object];
 	NSLog(@"NuxWindowDelegate windowDidResize %@, keyWindow=", window);
 	windowResized((uintptr_t)[notification object]);
+
+
+    // [NSEvent addGlobalMonitorForEventsMatchingMask:NSEventMaskKeyUp
+    //                                        handler:^(NSEvent *event){
+    //                                            NSLog(@"====== keydown: %@", event.characters);
+
+    //                                        }];
+
+
 }
 
 - (void)windowWillStartLiveResize:(NSNotification *)notification
@@ -599,6 +608,7 @@ void setTextInputRect(float x, float y, float w, float h)
 void invalidate(){
     dispatch_async(dispatch_get_main_queue(), ^{
         @autoreleasepool{
+            NSLog(@"------ post invalidate -------");
             NuxWindow* nuxWindow = (NuxWindow*)[NSApp keyWindow];
             if(nuxWindow.nuxview != nil){
                 [nuxWindow.nuxview setNeedsDisplay:YES];

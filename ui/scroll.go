@@ -328,7 +328,7 @@ func (me *scroll) Measure(width, height int32) {
 					// ok
 				case nux.Auto, nux.Unlimit:
 					if hPx > 0 {
-						hPt += cs.Width().Value()
+						hPt += cs.Width().Value() // ?????????? did width add to hPt ok?
 						_innerWidth := hPx / (1.0 - hPt/100.0)
 						w := cs.Width().Value() / 100 * _innerWidth
 						cms.Width = nux.MeasureSpec(util.Roundi32(w), nux.Pixel)

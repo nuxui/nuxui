@@ -83,6 +83,10 @@ func (me Dimen) Mode() Mode {
 	return Mode(dimenMMask & uint32(me) >> 28)
 }
 
+func (me Dimen) Mode2() Mode {
+	return Pixel
+}
+
 func (me Dimen) Value() float32 {
 	switch me.Mode() {
 	case Percent, Ratio:

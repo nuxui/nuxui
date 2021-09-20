@@ -66,7 +66,7 @@ const (
 type panGestureRecognizer struct {
 	target    Widget
 	callbacks [][]GestureCallback
-	initEvent Event
+	initEvent PointerEvent
 	state     GestureState
 }
 
@@ -109,7 +109,7 @@ func (me *panGestureRecognizer) removeCallback(which int, callback GestureCallba
 	}
 }
 
-func (me *panGestureRecognizer) PointerAllowed(event Event) bool {
+func (me *panGestureRecognizer) PointerAllowed(event PointerEvent) bool {
 	if len(me.callbacks[_ACTION_PAN_START]) == 0 &&
 		len(me.callbacks[_ACTION_PAN_UPDATE]) == 0 &&
 		len(me.callbacks[_ACTION_PAN_END]) == 0 &&
@@ -124,7 +124,7 @@ func (me *panGestureRecognizer) PointerAllowed(event Event) bool {
 	return false
 }
 
-func (me *panGestureRecognizer) HandlePointerEvent(event Event) {
+func (me *panGestureRecognizer) HandlePointerEvent(event PointerEvent) {
 	switch event.Action() {
 	case Action_Down:
 		me.initEvent = event
@@ -173,30 +173,30 @@ func (me *panGestureRecognizer) reset() {
 	me.state = GestureState_Ready
 }
 
-func (me *panGestureRecognizer) invokePanStart(event Event) {
+func (me *panGestureRecognizer) invokePanStart(event PointerEvent) {
 	log.V("nuxui", "invokePanStart")
 	for _, cb := range me.callbacks[_ACTION_PAN_START] {
-		cb(eventToDetail(event, me.target))
+		cb(pointerEventToDetail(event, me.target))
 	}
 }
 
-func (me *panGestureRecognizer) invokePanUpdate(event Event) {
+func (me *panGestureRecognizer) invokePanUpdate(event PointerEvent) {
 	log.V("nuxui", "invokePanUpdate")
 	for _, cb := range me.callbacks[_ACTION_PAN_UPDATE] {
-		cb(eventToDetail(event, me.target))
+		cb(pointerEventToDetail(event, me.target))
 	}
 }
 
-func (me *panGestureRecognizer) invokePanEnd(event Event) {
+func (me *panGestureRecognizer) invokePanEnd(event PointerEvent) {
 	log.V("nuxui", "invokePanEnd")
 	for _, cb := range me.callbacks[_ACTION_PAN_END] {
-		cb(eventToDetail(event, me.target))
+		cb(pointerEventToDetail(event, me.target))
 	}
 }
 
 func (me *panGestureRecognizer) invokePanCancel() {
 	log.V("nuxui", "invokePanCancel")
 	for _, cb := range me.callbacks[_ACTION_PAN_CANCEL] {
-		cb(eventToDetail(nil, me.target))
+		cb(pointerEventToDetail(nil, me.target))
 	}
 }

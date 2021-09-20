@@ -196,15 +196,18 @@ func setTextInputRect(x, y, w, h float32) {
 	C.setTextInputRect(C.float(x), C.float(y), C.float(w), C.float(h))
 }
 
-var lastMouseEvent map[MouseButton]Event = map[MouseButton]Event{}
+var lastMouseEvent map[MouseButton]PointerEvent = map[MouseButton]PointerEvent{}
 
 //export go_mouseEvent
 func go_mouseEvent(windptr C.uintptr_t, etype uint, x, y, screenX, screenY, scrollX, scrollY float32, buttonNumber int32, pressure float32, stage int32) {
-	e := &event{
-		window:   theApp.findWindow(windptr),
-		time:     time.Now(),
-		etype:    Type_PointerEvent,
-		action:   Action_None,
+	// log.V("nuxui", "go_mouseEvent x=%f, y=%f, screenX=%f, screenY=%f, scrollX=%f, scrollY=%f", x, y, screenX, screenY, scrollX, scrollY)
+	e := &pointerEvent{
+		event: event{
+			window: theApp.findWindow(windptr),
+			time:   time.Now(),
+			etype:  Type_PointerEvent,
+			action: Action_None,
+		},
 		pointer:  0,
 		button:   MB_None,
 		kind:     Kind_Mouse,
@@ -212,52 +215,51 @@ func go_mouseEvent(windptr C.uintptr_t, etype uint, x, y, screenX, screenY, scro
 		y:        y,
 		screenX:  screenX,
 		screenY:  screenY,
-		scrollX:  scrollX,
-		scrollY:  scrollY,
 		pressure: pressure,
 		stage:    stage,
 	}
 
 	switch etype {
 	case C.NSEventTypeMouseMoved:
+		e.event.action = Action_Hover
 		e.button = MB_None
-		e.action = Action_Hover
 		e.pointer = 0
 	case C.NSEventTypeLeftMouseDown:
+		e.event.action = Action_Down
 		e.button = MB_Left
-		e.action = Action_Down
 		e.pointer = time.Now().UnixNano()
-		lastMouseEvent[MB_Left] = e
+		lastMouseEvent[e.button] = e
 	case C.NSEventTypeLeftMouseUp:
+		e.event.action = Action_Up
 		e.button = MB_Left
-		e.action = Action_Up
-		if v, ok := lastMouseEvent[MB_Left]; ok {
+		if v, ok := lastMouseEvent[e.button]; ok {
 			e.pointer = v.Pointer()
 		}
 	case C.NSEventTypeLeftMouseDragged:
+		e.event.action = Action_Drag
 		e.button = MB_Left
-		e.action = Action_Move
-		if v, ok := lastMouseEvent[MB_Left]; ok {
+		if v, ok := lastMouseEvent[e.button]; ok {
 			e.pointer = v.Pointer()
 		}
 	case C.NSEventTypeRightMouseDown:
+		e.event.action = Action_Down
 		e.button = MB_Right
-		e.action = Action_Down
 		e.pointer = time.Now().UnixNano()
-		lastMouseEvent[MB_Right] = e
+		lastMouseEvent[e.button] = e
 	case C.NSEventTypeRightMouseUp:
+		e.event.action = Action_Up
 		e.button = MB_Right
-		e.action = Action_Up
-		if v, ok := lastMouseEvent[MB_Right]; ok {
+		if v, ok := lastMouseEvent[e.button]; ok {
 			e.pointer = v.Pointer()
 		}
 	case C.NSEventTypeRightMouseDragged:
+		e.event.action = Action_Drag
 		e.button = MB_Right
-		e.action = Action_Move
-		if v, ok := lastMouseEvent[MB_Right]; ok {
+		if v, ok := lastMouseEvent[e.button]; ok {
 			e.pointer = v.Pointer()
 		}
 	case C.NSEventTypeOtherMouseDown:
+		e.event.action = Action_Down
 		switch buttonNumber {
 		case 2:
 			e.button = MB_Middle
@@ -268,10 +270,10 @@ func go_mouseEvent(windptr C.uintptr_t, etype uint, x, y, screenX, screenY, scro
 		default:
 			e.button = MouseButton(buttonNumber)
 		}
-		e.action = Action_Down
 		e.pointer = time.Now().UnixNano()
-		lastMouseEvent[MB_Other] = e
+		lastMouseEvent[e.button] = e
 	case C.NSEventTypeOtherMouseUp:
+		e.event.action = Action_Up
 		switch buttonNumber {
 		case 2:
 			e.button = MB_Middle
@@ -282,11 +284,11 @@ func go_mouseEvent(windptr C.uintptr_t, etype uint, x, y, screenX, screenY, scro
 		default:
 			e.button = MouseButton(buttonNumber)
 		}
-		e.action = Action_Up
-		if v, ok := lastMouseEvent[MB_Other]; ok {
+		if v, ok := lastMouseEvent[e.button]; ok {
 			e.pointer = v.Pointer()
 		}
 	case C.NSEventTypeOtherMouseDragged:
+		e.event.action = Action_Drag
 		switch buttonNumber {
 		case 2:
 			e.button = MB_Middle
@@ -297,21 +299,41 @@ func go_mouseEvent(windptr C.uintptr_t, etype uint, x, y, screenX, screenY, scro
 		default:
 			e.button = MouseButton(buttonNumber)
 		}
-		e.action = Action_Move
-		if v, ok := lastMouseEvent[MB_Other]; ok {
+		if v, ok := lastMouseEvent[e.button]; ok {
 			e.pointer = v.Pointer()
 		}
 	case C.NSEventTypeScrollWheel:
-		e.button = MB_None
-		e.action = Action_Scroll
-		e.pointer = 0
+		log.E("nux", "use go_scrollEvent")
 	case C.NSEventTypePressure:
 		// TODO:: stageTransition pressureBehavior NSPressureBehavior
+		e.event.action = Action_Pressure
 		e.button = MB_None
-		e.action = Action_Pressure
 	}
 
 	theApp.handleEvent(e)
+
+}
+
+//export go_scrollEvent
+func go_scrollEvent(windptr C.uintptr_t, etype uint, x, y, screenX, screenY, scrollX, scrollY float32, buttonNumber int32, pressure float32, stage int32) {
+	log.V("nuxui", "go_scrollEvent x=%f, y=%f, screenX=%f, screenY=%f, scrollX=%f, scrollY=%f", x, y, screenX, screenY, scrollX, scrollY)
+	e := &scrollEvent{
+		event: event{
+			window: theApp.findWindow(windptr),
+			time:   time.Now(),
+			etype:  Type_ScrollEvent,
+			action: Action_Scroll,
+		},
+		x:       x,
+		y:       y,
+		screenX: screenX,
+		screenY: screenY,
+		scrollX: scrollX,
+		scrollY: scrollY,
+	}
+
+	theApp.handleEvent(e)
+
 }
 
 var lastModifierKeyEvent map[KeyCode]bool = map[KeyCode]bool{}
@@ -331,11 +353,13 @@ func go_drawEvent(windptr C.uintptr_t) {
 
 //export go_keyEvent
 func go_keyEvent(windptr C.uintptr_t, etype uint, keyCode uint16, modifierFlags uint, repeat byte, chars *C.char) {
-	e := &event{
-		window:        theApp.findWindow(windptr),
-		time:          time.Now(),
-		etype:         Type_KeyEvent,
-		action:        Action_None,
+	e := &keyEvent{
+		event: event{
+			window: theApp.findWindow(windptr),
+			time:   time.Now(),
+			etype:  Type_KeyEvent,
+			action: Action_None,
+		},
 		keyCode:       convertVirtualKeyCode(keyCode),
 		repeat:        false,
 		modifierFlags: convertModifierFlags(modifierFlags),
@@ -348,16 +372,16 @@ func go_keyEvent(windptr C.uintptr_t, etype uint, keyCode uint16, modifierFlags 
 
 	switch etype {
 	case C.NSEventTypeKeyDown:
-		e.action = Action_Down
+		e.event.action = Action_Down
 	case C.NSEventTypeKeyUp:
-		e.action = Action_Up
+		e.event.action = Action_Up
 	case C.NSEventTypeFlagsChanged:
 		if down, ok := lastModifierKeyEvent[e.keyCode]; ok && down {
 			lastModifierKeyEvent[e.keyCode] = false
-			e.action = Action_Up
+			e.event.action = Action_Up
 		} else {
 			lastModifierKeyEvent[e.keyCode] = true
-			e.action = Action_Down
+			e.event.action = Action_Down
 		}
 	}
 
@@ -372,11 +396,13 @@ func go_typingEvent(windptr C.uintptr_t, chars *C.char, action, location, length
 		act = Action_Typing
 	}
 
-	e := &event{
-		window:   theApp.findWindow(windptr),
-		time:     time.Now(),
-		etype:    Type_TypingEvent,
-		action:   act,
+	e := &keyEvent{
+		event: event{
+			window: theApp.findWindow(windptr),
+			time:   time.Now(),
+			etype:  Type_TypingEvent,
+			action: act,
+		},
 		text:     C.GoString(chars),
 		location: int32(location),
 	}

@@ -63,7 +63,7 @@ func (me *column) onVisualChanged(widget nux.Widget) {
 }
 
 func (me *column) Measure(width, height int32) {
-	log.I("nuxui", "ui.Column %s Measure width=%s, height=%s", me.ID(), nux.MeasureSpecString(width), nux.MeasureSpecString(height))
+	// log.I("nuxui", "ui.Column %s Measure width=%s, height=%s", me.ID(), nux.MeasureSpecString(width), nux.MeasureSpecString(height))
 	measureDuration := log.Time()
 	defer log.TimeEnd(measureDuration, "nuxui", "ui.Column %s Measure", me.ID())
 
@@ -311,7 +311,7 @@ func (me *column) Measure(width, height int32) {
 				// ok
 			}
 
-			log.I("nuxui", "measureHorizontal 1 child:%s, width:%s, height:%s, hPPx:%.2f, hPPt:%.2f, innerWidth:%.2f, canMeasureHeight:%t, measuredFlags:%d", child.ID(), nux.MeasureSpecString(width), nux.MeasureSpecString(height), hPPx, hPPt, innerWidth, canMeasureHeight, 0)
+			// log.I("nuxui", "measureHorizontal 1 child:%s, width:%s, height:%s, hPPx:%.2f, hPPt:%.2f, innerWidth:%.2f, canMeasureHeight:%t, measuredFlags:%d", child.ID(), nux.MeasureSpecString(width), nux.MeasureSpecString(height), hPPx, hPPt, innerWidth, canMeasureHeight, 0)
 
 			measuredFlags, hPx := me.measureHorizontal(width, height, hPPx, hPPt, innerWidth, child, canMeasureHeight, 0)
 
@@ -432,7 +432,7 @@ func (me *column) Measure(width, height int32) {
 				}
 
 				if needMeasure {
-					log.I("nuxui", "measureHorizontal 2 child:%s, width:%s, height:%s, hPPx:%.2f, hPPt:%.2f, innerWidth:%.2f, canMeasureHeight:%t, measuredFlags:%d", child.ID(), nux.MeasureSpecString(width), nux.MeasureSpecString(height), hPPx, hPPt, innerWidth, canMeasureHeight, measuredFlags)
+					// log.I("nuxui", "measureHorizontal 2 child:%s, width:%s, height:%s, hPPx:%.2f, hPPt:%.2f, innerWidth:%.2f, canMeasureHeight:%t, measuredFlags:%d", child.ID(), nux.MeasureSpecString(width), nux.MeasureSpecString(height), hPPx, hPPt, innerWidth, canMeasureHeight, measuredFlags)
 
 					newMeasuredFlags, _ := me.measureHorizontal(width, height, hPPx, hPPt, innerWidth, child, canMeasureHeight, measuredFlags)
 
@@ -502,7 +502,7 @@ func (me *column) Measure(width, height int32) {
 
 					if measuredFlags := childrenMeasuredFlags[index]; measuredFlags != hMeasuredWidthComplete {
 						// now width mode is must be nux.Pixel
-						log.I("nuxui", "measureHorizontal 3 width:%s, height:%s, hPPx:%.2f, hPPt:%.2f, innerWidth:%.2f, canMeasureHeight:%t, measuredFlags:%d", nux.MeasureSpecString(width), nux.MeasureSpecString(height), hPPx, hPPt, innerWidth, true, measuredFlags)
+						// log.I("nuxui", "measureHorizontal 3 width:%s, height:%s, hPPx:%.2f, hPPt:%.2f, innerWidth:%.2f, canMeasureHeight:%t, measuredFlags:%d", nux.MeasureSpecString(width), nux.MeasureSpecString(height), hPPx, hPPt, innerWidth, true, measuredFlags)
 						newMeasuredFlags, _ := me.measureHorizontal(width, height, hPPx, hPPt, innerWidth, child, true, measuredFlags)
 
 						if newMeasuredFlags != hMeasuredWidthComplete {
@@ -702,7 +702,7 @@ func (me *column) measureHorizontal(width, height int32, hPPx, hPPt, innerWidth 
 		if canMeasureWidth && canMeasureHeight {
 			if m, ok := child.(nux.Measure); ok {
 				if hasMeasuredFlags&hMeasuredWidth != hMeasuredWidth {
-					log.V("nuxui", "child: %s, Measure width=%s, height=%s", child.ID(), nux.MeasureSpecString(width), nux.MeasureSpecString(height))
+					// log.V("nuxui", "child: %s, Measure width=%s, height=%s", child.ID(), nux.MeasureSpecString(width), nux.MeasureSpecString(height))
 					m.Measure(cms.Width, cms.Height)
 
 					if cs.Width().Mode() == nux.Ratio {

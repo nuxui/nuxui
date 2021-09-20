@@ -31,9 +31,10 @@ type Window interface {
 	Delegate() WindowDelegate
 
 	// private methods
-	handlePointerEvent(event Event)
-	handleKeyEvent(event Event)
-	handleTypingEvent(event Event)
+	handlePointerEvent(event PointerEvent)
+	handleScrollEvent(event ScrollEvent)
+	handleKeyEvent(event KeyEvent)
+	handleTypingEvent(event TypingEvent)
 	requestFocus(widget Widget)
 }
 
@@ -43,7 +44,7 @@ type WindowDelegate interface {
 }
 
 type windowDelegate_HandlePointerEvent interface {
-	HandlePointerEvent(event Event)
+	HandlePointerEvent(event PointerEvent)
 }
 
 func NewWindow() Window {
@@ -59,7 +60,7 @@ func (me *decorGestureHandler) AddGestureRecoginer(recognizer GestureRecognizer)
 func (me *decorGestureHandler) RemoveGestureRecoginer(recognizer GestureRecognizer) {
 }
 
-func (me *decorGestureHandler) HandlePointerEvent(event Event) {
+func (me *decorGestureHandler) HandlePointerEvent(event PointerEvent) {
 	switch event.Action() {
 	case Action_Down:
 		GestureArenaManager().Close(event.Pointer())

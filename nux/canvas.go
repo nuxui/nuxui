@@ -40,8 +40,9 @@ type Canvas interface {
 
 	MeasureText(text string, font *Font, width, height int32) (outWidth, outHeight int32)
 
-	DrawImage(src string, width, height int32)
-	DrawPNG(*cPNGImage)
+	// DrawImage(src string, width, height int32)
+	// DrawPNG(*cPNGImage)
+	DrawImage(img Image)
 
 	SetAntialias(a int)
 	GetAntialias() int
