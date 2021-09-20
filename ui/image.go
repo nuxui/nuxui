@@ -325,6 +325,7 @@ func (me *image) SetSrc(src string) {
 		me.srcDrawable = NewImageDrawable(me.src)
 	}
 
+	nux.RequestLayout(me)
 	nux.RequestRedraw(me)
 }
 
