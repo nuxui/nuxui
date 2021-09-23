@@ -100,11 +100,6 @@ void drawText(cairo_t* cr, char* fontFamily, int fontWeight, int fontSize,
 	g_object_unref (layout);
 }
 
-void drawImage2(cairo_t* cr, cairo_surface_t *image){
-	cairo_set_source_surface (cr, image, 0, 0);
-	cairo_paint (cr);
-}
-
 */
 import "C"
 
@@ -441,7 +436,9 @@ func (me *canvas) MeasureText(text string, font *Font, width, height int32) (out
 }
 
 func (me *canvas) DrawImage(img Image) {
-	C.drawImage2(me.ptr, img.Buffer())
+	C.cairo_set_source_rgba(me.ptr, C.double(0), C.double(1.0), C.double(0), C.double(1))
+	C.cairo_set_source_surface(me.ptr, img.Buffer(), 0, 0)
+	C.cairo_paint(me.ptr)
 }
 
 func (me *canvas) deviceToUser(x, y float32) {

@@ -156,8 +156,8 @@ func (me *image) Layout(dx, dy, left, top, right, bottom int32) {
 		me.offsetY = (float32(innerH) - imgH) / 2
 	case ScaleType_CenterCrop:
 		r := imgW / imgH
-		r2 := float32(innerW) / float32(innerH)
-		if r2 > r {
+		ir := float32(innerW) / float32(innerH)
+		if ir > r {
 			newH := float32(innerW) / r
 			me.scaleX = float32(innerW) / imgW
 			me.scaleY = newH / imgH
