@@ -10,15 +10,13 @@ package nux
 #include <cairo/cairo-pdf.h>
 #include <cairo/cairo-ps.h>
 #include <cairo/cairo-svg.h>
-#include <cairo/cairo-quartz.h>
 
 #cgo pkg-config: pango
 #cgo pkg-config: pangocairo
 #cgo pkg-config: gobject-2.0
 #include <pango/pangocairo.h>
 
-#include <AppKit/NSGraphicsContext.h>
-#import <Cocoa/Cocoa.h>
+#include <stdlib.h>
 
 #cgo pkg-config: libjpeg
 #include "image_cairo_jpg.h"

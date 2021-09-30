@@ -2,29 +2,18 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build darwin
+//go:build windows
 
 package nux
 
 /*
-#cgo CFLAGS: -x objective-c -DGL_SILENCE_DEPRECATION
-#cgo LDFLAGS: -framework Cocoa -framework OpenGL
-#import <Carbon/Carbon.h> // for HIToolbox/Events.h
-#import <Cocoa/Cocoa.h>
-
-char*   window_title(uintptr_t window);
-void    window_setTitle(uintptr_t window, char* title);
-float   window_alpha(uintptr_t window);
-void    window_setAlpha(uintptr_t window, float alpha);
-int32_t window_getWidth(uintptr_t window);
-int32_t window_getHeight(uintptr_t window);
-int32_t window_getContentWidth(uintptr_t window);
-int32_t window_getContentHeight(uintptr_t window);
-void*   window_getCGContext(uintptr_t window);
+#include <windows.h>
+#include <windowsx.h>
 */
 import "C"
 
 import (
+	"syscall"
 	"unsafe"
 
 	"github.com/nuxui/nuxui/log"
@@ -32,7 +21,7 @@ import (
 
 // merge window and activity ?
 type window struct {
-	windptr      C.uintptr_t
+	windptr      C.HWND // TODO:: need by user code, how to use unsafe.Pointer
 	decor        Parent
 	buffer       unsafe.Pointer
 	bufferWidth  int32
@@ -45,7 +34,7 @@ type window struct {
 
 	surface        *Surface
 	surfaceResized bool
-	cgContext      uintptr
+	paintStruct    C.PAINTSTRUCT
 }
 
 func newWindow() *window {
@@ -68,6 +57,7 @@ func (me *window) Creating(attr Attr) {
 	}
 }
 
+// TODO:: Created(content Widget) content is decor
 func (me *window) Created(data interface{}) {
 	main := data.(string)
 	if main == "" {
@@ -135,9 +125,6 @@ func (me *window) Draw(canvas Canvas) {
 			log.V("nuxui", "window Draw canvas save")
 			canvas.Save()
 			// TODO:: canvas clip
-			canvas.Translate(0, me.ContentHeight())
-			canvas.Scale(1, -1)
-			log.V("nuxui", "window Draw canvas scale then draw")
 			f.Draw(canvas)
 			canvas.Restore()
 		}
@@ -150,42 +137,46 @@ func (me *window) ID() uint64 {
 }
 
 func (me *window) Width() int32 {
-	return int32(C.window_getWidth(me.windptr))
+	var rect C.RECT
+	if C.GetWindowRect(me.windptr, &rect) > 0 {
+		return int32(rect.right - rect.left)
+	}
+	return 0
 }
 
 func (me *window) Height() int32 {
-	return int32(C.window_getHeight(me.windptr))
+	var rect C.RECT
+	if C.GetWindowRect(me.windptr, &rect) > 0 {
+		return int32(rect.bottom - rect.top)
+	}
+	return 0
 }
 
 func (me *window) ContentWidth() int32 {
-	return int32(C.window_getContentWidth(me.windptr))
+	var rect C.RECT
+	if C.GetClientRect(me.windptr, &rect) > 0 {
+		return int32(rect.right - rect.left)
+	}
+	return 0
 }
 
 func (me *window) ContentHeight() int32 {
-	return int32(C.window_getContentHeight(me.windptr))
+	var rect C.RECT
+	if C.GetClientRect(me.windptr, &rect) > 0 {
+		return int32(rect.bottom - rect.top)
+	}
+	return 0
 }
 
 func (me *window) LockCanvas() (Canvas, error) {
-	w := me.ContentWidth()
-	h := me.ContentHeight()
-	if me.surface == nil {
-		me.cgContext = uintptr(C.window_getCGContext(me.windptr))
-		me.surface = newSurfaceQuartzWithCGContext(me.cgContext, w, h)
-	} else {
-		// TODO:: did cairo_surface has method to resize instead of recreate
-		if me.surfaceResized {
-			me.surface.Destory()
-			me.cgContext = uintptr(C.window_getCGContext(me.windptr))
-			me.surface = newSurfaceQuartzWithCGContext(me.cgContext, w, h)
-			me.surfaceResized = false
-		}
-	}
+	hdc := C.BeginPaint(me.windptr, &me.paintStruct)
+	me.surface = newSurfaceWin32(hdc)
 	return me.surface.GetCanvas(), nil
 }
 
 func (me *window) UnlockCanvas() error {
-	// me.surface.WriteToPng("./a.png")
 	me.surface.Flush()
+	C.EndPaint(me.windptr, &me.paintStruct)
 	return nil
 }
 
@@ -193,22 +184,36 @@ func (me *window) Decor() Widget {
 	return me.decor
 }
 
+// TODO:: use int? set 0.5 and return 127,0.498039
 func (me *window) Alpha() float32 {
-	return float32(C.window_alpha(me.windptr))
+	var pcrKey C.COLORREF
+	var pbAlpha C.BYTE
+	var pdwFlags C.DWORD
+	if C.GetLayeredWindowAttributes(me.windptr, &pcrKey, &pbAlpha, &pdwFlags) > 0 {
+		return float32(float32(pbAlpha) / 255.0)
+	}
+	return 1.0
 }
 
 func (me *window) SetAlpha(alpha float32) {
-	C.window_setAlpha(me.windptr, C.float(alpha))
+	C.SetWindowLong(me.windptr, C.GWL_EXSTYLE, C.GetWindowLong(me.windptr, C.GWL_EXSTYLE)|C.WS_EX_LAYERED)
+	C.SetLayeredWindowAttributes(me.windptr, 0, C.BYTE(255.0*alpha), C.LWA_ALPHA)
 }
 
 func (me *window) Title() string {
-	return C.GoString(C.window_title(me.windptr))
+	textLen := C.GetWindowTextLengthW(me.windptr) + 1
+	buf := make([]uint16, textLen)
+	C.GetWindowTextW(me.windptr, (*C.WCHAR)(&buf[0]), textLen)
+	return syscall.UTF16ToString(buf)
 }
 
 func (me *window) SetTitle(title string) {
-	ctitle := C.CString(title)
-	C.window_setTitle(me.windptr, ctitle)
-	C.free(unsafe.Pointer(ctitle))
+	ctitle, err := syscall.UTF16PtrFromString(title)
+	if err != nil {
+		log.E("nux", "set window title error: %s", err.Error())
+	} else {
+		C.SetWindowTextW(me.windptr, (*C.WCHAR)(ctitle))
+	}
 }
 
 func (me *window) SetDelegate(delegate WindowDelegate) {

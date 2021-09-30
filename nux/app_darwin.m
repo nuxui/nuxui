@@ -2,8 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build darwin
-// +build !ios
+//go:build darwin
 
 #include "_cgo_export.h"
 #import <Cocoa/Cocoa.h>
@@ -11,7 +10,7 @@
 #include <cairo/cairo-quartz.h>
 
 static const NSRange kEmptyRange = { NSNotFound, 0 };
-
+bool mainWindowCreated = false;
 
 
 @interface NuxText : NSView <NSTextInputClient> {
@@ -161,10 +160,6 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 
 - (void)sendEvent:(NSEvent *)theEvent
 {
-	CGFloat x = [theEvent locationInWindow].x;
-	CGFloat y = [[[theEvent window] contentView] bounds].size.height - [theEvent locationInWindow].y;
-	CGFloat screenX = [NSEvent mouseLocation].x;
-	CGFloat screenY = [[NSScreen mainScreen] frame].size.height-[NSEvent mouseLocation].y;
 	NSEventType etype = [theEvent type];
 	uintptr_t windptr = (uintptr_t)[theEvent window];
 
@@ -183,18 +178,43 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 		case NSEventTypeOtherMouseDown:
         case NSEventTypeOtherMouseUp:
         case NSEventTypeOtherMouseDragged:
-			go_mouseEvent(windptr, etype, x, y, screenX, screenY, 0, 0, [theEvent buttonNumber], 0, 0);
+        {
+            CGFloat x = [theEvent locationInWindow].x;
+	        CGFloat y = [[theEvent window] contentView].bounds.size.height - [theEvent locationInWindow].y;
+			go_mouseEvent(windptr, etype, x, y, [theEvent buttonNumber], 0, 0);
 			break;
-		case NSEventTypeScrollWheel:
-			go_scrollEvent(windptr, etype, x, y, screenX, screenY, [theEvent scrollingDeltaX], [theEvent scrollingDeltaY], [theEvent buttonNumber],0, 0);
-			break;
+        }
 		case NSEventTypePressure:
-			go_mouseEvent(windptr, etype, x, y, screenX, screenY, 0, 0, [theEvent buttonNumber], [theEvent pressure], [theEvent stage]);
-        	break;
+        {
+            CGFloat x = [theEvent locationInWindow].x;
+	        CGFloat y = [[theEvent window] contentView].bounds.size.height - [theEvent locationInWindow].y;
+			go_mouseEvent(windptr, etype, x, y, [theEvent buttonNumber], [theEvent pressure], [theEvent stage]);
+			break;
+        }
+		case NSEventTypeScrollWheel:
+        {
+            CGFloat x = [theEvent locationInWindow].x;
+	        CGFloat y = [[theEvent window] contentView].bounds.size.height - [theEvent locationInWindow].y;
+            CGFloat scrollX = [theEvent scrollingDeltaX];
+            CGFloat scrollY = [theEvent scrollingDeltaY];
+
+            if ([theEvent hasPreciseScrollingDeltas])
+            {
+                scrollX *= 0.1;
+                scrollY *= 0.1;
+            }
+
+            if (fabs(scrollX) > 0.0 || fabs(scrollY) > 0.0){
+			    go_scrollEvent(windptr, x, y, scrollX, scrollY);
+            }
+			break;
+        }
         case NSEventTypeKeyDown:
         case NSEventTypeKeyUp:
+        // NuxText typing event conflict
+            NSLog(@"============= NSEventTypeKeyDown");
 			go_keyEvent(windptr, etype, [theEvent keyCode], [theEvent modifierFlags], [theEvent isARepeat],  (char *)[[theEvent characters] UTF8String]);
-        	break;
+        	break; // TODO if true return else [super sendEvent:theEvent];
         case NSEventTypeFlagsChanged:
 			go_keyEvent(windptr, etype, [theEvent keyCode], [theEvent modifierFlags], 0, "");
         	break;
@@ -274,32 +294,38 @@ int cg_changed = 0;
 }
 @end
 
+@interface NuxWindowController : NSWindowController
+@end
+
+@implementation NuxWindowController
+- (void)windowDidLoad
+{
+    //TODO:: not work ?
+    NSLog(@"NuxWindowController windowDidLoad ");
+}
+@end
+
 
 @interface NuxWindowDelegate : NSObject <NSWindowDelegate>
 @end
 
 @implementation NuxWindowDelegate
 
-// Sizing Windows
-// - (NSSize)windowWillResize:(NSWindow *)sender  toSize:(NSSize)frameSize
-// {
-
-// }
+- (NSSize)windowWillResize:(NSWindow *)sender  toSize:(NSSize)frameSize
+{
+    NSLog(@"NuxWindowDelegate windowWillResize %@, sender=", sender);
+    return frameSize;
+}
 
 - (void)windowDidResize:(NSNotification *)notification
 {
 	NSWindow* window = [notification object];
 	NSLog(@"NuxWindowDelegate windowDidResize %@, keyWindow=", window);
+    if (!mainWindowCreated){
+        mainWindowCreated = true;
+        windowCreated((uintptr_t)[notification object]);
+    }
 	windowResized((uintptr_t)[notification object]);
-
-
-    // [NSEvent addGlobalMonitorForEventsMatchingMask:NSEventMaskKeyUp
-    //                                        handler:^(NSEvent *event){
-    //                                            NSLog(@"====== keydown: %@", event.characters);
-
-    //                                        }];
-
-
 }
 
 - (void)windowWillStartLiveResize:(NSNotification *)notification
@@ -419,10 +445,6 @@ int cg_changed = 0;
 	// [[NSRunningApplication currentApplication] activateWithOptions:(NSApplicationActivateAllWindows | NSApplicationActivateIgnoringOtherApps)];
 	// [window orderFrontRegardless];
 	// [window makeKeyAndOrderFront:window];
-
-    // windowCreated((uintptr_t)window);
-    // windowResized((uintptr_t)window);
-    // windowDraw((uintptr_t)window);
 }
 
 // Managing Active Status
@@ -515,8 +537,6 @@ int cg_changed = 0;
 
 @end //NuxApplicationDelegate
 
-
-
 void runApp()
 {
 	@autoreleasepool{
@@ -531,7 +551,8 @@ void runApp()
 											styleMask:windowStyle
 											backing:NSBackingStoreBuffered
 											defer:NO];
-		windowCreated((uintptr_t)window);
+
+        // NuxWindowController * windowController = [[NuxWindowController alloc] initWithWindow:window];
 
         NuxView* nuxview = (NuxView*)[[[NuxView alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)] autorelease]; 
         [window setContentView:nuxview];
@@ -543,7 +564,8 @@ void runApp()
         [window center];
         [window makeKeyAndOrderFront:nil];
 
-		[NSApp run];
+	    [NSApp run];
+
 	}
 }
 // ######################  begin  #####################
@@ -682,3 +704,23 @@ uintptr_t window_getCGContext(uintptr_t window){
     return (uintptr_t)[NSGraphicsContext currentContext];
 }
 // ############################### nuxwindow end #################################
+
+
+// ############################### cursor begin #################################
+void cursor_getScreenPosition(CGFloat* outX, CGFloat* outY){
+    *outX = [NSEvent mouseLocation].x;
+	*outY = [NSScreen mainScreen].frame.size.height-[NSEvent mouseLocation].y;
+}
+
+void cursor_positionWindowToScreen(uintptr_t window, CGFloat x, CGFloat y, CGFloat *outX, CGFloat *outY){
+    NSWindow* w = (NSWindow*)window;
+    *outX = w.frame.origin.x + x;
+    *outY = [NSScreen mainScreen].frame.size.height - ([w contentView].bounds.size.height - y + w.frame.origin.y);
+}
+
+void cursor_positionScreenToWindow(uintptr_t window, CGFloat x, CGFloat y, CGFloat *outX, CGFloat *outY){
+    NSWindow* w = (NSWindow*)window;
+    *outX = x - w.frame.origin.x;
+    *outY = [w contentView].bounds.size.height - ( ([NSScreen mainScreen].frame.size.height - y) - w.frame.origin.y );
+}
+// ############################### cursor end   #################################

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build darwin
+//go:build darwin
 
 package nux
 
@@ -119,37 +119,24 @@ func (me *application) Terminate() {
 //export windowCreated
 func windowCreated(windptr C.uintptr_t) {
 	theApp.window.windptr = windptr
-
-	e := &event{
-		time:   time.Now(),
-		etype:  Type_WindowEvent,
-		action: Action_WindowCreated,
-		window: theApp.findWindow(windptr),
-	}
-
-	theApp.handleEvent(e)
+	windowAction(windptr, Action_WindowCreated)
 }
 
 //export windowResized
 func windowResized(windptr C.uintptr_t) {
-	e := &event{
-		time:   time.Now(),
-		etype:  Type_WindowEvent,
-		action: Action_WindowMeasured,
-		window: theApp.findWindow(windptr),
-	}
-
-	theApp.handleEvent(e)
+	windowAction(windptr, Action_WindowMeasured)
 }
 
 //export windowDraw
 func windowDraw(windptr C.uintptr_t) {
-	log.V("nuxui", "windowDraw")
+	windowAction(windptr, Action_WindowDraw)
+}
 
+func windowAction(windptr C.uintptr_t, action EventAction) {
 	e := &event{
 		time:   time.Now(),
 		etype:  Type_WindowEvent,
-		action: Action_WindowDraw,
+		action: action,
 		window: theApp.findWindow(windptr),
 	}
 
@@ -199,8 +186,8 @@ func setTextInputRect(x, y, w, h float32) {
 var lastMouseEvent map[MouseButton]PointerEvent = map[MouseButton]PointerEvent{}
 
 //export go_mouseEvent
-func go_mouseEvent(windptr C.uintptr_t, etype uint, x, y, screenX, screenY, scrollX, scrollY float32, buttonNumber int32, pressure float32, stage int32) {
-	// log.V("nuxui", "go_mouseEvent x=%f, y=%f, screenX=%f, screenY=%f, scrollX=%f, scrollY=%f", x, y, screenX, screenY, scrollX, scrollY)
+func go_mouseEvent(windptr C.uintptr_t, etype C.NSEventType, x, y C.CGFloat, buttonNumber C.NSInteger, pressure C.float, stage C.NSInteger) {
+	// log.V("nuxui", "go_mouseEvent x=%f, y=%f", x, y)
 	e := &pointerEvent{
 		event: event{
 			window: theApp.findWindow(windptr),
@@ -211,12 +198,10 @@ func go_mouseEvent(windptr C.uintptr_t, etype uint, x, y, screenX, screenY, scro
 		pointer:  0,
 		button:   MB_None,
 		kind:     Kind_Mouse,
-		x:        x,
-		y:        y,
-		screenX:  screenX,
-		screenY:  screenY,
-		pressure: pressure,
-		stage:    stage,
+		x:        float32(x),
+		y:        float32(y),
+		pressure: float32(pressure),
+		stage:    int32(stage),
 	}
 
 	switch etype {
@@ -315,8 +300,8 @@ func go_mouseEvent(windptr C.uintptr_t, etype uint, x, y, screenX, screenY, scro
 }
 
 //export go_scrollEvent
-func go_scrollEvent(windptr C.uintptr_t, etype uint, x, y, screenX, screenY, scrollX, scrollY float32, buttonNumber int32, pressure float32, stage int32) {
-	log.V("nuxui", "go_scrollEvent x=%f, y=%f, screenX=%f, screenY=%f, scrollX=%f, scrollY=%f", x, y, screenX, screenY, scrollX, scrollY)
+func go_scrollEvent(windptr C.uintptr_t, x, y, scrollX, scrollY C.CGFloat) {
+	log.V("nuxui", "go_scrollEvent, x=%f, y=%f, scrollX=%f, scrollY=%f", x, y, scrollX, scrollY)
 	e := &scrollEvent{
 		event: event{
 			window: theApp.findWindow(windptr),
@@ -324,16 +309,13 @@ func go_scrollEvent(windptr C.uintptr_t, etype uint, x, y, screenX, screenY, scr
 			etype:  Type_ScrollEvent,
 			action: Action_Scroll,
 		},
-		x:       x,
-		y:       y,
-		screenX: screenX,
-		screenY: screenY,
-		scrollX: scrollX,
-		scrollY: scrollY,
+		x:       float32(x),
+		y:       float32(y),
+		scrollX: float32(scrollX),
+		scrollY: float32(scrollY),
 	}
 
 	theApp.handleEvent(e)
-
 }
 
 var lastModifierKeyEvent map[KeyCode]bool = map[KeyCode]bool{}

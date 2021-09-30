@@ -32,9 +32,6 @@ type PointerEvent interface {
 	Kind() Kind
 	X() float32
 	Y() float32
-	ScreenX() float32
-	ScreenY() float32
-
 	Pressure() float32
 	Stage() int32
 	IsPrimary() bool
@@ -46,9 +43,6 @@ type ScrollEvent interface {
 
 	X() float32
 	Y() float32
-	ScreenX() float32
-	ScreenY() float32
-
 	ScrollX() float32
 	ScrollY() float32
 }
@@ -93,6 +87,14 @@ func (me *event) Window() Window {
 	return me.window
 }
 
+func (me *event) Data() interface{} {
+	return me.data
+}
+
+func (me *event) String() string {
+	return fmt.Sprintf("Event: {type:%s, action:%s}", me.etype, me.action)
+}
+
 type pointerEvent struct {
 	event
 
@@ -100,8 +102,6 @@ type pointerEvent struct {
 	kind     Kind
 	x        float32
 	y        float32
-	screenX  float32
-	screenY  float32
 	pressure float32
 	stage    int32
 	button   MouseButton
@@ -121,14 +121,6 @@ func (me *pointerEvent) X() float32 {
 
 func (me *pointerEvent) Y() float32 {
 	return me.y
-}
-
-func (me *pointerEvent) ScreenX() float32 {
-	return me.screenX
-}
-
-func (me *pointerEvent) ScreenY() float32 {
-	return me.screenY
 }
 
 func (me *pointerEvent) Pressure() float32 {
@@ -152,13 +144,15 @@ func (me *pointerEvent) Distance(x, y float32) float32 {
 	return float32(math.Sqrt(float64(dx)*float64(dx) + float64(dy)*float64(dy)))
 }
 
+func (me *pointerEvent) String() string {
+	return fmt.Sprintf("PointerEvent: {pointer=%d, button=%s:%d, action=%s, x=%.2f, y=%.2f}", me.pointer, me.button, me.button, me.action, me.x, me.y)
+}
+
 type scrollEvent struct {
 	event
 
 	x       float32
 	y       float32
-	screenX float32
-	screenY float32
 	scrollX float32
 	scrollY float32
 }
@@ -169,14 +163,6 @@ func (me *scrollEvent) X() float32 {
 
 func (me *scrollEvent) Y() float32 {
 	return me.y
-}
-
-func (me *scrollEvent) ScreenX() float32 {
-	return me.screenX
-}
-
-func (me *scrollEvent) ScreenY() float32 {
-	return me.screenY
 }
 
 func (me *scrollEvent) ScrollX() float32 {
@@ -239,17 +225,6 @@ func (me *keyEvent) Location() int32 {
 	return me.location
 }
 
-func (me *event) Data() interface{} {
-	return me.data
-}
-
-func (me *event) String() string {
-	return fmt.Sprintf("Event: {type:%s, action:%s}", me.etype, me.action)
-}
-
-func (me *pointerEvent) String() string {
-	return fmt.Sprintf("PointerEvent: {pointer=%d, button=%s:%d, action=%s, x=%.2f, y=%.2f}", me.pointer, me.button, me.button, me.action, me.x, me.y)
-}
 func (me *keyEvent) String() string {
 	return fmt.Sprintf("KeyEvent: {keyCode=%s, action=%s, rune='%c'}", me.keyCode, me.action, me.Rune())
 }

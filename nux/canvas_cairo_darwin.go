@@ -4,7 +4,7 @@
 
 // +build !skia
 // +build !android
-// +build darwin windows linux
+// +build darwin linux
 
 package nux
 

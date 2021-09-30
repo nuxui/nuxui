@@ -195,7 +195,7 @@ cairo_status_t cairo_image_surface_write_to_jpeg_mem(cairo_surface_t *sfc, unsig
    jpeg_create_compress(&cinfo);
 
    // set compression parameters
-   jpeg_mem_dest(&cinfo, data, len);
+   jpeg_mem_dest(&cinfo, data, (unsigned long*)len);  // TODO:: size_t to unsigned long lost precision
    cinfo.image_width = cairo_image_surface_get_width(sfc);
    cinfo.image_height = cairo_image_surface_get_height(sfc);
 #ifdef LIBJPEG_TURBO_VERSION

@@ -25,8 +25,6 @@ type GestureDetail interface {
 	Kind() Kind
 	X() float32
 	Y() float32
-	ScreenX() float32
-	ScreenY() float32
 	WindowX() float32
 	WindowY() float32
 	ScrollX() float32
@@ -39,8 +37,6 @@ type gestureDetail struct {
 	kind    Kind
 	x       float32
 	y       float32
-	screenX float32
-	screenY float32
 	windowX float32
 	windowY float32
 	scrollX float32
@@ -52,8 +48,6 @@ func (me *gestureDetail) Time() time.Time  { return me.time }
 func (me *gestureDetail) Kind() Kind       { return me.kind }
 func (me *gestureDetail) X() float32       { return me.x }
 func (me *gestureDetail) Y() float32       { return me.y }
-func (me *gestureDetail) ScreenX() float32 { return me.screenX }
-func (me *gestureDetail) ScreenY() float32 { return me.screenY }
 func (me *gestureDetail) WindowX() float32 { return me.windowX }
 func (me *gestureDetail) WindowY() float32 { return me.windowY }
 func (me *gestureDetail) ScrollX() float32 { return me.scrollX }
@@ -82,12 +76,8 @@ func pointerEventToDetail(event PointerEvent, target Widget) GestureDetail {
 		kind:    event.Kind(),
 		x:       x,
 		y:       y,
-		screenX: event.ScreenX(),
-		screenY: event.ScreenY(),
 		windowX: event.X(),
 		windowY: event.Y(),
-		// scrollX: event.ScrollX(),
-		// scrollY: event.ScrollY(),
 	}
 }
 
@@ -114,8 +104,6 @@ func scrollEventToDetail(event ScrollEvent, target Widget) GestureDetail {
 		kind:    Kind_None,
 		x:       x,
 		y:       y,
-		screenX: event.ScreenX(),
-		screenY: event.ScreenY(),
 		windowX: event.X(),
 		windowY: event.Y(),
 		scrollX: event.ScrollX(),
