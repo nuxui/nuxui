@@ -175,6 +175,7 @@ func (me *window) LockCanvas() (Canvas, error) {
 }
 
 func (me *window) UnlockCanvas() error {
+	me.surface.GetCanvas().Destroy()
 	me.surface.Flush()
 	C.EndPaint(me.windptr, &me.paintStruct)
 	return nil

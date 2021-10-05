@@ -9,7 +9,7 @@ const (
 	windowActionCreated
 	windowActionMeasure
 	windowActionDraw
-	windowActionDestory
+	windowActionDestroy
 )
 
 type Window interface {

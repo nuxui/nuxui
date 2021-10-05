@@ -22,7 +22,7 @@ func (me *gestureBinding) AddGestureHandler(widget Widget, handler GestureHandle
 	me.widgetGestureHandlers[widget] = handler
 }
 
-//ClearGestureHandler clear widget gesture handler when destory
+//ClearGestureHandler clear widget gesture handler when destroy
 func (me *gestureBinding) ClearGestureHandler(widget Widget) {
 	delete(me.widgetGestureHandlers, widget)
 }

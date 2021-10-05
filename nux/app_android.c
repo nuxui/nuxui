@@ -52,7 +52,7 @@ struct android_app {
 
 enum {
     APP_CMD_INPUT_CHANGED = 1,
-    APP_CMD_DESTORY = 2,
+    APP_CMD_DESTROY = 2,
 };
 
 enum {
@@ -128,7 +128,7 @@ void android_app_loop(struct android_app *android_app){
 		switch (ident) {
 		case LOOPER_ID_CMD:
 			if ( read(android_app->msgread, &cmd, sizeof(cmd)) == sizeof(cmd) ) {
-                if (cmd == APP_CMD_DESTORY) {
+                if (cmd == APP_CMD_DESTROY) {
                     goto end;
                 }
 				android_app_pre_exec_cmd(android_app, cmd);
@@ -270,7 +270,7 @@ void onDestroyA(ANativeActivity *activity){
 
     struct android_app* android_app = (struct android_app*)activity->instance;
     pthread_mutex_lock(&android_app->mutex);
-    android_app_write_cmd(android_app, APP_CMD_DESTORY);
+    android_app_write_cmd(android_app, APP_CMD_DESTROY);
     while (android_app->running != 0) {
         pthread_cond_wait(&android_app->cond, &android_app->mutex);
     }

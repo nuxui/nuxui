@@ -9,7 +9,7 @@ import (
 	"github.com/nuxui/nuxui/util"
 )
 
-// TODO:: widget addMixins auto remove when onDestory,
+// TODO:: widget addMixins auto remove when onDestroy,
 // TODO:: When add, judge whether callback has been added or use map[callback]struct{}
 func OnLongPress(widget Widget, callback GestureCallback) {
 	addLongPressCallback(widget, _ACTION_LONG_PRESS, callback)

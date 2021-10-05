@@ -2,37 +2,101 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build !skia
-// +build android
+//go:build linux
 
 package nux
 
 /*
-// #cgo pkg-config: cairo
-
-#cgo LDFLAGS: -L~/Documents/skia/engine/out/arm64 -lcairo -lm -lz
-#cgo CFLAGS: -I/usr/local/Cellar/cairo/1.16.0_3/include
+#cgo pkg-config: cairo
 #include <cairo/cairo.h>
 #include <cairo/cairo-pdf.h>
 #include <cairo/cairo-ps.h>
 #include <cairo/cairo-svg.h>
+#include <cairo/cairo-xlib.h>
 
+#cgo pkg-config: pango
+#cgo pkg-config: pangocairo
+#cgo pkg-config: gobject-2.0
+#include <pango/pangocairo.h>
 
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-
 #include <stdio.h>
 
-void drawImage2(cairo_t* cr, cairo_surface_t *image){
-	cairo_set_source_surface (cr, image, 0, 0);
-	cairo_paint (cr);
+#include <X11/Xlib.h>
+
+void measureText(cairo_t* cr, char* fontFamily, int fontWeight, int fontSize,
+	char* text, int width, int height, int* outWidth, int* outHeight){
+	PangoLayout *layout;
+	PangoFontDescription *font_description;
+
+	font_description = pango_font_description_new ();
+	pango_font_description_set_family (font_description, fontFamily);
+	// pango_font_description_set_family_static (font_description, "Apple Color Emoji");
+	// pango_font_description_set_weight (font_description, fontWeight);
+	// pango_font_description_set_absolute_size (font_description, fontSize * PANGO_SCALE);
+	// pango_font_description_set_stretch(font_description, PANGO_STRETCH_NORMAL);
+	// pango_font_description_set_style(font_description, PANGO_STYLE_ITALIC);
+	// pango_font_description_set_variant(font_description, PANGO_VARIANT_SMALL_CAPS);
+	// pango_font_description_set_gravity(font_description, PANGO_GRAVITY_NORTH);
+
+	layout = pango_cairo_create_layout (cr);
+	pango_layout_set_font_description (layout, font_description);
+	pango_layout_set_width (layout, width * PANGO_SCALE);
+	pango_layout_set_height (layout, height * PANGO_SCALE);
+	pango_layout_set_text (layout, text, -1);
+	pango_layout_set_wrap (layout, PANGO_WRAP_WORD_CHAR);
+	// pango_layout_set_justify(layout, TRUE);
+	// pango_layout_set_indent(layout, 4);
+	// pango_layout_set_markup(layout, "*", 10);
+	// pango_layout_set_single_paragraph_mode(layout, TRUE);
+	// pango_layout_set_alignment(layout,PANGO_ALIGN_RIGHT);
+
+	pango_layout_get_size(layout, outWidth, outHeight);
+
+	pango_font_description_free (font_description);
+	g_object_unref (layout);
 }
+
+void drawText(cairo_t* cr, char* fontFamily, int fontWeight, int fontSize,
+	char* text, int width, int height){
+	PangoLayout *layout;
+	PangoFontDescription *font_description;
+
+	font_description = pango_font_description_new ();
+	pango_font_description_set_family (font_description, fontFamily);
+	// pango_font_description_set_family_static (font_description, "Apple Color Emoji");
+	// pango_font_description_set_weight (font_description, fontWeight);
+	// pango_font_description_set_absolute_size (font_description, fontSize * PANGO_SCALE);
+	// pango_font_description_set_stretch(font_description, PANGO_STRETCH_NORMAL);
+	// pango_font_description_set_style(font_description, PANGO_STYLE_ITALIC);
+	// pango_font_description_set_variant(font_description, PANGO_VARIANT_SMALL_CAPS);
+	// pango_font_description_set_gravity(font_description, PANGO_GRAVITY_NORTH);
+
+
+	layout = pango_cairo_create_layout (cr);
+	pango_layout_set_font_description (layout, font_description);
+	pango_layout_set_width (layout, width * PANGO_SCALE);
+	pango_layout_set_height (layout, height * PANGO_SCALE);
+	pango_layout_set_text (layout, text, -1);
+	pango_layout_set_wrap (layout, PANGO_WRAP_WORD_CHAR);
+	// pango_layout_set_justify(layout, TRUE);
+	// pango_layout_set_indent(layout, 4);
+	// pango_layout_set_markup(layout, "*", 10);
+	// pango_layout_set_single_paragraph_mode(layout, TRUE);
+	// pango_layout_set_alignment(layout,PANGO_ALIGN_RIGHT);
+
+	pango_cairo_show_layout (cr, layout);
+
+	pango_font_description_free (font_description);
+	g_object_unref (layout);
+}
+
 */
 import "C"
 
 import (
-	"time"
 	"unsafe"
 
 	"github.com/nuxui/nuxui/log"
@@ -74,13 +138,6 @@ type Surface struct {
 	canvas  *canvas
 }
 
-func (me *Surface) WriteToPng(fileName string) {
-	name := C.CString(fileName)
-	defer C.free(unsafe.Pointer(name))
-	C.cairo_surface_write_to_png(me.surface, name)
-}
-
-// TODO gl and not gl canvas
 func NewSurfaceFromData(data unsafe.Pointer, format, width, height, stride int) *Surface {
 	s := C.cairo_image_surface_create_for_data((*C.uchar)(data), C.cairo_format_t(format),
 		C.int(width), C.int(height), C.int(stride))
@@ -89,11 +146,42 @@ func NewSurfaceFromData(data unsafe.Pointer, format, width, height, stride int) 
 	return &Surface{surface: s, canvas: &canvas{ptr: cairo}}
 }
 
+func test_cairo_draw_xlib(display *C.Display, drawable C.Drawable, visual *C.Visual, width, height int32) {
+	C.cairo_xlib_surface_create(display, drawable, visual, C.int(width), C.int(height))
+	// cairo := C.cairo_create(s)
+	// c := &canvas{ptr: cairo}
+	// c.DrawColor(0xFF008834)
+	// log.V("nux", "%s", s)
+}
+
+func newSurfaceXlib(display *C.Display, drawable C.Drawable, visual *C.Visual, width, height int32) *Surface {
+	s := C.cairo_xlib_surface_create(display, drawable, visual, C.int(width), C.int(height))
+	cairo := C.cairo_create(s)
+	return &Surface{surface: s, canvas: &canvas{ptr: cairo}}
+}
+
+func (me *Surface) WriteToPng(fileName string) {
+	name := C.CString(fileName)
+	defer C.free(unsafe.Pointer(name))
+	C.cairo_surface_write_to_png(me.surface, name)
+}
+
 func (me *Surface) GetCanvas() Canvas {
 	if me.canvas == nil {
 		log.Fatal("nuxui", "create surface by call NewSurface...")
 	}
 	return me.canvas
+}
+
+func (me *Surface) Flush() {
+	C.cairo_surface_flush(me.surface)
+}
+
+func (me *Surface) Destroy() {
+	C.cairo_surface_finish(me.surface)
+	C.cairo_surface_destroy(me.surface)
+	me.surface = nil
+	me.canvas = nil
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -258,9 +346,9 @@ func (me *canvas) DrawRoundRectF(left, top, right, bottom, radius float32, paint
 
 func (me *canvas) drawPaint(paint *Paint) {
 	a := float32((paint.Color>>24)&0xff) / 255
-	b := float32((paint.Color>>16)&0xff) / 255
+	r := float32((paint.Color>>16)&0xff) / 255
 	g := float32((paint.Color>>8)&0xff) / 255
-	r := float32((paint.Color)&0xff) / 255
+	b := float32((paint.Color)&0xff) / 255
 	// C.cairo_fill_preserve(me.ptr)
 	C.cairo_set_source_rgba(me.ptr, C.double(r), C.double(g), C.double(b), C.double(a))
 	C.cairo_set_line_width(me.ptr, C.double(paint.Width))
@@ -274,14 +362,13 @@ func (me *canvas) drawPaint(paint *Paint) {
 
 func (me *canvas) DrawColor(color Color) {
 	a := float32((color>>24)&0xff) / 255
-	b := float32((color>>16)&0xff) / 255
+	r := float32((color>>16)&0xff) / 255
 	g := float32((color>>8)&0xff) / 255
-	r := float32((color)&0xff) / 255
+	b := float32((color)&0xff) / 255
 	C.cairo_set_source_rgba(me.ptr, C.double(r), C.double(g), C.double(b), C.double(a))
-
-	t1 := time.Now()
+	// t1 := time.Now()
 	C.cairo_paint(me.ptr)
-	log.V("nuxui", "cairo_paint used time %d", time.Now().Sub(t1).Milliseconds())
+	// log.V("nuxui", "cairo_paint used time %d", time.Now().Sub(t1).Milliseconds())
 }
 
 func (me *canvas) DrawAlpha(alpha float32) {
@@ -290,9 +377,9 @@ func (me *canvas) DrawAlpha(alpha float32) {
 
 func (me *canvas) SetColor(color Color) {
 	a := float32((color>>24)&0xff) / 255
-	b := float32((color>>16)&0xff) / 255
+	r := float32((color>>16)&0xff) / 255
 	g := float32((color>>8)&0xff) / 255
-	r := float32((color)&0xff) / 255
+	b := float32((color)&0xff) / 255
 	C.cairo_set_source_rgba(me.ptr, C.double(r), C.double(g), C.double(b), C.double(a))
 }
 
@@ -321,43 +408,31 @@ func (me *canvas) GetTextRect(text string, fontFamily string, fontSize float32) 
 }
 
 func (me *canvas) DrawText(text string, font *Font, width, height int32, paint *Paint) {
-	// fontFamily := C.CString(font.Family)
-	me.Save()
+	fontFamily := C.CString(font.Family)
 	ctext := C.CString(text)
-	cfont := C.CString(font.Family)
-	// me.SetColor(paint.Color)
-	// C.drawText(me.ptr, fontFamily, C.int(font.Weight), C.int(font.Size), ctext, C.int(width), C.int(height))
-	// C.free(unsafe.Pointer(fontFamily))
-	C.cairo_select_font_face(me.ptr, cfont, C.CAIRO_FONT_SLANT_NORMAL, C.CAIRO_FONT_WEIGHT_NORMAL)
-	C.cairo_set_font_size(me.ptr, C.double(font.Size*4))
-	var extents C.cairo_text_extents_t
-	C.cairo_text_extents(me.ptr, ctext, &extents)
-	// x := 128.0 - (extents.width / 2)
-	// y := 128.0 - (extents.height / 2)
-	C.cairo_move_to(me.ptr, 0, 15*4)
-	C.cairo_set_source_rgba(me.ptr, 1, 1, 1, 1)
-	C.cairo_show_text(me.ptr, ctext)
-
+	me.SetColor(paint.Color)
+	C.drawText(me.ptr, fontFamily, C.int(font.Weight), C.int(font.Size), ctext, C.int(width), C.int(height))
+	me.drawPaint(paint)
+	C.free(unsafe.Pointer(fontFamily))
 	C.free(unsafe.Pointer(ctext))
-	C.free(unsafe.Pointer(cfont))
-	log.I("nuxui", "DrawText end %s", font.Family)
-	me.Restore()
 }
 
 func (me *canvas) MeasureText(text string, font *Font, width, height int32) (outWidth, outHeight int32) {
-	// fontFamily := C.CString(font.Family)
-	// ctext := C.CString(text)
-	// var w, h C.int
-	// C.measureText(me.ptr, fontFamily, C.int(font.Weight), C.int(font.Size), ctext, C.int(width), C.int(height), &w, &h)
-	// outWidth = int32(float64(w)/float64(1024) + 0.99999)
-	// outHeight = int32(float64(h)/float64(1024) + 0.99999)
-	// C.free(unsafe.Pointer(fontFamily))
-	// C.free(unsafe.Pointer(ctext))
+	fontFamily := C.CString(font.Family)
+	ctext := C.CString(text)
+	var w, h C.int
+	C.measureText(me.ptr, fontFamily, C.int(font.Weight), C.int(font.Size), ctext, C.int(width), C.int(height), &w, &h)
+	outWidth = int32(float64(w)/float64(C.PANGO_SCALE) + 0.99999)
+	outHeight = int32(float64(h)/float64(C.PANGO_SCALE) + 0.99999)
+	C.free(unsafe.Pointer(fontFamily))
+	C.free(unsafe.Pointer(ctext))
 	return
 }
 
 func (me *canvas) DrawImage(img Image) {
-	C.drawImage2(me.ptr, img.Buffer())
+	C.cairo_set_source_rgba(me.ptr, C.double(0), C.double(1.0), C.double(0), C.double(1))
+	C.cairo_set_source_surface(me.ptr, img.Buffer(), 0, 0)
+	C.cairo_paint(me.ptr)
 }
 
 func (me *canvas) deviceToUser(x, y float32) {
@@ -394,9 +469,13 @@ func (me *canvas) Destroy() {
 /////////////////////////////////////////////////////////////////////////////////////////
 /////////////                         Text                            ///////////////////
 /////////////////////////////////////////////////////////////////////////////////////////
+// measureText canvas use an empty bitmap
+var canvas4measure Canvas = NewSurfaceFromData(unsafe.Pointer(&[]C.uchar{}), FORMAT_ARGB32, 0, 0, 0).GetCanvas()
 
-func MeasureText(canvas Canvas, text string, font *Font, width, height int32) (outWidth, outHeight int32) {
-	return canvas.MeasureText(text, font, width, height)
+func MeasureText(text string, font *Font, width, height int32) (outWidth, outHeight int32) {
+	// md := log.Time()
+	// defer log.TimeEnd("nuxui", "canvas MeasureText", md)
+	return canvas4measure.MeasureText(text, font, width, height)
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////

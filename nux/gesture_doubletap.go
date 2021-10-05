@@ -20,7 +20,7 @@ func OnDoubleTap(widget Widget, callback GestureCallback) {
 	}
 }
 
-// widget will auto clear all gesture when destory
+// widget will auto clear all gesture when destroy
 func RemoveDoubleTapGesture(widget Widget, callback GestureCallback) {
 	if r := GestureBinding().FindGestureRecognizer(widget, (*doubleTapGestureRecognizer)(nil)); r != nil {
 		recognizer := r.(*doubleTapGestureRecognizer)

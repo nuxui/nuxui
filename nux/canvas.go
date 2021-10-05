@@ -48,4 +48,6 @@ type Canvas interface {
 	GetAntialias() int
 
 	UserToDevice(x, y float32)
+
+	Destroy()
 }

@@ -28,7 +28,7 @@ func executeCreated(widget Widget) {
 	}
 }
 
-func executeDestory(widget Widget) {
+func executeDestroy(widget Widget) {
 	GestureBinding().ClearGestureHandler(widget)
 
 	for _, mixin := range Mixins(widget) {

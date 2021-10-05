@@ -2,25 +2,18 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build darwin
+//go:build (linux && !android)
 
 package nux
 
 /*
-#cgo CFLAGS: -x objective-c -DGL_SILENCE_DEPRECATION
-#cgo LDFLAGS: -framework Cocoa -framework OpenGL
-#import <Carbon/Carbon.h> // for HIToolbox/Events.h
-#import <Cocoa/Cocoa.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdio.h>
 
-char*   window_title(uintptr_t window);
-void    window_setTitle(uintptr_t window, char* title);
-float   window_alpha(uintptr_t window);
-void    window_setAlpha(uintptr_t window, float alpha);
-int32_t window_getWidth(uintptr_t window);
-int32_t window_getHeight(uintptr_t window);
-int32_t window_getContentWidth(uintptr_t window);
-int32_t window_getContentHeight(uintptr_t window);
-void*   window_getCGContext(uintptr_t window);
+#include <X11/Xlib.h>
+
+void window_getSize(Display* display, Window window, int32_t *width, int32_t *height);
 */
 import "C"
 
@@ -32,7 +25,7 @@ import (
 
 // merge window and activity ?
 type window struct {
-	windptr      C.uintptr_t
+	windptr      C.uintptr_t // TODO:: need by user code, how to use unsafe.Pointer
 	decor        Parent
 	buffer       unsafe.Pointer
 	bufferWidth  int32
@@ -44,8 +37,9 @@ type window struct {
 	timer     Timer
 
 	surface        *Surface
+	display        *C.Display
+	visual         *C.Visual
 	surfaceResized bool
-	cgContext      uintptr
 }
 
 func newWindow() *window {
@@ -68,6 +62,7 @@ func (me *window) Creating(attr Attr) {
 	}
 }
 
+// TODO:: Created(content Widget) content is decor
 func (me *window) Created(data interface{}) {
 	main := data.(string)
 	if main == "" {
@@ -135,10 +130,8 @@ func (me *window) Draw(canvas Canvas) {
 			log.V("nuxui", "window Draw canvas save")
 			canvas.Save()
 			// TODO:: canvas clip
-			canvas.Translate(0, me.ContentHeight())
-			canvas.Scale(1, -1)
-			log.V("nuxui", "window Draw canvas scale then draw")
 			f.Draw(canvas)
+			// canvas.DrawColor(0xffff00ff)
 			canvas.Restore()
 		}
 	}
@@ -150,42 +143,40 @@ func (me *window) ID() uint64 {
 }
 
 func (me *window) Width() int32 {
-	return int32(C.window_getWidth(me.windptr))
+	var width, height C.int
+	C.window_getSize(me.display, me.windptr, &width, &height)
+	return int32(width)
 }
 
 func (me *window) Height() int32 {
-	return int32(C.window_getHeight(me.windptr))
+	var width, height C.int
+	C.window_getSize(me.display, me.windptr, &width, &height)
+	return int32(height)
 }
 
 func (me *window) ContentWidth() int32 {
-	return int32(C.window_getContentWidth(me.windptr))
+	// TODO::
+	return me.Width()
 }
 
 func (me *window) ContentHeight() int32 {
-	return int32(C.window_getContentHeight(me.windptr))
+	// TODO::
+	return me.Height()
 }
 
 func (me *window) LockCanvas() (Canvas, error) {
 	w := me.ContentWidth()
 	h := me.ContentHeight()
-	if me.surface == nil {
-		me.cgContext = uintptr(C.window_getCGContext(me.windptr))
-		me.surface = newSurfaceQuartzWithCGContext(me.cgContext, w, h)
-	} else {
-		// TODO:: did cairo_surface has method to resize instead of recreate
-		if me.surfaceResized {
-			me.surface.GetCanvas().Destroy()
-			me.surface.Destroy()
-			me.cgContext = uintptr(C.window_getCGContext(me.windptr))
-			me.surface = newSurfaceQuartzWithCGContext(me.cgContext, w, h)
-			me.surfaceResized = false
-		}
-	}
+	log.V("nux", "LockCanvas ###### %d, %d", w, h)
+	me.surface = newSurfaceXlib(me.display, me.windptr, me.visual, w, h)
 	return me.surface.GetCanvas(), nil
 }
 
 func (me *window) UnlockCanvas() error {
+	me.surface.GetCanvas().Destroy()
 	me.surface.Flush()
+	me.surface.Destroy()
+	C.XFlush(me.display)
 	return nil
 }
 
@@ -193,22 +184,23 @@ func (me *window) Decor() Widget {
 	return me.decor
 }
 
+// TODO:: use int? set 0.5 and return 127,0.498039
 func (me *window) Alpha() float32 {
-	return float32(C.window_alpha(me.windptr))
+	// TODO::
+	return 1.0
 }
 
 func (me *window) SetAlpha(alpha float32) {
-	C.window_setAlpha(me.windptr, C.float(alpha))
+	// TODO::
 }
 
 func (me *window) Title() string {
-	return C.GoString(C.window_title(me.windptr))
+	// TODO::
+	return ""
 }
 
 func (me *window) SetTitle(title string) {
-	ctitle := C.CString(title)
-	C.window_setTitle(me.windptr, ctitle)
-	C.free(unsafe.Pointer(ctitle))
+	// TODO::
 }
 
 func (me *window) SetDelegate(delegate WindowDelegate) {

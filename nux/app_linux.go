@@ -2,20 +2,22 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build windows
-
+//go:build (linux && !android)
 package nux
 
 /*
-#cgo LDFLAGS: -static-libgcc -static-libstdc++
-#cgo LDFLAGS: -limm32
-#include <windows.h>
-#include <windowsx.h>
-int win32_main();
+#cgo pkg-config:  x11
+
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <X11/Xlib.h>
+
+void run();
 */
 import "C"
 import (
-	"syscall"
+	"runtime"
 	"time"
 
 	"github.com/nuxui/nuxui/log"
@@ -108,21 +110,26 @@ func (me *application) Terminate() {
 	// C.terminate()
 }
 
-//export windowAction
-func windowAction(windptr C.HWND, msg C.UINT) {
-	action := Action_WindowCreated
-	switch msg {
-	case C.WM_CREATE:
-		theApp.window.windptr = windptr
-		action = Action_WindowCreated
-	case C.WM_PAINT:
-		action = Action_WindowDraw
-	case C.WM_SIZE:
-		action = Action_WindowMeasured
-	default:
-		log.Fatal("nux", "can not run here.")
-	}
+//export windowCreated
+func windowCreated(windptr C.uintptr_t, display *C.Display, visual *C.Visual) {
+	theApp.window.windptr = windptr
+	theApp.window.display = display
+	theApp.window.visual = visual
+	windowAction(windptr, Action_WindowCreated)
+}
 
+//export windowResized
+func windowResized(windptr C.uintptr_t, width, height int32) {
+	// TODO:: compare old width
+	windowAction(windptr, Action_WindowMeasured)
+}
+
+//export windowDraw
+func windowDraw(windptr C.uintptr_t) {
+	windowAction(windptr, Action_WindowDraw)
+}
+
+func windowAction(windptr C.uintptr_t, action EventAction) {
 	e := &event{
 		time:   time.Now(),
 		etype:  Type_WindowEvent,
@@ -133,7 +140,7 @@ func windowAction(windptr C.HWND, msg C.UINT) {
 	theApp.handleEvent(e)
 }
 
-func (me *application) findWindow(windptr C.HWND) Window {
+func (me *application) findWindow(windptr C.uintptr_t) Window {
 	if me.window.windptr == windptr {
 		return me.window
 	}
@@ -150,8 +157,10 @@ func (me *application) RequestRedraw(widget Widget) {
 }
 
 func run() {
-	// winMain()
-	C.win32_main()
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
+	C.run()
 }
 
 //export go_nativeLoopPrepared
@@ -174,25 +183,52 @@ func setTextInputRect(x, y, w, h float32) {
 var lastMouseEvent map[MouseButton]PointerEvent = map[MouseButton]PointerEvent{}
 
 //export go_mouseEvent
-func go_mouseEvent(windptr C.HWND, etype C.UINT, x, y C.int) {
-	log.V("nuxui", "go_mouseEvent etype=%d, x=%d, y=%d", etype, x, y)
+func go_mouseEvent(windptr C.uintptr_t, etype uint, x, y float32, buttonNumber int32, pressure float32, stage int32) {
+	// log.V("nuxui", "go_mouseEvent x=%f, y=%f", x, y)
+	e := &pointerEvent{
+		event: event{
+			window: theApp.findWindow(windptr),
+			time:   time.Now(),
+			etype:  Type_PointerEvent,
+			action: Action_None,
+		},
+		pointer:  0,
+		button:   MB_None,
+		kind:     Kind_Mouse,
+		x:        float32(x),
+		y:        float32(y),
+		pressure: float32(pressure),
+		stage:    int32(stage),
+	}
 
-	// theApp.handleEvent(e)
+	theApp.handleEvent(e)
 
 }
 
 //export go_scrollEvent
-func go_scrollEvent(windptr C.HWND, scrollX, scrollY C.double) {
-	log.V("nuxui", "go_scrollEvent scrollX=%f, scrollY=%f", scrollX, scrollY)
+func go_scrollEvent(windptr C.uintptr_t, x, y, scrollX, scrollY float32) {
+	log.V("nuxui", "go_scrollEvent, x=%f, y=%f, scrollX=%f, scrollY=%f", x, y, scrollX, scrollY)
+	e := &scrollEvent{
+		event: event{
+			window: theApp.findWindow(windptr),
+			time:   time.Now(),
+			etype:  Type_ScrollEvent,
+			action: Action_Scroll,
+		},
+		x:       float32(x),
+		y:       float32(y),
+		scrollX: float32(scrollX),
+		scrollY: float32(scrollY),
+	}
 
-	// theApp.handleEvent(e)
-
+	theApp.handleEvent(e)
 }
 
 var lastModifierKeyEvent map[KeyCode]bool = map[KeyCode]bool{}
 
 //export go_drawEvent
-func go_drawEvent(windptr C.HWND) {
+func go_drawEvent(windptr C.uintptr_t) {
+	log.V("nuxui", "go_drawEvent -----")
 	e := &event{
 		window: theApp.findWindow(windptr),
 		time:   time.Now(),
@@ -204,21 +240,47 @@ func go_drawEvent(windptr C.HWND) {
 }
 
 //export go_keyEvent
-func go_keyEvent(windptr C.HWND, etype uint, keyCode uint16, modifierFlags uint, repeat byte, chars *C.char) {
-	// theApp.handleEvent(e)
+func go_keyEvent(windptr C.uintptr_t, etype uint, keyCode uint16, modifierFlags uint, repeat byte, chars *C.char) {
+	e := &keyEvent{
+		event: event{
+			window: theApp.findWindow(windptr),
+			time:   time.Now(),
+			etype:  Type_KeyEvent,
+			action: Action_None,
+		},
+		keyCode:       convertVirtualKeyCode(keyCode),
+		repeat:        false,
+		modifierFlags: convertModifierFlags(modifierFlags),
+		keyRune:       C.GoString(chars),
+	}
+
+	if repeat == 1 {
+		e.repeat = true
+	}
+
+	theApp.handleEvent(e)
 }
 
 //export go_typingEvent
-func go_typingEvent(windptr C.HWND) {
-	var hIMC C.HIMC = C.ImmGetContext(windptr)
-	// if hIMC == 0 {
-	// 	// error
-	// }
-	textLen := C.DWORD(C.ImmGetCompositionStringW(hIMC, C.GCS_RESULTSTR, nil, 0) + 1)
-	buf := make([]uint16, textLen)
-	C.ImmGetCompositionStringW(hIMC, C.GCS_RESULTSTR, (C.LPVOID)(&buf[0]), textLen)
-	C.ImmReleaseContext(windptr, hIMC)
-	log.V("nux", "typing event: %s", syscall.UTF16ToString(buf))
+func go_typingEvent(windptr C.uintptr_t, chars *C.char, action, location, length C.int) {
+	// 0 = Action_Input, 1 = Action_Typing,
+	act := Action_Input
+	if action == 1 {
+		act = Action_Typing
+	}
+
+	e := &keyEvent{
+		event: event{
+			window: theApp.findWindow(windptr),
+			time:   time.Now(),
+			etype:  Type_TypingEvent,
+			action: act,
+		},
+		text:     C.GoString(chars),
+		location: int32(location),
+	}
+
+	theApp.handleEvent(e)
 }
 
 //export go_backToUI
@@ -233,22 +295,19 @@ func go_backToUI() {
 }
 
 func runOnUI(callback func()) {
-	go func() {
-		theApp.runOnUI <- callback
-	}()
-	// C.backToUI()
+	// TODO::
 }
 
 func requestRedraw() {
-	log.V("nuxui", "requestRedraw invalidate")
-	// C.invalidate()
+	// TODO::
 }
 
 func convertModifierFlags(flags uint) uint32 {
-
+	// TODO::
 	return 0
 }
 
 func convertVirtualKeyCode(vkcode uint16) KeyCode {
-	return 0
+	// TODO::
+	return Key_Unknown
 }

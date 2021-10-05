@@ -2,9 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build !skia
-// +build !android
-// +build darwin linux
+//go:build darwin
 
 package nux
 
@@ -182,8 +180,7 @@ func (me *Surface) Flush() {
 	C.cairo_surface_flush(me.surface)
 }
 
-func (me *Surface) Destory() {
-	me.Flush()
+func (me *Surface) Destroy() {
 	C.cairo_surface_finish(me.surface)
 	C.cairo_surface_destroy(me.surface)
 	me.surface = nil
@@ -466,6 +463,10 @@ func (me *canvas) SetAntialias(a int) {
 
 func (me *canvas) GetAntialias() int {
 	return int(C.cairo_get_antialias(me.ptr))
+}
+
+func (me *canvas) Destroy() {
+	C.cairo_destroy(me.ptr)
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////

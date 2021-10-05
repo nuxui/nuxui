@@ -2,11 +2,14 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build windows
+//go:build windows
 
 package nux
 
 /*
+#cgo LDFLAGS: -static-libgcc -static-libstdc++
+
+// #cgo pkg-config: --libs cairo --static
 #cgo pkg-config: cairo
 #include <cairo/cairo.h>
 #include <cairo/cairo-pdf.h>
@@ -154,18 +157,6 @@ func newSurfaceWin32(hdc C.HDC) *Surface {
 	return &Surface{surface: s, canvas: &canvas{ptr: cairo}}
 }
 
-// func newSurfaceQuartzWithCGContext(context uintptr, width, height int32) *Surface {
-// 	s := C.nux_cairo_quartz_surface_create_for_cg_context(C.uintptr_t(context), C.uint(width), C.uint(height))
-// 	cairo := C.cairo_create(s)
-// 	return &Surface{surface: s, canvas: &canvas{ptr: cairo}}
-// }
-
-// func newSurfaceQuartz(width, height int32) *Surface {
-// 	s := C.cairo_quartz_surface_create(C.CAIRO_FORMAT_ARGB32, C.uint(width), C.uint(height))
-// 	cairo := C.cairo_create(s)
-// 	return &Surface{surface: s, canvas: &canvas{ptr: cairo}}
-// }
-
 func (me *Surface) WriteToPng(fileName string) {
 	name := C.CString(fileName)
 	defer C.free(unsafe.Pointer(name))
@@ -183,8 +174,7 @@ func (me *Surface) Flush() {
 	C.cairo_surface_flush(me.surface)
 }
 
-func (me *Surface) Destory() {
-	me.Flush()
+func (me *Surface) Destroy() {
 	C.cairo_surface_finish(me.surface)
 	C.cairo_surface_destroy(me.surface)
 	me.surface = nil
@@ -467,6 +457,10 @@ func (me *canvas) SetAntialias(a int) {
 
 func (me *canvas) GetAntialias() int {
 	return int(C.cairo_get_antialias(me.ptr))
+}
+
+func (me *canvas) Destroy() {
+	C.cairo_destroy(me.ptr)
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////

@@ -25,7 +25,7 @@ func OnTapCancel(widget Widget, callback GestureCallback) {
 	addTapCallback(widget, _ACTION_TAP_CANCEL, callback)
 }
 
-// TODO:: widget will auto clear all gesture when destory
+// TODO:: widget will auto clear all gesture when destroy
 func RemoveTapGesture(widget Widget, callback GestureCallback) {
 	removeTapCallback(widget, _ACTION_TAP, callback)
 }
