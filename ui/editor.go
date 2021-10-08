@@ -259,7 +259,7 @@ func (me *editor) OnTypingEvent(event nux.TypingEvent) bool {
 
 func (me *editor) OnKeyEvent(event nux.KeyEvent) bool {
 	switch event.KeyCode() {
-	case nux.Key_Delete:
+	case nux.Key_BackSpace:
 		if event.Action() == nux.Action_Down {
 			if len(me.text) == 0 {
 				return false
@@ -279,7 +279,7 @@ func (me *editor) OnKeyEvent(event nux.KeyEvent) bool {
 			me.startTick()
 			return true
 		}
-	case nux.Key_ForwardDelete:
+	case nux.Key_Delete:
 		if event.Action() == nux.Action_Down {
 			if len(me.text) == 0 {
 				return false
@@ -298,7 +298,7 @@ func (me *editor) OnKeyEvent(event nux.KeyEvent) bool {
 			me.startTick()
 			return true
 		}
-	case nux.Key_LeftArrow:
+	case nux.Key_Left:
 		if event.Action() == nux.Action_Down && me.editingText == "" {
 			me.cursorPosition--
 			if me.cursorPosition < 0 {
@@ -308,7 +308,7 @@ func (me *editor) OnKeyEvent(event nux.KeyEvent) bool {
 			nux.RequestRedraw(me)
 			me.startTick()
 		}
-	case nux.Key_RightArrow:
+	case nux.Key_Right:
 		if event.Action() == nux.Action_Down && me.editingText == "" {
 			me.cursorPosition++
 			maxlen := len([]rune(me.text))
@@ -319,8 +319,8 @@ func (me *editor) OnKeyEvent(event nux.KeyEvent) bool {
 			nux.RequestRedraw(me)
 			me.startTick()
 		}
-	case nux.Key_UpArrow:
-	case nux.Key_DownArrow:
+	case nux.Key_Up:
+	case nux.Key_Down:
 	case nux.Key_V:
 	}
 	return true

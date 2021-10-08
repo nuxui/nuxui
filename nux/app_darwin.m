@@ -211,8 +211,7 @@ bool mainWindowCreated = false;
         }
         case NSEventTypeKeyDown:
         case NSEventTypeKeyUp:
-        // NuxText typing event conflict
-            NSLog(@"============= NSEventTypeKeyDown");
+            // TODO:: NuxText typing event conflict
 			go_keyEvent(windptr, etype, [theEvent keyCode], [theEvent modifierFlags], [theEvent isARepeat],  (char *)[[theEvent characters] UTF8String]);
         	break; // TODO if true return else [super sendEvent:theEvent];
         case NSEventTypeFlagsChanged:

@@ -10,6 +10,7 @@
 #include <X11/Xresource.h>
 #include <X11/keysymdef.h>
 #include <X11/extensions/Xrender.h>
+#include <X11/XKBlib.h>
 
 #include <cairo/cairo.h>
 #include <cairo/cairo-pdf.h>
@@ -70,6 +71,7 @@ static const char *event_names[] = {
 		     CWOverrideRedirect|CWSaveUnder|CWEventMask|\
 		     CWDontPropagate|CWColormap|CWCursor)
 
+
 void run(){
     Display* display;
     Visual* visual;
@@ -87,7 +89,7 @@ void run(){
         printf("cannot connect to X server\n");
         exit(1);
     }
-
+    XkbDescPtr keyboard_map = XkbGetMap(display, XkbAllClientInfoMask, XkbUseCoreKbd);  
     screen_num = DefaultScreen(display);
     visual = DefaultVisual(display, screen_num);
     display_width = DisplayWidth(display, screen_num);
@@ -150,28 +152,35 @@ void run(){
             printf("%d, %s, state=%d\n", event.type, event_names[event.type], event.xvisibility.state);
             break;
         case KeyPress:
-            printf("%d, %s, keycode=%d, XK_q=%d\n", event.type, event_names[event.type], event.xkey.keycode, XK_q);
-            if (event.xkey.keycode == 'q'){
-                done = 1;
-                XDestroyWindow(display, window);
-            }
-
-            XEvent event_send;
-            event_send.type = Expose;
-            event_send.xexpose.send_event = 1;
-            event_send.xexpose.display = display;
-            event_send.xexpose.window = window;
-
-            XSendEvent(display, window, 0, ExposureMask, &event_send);
-            break;
         case KeyRelease:
-            printf("%d, %s, keycode=%d, XK_q=%d\n", event.type, event_names[event.type], event.xkey.keycode, XK_q);
-            if (tag > 3){
-                XUnmapWindow(display, window);  // hide window
-            }else{
-                XMapWindow(display, window);    // show window
+        {
+            KeySym keysym = XkbKeycodeToKeysym(display, event.xkey.keycode, 0, 0);
+            if (keysym >= XK_KP_Decimal || keysym <= XK_KP_9){
+                XKeyboardState keyState;
+                XGetKeyboardControl(display, &keyState);
+                if( (keyState.led_mask & 2) == 2){ // NumLock On
+                    keysym = XkbKeycodeToKeysym(display, event.xkey.keycode, 0, 1);
+                }else{
+                    switch(keysym){
+                        case XK_KP_Insert    : keysym = XK_Insert    ;break;
+                        case XK_KP_Up        : keysym = XK_Up        ;break;
+                        case XK_KP_Down      : keysym = XK_Down      ;break;
+                        case XK_KP_Left      : keysym = XK_Left      ;break;
+                        case XK_KP_Right     : keysym = XK_Right     ;break;
+                        case XK_KP_Home      : keysym = XK_Home      ;break;
+                        case XK_KP_End       : keysym = XK_End       ;break;
+                        case XK_KP_Page_Up   : keysym = XK_Page_Up   ;break;
+                        case XK_KP_Page_Down : keysym = XK_Page_Down ;break;
+                        case XK_KP_Delete    : keysym = XK_Delete    ;break;
+                        case XK_KP_Begin     : keysym = XK_KP_Begin  ;break;
+                        default:break;
+                    }
+                }
             }
-        break;
+
+            go_keyEvent(event.xkey.window, event.type, keysym, 0, 0, NULL);
+            break;
+        }
         default: /* ignore any other event types. */
             if (event.type < 35){
                 printf("%d, %s\n", event.type, event_names[event.type]);
@@ -183,6 +192,25 @@ void run(){
     } /* end while events handling */
 
     XCloseDisplay(display);
+}
+
+void invalidate(Display *display, Window window){
+    XEvent event;
+    event.type = Expose;
+    event.xexpose.serial = 0;
+    event.xexpose.send_event = True;
+    event.xexpose.display = display;
+    event.xexpose.window = window;
+    event.xexpose.window = window;
+    event.xexpose.x = 0;
+    event.xexpose.y = 0;
+    event.xexpose.width = 0;
+    event.xexpose.height = 0;
+    event.xexpose.count = 0;
+
+    if ( XSendEvent(display, window, False, ExposureMask, &event) == 0 ){
+        printf("XSendEvent faild !\n");
+    }
 }
 
 void window_getSize(Display* display, Window window, int *width, int *height){

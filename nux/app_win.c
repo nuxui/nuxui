@@ -116,40 +116,38 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             go_scrollEvent(hwnd, -(GET_WHEEL_DELTA_WPARAM(wParam) * lines / (double) WHEEL_DELTA), (double)0 );
             break;
         }
-        case WM_KEYDOWN    :
-            printf("WM_KEYDOWN, wParam=%d, lParam=%d, high=%d, low=%d\n", msg, wParam, lParam, (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
+        case WM_KEYDOWN:
+        case WM_KEYUP:
+        case WM_SYSKEYDOWN:
+        case WM_SYSKEYUP:
+        {
+            // printf("WM_KEYUP, wParam=0x%X, lParam=0x%X, &lParam=0x%X, lParam=0x%X, high=0x%X, low=0x%X\n", msg, wParam, lParam, &lParam, lParam, (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
+            go_keyEvent(hwnd, msg, (UINT32)LOWORD(wParam), 0, 0, NULL);
             break;
-        case WM_KEYUP      :
-            printf("WM_KEYUP, wParam=%d, lParam=%d, high=%d, low=%d\n", msg, wParam, lParam, (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
-            break;
-        case WM_SYSKEYDOWN :
-            printf("WM_SYSKEYDOWN, wParam=%d, lParam=%d, high=%d, low=%d\n", msg, wParam, lParam, (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
-            break;
-        case WM_SYSKEYUP   :
-            printf("WM_SYSKEYUP, wParam=%d, lParam=%d, high=%d, low=%d\n", msg, wParam, lParam, (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
-            break;
-        case WM_CHAR       :
+
+        }
+        case WM_CHAR:
             printf("WM_CHAR, wParam=%d, lParam=%d, high=%d, low=%d\n", msg, wParam, lParam, (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
             break;
-        case WM_SYSCHAR    :
+        case WM_SYSCHAR:
             printf("WM_SYSCHAR, wParam=%d, lParam=%d, high=%d, low=%d\n", msg, wParam, lParam, (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
             break;
-        case WM_DEADCHAR   :
+        case WM_DEADCHAR:
             printf("WM_DEADCHAR, wParam=%d, lParam=%d, high=%d, low=%d\n", msg, wParam, lParam, (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
             break;
         case WM_SYSDEADCHAR:
             printf("WM_SYSDEADCHAR, wParam=%d, lParam=%d, high=%d, low=%d\n", msg, wParam, lParam, (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
             break;
-        case WM_UNICHAR    :
+        case WM_UNICHAR:
             printf("WM_UNICHAR, wParam=%d, char=%c lParam=%d\n", msg, wParam, wParam, lParam);
             break;
         case WM_IME_STARTCOMPOSITION:
             printf("WM_IME_STARTCOMPOSITION, wParam=%d lParam=%d, high=%d, low=%d\n", msg, wParam, lParam, (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
             break;
-        case WM_IME_ENDCOMPOSITION  :
+        case WM_IME_ENDCOMPOSITION:
             printf("WM_IME_ENDCOMPOSITION, wParam=%d lParam=%d, high=%d, low=%d\n", msg, wParam, lParam, (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
             break;
-        case WM_IME_COMPOSITION     :   // = WM_IME_KEYLAST
+        case WM_IME_COMPOSITION:   // = WM_IME_KEYLAST
         {
             HIMC hIMC;
             DWORD dwSize;
@@ -162,33 +160,33 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             // }
             break;
         }
-        case WM_IME_CHAR           :
+        case WM_IME_CHAR:
         {
             printf("WM_IME_CHAR wParam=%d lParam=%d, high=%d, low=%d\n", msg, wParam, lParam, (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
             break;
         }
-        case WM_IME_SETCONTEXT     :
+        case WM_IME_SETCONTEXT:
             printf("WM_IME_SETCONTEXT, wParam=%d lParam=%d, high=%d, low=%d\n", msg, wParam, lParam, (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
             break;
-        case WM_IME_NOTIFY         :
+        case WM_IME_NOTIFY:
             printf("WM_IME_NOTIFY, wParam=%d lParam=%d, high=%d, low=%d\n", msg, wParam, lParam, (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
             break;
-        case WM_IME_CONTROL        :
+        case WM_IME_CONTROL:
             printf("WM_IME_CONTROL, wParam=%d lParam=%d, high=%d, low=%d\n", msg, wParam, lParam, (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
             break;
         case WM_IME_COMPOSITIONFULL:
             printf("WM_IME_COMPOSITIONFULL, wParam=%d lParam=%d, high=%d, low=%d\n", msg, wParam, lParam, (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
             break;
-        case WM_IME_SELECT         :
+        case WM_IME_SELECT:
             printf("WM_IME_SELECT, wParam=%d lParam=%d, high=%d, low=%d\n", msg, wParam, lParam, (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
             break;
-        case WM_IME_REQUEST        :
+        case WM_IME_REQUEST:
             printf("WM_IME_REQUEST, wParam=%d lParam=%d, high=%d, low=%d\n", msg, wParam, lParam, (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
             break;
-        case WM_IME_KEYDOWN        :
+        case WM_IME_KEYDOWN:
             printf("WM_IME_KEYDOWN, wParam=%d lParam=%d, high=%d, low=%d\n", msg, wParam, lParam, (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
             break;
-        case WM_IME_KEYUP          :
+        case WM_IME_KEYUP:
             printf("WM_IME_KEYUP, wParam=%d lParam=%d, high=%d, low=%d\n", msg, wParam, lParam, (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
             break;
         case WM_CREATE:
@@ -235,9 +233,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             PostQuitMessage(0);
             break;
         default:
-            printf("######## event msg = 0x%04x\n", msg);
+            // printf("######## event msg = 0x%04x\n", msg);
             return DefWindowProc(hwnd, msg, wParam, lParam);
     }
     // return 0;
     return DefWindowProc(hwnd, msg, wParam, lParam);
+}
+
+void invalidate(HWND hwnd){
+    SendMessage(hwnd, WM_PAINT, 0, 0);
 }

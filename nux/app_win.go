@@ -12,6 +12,7 @@ package nux
 #include <windows.h>
 #include <windowsx.h>
 int win32_main();
+void invalidate(HWND hwnd);
 */
 import "C"
 import (
@@ -204,8 +205,33 @@ func go_drawEvent(windptr C.HWND) {
 }
 
 //export go_keyEvent
-func go_keyEvent(windptr C.HWND, etype uint, keyCode uint16, modifierFlags uint, repeat byte, chars *C.char) {
-	// theApp.handleEvent(e)
+func go_keyEvent(windptr C.HWND, etype uint, keyCode C.UINT32, modifierFlags uint, repeat byte, chars *C.char) {
+	log.V("nux", "etype=0x%X keycode = 0x%X %s, modifierFlags=0x%X", etype, keyCode, KeyCode(keyCode), modifierFlags)
+	e := &keyEvent{
+		event: event{
+			window: theApp.findWindow(windptr),
+			time:   time.Now(),
+			etype:  Type_KeyEvent,
+			action: Action_None,
+		},
+		keyCode:       KeyCode(keyCode),
+		repeat:        false,
+		modifierFlags: convertModifierFlags(modifierFlags),
+		keyRune:       C.GoString(chars),
+	}
+
+	if repeat == 1 {
+		e.repeat = true
+	}
+
+	switch etype {
+	case C.WM_KEYDOWN, C.WM_SYSKEYDOWN:
+		e.event.action = Action_Down
+	case C.WM_KEYUP, C.WM_SYSKEYUP:
+		e.event.action = Action_Up
+	}
+
+	theApp.handleEvent(e)
 }
 
 //export go_typingEvent
@@ -241,7 +267,8 @@ func runOnUI(callback func()) {
 
 func requestRedraw() {
 	log.V("nuxui", "requestRedraw invalidate")
-	// C.invalidate()
+	w := theApp.MainWindow().(*window)
+	C.invalidate(w.windptr)
 }
 
 func convertModifierFlags(flags uint) uint32 {

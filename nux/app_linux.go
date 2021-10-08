@@ -14,6 +14,7 @@ package nux
 #include <X11/Xlib.h>
 
 void run();
+void invalidate(Display *display, Window window);
 */
 import "C"
 import (
@@ -248,7 +249,7 @@ func go_keyEvent(windptr C.uintptr_t, etype uint, keyCode uint16, modifierFlags 
 			etype:  Type_KeyEvent,
 			action: Action_None,
 		},
-		keyCode:       convertVirtualKeyCode(keyCode),
+		keyCode:       KeyCode(keyCode),
 		repeat:        false,
 		modifierFlags: convertModifierFlags(modifierFlags),
 		keyRune:       C.GoString(chars),
@@ -256,6 +257,13 @@ func go_keyEvent(windptr C.uintptr_t, etype uint, keyCode uint16, modifierFlags 
 
 	if repeat == 1 {
 		e.repeat = true
+	}
+
+	switch etype {
+	case C.KeyPress:
+		e.event.action = Action_Down
+	case C.KeyRelease:
+		e.event.action = Action_Up
 	}
 
 	theApp.handleEvent(e)
@@ -299,15 +307,11 @@ func runOnUI(callback func()) {
 }
 
 func requestRedraw() {
-	// TODO::
+	w := theApp.MainWindow().(*window)
+	C.invalidate(w.display, w.windptr)
 }
 
 func convertModifierFlags(flags uint) uint32 {
 	// TODO::
 	return 0
-}
-
-func convertVirtualKeyCode(vkcode uint16) KeyCode {
-	// TODO::
-	return Key_Unknown
 }
