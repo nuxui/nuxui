@@ -27,11 +27,7 @@
  * @version 2018/12/11
  * @license LGPL3
  */
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-#include <cairo.h>
+#include <cairo/cairo.h>
 
 #ifdef USE_CAIRO_READ_FUNC_LEN_T
 /*! This is the type for the stream read function. Which must be implemented by

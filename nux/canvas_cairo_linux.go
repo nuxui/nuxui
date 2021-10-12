@@ -8,15 +8,17 @@ package nux
 
 /*
 #cgo pkg-config: cairo
+#cgo pkg-config: pango
+#cgo pkg-config: pangocairo
+#cgo pkg-config: gobject-2.0
+#cgo pkg-config: libjpeg
+#cgo pkg-config: x11
+
 #include <cairo/cairo.h>
 #include <cairo/cairo-pdf.h>
 #include <cairo/cairo-ps.h>
 #include <cairo/cairo-svg.h>
 #include <cairo/cairo-xlib.h>
-
-#cgo pkg-config: pango
-#cgo pkg-config: pangocairo
-#cgo pkg-config: gobject-2.0
 #include <pango/pangocairo.h>
 
 #include <stdlib.h>

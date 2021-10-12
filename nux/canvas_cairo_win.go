@@ -7,10 +7,13 @@
 package nux
 
 /*
-#cgo LDFLAGS: -static-libgcc -static-libstdc++
-
-// #cgo pkg-config: --libs cairo --static
+#cgo LDFLAGS: -limm32
 #cgo pkg-config: cairo
+#cgo pkg-config: pango
+#cgo pkg-config: pangocairo
+#cgo pkg-config: gobject-2.0
+#cgo pkg-config: libjpeg
+
 #include <cairo/cairo.h>
 #include <cairo/cairo-win32.h>
 

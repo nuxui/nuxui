@@ -5,17 +5,10 @@
 package nux
 
 /*
-//#cgo LDFLAGS: -static-libgcc -static-libstdc++
-
-#cgo pkg-config: cairo
 #include <cairo/cairo.h>
 #include <cairo/cairo-pdf.h>
 #include <cairo/cairo-ps.h>
 #include <cairo/cairo-svg.h>
-
-#cgo pkg-config: pango
-#cgo pkg-config: pangocairo
-#cgo pkg-config: gobject-2.0
 #include <pango/pangocairo.h>
 
 #include <stdlib.h>
@@ -403,7 +396,6 @@ func (me *canvas) MeasureText(text string, font *Font, width, height int32) (out
 }
 
 func (me *canvas) DrawImage(img Image) {
-	C.cairo_set_source_rgba(me.ptr, C.double(0), C.double(1.0), C.double(0), C.double(1))
 	C.cairo_set_source_surface(me.ptr, img.Buffer(), 0, 0)
 	C.cairo_paint(me.ptr)
 }

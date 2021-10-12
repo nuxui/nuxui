@@ -7,8 +7,6 @@
 package nux
 
 /*
-#cgo LDFLAGS: -static-libgcc -static-libstdc++
-#cgo LDFLAGS: -limm32
 #include <windows.h>
 #include <windowsx.h>
 int win32_main();

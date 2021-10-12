@@ -2,11 +2,12 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build (linux && !android)
+//go:build linux && !android
+
 package nux
 
 /*
-#cgo pkg-config:  x11
+
 
 #include <stdlib.h>
 #include <stdint.h>

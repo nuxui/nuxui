@@ -7,15 +7,22 @@
 package nux
 
 /*
+#cgo CFLAGS: -x objective-c -DGL_SILENCE_DEPRECATION
+#cgo LDFLAGS: -framework Cocoa -framework OpenGL
 #cgo pkg-config: cairo
+#cgo pkg-config: pango
+#cgo pkg-config: pangocairo
+#cgo pkg-config: gobject-2.0
+#cgo pkg-config: libjpeg
+
 #include <cairo/cairo.h>
 #include <cairo/cairo-quartz.h>
 
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-
 #include <stdio.h>
+
 #include <AppKit/NSGraphicsContext.h>
 #import <Cocoa/Cocoa.h>
 

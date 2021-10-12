@@ -5,20 +5,13 @@
 package nux
 
 /*
-#cgo pkg-config: cairo
 #include <cairo/cairo.h>
 #include <cairo/cairo-pdf.h>
 #include <cairo/cairo-ps.h>
 #include <cairo/cairo-svg.h>
-
-#cgo pkg-config: pango
-#cgo pkg-config: pangocairo
-#cgo pkg-config: gobject-2.0
-#include <pango/pangocairo.h>
-
 #include <stdlib.h>
 
-#cgo pkg-config: libjpeg
+
 #include "image_cairo_jpg.h"
 
 */
@@ -30,11 +23,15 @@ import (
 	// _ "image/png"
 
 	"path/filepath"
+	"runtime"
 	"strings"
 	"unicode"
 	"unsafe"
+
+	"github.com/nuxui/nuxui/log"
 )
 
+// TODO:: release memory
 type Image interface {
 	Width() int32
 	Height() int32
@@ -46,17 +43,26 @@ func CreateImage(src string) Image {
 	csrc := C.CString(src)
 	defer C.free(unsafe.Pointer(csrc))
 
+	var img *cimage
+
 	switch ext {
 	case ".png":
-		return &cimage{image: C.cairo_image_surface_create_from_png(csrc)}
+		img = &cimage{image: C.cairo_image_surface_create_from_png(csrc)}
 	case ".svg":
-		img := &cimage{image: C.cairo_svg_surface_create(csrc, 400, 400)}
+		img = &cimage{image: C.cairo_svg_surface_create(csrc, 400, 400)}
 		C.cairo_svg_surface_set_document_unit(img.image, C.CAIRO_SVG_UNIT_PX)
 		return img
 	case ".jpg", ".jpeg":
-		return &cimage{image: C.cairo_image_surface_create_from_jpeg(csrc)}
+		img = &cimage{image: C.cairo_image_surface_create_from_jpeg(csrc)}
 	}
-	return nil
+
+	runtime.SetFinalizer(img, freeCairoImage)
+	return img
+}
+
+func freeCairoImage(img *cimage) {
+	log.V("nux", "runtime finalizer => freeCairoImage")
+	C.cairo_surface_destroy(img.image)
 }
 
 type cimage struct {
