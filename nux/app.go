@@ -16,8 +16,8 @@ type Application interface {
 	// KeyWindow() Window
 	// Windows() []Window
 	// FindWindow() Window
-	SendEvent(Event)
-	SendEventAndWait(Event)
+	// SendEvent(Event)
+	// SendEventAndWait(Event)
 	RequestLayout(Widget)
 	RequestRedraw(Widget)
 	Terminate()
@@ -61,13 +61,6 @@ func (me *application) handleEvent(event Event) {
 			if f, ok := event.Window().(Layout); ok {
 				f.Layout(0, 0, 0, 0, event.Window().ContentWidth(), event.Window().ContentHeight())
 			}
-
-			// if f, ok := event.Window().(Draw); ok {
-			// 	if canvas, err := event.Window().LockCanvas(); err == nil {
-			// 		f.Draw(canvas)
-			// 		event.Window().UnlockCanvas()
-			// 	}
-			// }
 		case Action_WindowDraw:
 			// log.V("nuxui", "Action_WindowDraw")
 			if f, ok := event.Window().(Draw); ok {
@@ -109,37 +102,6 @@ func (me *application) RequestLayout(widget Widget) {
 		}
 		me.handleEvent(e)
 	}
-}
-
-func (me *application) loop2() {
-	// application created and started , so here is started?
-	// me.Created(struct{}{})
-
-	log.V("nuxui", "run go loop...")
-	var event Event
-	var wait bool
-	for {
-		select {
-		case event = <-me.event:
-			wait = false
-		case event = <-me.eventWaitDone:
-			wait = true
-		}
-
-		me.handleEvent(event)
-
-		if wait {
-			wait = false
-			me.eventDone <- struct{}{}
-		}
-
-	}
-	// end:
-	// 	if wait {
-	// 		wait = false
-	// 		me.eventDone <- struct{}{}
-	// 	}
-	// 	log.V("nuxui", "end of nux loop")
 }
 
 func RequestLayout(widget Widget) {

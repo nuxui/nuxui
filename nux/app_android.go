@@ -89,7 +89,7 @@ func (me *application) SendEventAndWait(event Event) {
 	<-me.eventDone
 }
 
-func (me *application) findWindow(activity *C.ANativeActivity, awindow *C.ANativeWindow) Window {
+func (me *application) findWindow(activity *C.ANativeActivity, awindow *C.ANativeWindow) *window {
 	if me.window.actptr == nil || me.window.windptr == nil {
 		return nil
 	}

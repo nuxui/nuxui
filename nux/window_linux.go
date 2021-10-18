@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build (linux && !android)
+//go:build linux && !android
 
 package nux
 
@@ -14,6 +14,7 @@ package nux
 #include <X11/Xlib.h>
 
 void window_getSize(Display* display, Window window, int32_t *width, int32_t *height);
+void window_setText(Display* display, Window window, char *name);
 */
 import "C"
 
@@ -40,6 +41,10 @@ type window struct {
 	display        *C.Display
 	visual         *C.Visual
 	surfaceResized bool
+
+	width  int32
+	height int32
+	title  string
 }
 
 func newWindow() *window {
@@ -96,6 +101,9 @@ func (me *window) Measure(width, height int32) {
 	if me.decor == nil {
 		return
 	}
+
+	me.width = width
+	me.height = height
 
 	if s, ok := me.decor.(Size); ok {
 		if s.MeasuredSize().Width == width && s.MeasuredSize().Height == height {
@@ -195,12 +203,14 @@ func (me *window) SetAlpha(alpha float32) {
 }
 
 func (me *window) Title() string {
-	// TODO::
-	return ""
+	return me.title
 }
 
 func (me *window) SetTitle(title string) {
-	// TODO::
+	me.title = title
+	ctitle := C.CString(title)
+	C.window_setText(me.display, me.windptr, ctitle)
+	C.free(unsafe.Pointer(ctitle))
 }
 
 func (me *window) SetDelegate(delegate WindowDelegate) {

@@ -39,7 +39,11 @@ const (
 )
 
 func init() {
+	runtime.LockOSThread()
+	timerLoopInstance.init()
+
 	go func() {
+		<-theApp.nativeLoopPrepared
 		var i, l int
 		for {
 			<-theApp.drawSignal
@@ -112,22 +116,24 @@ func (me *application) Terminate() {
 	// C.terminate()
 }
 
-//export windowCreated
-func windowCreated(windptr C.uintptr_t, display *C.Display, visual *C.Visual) {
+//export go_windowCreated
+func go_windowCreated(windptr C.uintptr_t, display *C.Display, visual *C.Visual) {
 	theApp.window.windptr = windptr
 	theApp.window.display = display
 	theApp.window.visual = visual
 	windowAction(windptr, Action_WindowCreated)
 }
 
-//export windowResized
-func windowResized(windptr C.uintptr_t, width, height int32) {
-	// TODO:: compare old width
-	windowAction(windptr, Action_WindowMeasured)
+//export go_windowResized
+func go_windowResized(windptr C.uintptr_t, width, height int32) {
+	w := theApp.findWindow(windptr)
+	if width != w.width || height != w.height {
+		windowAction(windptr, Action_WindowMeasured)
+	}
 }
 
-//export windowDraw
-func windowDraw(windptr C.uintptr_t) {
+//export go_windowDraw
+func go_windowDraw(windptr C.uintptr_t) {
 	windowAction(windptr, Action_WindowDraw)
 }
 
@@ -142,7 +148,7 @@ func windowAction(windptr C.uintptr_t, action EventAction) {
 	theApp.handleEvent(e)
 }
 
-func (me *application) findWindow(windptr C.uintptr_t) Window {
+func (me *application) findWindow(windptr C.uintptr_t) *window {
 	if me.window.windptr == windptr {
 		return me.window
 	}
@@ -159,9 +165,7 @@ func (me *application) RequestRedraw(widget Widget) {
 }
 
 func run() {
-	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
-
 	C.run()
 }
 

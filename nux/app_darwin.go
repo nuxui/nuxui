@@ -16,8 +16,9 @@ void startTextInput();
 void stopTextInput();
 void setTextInputRect(float x, float y, float w, float h);
 void invalidate();
-void loop_event();
 void backToUI();
+
+uint64 threadID();
 */
 import "C"
 import (
@@ -28,9 +29,6 @@ import (
 )
 
 var theApp = &application{
-	event:              make(chan Event),
-	eventWaitDone:      make(chan Event),
-	eventDone:          make(chan struct{}),
 	runOnUI:            make(chan func()),
 	nativeLoopPrepared: make(chan struct{}),
 	drawSignal:         make(chan struct{}, drawSignalSize),
@@ -40,8 +38,17 @@ const (
 	drawSignalSize = 50
 )
 
+var initThreadID uint64
+
 func init() {
+	runtime.LockOSThread()
+	initThreadID = uint64(C.threadID())
+
+	timerLoopInstance.init()
+
 	go func() {
+		<-theApp.nativeLoopPrepared
+		// TODO:: paint not ok?
 		var i, l int
 		for {
 			<-theApp.drawSignal
@@ -60,13 +67,9 @@ func app() Application {
 }
 
 type application struct {
-	manifest      Manifest
-	window        *window
-	event         chan Event
-	eventWaitDone chan Event
-	runOnUI       chan func()
-
-	eventDone          chan struct{}
+	manifest           Manifest
+	window             *window
+	runOnUI            chan func()
 	nativeLoopPrepared chan struct{}
 	drawSignal         chan struct{}
 }
@@ -101,32 +104,23 @@ func (me *application) Manifest() Manifest {
 	return me.manifest
 }
 
-func (me *application) SendEvent(event Event) {
-	me.event <- event
-}
-
-func (me *application) SendEventAndWait(event Event) {
-	me.eventWaitDone <- event
-	<-me.eventDone
-}
-
 func (me *application) Terminate() {
 	C.terminate()
 }
 
-//export windowCreated
-func windowCreated(windptr C.uintptr_t) {
+//export go_windowCreated
+func go_windowCreated(windptr C.uintptr_t) {
 	theApp.window.windptr = windptr
 	windowAction(windptr, Action_WindowCreated)
 }
 
-//export windowResized
-func windowResized(windptr C.uintptr_t) {
+//export go_windowResized
+func go_windowResized(windptr C.uintptr_t) {
 	windowAction(windptr, Action_WindowMeasured)
 }
 
-//export windowDraw
-func windowDraw(windptr C.uintptr_t) {
+//export go_windowDraw
+func go_windowDraw(windptr C.uintptr_t) {
 	windowAction(windptr, Action_WindowDraw)
 }
 
@@ -141,7 +135,7 @@ func windowAction(windptr C.uintptr_t, action EventAction) {
 	theApp.handleEvent(e)
 }
 
-func (me *application) findWindow(windptr C.uintptr_t) Window {
+func (me *application) findWindow(windptr C.uintptr_t) *window {
 	if me.window.windptr == windptr {
 		return me.window
 	}
@@ -158,8 +152,10 @@ func (me *application) RequestRedraw(widget Widget) {
 }
 
 func run() {
-	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
+	if tid := uint64(C.threadID()); tid != initThreadID {
+		log.Fatal("nuxui", "main called on thread %d, but init ran on %d", tid, initThreadID)
+	}
 
 	C.runApp()
 }
@@ -396,12 +392,15 @@ func go_typingEvent(windptr C.uintptr_t, chars *C.char, action, location, length
 //export go_backToUI
 func go_backToUI() {
 	log.V("nuxui", "go_backToUI ..........")
-	select {
-	case f := <-theApp.runOnUI:
-		f()
-		// case e := <-theApp.event:
-		// case e := <-theApp.eventWaitDone:
-	}
+	callback := <-theApp.runOnUI
+	callback()
+
+	// select {
+	// case f := <-theApp.runOnUI:
+	// 	f()
+	// 	case e := <-theApp.event:
+	// 	case e := <-theApp.eventWaitDone:
+	// }
 }
 
 func runOnUI(callback func()) {

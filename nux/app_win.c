@@ -192,8 +192,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         case WM_CREATE:
         case WM_PAINT:
         case WM_SIZE:
-            windowAction(hwnd, msg);
-            break;
+            go_windowAction(hwnd, msg);
+            return 0;
 
         // nonclient area of a window
         case WM_NCLBUTTONDBLCLK:

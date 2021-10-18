@@ -11,6 +11,7 @@
 #include <X11/keysymdef.h>
 #include <X11/extensions/Xrender.h>
 #include <X11/XKBlib.h>
+#include <X11/Xatom.h>
 
 #include <cairo/cairo.h>
 #include <cairo/cairo-pdf.h>
@@ -22,6 +23,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <strings.h>
+#include <string.h>
 
 #include "_cgo_export.h"
 
@@ -71,6 +73,7 @@ static const char *event_names[] = {
 		     CWOverrideRedirect|CWSaveUnder|CWEventMask|\
 		     CWDontPropagate|CWColormap|CWCursor)
 
+int _go_nativeLoopPrepared = 0;
 
 void run(){
     Display* display;
@@ -94,8 +97,8 @@ void run(){
     visual = DefaultVisual(display, screen_num);
     display_width = DisplayWidth(display, screen_num);
     display_height = DisplayHeight(display, screen_num);
-    width = display_width/2;
-    height = display_height/2;
+    width = 800;
+    height = 600;
     printf("display_width=%d, display_height=%d, screen_num=%d\n",display_width, display_height, screen_num);
 
     winattr.event_mask = XALL_EVENT;
@@ -118,7 +121,7 @@ void run(){
     /* flush all pending requests to the X server. */
     XFlush(display);
 
-    windowCreated(window, display, visual);
+    go_windowCreated(window, display, visual);
 
     int done = 0;
     int tag = 0;
@@ -131,15 +134,19 @@ void run(){
         switch (event.type) {
         case ConfigureNotify:
             printf("%d, %s\n", event.type, event_names[event.type]);
-            windowResized(event.xconfigure.window, event.xconfigure.width, event.xconfigure.height);
+            go_windowResized(event.xconfigure.window, event.xconfigure.width, event.xconfigure.height);
         break;
         case MapNotify:
             printf("%d, %s\n", event.type, event_names[event.type]);
         break;
         case Expose:
         {
+            if (_go_nativeLoopPrepared == 0){
+                _go_nativeLoopPrepared = 1;
+                go_nativeLoopPrepared();
+            }
             printf("%d, %s\n", event.type, event_names[event.type]);
-            windowDraw(event.xexpose.window);
+            go_windowDraw(event.xexpose.window);
             break;
         }
         case MotionNotify:
@@ -222,3 +229,9 @@ void window_getSize(Display* display, Window window, int *width, int *height){
     if (height)
         *height = attribs.height;
 }
+
+ void window_setText(Display* display, Window window, char *name)
+ {
+    Atom utf8Str = XInternAtom(display, "UTF8_STRING", 0);
+    XChangeProperty(display, window, XA_WM_NAME, utf8Str, 8, PropModeReplace, (unsigned char *)name, (int)strlen(name));
+ }

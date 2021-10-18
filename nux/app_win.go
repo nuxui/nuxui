@@ -14,6 +14,7 @@ void invalidate(HWND hwnd);
 */
 import "C"
 import (
+	"runtime"
 	"syscall"
 	"time"
 
@@ -34,6 +35,9 @@ const (
 )
 
 func init() {
+	runtime.LockOSThread()
+	timerLoopInstance.init()
+
 	go func() {
 		var i, l int
 		for {
@@ -107,8 +111,8 @@ func (me *application) Terminate() {
 	// C.terminate()
 }
 
-//export windowAction
-func windowAction(windptr C.HWND, msg C.UINT) {
+//export go_windowAction
+func go_windowAction(windptr C.HWND, msg C.UINT) {
 	action := Action_WindowCreated
 	switch msg {
 	case C.WM_CREATE:
@@ -132,7 +136,7 @@ func windowAction(windptr C.HWND, msg C.UINT) {
 	theApp.handleEvent(e)
 }
 
-func (me *application) findWindow(windptr C.HWND) Window {
+func (me *application) findWindow(windptr C.HWND) *window {
 	if me.window.windptr == windptr {
 		return me.window
 	}
@@ -140,16 +144,12 @@ func (me *application) findWindow(windptr C.HWND) Window {
 }
 
 func (me *application) RequestRedraw(widget Widget) {
-	if l := len(theApp.drawSignal); l >= drawSignalSize {
-		for i := 0; i != l-1; i++ {
-			<-theApp.drawSignal
-		}
-	}
-	theApp.drawSignal <- struct{}{}
+	w := GetWidgetWindow(widget).(*window)
+	C.InvalidateRect(w.windptr, nil, 0)
 }
 
 func run() {
-	// winMain()
+	defer runtime.UnlockOSThread()
 	C.win32_main()
 }
 

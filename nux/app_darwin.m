@@ -6,8 +6,7 @@
 
 #include "_cgo_export.h"
 #import <Cocoa/Cocoa.h>
-#include <cairo/cairo.h>
-#include <cairo/cairo-quartz.h>
+#include <pthread.h>
 
 static const NSRange kEmptyRange = { NSNotFound, 0 };
 bool mainWindowCreated = false;
@@ -138,7 +137,6 @@ bool mainWindowCreated = false;
 @interface NuxWindow : NSWindow
 @property (nonatomic, strong, readwrite) id nuxtext;
 @property (nonatomic, strong, readwrite) id nuxview;
-@property (nonatomic, readwrite) cairo_t* cairo;
 @property (nonatomic, readwrite) CGContextRef cgContext;
 @end
 
@@ -288,6 +286,7 @@ int cg_changed = 0;
 @implementation NuxView
 - (void)drawRect:(NSRect)dirtyRect
 {
+    NSLog(@"NuxView drawRect");
     NuxWindow* w = (NuxWindow*)[self window];
     go_drawEvent((uintptr_t)w);
 }
@@ -322,9 +321,9 @@ int cg_changed = 0;
 	NSLog(@"NuxWindowDelegate windowDidResize %@, keyWindow=", window);
     if (!mainWindowCreated){
         mainWindowCreated = true;
-        windowCreated((uintptr_t)[notification object]);
+        go_windowCreated((uintptr_t)[notification object]);
     }
-	windowResized((uintptr_t)[notification object]);
+	go_windowResized((uintptr_t)[notification object]);
 }
 
 - (void)windowWillStartLiveResize:(NSNotification *)notification
@@ -444,6 +443,7 @@ int cg_changed = 0;
 	// [[NSRunningApplication currentApplication] activateWithOptions:(NSApplicationActivateAllWindows | NSApplicationActivateIgnoringOtherApps)];
 	// [window orderFrontRegardless];
 	// [window makeKeyAndOrderFront:window];
+    go_nativeLoopPrepared();
 }
 
 // Managing Active Status
@@ -569,12 +569,12 @@ void runApp()
 }
 // ######################  begin  #####################
 
-void loop_event(){
-    NSEvent* event = [NSApp nextEventMatchingMask:NSEventMaskAny untilDate:nil inMode:NSDefaultRunLoopMode dequeue:YES];
-    if (event != NULL){
-        [NSApp sendEvent: event];
-    }
-}
+// void loop_event(){
+//     NSEvent* event = [NSApp nextEventMatchingMask:NSEventMaskAny untilDate:nil inMode:NSDefaultRunLoopMode dequeue:YES];
+//     if (event != NULL){
+//         [NSApp sendEvent: event];
+//     }
+// }
 
 void terminate()
 {
@@ -723,3 +723,11 @@ void cursor_positionScreenToWindow(uintptr_t window, CGFloat x, CGFloat y, CGFlo
     *outY = [w contentView].bounds.size.height - ( ([NSScreen mainScreen].frame.size.height - y) - w.frame.origin.y );
 }
 // ############################### cursor end   #################################
+
+uint64 threadID() {
+	uint64 id;
+	if (pthread_threadid_np(pthread_self(), &id)) {
+		abort();
+	}
+	return id;
+}
