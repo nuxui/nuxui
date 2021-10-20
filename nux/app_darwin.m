@@ -65,7 +65,7 @@ bool mainWindowCreated = false;
     _selectedRange = selectedRange;
     _markedRange = NSMakeRange(0, [aString length]);
 
-    go_typingEvent((uintptr_t)[self window], (char*)[aString UTF8String], 1, (int) selectedRange.location, (int) selectedRange.length);
+    go_typeEvent((uintptr_t)[self window], (char*)[aString UTF8String], 1, (int) selectedRange.location, (int) selectedRange.length);
 }
 
 - (void)unmarkText
@@ -73,7 +73,7 @@ bool mainWindowCreated = false;
     [_markedText release];
     _markedText = nil;
 
-    go_typingEvent((uintptr_t)[self window], "", 1, 0, 0);
+    go_typeEvent((uintptr_t)[self window], "", 1, 0, 0);
 }
 
 - (NSArray<NSAttributedStringKey> *)validAttributesForMarkedText
@@ -100,7 +100,7 @@ bool mainWindowCreated = false;
         return ;
     }
 
-    go_typingEvent((uintptr_t)[self window], text, 0, 0, 0);
+    go_typeEvent((uintptr_t)[self window], text, 0, 0, 0);
 }
 
 - (NSUInteger)characterIndexForPoint:(NSPoint)point

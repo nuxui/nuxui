@@ -9,6 +9,7 @@ package ui
 import (
 	"time"
 
+	"github.com/nuxui/nuxui/log"
 	"github.com/nuxui/nuxui/nux"
 	"github.com/nuxui/nuxui/util"
 )
@@ -27,8 +28,6 @@ type Text interface {
 }
 
 type text struct {
-	// TODO use TextMeasure combination, me.MeasureText()
-	// TextMeasure
 	nux.WidgetBase
 	nux.WidgetSize
 	WidgetVisual
@@ -40,6 +39,7 @@ type text struct {
 	downTime time.Time
 }
 
+// TODO:: Creating(attr nux.Attr) to NewText(attr nux.Attr) avoid twice parse attr
 func NewText() Text {
 	me := &text{}
 	me.WidgetSize.Owner = me
@@ -47,7 +47,7 @@ func NewText() Text {
 	me.WidgetSize.AddOnSizeChanged(me.onSizeChanged)
 	me.WidgetVisual.AddOnVisualChanged(me.onVisualChanged)
 
-	// me.Creating(nux.Attr{})
+	me.Creating(nux.Attr{})
 	return me
 }
 
@@ -125,7 +125,7 @@ func (me *text) Layout(dx, dy, left, top, right, bottom int32) {
 
 func (me *text) Measure(width, height int32) {
 	// measuredDuration := log.Time()
-	// defer log.TimeEnd("nuxui", "ui.Text Measure", measuredDuration)
+	// defer log.TimeEnd(measuredDuration, "nuxui", "ui.Text Measure ")
 
 	var vPPt float32 // horizontal padding percent
 	var vPPx float32 // horizontal padding pixel

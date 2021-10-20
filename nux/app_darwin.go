@@ -125,11 +125,13 @@ func go_windowDraw(windptr C.uintptr_t) {
 }
 
 func windowAction(windptr C.uintptr_t, action EventAction) {
-	e := &event{
-		time:   time.Now(),
-		etype:  Type_WindowEvent,
-		action: action,
-		window: theApp.findWindow(windptr),
+	e := &windowEvent{
+		event: event{
+			time:   time.Now(),
+			etype:  Type_WindowEvent,
+			action: action,
+			window: theApp.findWindow(windptr),
+		},
 	}
 
 	theApp.handleEvent(e)
@@ -281,8 +283,6 @@ func go_mouseEvent(windptr C.uintptr_t, etype C.NSEventType, x, y C.CGFloat, but
 		if v, ok := lastMouseEvent[e.button]; ok {
 			e.pointer = v.Pointer()
 		}
-	case C.NSEventTypeScrollWheel:
-		log.E("nux", "use go_scrollEvent")
 	case C.NSEventTypePressure:
 		// TODO:: stageTransition pressureBehavior NSPressureBehavior
 		e.event.action = Action_Pressure
@@ -367,19 +367,19 @@ func go_keyEvent(windptr C.uintptr_t, etype uint, keyCode uint16, modifierFlags 
 	theApp.handleEvent(e)
 }
 
-//export go_typingEvent
-func go_typingEvent(windptr C.uintptr_t, chars *C.char, action, location, length C.int) {
+//export go_typeEvent
+func go_typeEvent(windptr C.uintptr_t, chars *C.char, action, location, length C.int) {
 	// 0 = Action_Input, 1 = Action_Typing,
 	act := Action_Input
 	if action == 1 {
 		act = Action_Typing
 	}
 
-	e := &keyEvent{
+	e := &typeEvent{
 		event: event{
 			window: theApp.findWindow(windptr),
 			time:   time.Now(),
-			etype:  Type_TypingEvent,
+			etype:  Type_TypeEvent,
 			action: act,
 		},
 		text:     C.GoString(chars),

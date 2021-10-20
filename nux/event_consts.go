@@ -14,7 +14,7 @@ type MouseButton int
 const (
 	Type_None EventType = iota
 	Type_WindowEvent
-	Type_TypingEvent
+	Type_TypeEvent
 	Type_AppExit
 	Type_KeyEvent
 	Type_PointerEvent
@@ -43,6 +43,7 @@ const (
 	Action_WindowFocusGained
 	Action_WindowFocusLost
 	Action_WindowActived
+	Action_WindowHide
 )
 
 const (
@@ -92,8 +93,8 @@ func (me EventType) String() string {
 		return "Type_None "
 	case Type_WindowEvent:
 		return "Type_WindowEvent"
-	case Type_TypingEvent:
-		return "Type_TypingEvent"
+	case Type_TypeEvent:
+		return "Type_TypeEvent"
 	case Type_AppExit:
 		return "Type_AppExit"
 	case Type_KeyEvent:
@@ -121,6 +122,10 @@ func (me EventAction) String() string {
 		return "Action_Hover"
 	case Action_Scroll:
 		return "Action_Scroll"
+	case Action_Input:
+		return "Action_Input"
+	case Action_Typing:
+		return "Action_Typing"
 	case Action_Pressure:
 		return "Action_Pressure"
 	case Action_WindowCreating:
@@ -137,6 +142,8 @@ func (me EventAction) String() string {
 		return "Action_WindowFocusLost"
 	case Action_WindowActived:
 		return "Action_WindowActived"
+	case Action_WindowHide:
+		return "Action_WindowHide"
 	}
 	log.Fatal("nuxui", "EventAction %d not handled in switch", me)
 	return ""
@@ -159,6 +166,6 @@ func (me MouseButton) String() string {
 	case MB_Other:
 		return "MB_Other"
 	}
-	log.Fatal("nuxui", "EventAction %d not handled in switch", me)
+	log.Fatal("nuxui", "MouseButton %d not handled in switch", me)
 	return ""
 }

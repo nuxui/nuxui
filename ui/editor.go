@@ -234,7 +234,7 @@ func (me *editor) stopTick() {
 	nux.RequestRedraw(me)
 }
 
-func (me *editor) OnTypingEvent(event nux.TypingEvent) bool {
+func (me *editor) OnTypeEvent(event nux.TypeEvent) bool {
 	switch event.Action() {
 	case nux.Action_Typing:
 		me.editingText = event.Text()
@@ -253,7 +253,7 @@ func (me *editor) OnTypingEvent(event nux.TypingEvent) bool {
 		me.SetText(ret)
 		me.startTick()
 	}
-	// log.V("nuxui", "OnTypingEvent editingText=%s text=%s", me.editingText, me.text)
+	// log.V("nuxui", "OnTypeEvent editingText=%s text=%s", me.editingText, me.text)
 	return true
 }
 

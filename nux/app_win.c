@@ -72,6 +72,8 @@ int win32_main()
     return msg.wParam;
 }
 
+#define printMsg(msgstr) printf("%s, msg=0x%X, wParam=0x%X, lParam=0x%X, W_high=0x%X, W_low=0x%X, L_high=0x%X, L_low=0x%X\n", (msgstr), msg, wParam, lParam, (SHORT)HIWORD(wParam), (SHORT)LOWORD(wParam), (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
+
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch(msg)
@@ -80,7 +82,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         case WM_NCHITTEST:
             return DefWindowProc(hwnd, msg, wParam, lParam);
         case WM_MOUSEMOVE:
-        break;
         case WM_LBUTTONDOWN:
         case WM_LBUTTONUP:
         case WM_MBUTTONDOWN:
@@ -91,29 +92,38 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         case WM_XBUTTONUP:
         {
             // TODO:: did mouse event contain shift/ctrl key? 
-            printf("mouse event msg = 0x%04x, wx=%d, wy=%d, x=%d, y=%d\n", 
-                msg, GET_KEYSTATE_WPARAM(wParam), GET_WHEEL_DELTA_WPARAM(wParam), GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-            go_mouseEvent(hwnd, msg, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+            printMsg("WM_MOUSEBUTTON");
+            go_mouseEvent(hwnd, msg, HIWORD(wParam), GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
             break;
         }
         case WM_MOUSEWHEEL:
         {
+            POINT p;
+            p.x = GET_X_LPARAM(lParam);
+            p.y = GET_Y_LPARAM(lParam);
+            ScreenToClient(hwnd, &p);
+
             int aMouseInfo[3];
             int lines = 1;
             if ( SystemParametersInfoW(SPI_GETWHEELSCROLLLINES, 0, &aMouseInfo, 0) > 0 ){
                 lines = aMouseInfo[0]; // get lines number of scroll each time
             }
-            go_scrollEvent(hwnd, 0, (GET_WHEEL_DELTA_WPARAM(wParam) * lines / (double) WHEEL_DELTA) );
+            go_scrollEvent(hwnd, (float)p.x, (float)p.y, 0, (GET_WHEEL_DELTA_WPARAM(wParam) * lines / (float) WHEEL_DELTA) );
             break;
         }
         case WM_MOUSEHWHEEL:
         {
+            POINT p;
+            p.x = GET_X_LPARAM(lParam);
+            p.y = GET_Y_LPARAM(lParam);
+            ScreenToClient(hwnd, &p);
+
             int aMouseInfo[3];
             int lines = 1;
             if ( SystemParametersInfoW(SPI_GETWHEELSCROLLLINES, 0, &aMouseInfo, 0) > 0 ){
                 lines = aMouseInfo[0]; // get lines number of scroll each time
             }
-            go_scrollEvent(hwnd, -(GET_WHEEL_DELTA_WPARAM(wParam) * lines / (double) WHEEL_DELTA), (double)0 );
+            go_scrollEvent(hwnd, (float)p.x, (float)p.y, -(GET_WHEEL_DELTA_WPARAM(wParam) * lines / (float) WHEEL_DELTA), 0 );
             break;
         }
         case WM_KEYDOWN:
@@ -121,80 +131,84 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         case WM_SYSKEYDOWN:
         case WM_SYSKEYUP:
         {
-            // printf("WM_KEYUP, wParam=0x%X, lParam=0x%X, &lParam=0x%X, lParam=0x%X, high=0x%X, low=0x%X\n", msg, wParam, lParam, &lParam, lParam, (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
+            // printMsg("WM_KEY");
             go_keyEvent(hwnd, msg, (UINT32)LOWORD(wParam), 0, 0, NULL);
             break;
 
         }
         case WM_CHAR:
-            printf("WM_CHAR, wParam=%d, lParam=%d, high=%d, low=%d\n", msg, wParam, lParam, (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
+        {
+            // printMsg("WM_CHAR");
+            if((SHORT)HIWORD(lParam) != 0){  // 0 is IME char, ignore
+                UINT32 keycode = (UINT32)LOWORD(wParam);
+                if ( (keycode >= 0x20 && keycode <= 0x7E) || keycode == 0x09 || keycode == 0x0A || keycode == 0x0B || keycode == 0x0D ){
+                    go_typeEvent(hwnd, msg, wParam, lParam);
+                }
+            }
             break;
+        }
         case WM_SYSCHAR:
-            printf("WM_SYSCHAR, wParam=%d, lParam=%d, high=%d, low=%d\n", msg, wParam, lParam, (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
+            printMsg("WM_SYSCHAR");
             break;
         case WM_DEADCHAR:
-            printf("WM_DEADCHAR, wParam=%d, lParam=%d, high=%d, low=%d\n", msg, wParam, lParam, (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
+            printMsg("WM_DEADCHAR");
             break;
         case WM_SYSDEADCHAR:
-            printf("WM_SYSDEADCHAR, wParam=%d, lParam=%d, high=%d, low=%d\n", msg, wParam, lParam, (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
+            printMsg("WM_SYSDEADCHAR");
             break;
         case WM_UNICHAR:
-            printf("WM_UNICHAR, wParam=%d, char=%c lParam=%d\n", msg, wParam, wParam, lParam);
+            printMsg("WM_UNICHAR");
             break;
         case WM_IME_STARTCOMPOSITION:
-            printf("WM_IME_STARTCOMPOSITION, wParam=%d lParam=%d, high=%d, low=%d\n", msg, wParam, lParam, (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
+            printMsg("WM_IME_STARTCOMPOSITION");
             break;
         case WM_IME_ENDCOMPOSITION:
-            printf("WM_IME_ENDCOMPOSITION, wParam=%d lParam=%d, high=%d, low=%d\n", msg, wParam, lParam, (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
+            printMsg("WM_IME_ENDCOMPOSITION");
             break;
         case WM_IME_COMPOSITION:   // = WM_IME_KEYLAST
         {
-            HIMC hIMC;
-            DWORD dwSize;
-            HGLOBAL hstr;
-            LPWSTR lpstr;
-            printf("WM_IME_COMPOSITION wParam=%d lParam=%d, high=%d, low=%d\n", msg, wParam, lParam, (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
-            // if (lParam & GCS_RESULTSTR) 
-            // {
-                go_typingEvent(hwnd);
-            // }
+            // printMsg("WM_IME_COMPOSITION");
+            go_typeEvent(hwnd, msg, wParam, lParam);
             break;
         }
         case WM_IME_CHAR:
         {
-            printf("WM_IME_CHAR wParam=%d lParam=%d, high=%d, low=%d\n", msg, wParam, lParam, (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
+            printMsg("WM_IME_CHAR");
             break;
         }
         case WM_IME_SETCONTEXT:
-            printf("WM_IME_SETCONTEXT, wParam=%d lParam=%d, high=%d, low=%d\n", msg, wParam, lParam, (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
+            printMsg("WM_IME_SETCONTEXT");
             break;
         case WM_IME_NOTIFY:
-            printf("WM_IME_NOTIFY, wParam=%d lParam=%d, high=%d, low=%d\n", msg, wParam, lParam, (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
+            printMsg("WM_IME_NOTIFY");
             break;
         case WM_IME_CONTROL:
-            printf("WM_IME_CONTROL, wParam=%d lParam=%d, high=%d, low=%d\n", msg, wParam, lParam, (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
+            printMsg("WM_IME_CONTROL");
             break;
         case WM_IME_COMPOSITIONFULL:
-            printf("WM_IME_COMPOSITIONFULL, wParam=%d lParam=%d, high=%d, low=%d\n", msg, wParam, lParam, (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
+            printMsg("WM_IME_COMPOSITIONFULL");
             break;
         case WM_IME_SELECT:
-            printf("WM_IME_SELECT, wParam=%d lParam=%d, high=%d, low=%d\n", msg, wParam, lParam, (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
+            printMsg("WM_IME_SELECT");
             break;
         case WM_IME_REQUEST:
-            printf("WM_IME_REQUEST, wParam=%d lParam=%d, high=%d, low=%d\n", msg, wParam, lParam, (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
+            printMsg("WM_IME_REQUEST");
             break;
         case WM_IME_KEYDOWN:
-            printf("WM_IME_KEYDOWN, wParam=%d lParam=%d, high=%d, low=%d\n", msg, wParam, lParam, (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
+            printMsg("WM_IME_KEYDOWN");
             break;
         case WM_IME_KEYUP:
-            printf("WM_IME_KEYUP, wParam=%d lParam=%d, high=%d, low=%d\n", msg, wParam, lParam, (SHORT)HIWORD(lParam), (SHORT)LOWORD(lParam));
+            printMsg("WM_IME_KEYUP");
             break;
         case WM_CREATE:
+            printMsg("WM_CREATE");
+            go_windowAction(hwnd, msg);break;
         case WM_PAINT:
+            printMsg("WM_PAINT");
+            go_windowAction(hwnd, msg);break;
         case WM_SIZE:
-            go_windowAction(hwnd, msg);
-            return 0;
-
+            printMsg("WM_SIZE");
+            go_windowAction(hwnd, msg);break;
         // nonclient area of a window
         case WM_NCLBUTTONDBLCLK:
         case WM_NCLBUTTONDOWN:
@@ -218,14 +232,17 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         case WM_MBUTTONDBLCLK:
         case WM_RBUTTONDBLCLK:
         case WM_XBUTTONDBLCLK:
-            printf("mouse double click msg=0x%04x\n", msg);
+            printMsg("WM_XBUTTONDBLCLK");
             return DefWindowProc(hwnd, msg, wParam, lParam);
         case WM_MOUSEACTIVATE:
         case WM_MOUSEHOVER:
         case WM_MOUSELEAVE:
-            printf("mouse active hover leave msg=0x%04x\n", msg);
+            printMsg("WM_MOUSELEAVE");
             return DefWindowProc(hwnd, msg, wParam, lParam);
         /*mouse event end*/
+        case WM_USER:
+            go_backToUI();
+            break;
         case WM_CLOSE:
             DestroyWindow(hwnd);
             break;
@@ -242,4 +259,17 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 void invalidate(HWND hwnd){
     SendMessage(hwnd, WM_PAINT, 0, 0);
+}
+
+void setTextInputRect(HWND hwnd, LONG x, LONG y, LONG w, LONG h)
+{
+    HIMC hIMC = ImmGetContext(hwnd);
+    if (hIMC) {
+        COMPOSITIONFORM comp;
+        comp.dwStyle = CFS_POINT;
+        comp.ptCurrentPos.x = x;
+        comp.ptCurrentPos.y = y;
+        ImmSetCompositionWindow(hIMC, &comp);
+        ImmReleaseContext(hwnd, hIMC);
+    }
 }

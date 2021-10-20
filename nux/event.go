@@ -12,54 +12,14 @@ import (
 	"github.com/nuxui/nuxui/log"
 )
 
+//////////////////////////  Event  //////////////////////////////////////////////////////////////////////////////
+
 type Event interface {
 	Time() time.Time
 	Type() EventType
 	Action() EventAction
-	Window() Window    // TODO:: if global save a event, then window will not release
-	Data() interface{} // TODO:: for user event
-}
-
-type WindowEvent interface {
-	Event
-	windowEvent()
-}
-
-type PointerEvent interface {
-	Event
-
-	Pointer() int64
-	Kind() Kind
-	X() float32
-	Y() float32
-	Pressure() float32
-	Stage() int32
-	IsPrimary() bool
-	Distance(x, y float32) float32
-}
-
-type ScrollEvent interface {
-	Event
-
-	X() float32
-	Y() float32
-	ScrollX() float32
-	ScrollY() float32
-}
-
-type KeyEvent interface {
-	Event
-
-	KeyCode() KeyCode
-	Repeat() bool
-	Modifiers() (none, capslock, shift, control, alt, super bool)
-	Rune() rune // rune or 0
-	Text() string
-	Location() int32
-}
-
-type TypingEvent interface {
-	KeyEvent
+	Window() Window
+	Data() interface{}
 }
 
 type event struct {
@@ -67,8 +27,7 @@ type event struct {
 	etype  EventType
 	action EventAction
 	window Window
-
-	data interface{}
+	data   interface{}
 }
 
 func (me *event) Time() time.Time {
@@ -93,6 +52,36 @@ func (me *event) Data() interface{} {
 
 func (me *event) String() string {
 	return fmt.Sprintf("Event: {type:%s, action:%s}", me.etype, me.action)
+}
+
+//////////////////////////  WindowEvent  //////////////////////////////////////////////////////////////////////////////
+
+// WindowEvent
+type WindowEvent interface {
+	Event
+	windowEvent()
+}
+
+type windowEvent struct {
+	event
+}
+
+func (me *windowEvent) windowEvent() {}
+
+//////////////////////////  PointerEvent  //////////////////////////////////////////////////////////////////////////////
+
+type PointerEvent interface {
+	Event
+
+	Pointer() int64
+	Kind() Kind
+	X() float32
+	Y() float32
+	Pressure() float32
+	Stage() int32
+	IsPrimary() bool
+	Distance(x, y float32) float32
+	pointerEvent()
 }
 
 type pointerEvent struct {
@@ -144,8 +133,22 @@ func (me *pointerEvent) Distance(x, y float32) float32 {
 	return float32(math.Sqrt(float64(dx)*float64(dx) + float64(dy)*float64(dy)))
 }
 
+func (me *pointerEvent) pointerEvent() {}
+
 func (me *pointerEvent) String() string {
 	return fmt.Sprintf("PointerEvent: {pointer=%d, button=%s:%d, action=%s, x=%.2f, y=%.2f}", me.pointer, me.button, me.button, me.action, me.x, me.y)
+}
+
+//////////////////////////  ScrollEvent  //////////////////////////////////////////////////////////////////////////////
+
+type ScrollEvent interface {
+	Event
+
+	X() float32
+	Y() float32
+	ScrollX() float32
+	ScrollY() float32
+	scrollEvent()
 }
 
 type scrollEvent struct {
@@ -179,6 +182,20 @@ func (me *scrollEvent) ScrollY() float32 {
 	return me.scrollY
 }
 
+func (me *scrollEvent) scrollEvent() {}
+
+//////////////////////////  KeyEvent  //////////////////////////////////////////////////////////////////////////////
+
+type KeyEvent interface {
+	Event
+
+	KeyCode() KeyCode
+	Repeat() bool
+	Modifiers() (none, capslock, shift, control, alt, super bool)
+	Rune() rune // rune or 0
+	keyEvent()
+}
+
 type keyEvent struct {
 	event
 
@@ -186,10 +203,7 @@ type keyEvent struct {
 	repeat        bool
 	modifierFlags uint32
 	keyRune       string
-	text          string
-	location      int32
 }
-type typingEvent keyEvent
 
 func (me *keyEvent) KeyCode() KeyCode {
 	return me.keyCode
@@ -212,19 +226,42 @@ func (me *keyEvent) Modifiers() (none, capslock, shift, control, alt, super bool
 func (me *keyEvent) Rune() rune {
 	r := []rune(me.keyRune)
 	if len(r) > 0 {
+		log.W("nuxui", "KeyEvent original rune is %s length = %d, %d", me.keyRune, len(me.keyRune), len(r))
 		return r[0]
 	}
 	return 0
 }
 
-func (me *keyEvent) Text() string {
-	return me.text
-}
-
-func (me *keyEvent) Location() int32 {
-	return me.location
-}
+func (me *keyEvent) keyEvent() {}
 
 func (me *keyEvent) String() string {
 	return fmt.Sprintf("KeyEvent: {keyCode=%s, action=%s, rune='%c'}", me.keyCode, me.action, me.Rune())
+}
+
+//////////////////////////  TypeEvent  //////////////////////////////////////////////////////////////////////////////
+
+type TypeEvent interface {
+	Event
+	Text() string
+	Location() int32
+	typeEvent()
+}
+
+type typeEvent struct {
+	event
+	text     string
+	location int32
+}
+
+func (me *typeEvent) Text() string {
+	return me.text
+}
+
+func (me *typeEvent) Location() int32 {
+	return me.location
+}
+
+func (me *typeEvent) typeEvent() {}
+func (me *typeEvent) String() string {
+	return fmt.Sprintf("TypeEvent: {action=%s, text=%s, location=%d}", me.action, me.text, me.location)
 }

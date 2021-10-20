@@ -11,6 +11,7 @@ package nux
 #include <windowsx.h>
 int win32_main();
 void invalidate(HWND hwnd);
+void setTextInputRect(HWND hwnd, LONG x, LONG y, LONG w, LONG h);
 */
 import "C"
 import (
@@ -22,9 +23,6 @@ import (
 )
 
 var theApp = &application{
-	event:              make(chan Event),
-	eventWaitDone:      make(chan Event),
-	eventDone:          make(chan struct{}),
 	runOnUI:            make(chan func()),
 	nativeLoopPrepared: make(chan struct{}),
 	drawSignal:         make(chan struct{}, drawSignalSize),
@@ -57,13 +55,9 @@ func app() Application {
 }
 
 type application struct {
-	manifest      Manifest
-	window        *window
-	event         chan Event
-	eventWaitDone chan Event
-	runOnUI       chan func()
-
-	eventDone          chan struct{}
+	manifest           Manifest
+	window             *window
+	runOnUI            chan func()
 	nativeLoopPrepared chan struct{}
 	drawSignal         chan struct{}
 }
@@ -96,15 +90,6 @@ func (me *application) MainWindow() Window {
 
 func (me *application) Manifest() Manifest {
 	return me.manifest
-}
-
-func (me *application) SendEvent(event Event) {
-	me.event <- event
-}
-
-func (me *application) SendEventAndWait(event Event) {
-	me.eventWaitDone <- event
-	<-me.eventDone
 }
 
 func (me *application) Terminate() {
@@ -144,8 +129,9 @@ func (me *application) findWindow(windptr C.HWND) *window {
 }
 
 func (me *application) RequestRedraw(widget Widget) {
-	w := GetWidgetWindow(widget).(*window)
-	C.InvalidateRect(w.windptr, nil, 0)
+	if w := GetWidgetWindow(widget); w != nil {
+		C.InvalidateRect(w.(*window).windptr, nil, 0)
+	}
 }
 
 func run() {
@@ -167,24 +153,122 @@ func stopTextInput() {
 }
 
 func setTextInputRect(x, y, w, h float32) {
-	// C.setTextInputRect(C.float(x), C.float(y), C.float(w), C.float(h))
+	if theApp.window == nil {
+		log.E("nuxui", "the application not ready")
+		return
+	}
+	C.setTextInputRect(theApp.window.windptr, C.LONG(x), C.LONG(y), C.LONG(w), C.LONG(h))
+
 }
 
 var lastMouseEvent map[MouseButton]PointerEvent = map[MouseButton]PointerEvent{}
 
 //export go_mouseEvent
-func go_mouseEvent(windptr C.HWND, etype C.UINT, x, y C.int) {
+func go_mouseEvent(windptr C.HWND, etype C.UINT, buttonNumber, x, y C.int) {
 	log.V("nuxui", "go_mouseEvent etype=%d, x=%d, y=%d", etype, x, y)
 
-	// theApp.handleEvent(e)
+	e := &pointerEvent{
+		event: event{
+			window: theApp.findWindow(windptr),
+			time:   time.Now(),
+			etype:  Type_PointerEvent,
+			action: Action_None,
+		},
+		pointer: 0,
+		button:  MB_None,
+		kind:    Kind_Mouse,
+		x:       float32(x),
+		y:       float32(y),
+		// pressure: float32(pressure),
+		// stage:    int32(stage),
+	}
+
+	switch etype {
+	case C.WM_MOUSEMOVE:
+		e.event.action = Action_Hover
+		e.button = MB_None
+		e.pointer = 0
+	case C.WM_LBUTTONDOWN:
+		e.event.action = Action_Down
+		e.button = MB_Left
+		e.pointer = time.Now().UnixNano()
+		lastMouseEvent[e.button] = e
+	case C.WM_LBUTTONUP:
+		e.event.action = Action_Up
+		e.button = MB_Left
+		if v, ok := lastMouseEvent[e.button]; ok {
+			e.pointer = v.Pointer()
+		}
+	case C.WM_RBUTTONDOWN:
+		e.event.action = Action_Down
+		e.button = MB_Right
+		e.pointer = time.Now().UnixNano()
+		lastMouseEvent[e.button] = e
+	case C.WM_RBUTTONUP:
+		e.event.action = Action_Up
+		e.button = MB_Right
+		if v, ok := lastMouseEvent[e.button]; ok {
+			e.pointer = v.Pointer()
+		}
+	case C.WM_MBUTTONDOWN:
+		e.event.action = Action_Down
+		e.button = MB_Middle
+		e.pointer = time.Now().UnixNano()
+		lastMouseEvent[e.button] = e
+	case C.WM_MBUTTONUP:
+		e.event.action = Action_Up
+		e.button = MB_Middle
+		if v, ok := lastMouseEvent[e.button]; ok {
+			e.pointer = v.Pointer()
+		}
+	case C.WM_XBUTTONDOWN:
+		e.event.action = Action_Down
+		switch buttonNumber {
+		case 1:
+			e.button = MB_X1
+		case 2:
+			e.button = MB_X2
+		default:
+			e.button = MouseButton(buttonNumber)
+		}
+		e.pointer = time.Now().UnixNano()
+		lastMouseEvent[e.button] = e
+	case C.WM_XBUTTONUP:
+		e.event.action = Action_Up
+		switch buttonNumber {
+		case 1:
+			e.button = MB_X1
+		case 2:
+			e.button = MB_X2
+		default:
+			e.button = MouseButton(buttonNumber)
+		}
+		if v, ok := lastMouseEvent[e.button]; ok {
+			e.pointer = v.Pointer()
+		}
+	}
+
+	theApp.handleEvent(e)
 
 }
 
 //export go_scrollEvent
-func go_scrollEvent(windptr C.HWND, scrollX, scrollY C.double) {
-	log.V("nuxui", "go_scrollEvent scrollX=%f, scrollY=%f", scrollX, scrollY)
+func go_scrollEvent(windptr C.HWND, x, y, scrollX, scrollY C.float) {
+	log.V("nuxui", "go_scrollEvent, x=%f, y=%f, scrollX=%f, scrollY=%f", x, y, scrollX, scrollY)
+	e := &scrollEvent{
+		event: event{
+			window: theApp.findWindow(windptr),
+			time:   time.Now(),
+			etype:  Type_ScrollEvent,
+			action: Action_Scroll,
+		},
+		x:       float32(x),
+		y:       float32(y),
+		scrollX: float32(scrollX),
+		scrollY: float32(scrollY),
+	}
 
-	// theApp.handleEvent(e)
+	theApp.handleEvent(e)
 
 }
 
@@ -232,35 +316,72 @@ func go_keyEvent(windptr C.HWND, etype uint, keyCode C.UINT32, modifierFlags uin
 	theApp.handleEvent(e)
 }
 
-//export go_typingEvent
-func go_typingEvent(windptr C.HWND) {
-	var hIMC C.HIMC = C.ImmGetContext(windptr)
-	// if hIMC == 0 {
-	// 	// error
+//export go_typeEvent
+func go_typeEvent(windptr C.HWND, etype uint, wParam C.WPARAM, lParam C.LPARAM) {
+	// if hIMC == C.HIMC(0) {
+	// 	log.E("nuxui", "ImmGetContext faild.")
+	// 	return
 	// }
-	textLen := C.DWORD(C.ImmGetCompositionStringW(hIMC, C.GCS_RESULTSTR, nil, 0) + 1)
-	buf := make([]uint16, textLen)
-	C.ImmGetCompositionStringW(hIMC, C.GCS_RESULTSTR, (C.LPVOID)(&buf[0]), textLen)
-	C.ImmReleaseContext(windptr, hIMC)
-	log.V("nux", "typing event: %s", syscall.UTF16ToString(buf))
+
+	e := &typeEvent{
+		event: event{
+			window: theApp.findWindow(windptr),
+			time:   time.Now(),
+			etype:  Type_TypeEvent,
+		},
+	}
+
+	if etype == C.WM_CHAR {
+		e.action = Action_Input
+		buf := make([]uint16, 2)
+		buf[0] = uint16(wParam & 0xffff)
+		buf[1] = 0 // uint16((wParam >> 16) & 0xffff)
+		e.text = syscall.UTF16ToString(buf)
+		log.V("nux", "typing event WM_CHAR 2 : %s", syscall.UTF16ToString(buf))
+	} else {
+		var hIMC C.HIMC = C.ImmGetContext(windptr)
+
+		if lParam&C.GCS_CURSORPOS == C.GCS_CURSORPOS {
+			e.location = int32(C.DWORD(C.ImmGetCompositionStringW(hIMC, C.GCS_CURSORPOS, nil, 0)))
+		}
+
+		if lParam&C.GCS_COMPSTR == C.GCS_COMPSTR {
+			textLen := C.DWORD(C.ImmGetCompositionStringW(hIMC, C.GCS_COMPSTR, nil, 0) + 1)
+			buf := make([]uint16, textLen)
+			C.ImmGetCompositionStringW(hIMC, C.GCS_COMPSTR, (C.LPVOID)(&buf[0]), textLen)
+			log.V("nux", "typing event GCS_COMPSTR: %s", syscall.UTF16ToString(buf))
+			e.action = Action_Typing
+			e.text = syscall.UTF16ToString(buf)
+
+		}
+
+		if lParam&C.GCS_RESULTSTR == C.GCS_RESULTSTR {
+			textLen := C.DWORD(C.ImmGetCompositionStringW(hIMC, C.GCS_RESULTSTR, nil, 0) + 1)
+			buf := make([]uint16, textLen)
+			C.ImmGetCompositionStringW(hIMC, C.GCS_RESULTSTR, (C.LPVOID)(&buf[0]), textLen)
+			log.V("nux", "typing event GCS_RESULTSTR: %s", syscall.UTF16ToString(buf))
+			e.action = Action_Input
+			e.text = syscall.UTF16ToString(buf)
+		}
+
+		C.ImmReleaseContext(windptr, hIMC)
+	}
+
+	theApp.handleEvent(e)
 }
 
 //export go_backToUI
 func go_backToUI() {
 	log.V("nuxui", "go_backToUI ..........")
-	select {
-	case f := <-theApp.runOnUI:
-		f()
-		// case e := <-theApp.event:
-		// case e := <-theApp.eventWaitDone:
-	}
+	callback := <-theApp.runOnUI
+	callback()
 }
 
 func runOnUI(callback func()) {
 	go func() {
 		theApp.runOnUI <- callback
 	}()
-	// C.backToUI()
+	C.SendMessage(theApp.MainWindow().(*window).windptr, C.WM_USER, 0, 0)
 }
 
 func requestRedraw() {

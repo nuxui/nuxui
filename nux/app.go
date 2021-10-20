@@ -78,8 +78,8 @@ func (me *application) handleEvent(event Event) {
 		event.Window().handleScrollEvent(event.(ScrollEvent))
 	case Type_KeyEvent:
 		event.Window().handleKeyEvent(event.(KeyEvent))
-	case Type_TypingEvent:
-		event.Window().handleTypingEvent(event.(TypingEvent))
+	case Type_TypeEvent:
+		event.Window().handleTypeEvent(event.(TypeEvent))
 	case Type_BackToUI:
 		if f, ok := event.Data().(func()); ok {
 			f()

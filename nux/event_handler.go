@@ -8,6 +8,6 @@ type KeyEventHandler interface {
 	OnKeyEvent(event KeyEvent) bool
 }
 
-type TypingEventHandler interface {
-	OnTypingEvent(event TypingEvent) bool
+type TypeEventHandler interface {
+	OnTypeEvent(event TypeEvent) bool
 }

@@ -274,19 +274,19 @@ func go_keyEvent(windptr C.uintptr_t, etype uint, keyCode uint16, modifierFlags 
 	theApp.handleEvent(e)
 }
 
-//export go_typingEvent
-func go_typingEvent(windptr C.uintptr_t, chars *C.char, action, location, length C.int) {
+//export go_typeEvent
+func go_typeEvent(windptr C.uintptr_t, chars *C.char, action, location, length C.int) {
 	// 0 = Action_Input, 1 = Action_Typing,
 	act := Action_Input
 	if action == 1 {
 		act = Action_Typing
 	}
 
-	e := &keyEvent{
+	e := &typeEvent{
 		event: event{
 			window: theApp.findWindow(windptr),
 			time:   time.Now(),
-			etype:  Type_TypingEvent,
+			etype:  Type_TypeEvent,
 			action: act,
 		},
 		text:     C.GoString(chars),
@@ -299,12 +299,8 @@ func go_typingEvent(windptr C.uintptr_t, chars *C.char, action, location, length
 //export go_backToUI
 func go_backToUI() {
 	log.V("nuxui", "go_backToUI ..........")
-	select {
-	case f := <-theApp.runOnUI:
-		f()
-		// case e := <-theApp.event:
-		// case e := <-theApp.eventWaitDone:
-	}
+	callback := <-theApp.runOnUI
+	callback()
 }
 
 func runOnUI(callback func()) {

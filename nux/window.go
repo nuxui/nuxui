@@ -34,7 +34,7 @@ type Window interface {
 	handlePointerEvent(event PointerEvent)
 	handleScrollEvent(event ScrollEvent)
 	handleKeyEvent(event KeyEvent)
-	handleTypingEvent(event TypingEvent)
+	handleTypeEvent(event TypeEvent)
 	requestFocus(widget Widget)
 }
 
