@@ -9,7 +9,6 @@ package ui
 import (
 	"time"
 
-	"github.com/nuxui/nuxui/log"
 	"github.com/nuxui/nuxui/nux"
 	"github.com/nuxui/nuxui/util"
 )
@@ -87,7 +86,7 @@ func (me *text) onTapDown(detail nux.GestureDetail) {
 }
 
 func (me *text) onTapUp(detail nux.GestureDetail) {
-	if sub := time.Now().Sub(me.downTime); sub < nux.GESTURE_DOWN2UP_DELAY*time.Millisecond {
+	if sub := time.Since(me.downTime); sub < nux.GESTURE_DOWN2UP_DELAY*time.Millisecond {
 		nux.NewTimerBackToUI(nux.GESTURE_DOWN2UP_DELAY*time.Millisecond-sub, func() {
 			me.doTapUp(detail)
 		})

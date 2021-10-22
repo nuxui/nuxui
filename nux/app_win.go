@@ -318,11 +318,6 @@ func go_keyEvent(windptr C.HWND, etype uint, keyCode C.UINT32, modifierFlags uin
 
 //export go_typeEvent
 func go_typeEvent(windptr C.HWND, etype uint, wParam C.WPARAM, lParam C.LPARAM) {
-	// if hIMC == C.HIMC(0) {
-	// 	log.E("nuxui", "ImmGetContext faild.")
-	// 	return
-	// }
-
 	e := &typeEvent{
 		event: event{
 			window: theApp.findWindow(windptr),
@@ -340,6 +335,10 @@ func go_typeEvent(windptr C.HWND, etype uint, wParam C.WPARAM, lParam C.LPARAM) 
 		log.V("nux", "typing event WM_CHAR 2 : %s", syscall.UTF16ToString(buf))
 	} else {
 		var hIMC C.HIMC = C.ImmGetContext(windptr)
+		if hIMC == nil {
+			log.E("nuxui", "ImmGetContext faild.")
+			return
+		}
 
 		if lParam&C.GCS_CURSORPOS == C.GCS_CURSORPOS {
 			e.location = int32(C.DWORD(C.ImmGetCompositionStringW(hIMC, C.GCS_CURSORPOS, nil, 0)))
@@ -350,7 +349,7 @@ func go_typeEvent(windptr C.HWND, etype uint, wParam C.WPARAM, lParam C.LPARAM) 
 			buf := make([]uint16, textLen)
 			C.ImmGetCompositionStringW(hIMC, C.GCS_COMPSTR, (C.LPVOID)(&buf[0]), textLen)
 			log.V("nux", "typing event GCS_COMPSTR: %s", syscall.UTF16ToString(buf))
-			e.action = Action_Typing
+			e.action = Action_Preedit
 			e.text = syscall.UTF16ToString(buf)
 
 		}

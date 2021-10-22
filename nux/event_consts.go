@@ -34,7 +34,7 @@ const (
 
 	// typing
 	Action_Input
-	Action_Typing
+	Action_Preedit
 
 	Action_WindowCreating
 	Action_WindowCreated
@@ -124,8 +124,8 @@ func (me EventAction) String() string {
 		return "Action_Scroll"
 	case Action_Input:
 		return "Action_Input"
-	case Action_Typing:
-		return "Action_Typing"
+	case Action_Preedit:
+		return "Action_Preedit"
 	case Action_Pressure:
 		return "Action_Pressure"
 	case Action_WindowCreating:

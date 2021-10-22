@@ -236,7 +236,7 @@ func (me *editor) stopTick() {
 
 func (me *editor) OnTypeEvent(event nux.TypeEvent) bool {
 	switch event.Action() {
-	case nux.Action_Typing:
+	case nux.Action_Preedit:
 		me.editingText = event.Text()
 		me.editingLoc = event.Location()
 		nux.RequestLayout(me)

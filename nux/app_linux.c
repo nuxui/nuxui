@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include <strings.h>
 #include <string.h>
+#include <locale.h>
 
 #include "_cgo_export.h"
 
@@ -65,6 +66,9 @@ static const char *event_names[] = {
 " MappingNotify ",
 };
 
+#define Button6            6
+#define Button7            7
+
 #define XALL_EVENT KeyPressMask|KeyReleaseMask|ButtonPressMask|ButtonReleaseMask|EnterWindowMask|LeaveWindowMask|PointerMotionMask|/*PointerMotionHintMask*/Button1MotionMask|Button2MotionMask|Button3MotionMask|Button4MotionMask|Button5MotionMask|ButtonMotionMask|KeymapStateMask|ExposureMask|VisibilityChangeMask|StructureNotifyMask|ResizeRedirectMask|SubstructureNotifyMask|SubstructureRedirectMask|FocusChangeMask|PropertyChangeMask|ColormapChangeMask|OwnerGrabButtonMask
 
 #define AllMaskBits (CWBackPixmap|CWBackPixel|CWBorderPixmap|\
@@ -75,48 +79,166 @@ static const char *event_names[] = {
 
 int _go_nativeLoopPrepared = 0;
 
+// https://www.x.org/releases/current/doc/libX11/libX11/libX11.html#:~:text=Preedit%20State-,Callbacks,-When%20the%20input
+int nux_PreeditStartCallback(XIC xic, XPointer client_data, XPointer call_data){
+    printf("nux_PreeditStartCallback\n");
+    return -1;
+}
+void nux_PreeditDoneCallback(XIC xic, XPointer client_data, XPointer call_data){
+    printf("nux_PreeditDoneCallback\n");
+
+}
+void nux_PreeditDrawCallback(XIC xic, XPointer client_data, XIMPreeditDrawCallbackStruct *call_data){
+    if(call_data->text != NULL){
+        go_typeEvent(1, call_data->text->string.multi_byte, call_data->text->length, call_data->caret);
+    }
+
+    // XPoint spot;
+    // spot.x = 50;
+    // spot.y = 50;
+    // XVaNestedList preedit_attr;
+    // preedit_attr = XVaCreateNestedList(0, XNSpotLocation, &spot, NULL);
+    // XSetICValues(xic, XNPreeditAttributes, preedit_attr, NULL);
+    // XFree(preedit_attr);
+
+}
+void nux_PreeditCaretCallback(XIC xic, XPointer client_data, XIMPreeditCaretCallbackStruct *call_data){
+    printf("nux_PreeditCaretCallback\n");
+
+}
+
+void nux_PreeditStateNotifyCallback(XIC xic, XPointer client_data, XIMPreeditStateNotifyCallbackStruct *call_data){
+    printf("nux_PreeditStateNotifyCallback\n");
+
+}
+
+void nux_StatusStartCallback(XIC ic, XPointer client_data, XPointer call_data){
+    printf("nux_StatusStartCallback\n");
+
+}
+
+void nux_StatusDoneCallback(XIC ic, XPointer client_data, XPointer call_data){
+    printf("nux_StatusDoneCallback\n");
+
+}
+
+void nux_StatusDrawCallback(XIC ic, XPointer client_data, XIMStatusDrawCallbackStruct *call_data){
+    printf("nux_StatusDrawCallback\n");
+
+}
+
 void run(){
     Display* display;
     Visual* visual;
     Window window;
-    int screen_num;
-
+    int screen;
     unsigned int display_width, display_height;
     unsigned int width, height;
-    char *display_name = getenv("DISPLAY");
     unsigned long valuemask = AllMaskBits;
     XSetWindowAttributes winattr = { 0 };
+    XIM xim;
+    XIC xic;
 
-    display = XOpenDisplay(display_name);
-    if (display == NULL) {
-        printf("cannot connect to X server\n");
-        exit(1);
+    // HACK: If the application has left the locale as "C" then both wide
+    //       character text input and explicit UTF-8 input via XIM will break
+    //       This sets the CTYPE part of the current locale from the environment
+    //       in the hope that it is set to something more sane than "C"
+    if ( strcmp(setlocale(LC_CTYPE, NULL), "C") == 0 ){
+        setlocale(LC_CTYPE, "");
     }
-    XkbDescPtr keyboard_map = XkbGetMap(display, XkbAllClientInfoMask, XkbUseCoreKbd);  
-    screen_num = DefaultScreen(display);
-    visual = DefaultVisual(display, screen_num);
-    display_width = DisplayWidth(display, screen_num);
-    display_height = DisplayHeight(display, screen_num);
+
+    XInitThreads();
+    XrmInitialize();
+
+    display = XOpenDisplay(NULL);
+    if (!display)
+    {
+        const char* display_name = getenv("DISPLAY");
+        if (display_name){
+            printf("X11: Failed to open display %s\n", display_name);
+        } else {
+            printf("X11: The DISPLAY environment variable is missing\n");
+        }
+        return;
+    }
+
+    // XkbDescPtr keyboard_map = XkbGetMap(display, XkbAllClientInfoMask, XkbUseCoreKbd);  
+    screen = DefaultScreen(display);
+    visual = DefaultVisual(display, screen);
+    display_width = DisplayWidth(display, screen);
+    display_height = DisplayHeight(display, screen);
     width = 800;
     height = 600;
-    printf("display_width=%d, display_height=%d, screen_num=%d\n",display_width, display_height, screen_num);
+    printf("display_width=%d, display_height=%d, screen=%d\n",display_width, display_height, screen);
+
+    if (XSupportsLocale())
+    {
+        XSetLocaleModifiers("");
+    }
 
     winattr.event_mask = XALL_EVENT;
     window = XCreateWindow(
         display, 
-        RootWindow(display, screen_num),    // parent window
+        RootWindow(display, screen),    // parent window
         0,                                  // x
         0,                                  // y
         width,                              // width
         height,                             // height
         0,                                  // border_width
-        DefaultDepth(display, screen_num),  // depth
+        DefaultDepth(display, screen),  // depth
         InputOutput,                        // class
         visual,                             // visual 
         valuemask,                          // valuemask 
         &winattr                            // attributes
     );
     XMapWindow(display, window);
+
+    xim = XOpenIM(display, 0, NULL, NULL);
+
+    XIMCallback start_callback;
+    start_callback.client_data = NULL;
+    start_callback.callback = (XIMProc)nux_PreeditStartCallback;
+    XIMCallback done_callback;
+    done_callback.client_data = NULL;
+    done_callback.callback = (XIMProc)nux_PreeditDoneCallback;
+    XIMCallback draw_callback;
+    draw_callback.client_data = NULL;
+    draw_callback.callback = (XIMProc)nux_PreeditDrawCallback;
+    XIMCallback caret_callback;
+    caret_callback.client_data = NULL;
+    caret_callback.callback = (XIMProc)nux_PreeditCaretCallback;
+    XIMCallback state_notify_callback;
+    state_notify_callback.client_data = NULL;
+    state_notify_callback.callback = (XIMProc)nux_PreeditStateNotifyCallback;
+
+    XVaNestedList preedit_attributes = XVaCreateNestedList(
+        0,
+        XNPreeditStartCallback, &start_callback,
+        XNPreeditDoneCallback, &done_callback,
+        XNPreeditDrawCallback, &draw_callback,
+        XNPreeditCaretCallback, &caret_callback,
+        XNPreeditStateNotifyCallback, &state_notify_callback,
+        NULL);
+
+    // TODO:: free preedit_attributes
+
+    XVaNestedList status_attributes = XVaCreateNestedList(
+        0,
+        XNStatusStartCallback, &nux_StatusStartCallback,
+        XNStatusDoneCallback, &nux_StatusDoneCallback,
+        XNStatusDrawCallback, &nux_StatusDrawCallback,
+        NULL);
+    // TODO:: free status_attributes
+    xic = XCreateIC(xim,
+                    /* the following are in attr, val format, terminated by NULL */
+                    XNInputStyle, XIMPreeditCallbacks | XIMStatusCallbacks,
+                    XNClientWindow, window, 
+                    XNPreeditAttributes, preedit_attributes,
+                    XNStatusAttributes, status_attributes,
+                    NULL);
+    /* focus on the only IC */
+    XSetICFocus(xic);
+
 
     /* flush all pending requests to the X server. */
     XFlush(display);
@@ -126,11 +248,21 @@ void run(){
     int done = 0;
     int tag = 0;
     XEvent event;
+    Bool filtered;
     while (!done) {
-
         // printf("XPending %d\n", XPending(display));
         // TODO:: set event 0
         XNextEvent(display, &event);
+        filtered = XFilterEvent(&event, None); // filter by input method
+        if (event.type < 35){
+            printf("%d, %s, filtered=%d\n", event.type, event_names[event.type], filtered);
+        }else{
+            printf("Event NO: %d\n", event.type);
+        }
+        if(filtered){
+            continue;
+        }
+
         switch (event.type) {
         case ConfigureNotify:
             printf("%d, %s\n", event.type, event_names[event.type]);
@@ -150,8 +282,41 @@ void run(){
             break;
         }
         case MotionNotify:
-        // do not print
+            go_mouseEvent(event.xmotion.window, event.xmotion.type, (float)event.xmotion.x, (float)event.xmotion.y, event.xmotion.is_hint);
         break;
+        case ButtonPress:
+        {
+            printf("ButtonPress x=%d, y=%d, button=%d, state=%d\n", event.xbutton.x, event.xbutton.y, event.xbutton.button, event.xbutton.state);
+            switch(event.xbutton.button){
+            case Button4:
+                go_scrollEvent(event.xbutton.window, (float)event.xbutton.x, (float)event.xbutton.y, 0.0, 1.0);break;
+            case Button5:
+                go_scrollEvent(event.xbutton.window, (float)event.xbutton.x, (float)event.xbutton.y, 0.0, -1.0);break;
+            case Button6:
+                go_scrollEvent(event.xbutton.window, (float)event.xbutton.x, (float)event.xbutton.y, 1.0, 0.0);break;
+            case Button7:
+                go_scrollEvent(event.xbutton.window, (float)event.xbutton.x, (float)event.xbutton.y, -1.0, 0.0);break;
+            default:
+                go_mouseEvent(event.xbutton.window, event.xbutton.type, event.xbutton.x, event.xbutton.y, event.xbutton.button);
+                break;
+            }
+            break;
+        }
+        case ButtonRelease:
+        {
+            printf("ButtonRelease x=%d, y=%d, button=%d, state=%d\n", event.xbutton.x, event.xbutton.y, event.xbutton.button, event.xbutton.state);
+
+            switch(event.xbutton.button){
+            case Button4:break;
+            case Button5:break;
+            case Button6:break;
+            case Button7:break;
+            default:
+                go_mouseEvent(event.xbutton.window, event.xbutton.type, event.xbutton.x, event.xbutton.y, event.xbutton.button);
+                break;
+            }
+            break;
+        }
         case KeymapNotify:
             printf("%d, %s, %s\n", event.type, event_names[event.type], event.xkeymap.key_vector);
         break;
@@ -161,39 +326,59 @@ void run(){
         case KeyPress:
         case KeyRelease:
         {
-            KeySym keysym = XkbKeycodeToKeysym(display, event.xkey.keycode, 0, 0);
-            if (keysym >= XK_KP_Decimal || keysym <= XK_KP_9){
-                XKeyboardState keyState;
-                XGetKeyboardControl(display, &keyState);
-                if( (keyState.led_mask & 2) == 2){ // NumLock On
-                    keysym = XkbKeycodeToKeysym(display, event.xkey.keycode, 0, 1);
-                }else{
-                    switch(keysym){
-                        case XK_KP_Insert    : keysym = XK_Insert    ;break;
-                        case XK_KP_Up        : keysym = XK_Up        ;break;
-                        case XK_KP_Down      : keysym = XK_Down      ;break;
-                        case XK_KP_Left      : keysym = XK_Left      ;break;
-                        case XK_KP_Right     : keysym = XK_Right     ;break;
-                        case XK_KP_Home      : keysym = XK_Home      ;break;
-                        case XK_KP_End       : keysym = XK_End       ;break;
-                        case XK_KP_Page_Up   : keysym = XK_Page_Up   ;break;
-                        case XK_KP_Page_Down : keysym = XK_Page_Down ;break;
-                        case XK_KP_Delete    : keysym = XK_Delete    ;break;
-                        case XK_KP_Begin     : keysym = XK_KP_Begin  ;break;
-                        default:break;
+            // 1. handle key event
+            {
+                KeySym keysym = XkbKeycodeToKeysym(display, event.xkey.keycode, 0, 0);
+                if (keysym >= XK_KP_Decimal || keysym <= XK_KP_9){
+                    XKeyboardState keyState;
+                    XGetKeyboardControl(display, &keyState);
+                    if( (keyState.led_mask & 2) == 2){ // NumLock On
+                        keysym = XkbKeycodeToKeysym(display, event.xkey.keycode, 0, 1);
+                    }else{
+                        switch(keysym){
+                            case XK_KP_Insert    : keysym = XK_Insert    ;break;
+                            case XK_KP_Up        : keysym = XK_Up        ;break;
+                            case XK_KP_Down      : keysym = XK_Down      ;break;
+                            case XK_KP_Left      : keysym = XK_Left      ;break;
+                            case XK_KP_Right     : keysym = XK_Right     ;break;
+                            case XK_KP_Home      : keysym = XK_Home      ;break;
+                            case XK_KP_End       : keysym = XK_End       ;break;
+                            case XK_KP_Page_Up   : keysym = XK_Page_Up   ;break;
+                            case XK_KP_Page_Down : keysym = XK_Page_Down ;break;
+                            case XK_KP_Delete    : keysym = XK_Delete    ;break;
+                            case XK_KP_Begin     : keysym = XK_KP_Begin  ;break;
+                            default:break;
+                        }
                     }
                 }
+
+                go_keyEvent(event.xkey.window, event.type, keysym, 0, 0, NULL);
             }
 
-            go_keyEvent(event.xkey.window, event.type, keysym, 0, 0, NULL);
+            // 2. handle input event
+            if(event.type == KeyPress){
+                KeySym keysym;
+                Status status;
+                int len = Xutf8LookupString(xic, &event.xkey, NULL, 0, &keysym, &status);
+                char* text = (char*)calloc(len+1, sizeof(char));
+                len = Xutf8LookupString(xic, &event.xkey, text, len, &keysym, &status);
+                if (status == XLookupChars){
+                    go_typeEvent(0, text, len, 0);
+                }else if (status == XLookupBoth){
+                    if (keysym >= 0x20 && keysym <= 0x7E){
+                        go_typeEvent(0, text, len, 0);
+                    }
+                }
+                free(text);
+            }
             break;
         }
+        case ClientMessage:
+        {
+            Atom msg = event.xclient.message_type;
+            printf("ClientMessage atom: %s\n", XGetAtomName(display, msg));
+        }
         default: /* ignore any other event types. */
-            if (event.type < 35){
-                printf("%d, %s\n", event.type, event_names[event.type]);
-            }else{
-                printf("Event NO: %d\n", event.type);
-            }
             break;
         } /* end switch on event type */
     } /* end while events handling */
@@ -230,7 +415,7 @@ void window_getSize(Display* display, Window window, int *width, int *height){
         *height = attribs.height;
 }
 
- void window_setText(Display* display, Window window, char *name)
+ void window_setTitle(Display* display, Window window, char *name)
  {
     Atom utf8Str = XInternAtom(display, "UTF8_STRING", 0);
     XChangeProperty(display, window, XA_WM_NAME, utf8Str, 8, PropModeReplace, (unsigned char *)name, (int)strlen(name));

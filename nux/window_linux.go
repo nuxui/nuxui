@@ -14,7 +14,7 @@ package nux
 #include <X11/Xlib.h>
 
 void window_getSize(Display* display, Window window, int32_t *width, int32_t *height);
-void window_setText(Display* display, Window window, char *name);
+void window_setTitle(Display* display, Window window, char *name);
 */
 import "C"
 
@@ -209,7 +209,7 @@ func (me *window) Title() string {
 func (me *window) SetTitle(title string) {
 	me.title = title
 	ctitle := C.CString(title)
-	C.window_setText(me.display, me.windptr, ctitle)
+	C.window_setTitle(me.display, me.windptr, ctitle)
 	C.free(unsafe.Pointer(ctitle))
 }
 

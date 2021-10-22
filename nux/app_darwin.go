@@ -183,7 +183,7 @@ var lastMouseEvent map[MouseButton]PointerEvent = map[MouseButton]PointerEvent{}
 
 //export go_mouseEvent
 func go_mouseEvent(windptr C.uintptr_t, etype C.NSEventType, x, y C.CGFloat, buttonNumber C.NSInteger, pressure C.float, stage C.NSInteger) {
-	// log.V("nuxui", "go_mouseEvent x=%f, y=%f", x, y)
+	log.V("nuxui", "go_mouseEvent x=%f, y=%f, buttonNumber=%d", x, y, buttonNumber)
 	e := &pointerEvent{
 		event: event{
 			window: theApp.findWindow(windptr),
@@ -202,45 +202,45 @@ func go_mouseEvent(windptr C.uintptr_t, etype C.NSEventType, x, y C.CGFloat, but
 
 	switch etype {
 	case C.NSEventTypeMouseMoved:
-		e.event.action = Action_Hover
+		e.action = Action_Hover
 		e.button = MB_None
 		e.pointer = 0
 	case C.NSEventTypeLeftMouseDown:
-		e.event.action = Action_Down
+		e.action = Action_Down
 		e.button = MB_Left
 		e.pointer = time.Now().UnixNano()
 		lastMouseEvent[e.button] = e
 	case C.NSEventTypeLeftMouseUp:
-		e.event.action = Action_Up
+		e.action = Action_Up
 		e.button = MB_Left
 		if v, ok := lastMouseEvent[e.button]; ok {
 			e.pointer = v.Pointer()
 		}
 	case C.NSEventTypeLeftMouseDragged:
-		e.event.action = Action_Drag
+		e.action = Action_Drag
 		e.button = MB_Left
 		if v, ok := lastMouseEvent[e.button]; ok {
 			e.pointer = v.Pointer()
 		}
 	case C.NSEventTypeRightMouseDown:
-		e.event.action = Action_Down
+		e.action = Action_Down
 		e.button = MB_Right
 		e.pointer = time.Now().UnixNano()
 		lastMouseEvent[e.button] = e
 	case C.NSEventTypeRightMouseUp:
-		e.event.action = Action_Up
+		e.action = Action_Up
 		e.button = MB_Right
 		if v, ok := lastMouseEvent[e.button]; ok {
 			e.pointer = v.Pointer()
 		}
 	case C.NSEventTypeRightMouseDragged:
-		e.event.action = Action_Drag
+		e.action = Action_Drag
 		e.button = MB_Right
 		if v, ok := lastMouseEvent[e.button]; ok {
 			e.pointer = v.Pointer()
 		}
 	case C.NSEventTypeOtherMouseDown:
-		e.event.action = Action_Down
+		e.action = Action_Down
 		switch buttonNumber {
 		case 2:
 			e.button = MB_Middle
@@ -254,7 +254,7 @@ func go_mouseEvent(windptr C.uintptr_t, etype C.NSEventType, x, y C.CGFloat, but
 		e.pointer = time.Now().UnixNano()
 		lastMouseEvent[e.button] = e
 	case C.NSEventTypeOtherMouseUp:
-		e.event.action = Action_Up
+		e.action = Action_Up
 		switch buttonNumber {
 		case 2:
 			e.button = MB_Middle
@@ -269,7 +269,7 @@ func go_mouseEvent(windptr C.uintptr_t, etype C.NSEventType, x, y C.CGFloat, but
 			e.pointer = v.Pointer()
 		}
 	case C.NSEventTypeOtherMouseDragged:
-		e.event.action = Action_Drag
+		e.action = Action_Drag
 		switch buttonNumber {
 		case 2:
 			e.button = MB_Middle
@@ -285,7 +285,7 @@ func go_mouseEvent(windptr C.uintptr_t, etype C.NSEventType, x, y C.CGFloat, but
 		}
 	case C.NSEventTypePressure:
 		// TODO:: stageTransition pressureBehavior NSPressureBehavior
-		e.event.action = Action_Pressure
+		e.action = Action_Pressure
 		e.button = MB_None
 	}
 
@@ -351,16 +351,16 @@ func go_keyEvent(windptr C.uintptr_t, etype uint, keyCode uint16, modifierFlags 
 
 	switch etype {
 	case C.NSEventTypeKeyDown:
-		e.event.action = Action_Down
+		e.action = Action_Down
 	case C.NSEventTypeKeyUp:
-		e.event.action = Action_Up
+		e.action = Action_Up
 	case C.NSEventTypeFlagsChanged:
 		if down, ok := lastModifierKeyEvent[e.keyCode]; ok && down {
 			lastModifierKeyEvent[e.keyCode] = false
-			e.event.action = Action_Up
+			e.action = Action_Up
 		} else {
 			lastModifierKeyEvent[e.keyCode] = true
-			e.event.action = Action_Down
+			e.action = Action_Down
 		}
 	}
 
@@ -369,10 +369,10 @@ func go_keyEvent(windptr C.uintptr_t, etype uint, keyCode uint16, modifierFlags 
 
 //export go_typeEvent
 func go_typeEvent(windptr C.uintptr_t, chars *C.char, action, location, length C.int) {
-	// 0 = Action_Input, 1 = Action_Typing,
+	// 0 = Action_Input, 1 = Action_Preedit,
 	act := Action_Input
 	if action == 1 {
-		act = Action_Typing
+		act = Action_Preedit
 	}
 
 	e := &typeEvent{

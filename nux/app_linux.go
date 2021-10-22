@@ -189,8 +189,8 @@ func setTextInputRect(x, y, w, h float32) {
 var lastMouseEvent map[MouseButton]PointerEvent = map[MouseButton]PointerEvent{}
 
 //export go_mouseEvent
-func go_mouseEvent(windptr C.uintptr_t, etype uint, x, y float32, buttonNumber int32, pressure float32, stage int32) {
-	// log.V("nuxui", "go_mouseEvent x=%f, y=%f", x, y)
+func go_mouseEvent(windptr C.uintptr_t, etype int32, x, y float32, buttonNumber uint32) {
+	log.V("nuxui", "go_mouseEvent x=%f, y=%f, buttonNumber=%d", x, y, buttonNumber)
 	e := &pointerEvent{
 		event: event{
 			window: theApp.findWindow(windptr),
@@ -198,17 +198,41 @@ func go_mouseEvent(windptr C.uintptr_t, etype uint, x, y float32, buttonNumber i
 			etype:  Type_PointerEvent,
 			action: Action_None,
 		},
-		pointer:  0,
-		button:   MB_None,
-		kind:     Kind_Mouse,
-		x:        float32(x),
-		y:        float32(y),
-		pressure: float32(pressure),
-		stage:    int32(stage),
+		pointer: 0,
+		button:  MB_None,
+		kind:    Kind_Mouse,
+		x:       float32(x),
+		y:       float32(y),
+		// pressure: float32(pressure),
+		// stage:    int32(stage),
+	}
+
+	switch etype {
+	case C.MotionNotify:
+		e.action = Action_Move
+	case C.ButtonPress:
+		e.action = Action_Down
+	case C.ButtonRelease:
+		e.action = Action_Up
+	}
+
+	switch buttonNumber {
+	case C.Button1:
+		e.button = MB_Left
+	case C.Button2:
+		e.button = MB_Right
+	case C.Button3:
+		e.button = MB_Middle
+	default: // > Button7
+		// MB_X1 = MB_Middle = 2
+		if buttonNumber == 2 {
+			e.button = MB_X1
+		} else if buttonNumber == 8 {
+			e.button = MB_X2
+		}
 	}
 
 	theApp.handleEvent(e)
-
 }
 
 //export go_scrollEvent
@@ -266,25 +290,25 @@ func go_keyEvent(windptr C.uintptr_t, etype uint, keyCode uint16, modifierFlags 
 
 	switch etype {
 	case C.KeyPress:
-		e.event.action = Action_Down
+		e.action = Action_Down
 	case C.KeyRelease:
-		e.event.action = Action_Up
+		e.action = Action_Up
 	}
 
 	theApp.handleEvent(e)
 }
 
 //export go_typeEvent
-func go_typeEvent(windptr C.uintptr_t, chars *C.char, action, location, length C.int) {
-	// 0 = Action_Input, 1 = Action_Typing,
+func go_typeEvent(action C.int, chars *C.char, length C.int, location C.int) {
+	// 0 = Action_Input, 1 = Action_Preedit,
 	act := Action_Input
 	if action == 1 {
-		act = Action_Typing
+		act = Action_Preedit
 	}
 
 	e := &typeEvent{
 		event: event{
-			window: theApp.findWindow(windptr),
+			window: theApp.MainWindow(),
 			time:   time.Now(),
 			etype:  Type_TypeEvent,
 			action: act,
