@@ -16,9 +16,11 @@ type Font struct {
 	Weight int
 }
 
-func (me *Font) Creating(attr Attr) {
-	me.Size = attr.GetFloat32("size", 14.0)
-	me.Color = attr.GetColor("color", Black)
+func NewFont(attr Attr) *Font {
+	me := &Font{
+		Size:  attr.GetFloat32("size", 14.0),
+		Color: attr.GetColor("color", Black),
+	}
 	family := strings.Split(attr.GetString("family", "Sans"), ",")
 	for i, f := range family {
 		family[i] = strings.TrimSpace(f)
@@ -28,6 +30,7 @@ func (me *Font) Creating(attr Attr) {
 	}
 
 	me.Family = strings.Join(family, ",")
+	return me
 }
 
 // typedef enum {

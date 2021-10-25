@@ -13,16 +13,16 @@ import (
 var _widgetList = make(map[string]Creator)
 var _mixinList = make(map[string]MixinCreator)
 
-func CreateWidget(widgetType interface{}) Widget {
-	// TODO:: check widgetType is struct and (*Widget)nil
-	// return reflect.New(reflect.TypeOf(widgetType)).Elem().Interface()
-	i := reflect.New(reflect.TypeOf(widgetType).Elem()).Interface()
-	w, ok := i.(Widget)
-	if !ok {
-		log.Fatal("nuxui", "Create widget from widget type %T faild", widgetType)
-	}
-	return w
-}
+// func CreateWidget(widgetType interface{}) Widget {
+// 	// TODO:: check widgetType is struct and (*Widget)nil
+// 	// return reflect.New(reflect.TypeOf(widgetType)).Elem().Interface()
+// 	i := reflect.New(reflect.TypeOf(widgetType).Elem()).Interface()
+// 	w, ok := i.(Widget)
+// 	if !ok {
+// 		log.Fatal("nuxui", "Create widget from widget type %T faild", widgetType)
+// 	}
+// 	return w
+// }
 
 // TODO mutex, or check if is in init func?
 // TODO What should I do if I have already registered, but I wrote it directly in the template, and the package is not included in the code, and golang cannot find it? Displayed use nux.Use(...), automatically generated for later use
@@ -108,218 +108,23 @@ func FindRegistedMixinCreatorByName(name string) MixinCreator {
 	return nil
 }
 
-// ########################## render widget ###############################
-func RenderWidget(widget Widget) Widget {
-	if reflect.TypeOf(widget).Kind() != reflect.Ptr {
-		log.Fatal("nuxui", "Widget %T should a pointer. eg: &MyWidget{}", widget) // TODO:: tips
-	}
+func IsView(widget Widget) bool {
+	_, ret := widget.(viewfuncs)
 
-	if IsComponent(widget) {
-		var content Widget
-
-		if fn, ok := widget.(Render); ok { // RenderRender
-			executeCreating(widget, Attr{})
-			content = RenderRender(fn.Render()) // TODO:: &Header{}. template()
-		} else if fn, ok := widget.(Template); ok {
-			attrs := ParseAttr(fn.Template())
-			executeCreating(widget, attrs)
-			content = RenderTemplate(widget, attrs)
-		} else {
-			log.Fatal("nuxui", "%T is not a component, the code should not run here", widget)
-		}
-
-		if c, ok := widget.(Created); ok {
-			c.Created(content)
-		}
-
-		return NewComponent(widget, content)
-	}
-
-	return widget
-}
-
-func RenderRender(widget Widget) Widget {
-	w := RenderWidget(widget)
-	if p, ok := w.(Parent); ok {
-		for _, child := range p.Children() {
-			if compt, ok := child.(Component); ok {
-				child = compt.Content()
-			}
-
-			r := RenderRender(child)
-			p.ReplaceChild(child, r)
-		}
-	}
-	return w
-}
-
-func RenderTemplate(component Widget, attrs Attr) Widget {
-	layout := attrs.GetAttr("layout", make(Attr, 0))
-	return renderLayout(component, layout)
-}
-
-func renderLayout(component Widget, layout Attr) (ret Widget) {
-	if widgetNode := layout.GetString("widget", ""); widgetNode != "" {
-		// TODO:: copyAttribute(layout)
-		// w0 := reflect.New(reflect.TypeOf(widgetType).Elem()).Elem().Interface()
-		// w := reflect.New(widgetType).Elem().Interface()
-		// w := info.Creator(layout)
-		// var w interface{} = &w0
-		// w := CreateWidget(widgetType)
-		w := FindRegistedWidgetCreatorByName(widgetNode)()
-
-		mixins := layout.GetStringArray("mixins", []string{})
-		for _, name := range mixins {
-			mixin := FindRegistedMixinCreatorByName(name)()
-			if h, ok := mixin.(ComptHelper); ok {
-				h.AssignComponent(component)
-			}
-			AddMixins(w, mixin)
-		}
-
-		// TODO:: The execution order of the life cycle? From parent to child, because the measure draw layout is like this.
-		executeCreating(w, layout)
-
-		ret = RenderWidget(w)
-
-		if childrenNode, ok := layout["children"]; ok {
-			if children, ok := childrenNode.([]interface{}); ok {
-				if p, ok := ret.(Parent); ok {
-					for _, childNode := range children {
-						if child, ok := childNode.(Attr); ok {
-							childWidget := renderLayout(component, child)
-							p.AddChild(childWidget)
-						}
-					}
-				} else {
-					log.Fatal("nuxui", "%T is not a WidgetParent but has children node", p)
-				}
-			} else {
-				log.Fatal("nuxui", "unknow type for Children.")
-			}
-		}
-
-		executeCreated(ret)
-
-	} else {
-		log.Fatal("nuxui", `must specified "widget"`)
-	}
 	return ret
 }
-
-func IsWidget(widget Widget) bool {
-	_, hasLayout := widget.(Layout)
-	_, hasDraw := widget.(Draw)
-	_, hasTemplate := widget.(Template)
-	_, hasRender := widget.(Render)
-
-	return hasLayout || !hasDraw || hasTemplate || hasRender
-}
-
-func IsComponent(widget Widget) bool {
-	_, hasLayout := widget.(Layout)
-	_, hasDraw := widget.(Draw)
-	_, hasTemplate := widget.(Template)
-	_, hasRender := widget.(Render)
-
-	return !hasLayout && !hasDraw && (hasTemplate || hasRender)
-}
-
-func IsView(widget Widget) bool {
-	_, hasLayout := widget.(Layout)
-	_, hasDraw := widget.(Draw)
-	_, hasTemplate := widget.(Template)
-	_, hasRender := widget.(Render)
-
-	return !hasTemplate && !hasRender && (hasLayout || hasDraw)
-}
-
-// TODO measure root widget, should move to app package
-func MeasureWidget(widget Widget) {
-	if m, ok := widget.(Measure); ok {
-		// TODO:: dynamic obtain size
-		if s, ok := widget.(Size); ok {
-			ms := s.MeasuredSize()
-			m.Measure(MeasureSpec(ms.Width, Pixel), MeasureSpec(ms.Height, Pixel))
-		}
-	}
-}
-
-func LayoutWidget(widget Widget) {
-	if layout, ok := widget.(Layout); ok {
-		if s, ok := widget.(Size); ok {
-			layout.Layout(0, 0, 0, 0, s.MeasuredSize().Width, s.MeasuredSize().Height)
-		}
-	}
-}
-
-func DrawWidget(canvas Canvas, widget Widget) {
-	if s, ok := widget.(Size); ok {
-		if d, ok := widget.(Draw); ok {
-			ms := s.MeasuredSize()
-			canvas.Save()
-			canvas.Translate(ms.Position.Left, ms.Position.Top)
-			canvas.ClipRect(0, 0, ms.Width, ms.Height)
-			d.Draw(canvas)
-			canvas.Restore()
-		}
-	}
-}
-
-func DrawWidget2(canvas Canvas, widget Widget) {
-	drawWidgetById0(canvas, widget, "title")
-}
-
-func drawWidgetById0(canvas Canvas, widget Widget, id string) {
-	if "title" == widget.ID() {
-		if s, ok := widget.(Size); ok {
-			if d, ok := widget.(Draw); ok {
-				ms := s.MeasuredSize()
-				canvas.Save()
-				canvas.Translate(ms.Position.Left, ms.Position.Top)
-				canvas.ClipRect(0, 0, ms.Width, ms.Height)
-				if "title" == widget.ID() {
-					d.Draw(canvas)
-				}
-				canvas.Restore()
-			}
-		}
-	} else {
-		if p, ok := widget.(Parent); ok {
-
-			if s, ok := widget.(Size); ok {
-				ms := s.MeasuredSize()
-				canvas.Save()
-				canvas.Translate(ms.Position.Left, ms.Position.Top)
-
-				for _, child := range p.Children() {
-					if compt, ok := child.(Component); ok {
-						child = compt.Content()
-					}
-
-					drawWidgetById0(canvas, child, id)
-				}
-
-				canvas.Restore()
-			}
-
-		}
-	}
-}
-
-// func GetComponentRootWidget(widget Widget) Widget {
-// 	return nil
-// }
 
 // only find
 func Find(widget Widget, id string) Widget {
 	if id == "" {
 		log.Fatal("nuxui", "the widget %T id must be specified", widget)
+		return nil
 	}
 
 	w := find(widget, id)
 	if w == nil {
 		log.Fatal("nuxui", "the id '%s' was not found in widget %T\n", id, widget)
+		return nil
 	}
 
 	return w
@@ -328,6 +133,12 @@ func Find(widget Widget, id string) Widget {
 func find(widget Widget, id string) Widget {
 	if id == widget.ID() {
 		return widget
+	}
+
+	if c, ok := widget.(Component); ok {
+		if ret := find(c.Content(), id); ret != nil {
+			return ret
+		}
 	}
 
 	if p, ok := widget.(Parent); ok {

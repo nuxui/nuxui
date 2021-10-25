@@ -16,6 +16,7 @@ package nux
 
 void run();
 void invalidate(Display *display, Window window);
+void setTextInputRect(short x, short y);
 */
 import "C"
 import (
@@ -73,25 +74,9 @@ type application struct {
 	drawSignal         chan struct{}
 }
 
-func (me *application) Creating(attr Attr) {
-	if me.manifest == nil {
-		me.manifest = NewManifest()
-	}
-
-	if c, ok := me.manifest.(Creating); ok {
-		c.Creating(attr.GetAttr("manifest", Attr{}))
-	}
-
-	if me.window == nil {
-		me.window = newWindow()
-	}
-
-	me.window.Creating(attr)
-}
-
-func (me *application) Created(data interface{}) {
-	if c, ok := me.manifest.(AnyCreated); ok {
-		c.Created(data)
+func (me *application) OnCreate(data interface{}) {
+	if c, ok := me.manifest.(OnCreate); ok {
+		c.OnCreate()
 	}
 }
 
@@ -183,7 +168,7 @@ func stopTextInput() {
 }
 
 func setTextInputRect(x, y, w, h float32) {
-	// C.setTextInputRect(C.float(x), C.float(y), C.float(w), C.float(h))
+	C.setTextInputRect(C.short(x), C.short(y))
 }
 
 var lastMouseEvent map[MouseButton]PointerEvent = map[MouseButton]PointerEvent{}

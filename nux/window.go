@@ -4,9 +4,10 @@
 
 package nux
 
+import "github.com/nuxui/nuxui/log"
+
 const (
-	windowActionCreating = iota
-	windowActionCreated
+	windowActionCreated = iota
 	windowActionMeasure
 	windowActionDraw
 	windowActionDestroy
@@ -47,9 +48,87 @@ type windowDelegate_HandlePointerEvent interface {
 	HandlePointerEvent(event PointerEvent)
 }
 
-func NewWindow() Window {
-	return newWindow()
+func NewWindow(attr Attr) Window {
+	return newWindow(attr)
 }
+
+func (me *window) OnCreate() {
+	main := App().Manifest().Main()
+	if main == "" {
+		log.Fatal("nuxui", "no main widget found.")
+	} else {
+		mainWidgetCreator := FindRegistedWidgetCreatorByName(main)
+		ctx := &context{}
+		// widgetTree := RenderWidget(mainWidgetCreator(ctx, Attr{}))
+		widgetTree := mainWidgetCreator(ctx, Attr{})
+		me.decor.AddChild(widgetTree)
+	}
+
+	me.excuteCreated(me.decor)
+}
+
+func (me *window) excuteCreated(widget Widget) {
+	if c, ok := widget.(OnCreate); ok {
+		c.OnCreate()
+	}
+
+	if c, ok := widget.(Component); ok {
+		me.excuteCreated(c.Content())
+	}
+
+	if p, ok := widget.(Parent); ok {
+		for _, child := range p.Children() {
+			me.excuteCreated(child)
+		}
+	}
+}
+
+func (me *window) CreateDecor(ctx Context, attr Attr) Widget {
+	creator := FindRegistedWidgetCreatorByName("github.com/nuxui/nuxui/ui.Layer")
+	w := creator(ctx, attr)
+	if p, ok := w.(Parent); ok {
+		me.decor = p
+	} else {
+		log.Fatal("nuxui", "decor must is a Parent")
+	}
+
+	decorWindowList[w] = me
+
+	return me.decor
+}
+
+func (me *window) Measure(width, height int32) {
+	if me.decor == nil {
+		return
+	}
+
+	if s, ok := me.decor.(Size); ok {
+		if s.MeasuredSize().Width == width && s.MeasuredSize().Height == height {
+			// return
+		}
+
+		s.MeasuredSize().Width = width
+		s.MeasuredSize().Height = height
+	}
+
+	me.surfaceResized = true
+
+	if f, ok := me.decor.(Measure); ok {
+		f.Measure(width, height)
+	}
+}
+
+func (me *window) Layout(dx, dy, left, top, right, bottom int32) {
+	if me.decor == nil {
+		return
+	}
+
+	if f, ok := me.decor.(Layout); ok {
+		f.Layout(dx, dy, left, top, right, bottom)
+	}
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
 
 type decorGestureHandler struct {
 }

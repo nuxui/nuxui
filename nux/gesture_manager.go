@@ -70,6 +70,7 @@ func (me *gestureManager) dispatchEvent(event PointerEvent, hitTestResult HitTes
 }
 
 func (me *gestureManager) hitTest(widget Widget, offsetX, offsetY int32, hitTestResult HitTestResult, event PointerEvent) {
+
 	if s, ok := widget.(Size); ok {
 		ms := s.MeasuredSize()
 
@@ -92,5 +93,7 @@ func (me *gestureManager) hitTest(widget Widget, offsetX, offsetY int32, hitTest
 				hitTestResult.Add(widget)
 			}
 		}
+	} else if c, ok := widget.(Component); ok {
+		me.hitTest(c.Content(), offsetX+s.ScrollX(), offsetY+s.ScrollY(), hitTestResult, event)
 	}
 }

@@ -13,46 +13,35 @@ import (
 type Column interface {
 	nux.Parent
 	nux.Size
-	Visual
-	nux.Creating
 	nux.Layout
 	nux.Measure
 	nux.Draw
+	Visual
 }
 
 type column struct {
-	nux.WidgetParent
-	nux.WidgetBase
-	nux.WidgetSize
-	WidgetVisual
+	*nux.WidgetParent
+	*nux.WidgetSize
+	*WidgetVisual
 
-	Align          Align // TODO not nil
+	align          *Align // TODO not nil
 	childrenHeight float32
 }
 
-func NewColumn() Column {
-	me := &column{
-		Align: Align{Vertical: Top, Horizontal: Left},
+func NewColumn(context nux.Context, attrs ...nux.Attr) Column {
+	attr := nux.Attr{}
+	if len(attrs) == 0 {
+		attr = attrs[0]
 	}
-	me.WidgetParent.Owner = me
-	me.WidgetSize.Owner = me
+	me := &column{
+		align: NewAlign(attr.GetAttr("align", nux.Attr{})),
+	}
+	me.WidgetSize = nux.NewWidgetSize(context, me, attrs...)
+	me.WidgetParent = nux.NewWidgetParent(context, me, attrs...)
+	me.WidgetVisual = NewWidgetVisual(context, me, attrs...)
 	me.WidgetSize.AddOnSizeChanged(me.onSizeChanged)
-	me.WidgetVisual.Owner = me
 	me.WidgetVisual.AddOnVisualChanged(me.onVisualChanged)
 	return me
-}
-
-func (me *column) Creating(attr nux.Attr) {
-	if attr == nil {
-		attr = nux.Attr{}
-	}
-
-	me.WidgetBase.Creating(attr)
-	me.WidgetSize.Creating(attr)
-	me.WidgetParent.Creating(attr)
-	me.WidgetVisual.Creating(attr)
-
-	me.Align = *NewAlign(attr.GetAttr("align", nux.Attr{}))
 }
 
 func (me *column) onSizeChanged(widget nux.Widget) {
@@ -63,7 +52,7 @@ func (me *column) onVisualChanged(widget nux.Widget) {
 }
 
 func (me *column) Measure(width, height int32) {
-	// log.I("nuxui", "ui.Column %s Measure width=%s, height=%s", me.ID(), nux.MeasureSpecString(width), nux.MeasureSpecString(height))
+	log.I("nuxui", "ui.Column %s Measure width=%s, height=%s", me.ID(), nux.MeasureSpecString(width), nux.MeasureSpecString(height))
 	measureDuration := log.Time()
 	defer log.TimeEnd(measureDuration, "nuxui", "ui.Column %s Measure", me.ID())
 
@@ -808,7 +797,7 @@ func (me *column) measureHorizontal(width, height int32, hPPx, hPPt, innerWidth 
 // Responsible for determining the position of the widget align, margin
 // TODO measure other mode dimen
 func (me *column) Layout(dx, dy, left, top, right, bottom int32) {
-	// log.V("nuxui", "column layout %d, %d, %d, %d, %d, %d", dx, dy, left, top, right, bottom)
+	log.D("nuxui", "column layout %d, %d, %d, %d, %d, %d", dx, dy, left, top, right, bottom)
 	ms := me.MeasuredSize()
 
 	var l float32 = 0
@@ -819,7 +808,7 @@ func (me *column) Layout(dx, dy, left, top, right, bottom int32) {
 
 	innerHeight -= float32(ms.Padding.Top + ms.Padding.Bottom)
 	innerWidth -= float32(ms.Padding.Left + ms.Padding.Right)
-	switch me.Align.Vertical {
+	switch me.align.Vertical {
 	case Top:
 		t = 0
 	case Center:
@@ -841,7 +830,7 @@ func (me *column) Layout(dx, dy, left, top, right, bottom int32) {
 			if cs.Width().Mode() == nux.Weight || (cs.MarginLeft().Mode() == nux.Weight || cs.MarginRight().Mode() == nux.Weight) {
 				l += float32(ms.Padding.Left + cms.Margin.Left)
 			} else {
-				switch me.Align.Horizontal {
+				switch me.align.Horizontal {
 				case Left:
 					l += 0
 				case Center:
@@ -870,6 +859,8 @@ func (me *column) Layout(dx, dy, left, top, right, bottom int32) {
 }
 
 func (me *column) Draw(canvas nux.Canvas) {
+	log.D("nuxui", "column Draw %d, %d", me.MeasuredSize().Width, me.MeasuredSize().Height)
+
 	if me.Background() != nil {
 		me.Background().Draw(canvas)
 	}

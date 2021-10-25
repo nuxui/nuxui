@@ -39,7 +39,15 @@ type WidgetVisual struct {
 	translucent              bool
 }
 
-func (me *WidgetVisual) Creating(attr nux.Attr) {
+func NewWidgetVisual(ctx nux.Context, owner nux.Widget, attrs ...nux.Attr) *WidgetVisual {
+	attr := nux.Attr{}
+	if len(attrs) > 0 {
+		attr = attrs[0]
+	}
+	me := &WidgetVisual{
+		Owner: owner,
+	}
+
 	bg := NewColorDrawable()
 	bg.SetColor(attr.GetColor("background", nux.Transparent))
 	me.background = bg
@@ -61,6 +69,8 @@ func (me *WidgetVisual) Creating(attr nux.Attr) {
 	default:
 		log.Fatal("nuxui", "visible should be 'show', 'hide' or 'gone'")
 	}
+
+	return me
 }
 
 func (me *WidgetVisual) Border() {}

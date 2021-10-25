@@ -43,89 +43,21 @@ type window struct {
 	initEvent PointerEvent
 	timer     Timer
 
+	context        Context
 	surface        *Surface
 	surfaceResized bool
 	cgContext      uintptr
 }
 
-func newWindow() *window {
-	return &window{
+func newWindow(attr Attr) *window {
+	me := &window{
+		context:        &context{},
 		surfaceResized: true,
 	}
-}
 
-func (me *window) Creating(attr Attr) {
-	// TODO width ,height background drawable ...
-	// create decor widget
-
-	if me.decor == nil {
-		me.CreatDecor(attr)
-		GestureBinding().AddGestureHandler(me.decor, &decorGestureHandler{})
-	}
-
-	if c, ok := me.decor.(Creating); ok {
-		c.Creating(attr)
-	}
-}
-
-func (me *window) Created(data interface{}) {
-	main := data.(string)
-	if main == "" {
-		log.Fatal("nuxui", "no main widget found.")
-	} else {
-		mainWidgetCreator := FindRegistedWidgetCreatorByName(main)
-		widgetTree := RenderWidget(mainWidgetCreator())
-		me.decor.AddChild(widgetTree)
-	}
-
-	if c, ok := me.decor.(Created); ok {
-		c.Created(me.decor)
-	}
-}
-
-func (me *window) CreatDecor(attr Attr) Widget {
-	creator := FindRegistedWidgetCreatorByName("github.com/nuxui/nuxui/ui.Layer")
-	w := creator()
-	if p, ok := w.(Parent); ok {
-		me.decor = p
-	} else {
-		log.Fatal("nuxui", "decor must is a Parent")
-	}
-
-	decorWindowList[w] = me
-
-	return me.decor
-}
-
-func (me *window) Measure(width, height int32) {
-	if me.decor == nil {
-		return
-	}
-
-	if s, ok := me.decor.(Size); ok {
-		if s.MeasuredSize().Width == width && s.MeasuredSize().Height == height {
-			// return
-		}
-
-		s.MeasuredSize().Width = width
-		s.MeasuredSize().Height = height
-	}
-
-	me.surfaceResized = true
-
-	if f, ok := me.decor.(Measure); ok {
-		f.Measure(width, height)
-	}
-}
-
-func (me *window) Layout(dx, dy, left, top, right, bottom int32) {
-	if me.decor == nil {
-		return
-	}
-
-	if f, ok := me.decor.(Layout); ok {
-		f.Layout(dx, dy, left, top, right, bottom)
-	}
+	me.CreateDecor(me.context, attr)
+	GestureBinding().AddGestureHandler(me.decor, &decorGestureHandler{})
+	return me
 }
 
 func (me *window) Draw(canvas Canvas) {
@@ -262,7 +194,7 @@ func (me *window) handleOtherWidgetKeyEvent(p Parent, e KeyEvent) bool {
 			compt = nil
 			if cpt, ok := c.(Component); ok {
 				c = cpt.Content()
-				compt = cpt.Component()
+				compt = cpt
 			}
 			if cp, ok := c.(Parent); ok {
 				if me.handleOtherWidgetKeyEvent(cp, e) {

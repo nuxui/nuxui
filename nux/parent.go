@@ -28,18 +28,18 @@ type Parent interface {
 
 type WidgetParent struct {
 	Owner Parent
-	WidgetBase
+	*WidgetBase
 	children []Widget
 }
 
-func (me *WidgetParent) Creating(attr Attr) {
-	if me.Owner == nil {
-		log.Fatal("nuxui", "set Owner to WidgetParent before use")
+func NewWidgetParent(ctx Context, owner Parent, attrs ...Attr) *WidgetParent {
+	me := &WidgetParent{
+		Owner:      owner,
+		WidgetBase: NewWidgetBase(ctx, owner, attrs...),
+		children:   []Widget{},
 	}
 
-	if me.children == nil {
-		me.children = make([]Widget, 0)
-	}
+	return me
 }
 
 func (me *WidgetParent) InsertChild(index int, child ...Widget) {
@@ -62,10 +62,6 @@ func (me *WidgetParent) AddChild(child ...Widget) {
 	if child == nil {
 		log.E("nuxui", "child should not be nil when add child to parent")
 		return
-	}
-
-	if me.children == nil {
-		log.Fatal("nuxui", "call creating before use.")
 	}
 
 	for _, c := range child {

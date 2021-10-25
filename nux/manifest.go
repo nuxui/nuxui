@@ -17,8 +17,25 @@ type Manifest interface {
 	Main() string
 }
 
-func NewManifest() Manifest {
-	return newManifest()
+var manifestInstance *manifest = &manifest{}
+
+func NewManifest(attr Attr) Manifest {
+	if attr == nil {
+		attr = Attr{}
+	}
+
+	m := manifestInstance
+	m.name = attr.GetString("name", "")
+	m.appId = attr.GetString("appId", "")
+	m.packageName = attr.GetString("package", "")
+	m.version = attr.GetString("version", "")
+	m.versionCode = attr.GetString("versionCode", "")
+	m.versionId = attr.GetString("versionId", "")
+	m.permissions = attr.GetStringArray("permissions", []string{})
+	m.main = attr.GetString("main", "")
+	m.multiWindow = attr.GetBool("multiWindow", false)
+
+	return m
 }
 
 type manifest struct {
@@ -30,21 +47,7 @@ type manifest struct {
 	versionId   string
 	permissions []string
 	main        string
-}
-
-func newManifest() *manifest {
-	return &manifest{}
-}
-
-func (me *manifest) Creating(attr Attr) {
-	me.name = attr.GetString("name", "")
-	me.appId = attr.GetString("appId", "")
-	me.packageName = attr.GetString("package", "")
-	me.version = attr.GetString("version", "")
-	me.versionCode = attr.GetString("versionCode", "")
-	me.versionId = attr.GetString("versionId", "")
-	me.permissions = attr.GetStringArray("permissions", []string{})
-	me.main = attr.GetString("main", "")
+	multiWindow bool
 }
 
 func (me *manifest) Name() string {

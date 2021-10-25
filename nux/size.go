@@ -71,19 +71,16 @@ type Padding struct {
 	Bottom Dimen
 }
 
-func NewPadding() *Padding {
-	return &Padding{}
-}
-
-func (me *Padding) Creating(attr Attr) {
+func NewPadding(attr Attr) *Padding {
 	if attr == nil {
 		attr = Attr{}
 	}
-
+	me := &Padding{}
 	me.Left = getPadding(attr, "left", "0")
 	me.Top = getPadding(attr, "top", "0")
 	me.Right = getPadding(attr, "right", "0")
 	me.Bottom = getPadding(attr, "bottom", "0")
+	return me
 }
 
 func getPadding(attr Attr, key string, defaultValue string) Dimen {
@@ -105,19 +102,17 @@ type Margin struct {
 	Bottom Dimen
 }
 
-func NewMargin() *Margin {
-	return &Margin{}
-}
-
-func (me *Margin) Creating(attr Attr) {
+func NewMargin(attr Attr) *Margin {
 	if attr == nil {
 		attr = Attr{}
 	}
 
+	me := &Margin{}
 	me.Left = getMargin(attr, "left", "0")
 	me.Top = getMargin(attr, "top", "0")
 	me.Right = getMargin(attr, "right", "0")
 	me.Bottom = getMargin(attr, "bottom", "0")
+	return me
 }
 
 func getMargin(attr Attr, key string, defaultValue string) Dimen {
@@ -144,9 +139,18 @@ type WidgetSize struct {
 	onSizeChangedCallbacks []OnSizeChanged
 }
 
-func (me *WidgetSize) Creating(attr Attr) {
-	if me.Owner == nil {
+func NewWidgetSize(ctx Context, owner Widget, attrs ...Attr) *WidgetSize {
+	if owner == nil {
 		log.Fatal("nuxui", "set WidgetSize Owner before to use")
+	}
+
+	me := &WidgetSize{
+		Owner: owner,
+	}
+
+	attr := Attr{}
+	if len(attrs) > 0 {
+		attr = attrs[0]
 	}
 
 	me.onSizeChangedCallbacks = []OnSizeChanged{}
@@ -154,15 +158,15 @@ func (me *WidgetSize) Creating(attr Attr) {
 	me.width = attr.GetDimen("width", "auto")
 	me.height = attr.GetDimen("height", "auto")
 
-	if padding := attr.Get("padding", nil); padding != nil {
-		me.padding = NewPadding()
-		me.padding.Creating(padding.(Attr))
+	if padding := attr.GetAttr("padding", nil); padding != nil {
+		me.padding = NewPadding(padding)
 	}
 
-	if margin := attr.Get("margin", nil); margin != nil {
-		me.margin = NewMargin()
-		me.margin.Creating(margin.(Attr))
+	if margin := attr.GetAttr("margin", nil); margin != nil {
+		me.margin = NewMargin(margin)
 	}
+
+	return me
 }
 
 func (me *WidgetSize) Width() Dimen {

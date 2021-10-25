@@ -4,55 +4,29 @@
 
 package nux
 
-// life cycle
-type Creating interface {
-	// Creating(Template, Attr)
-	Creating(attr Attr)
+// lifecycle
+
+type OnCreate interface {
+	OnCreate()
 }
 
-type Created interface {
-	Created(content Widget)
+type OnMount interface {
+	OnMount()
 }
 
-type AnyCreated interface {
-	Created(data interface{})
+type OnEject interface {
+	OnEject()
 }
 
-// type Mounting interface {
-// 	Mounting()
+// // Active, it does not mean Focused, it should be Actived and it can also run animation
+// type Actived interface {
+// 	Actived()
 // }
 
-type Mounted interface {
-	Mounted()
-}
-
-// Active, it does not mean Focused, it should be Actived and it can also run animation
-type Actived interface {
-	Actived()
-}
-
-//Deactived window widget lost focus
-type Deactived interface {
-	Deactived()
-}
-
-// type Unmounting interface {
-// 	Unounting()
+// //Deactived window widget lost focus
+// type Deactived interface {
+// 	Deactived()
 // }
-
-// widnow hide, go background
-// widget removed from parent
-type Unmounted interface {
-	Unounted()
-}
-
-type Destroying interface {
-	Destroying()
-}
-
-type Destroyed interface {
-	Destroyed()
-}
 
 type Measure interface {
 	Measure(width, height int32)

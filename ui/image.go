@@ -15,12 +15,11 @@ import (
 type Image interface {
 	nux.Widget
 	nux.Size
-	Visual
-	nux.Creating
-	nux.Created
+	nux.OnCreate
 	nux.Layout
 	nux.Measure
 	nux.Draw
+	Visual
 
 	Src() string
 	SetSrc(src string)
@@ -43,25 +42,28 @@ const (
 
 type Repeat int32
 
-func NewImage() Image {
+func NewImage(context nux.Context, attrs ...nux.Attr) Image {
+	attr := getAttr(attrs...)
 	me := &image{
 		scaleX:    1.0,
 		scaleY:    1.0,
 		offsetX:   0,
 		offsetY:   0,
-		scaleType: ScaleType_Matrix,
+		scaleType: convertScaleTypeFromString(attr.GetString("scaleType", "matrix")),
+		src:       attr.GetString("src", ""),
 	}
-	me.WidgetSize.Owner = me
-	me.WidgetVisual.Owner = me
+	me.WidgetBase = nux.NewWidgetBase(context, me, attrs...)
+	me.WidgetSize = nux.NewWidgetSize(context, me, attrs...)
+	me.WidgetVisual = NewWidgetVisual(context, me, attrs...)
 	me.WidgetSize.AddOnSizeChanged(me.onSizeChanged)
 	me.WidgetVisual.AddOnVisualChanged(me.onVisualChanged)
 	return me
 }
 
 type image struct {
-	nux.WidgetBase
-	nux.WidgetSize
-	WidgetVisual
+	*nux.WidgetBase
+	*nux.WidgetSize
+	*WidgetVisual
 
 	scaleType   ScaleType
 	src         string
@@ -70,19 +72,6 @@ type image struct {
 	scaleY      float32
 	offsetX     float32
 	offsetY     float32
-}
-
-func (me *image) Creating(attr nux.Attr) {
-	if attr == nil {
-		attr = nux.Attr{}
-	}
-
-	me.WidgetBase.Creating(attr)
-	me.WidgetSize.Creating(attr)
-	me.WidgetVisual.Creating(attr)
-
-	me.src = attr.GetString("src", "")
-	me.scaleType = convertScaleTypeFromString(attr.GetString("scaleType", "matrix"))
 }
 
 func convertScaleTypeFromString(scaleType string) ScaleType {
@@ -109,7 +98,7 @@ func convertScaleTypeFromString(scaleType string) ScaleType {
 	return ScaleType_Center
 }
 
-func (me *image) Created(content nux.Widget) {
+func (me *image) OnCreate() {
 	if me.src != "" {
 		me.srcDrawable = NewImageDrawable(me.src)
 	}

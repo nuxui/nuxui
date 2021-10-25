@@ -412,15 +412,20 @@ end:
 
 ///////////////////////////////////// Parse /////////////////////////////////////
 
-// TODO:: parse int to int64, float to float64
-func FullParseAttr(sntext string) Attr {
-	return nil
+// ParseAttr parse all value to string
+// print error if has error and return empty Attr
+func ParseAttr(attrtext string) Attr {
+	ret, err := ParseAttrWitthError(attrtext)
+	if err != nil {
+		log.E("nuxui", err.Error())
+		return Attr{}
+	}
+	return ret
 }
 
-// TODO return error
-// ParseAttr parse all value to string
-func ParseAttr(sntext string) Attr {
-	return (&attr{}).parse(sntext)
+// TODO:: error
+func ParseAttrWitthError(attrtext string) (Attr, error) {
+	return (&attr{}).parse(attrtext), nil
 }
 
 const EOF = -1
@@ -468,7 +473,7 @@ func (me *attr) parse(template string) Attr {
 }
 
 func (me *attr) nextStruct() Attr {
-	data := make(Attr, 0)
+	data := Attr{}
 
 	for {
 		me.next()
@@ -486,7 +491,7 @@ func (me *attr) nextStruct() Attr {
 		value := me.nextValue()
 		data[key] = value
 
-		if me.i == nil && "import" == key  {
+		if me.i == nil && "import" == key {
 			if i, ok := value.(Attr); ok {
 				me.i = i
 			}

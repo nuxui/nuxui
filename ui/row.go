@@ -13,7 +13,6 @@ import (
 type Row interface {
 	nux.Parent
 	nux.Size
-	nux.Creating
 	nux.Measure
 	nux.Layout
 	nux.Draw
@@ -21,38 +20,26 @@ type Row interface {
 }
 
 type row struct {
-	nux.WidgetParent
-	nux.WidgetSize
-	WidgetVisual
+	*nux.WidgetParent
+	*nux.WidgetSize
+	*WidgetVisual
 
-	Align Align
+	align *Align
 
 	childrenWidth float32
 }
 
-func NewRow() Row {
+func NewRow(context nux.Context, attrs ...nux.Attr) Row {
+	attr := getAttr(attrs...)
 	me := &row{
-		Align: Align{Vertical: Top, Horizontal: Left},
+		align: NewAlign(attr.GetAttr("align", nux.Attr{})),
 	}
-	me.WidgetParent.Owner = me
-	me.WidgetSize.Owner = me
+	me.WidgetParent = nux.NewWidgetParent(context, me, attrs...)
+	me.WidgetSize = nux.NewWidgetSize(context, me, attrs...)
+	me.WidgetVisual = NewWidgetVisual(context, me, attrs...)
 	me.WidgetSize.AddOnSizeChanged(me.onSizeChanged)
-	me.WidgetVisual.Owner = me
 	me.WidgetVisual.AddOnVisualChanged(me.onVisualChanged)
 	return me
-}
-
-func (me *row) Creating(attr nux.Attr) {
-	if attr == nil {
-		attr = nux.Attr{}
-	}
-
-	me.WidgetBase.Creating(attr)
-	me.WidgetSize.Creating(attr)
-	me.WidgetParent.Creating(attr)
-	me.WidgetVisual.Creating(attr)
-
-	me.Align = *NewAlign(attr.GetAttr("align", nux.Attr{}))
 }
 
 func (me *row) onSizeChanged(widget nux.Widget) {
@@ -819,7 +806,7 @@ func (me *row) Layout(dx, dy, left, top, right, bottom int32) {
 
 	innerHeight -= float32(ms.Padding.Top + ms.Padding.Bottom)
 	innerWidth -= float32(ms.Padding.Left + ms.Padding.Right)
-	switch me.Align.Horizontal {
+	switch me.align.Horizontal {
 	case Left:
 		l = 0
 	case Center:
@@ -841,7 +828,7 @@ func (me *row) Layout(dx, dy, left, top, right, bottom int32) {
 			if cs.Height().Mode() == nux.Weight || (cs.HasMargin() && (cs.MarginTop().Mode() == nux.Weight || cs.MarginBottom().Mode() == nux.Weight)) {
 				t += float32(ms.Padding.Top + cms.Margin.Top)
 			} else {
-				switch me.Align.Vertical {
+				switch me.align.Vertical {
 				case Top:
 					t += 0
 				case Center:

@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+//go:build android
 // +build android
 
 package nux
@@ -52,7 +53,7 @@ func (me *window) Creating(attr Attr) {
 	}
 }
 
-func (me *window) Created(data interface{}) {
+func (me *window) OnCreate(data interface{}) {
 	main := data.(string)
 	if main == "" {
 		log.Fatal("nuxui", "no main widget found.")
@@ -62,8 +63,8 @@ func (me *window) Created(data interface{}) {
 		me.decor.AddChild(widgetTree)
 	}
 
-	if c, ok := me.decor.(Created); ok {
-		c.Created(me.decor)
+	if c, ok := me.decor.(OnCreate); ok {
+		c.OnCreate(me.decor)
 	}
 }
 

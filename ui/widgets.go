@@ -7,13 +7,13 @@ package ui
 import "github.com/nuxui/nuxui/nux"
 
 func init() {
-	nux.RegisterWidget((*Row)(nil), func() nux.Widget { return NewRow() })
-	nux.RegisterWidget((*Column)(nil), func() nux.Widget { return NewColumn() })
-	nux.RegisterWidget((*Layer)(nil), func() nux.Widget { return NewLayer() })
-	nux.RegisterWidget((*Scroll)(nil), func() nux.Widget { return NewScroll() })
-	nux.RegisterWidget((*Text)(nil), func() nux.Widget { return NewText() })
-	nux.RegisterWidget((*Image)(nil), func() nux.Widget { return NewImage() })
-	nux.RegisterWidget((*Editor)(nil), func() nux.Widget { return NewEditor() })
+	nux.RegisterWidget((*Row)(nil), func(ctx nux.Context, attr ...nux.Attr) nux.Widget { return NewRow(ctx, attr...) })
+	nux.RegisterWidget((*Column)(nil), func(ctx nux.Context, attr ...nux.Attr) nux.Widget { return NewColumn(ctx, attr...) })
+	nux.RegisterWidget((*Layer)(nil), func(ctx nux.Context, attr ...nux.Attr) nux.Widget { return NewLayer(ctx, attr...) })
+	nux.RegisterWidget((*Scroll)(nil), func(ctx nux.Context, attr ...nux.Attr) nux.Widget { return NewScroll(ctx, attr...) })
+	nux.RegisterWidget((*Text)(nil), func(ctx nux.Context, attr ...nux.Attr) nux.Widget { return NewText(ctx, attr...) })
+	nux.RegisterWidget((*Image)(nil), func(ctx nux.Context, attr ...nux.Attr) nux.Widget { return NewImage(ctx, attr...) })
+	nux.RegisterWidget((*Editor)(nil), func(ctx nux.Context, attr ...nux.Attr) nux.Widget { return NewEditor(ctx, attr...) })
 	// RegisterWidget((*Pager)(nil), func() Widget { return NewPager() })
 
 	// RegisterMixin((*GestureMixin)(nil), func() Mixin { return NewGestureMixin() })

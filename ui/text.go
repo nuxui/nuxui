@@ -9,6 +9,7 @@ package ui
 import (
 	"time"
 
+	"github.com/nuxui/nuxui/log"
 	"github.com/nuxui/nuxui/nux"
 	"github.com/nuxui/nuxui/util"
 )
@@ -16,7 +17,6 @@ import (
 type Text interface {
 	nux.Widget
 	nux.Size
-	nux.Creating
 	nux.Layout
 	nux.Measure
 	nux.Draw
@@ -27,51 +27,40 @@ type Text interface {
 }
 
 type text struct {
-	nux.WidgetBase
-	nux.WidgetSize
-	WidgetVisual
+	*nux.WidgetBase
+	*nux.WidgetSize
+	*WidgetVisual
 
 	text      string
-	Font      nux.Font
+	font      *nux.Font
 	ellipsize int
 
 	downTime time.Time
 }
 
-// TODO:: Creating(attr nux.Attr) to NewText(attr nux.Attr) avoid twice parse attr
-func NewText() Text {
-	me := &text{}
-	me.WidgetSize.Owner = me
-	me.WidgetVisual.Owner = me
-	me.WidgetSize.AddOnSizeChanged(me.onSizeChanged)
-	me.WidgetVisual.AddOnVisualChanged(me.onVisualChanged)
-
-	me.Creating(nux.Attr{})
-	return me
-}
-
-func (me *text) Creating(attr nux.Attr) {
-	if attr == nil {
-		attr = nux.Attr{}
+func NewText(context nux.Context, attrs ...nux.Attr) Text {
+	attr := getAttr(attrs...)
+	me := &text{
+		text: attr.GetString("text", ""),
+		font: nux.NewFont(attr.GetAttr("font", nux.Attr{})),
 	}
-
-	me.WidgetBase.Creating(attr)
-	me.WidgetSize.Creating(attr)
-	me.WidgetVisual.Creating(attr)
-
-	me.Font.Creating(attr.GetAttr("font", nux.Attr{}))
-
-	me.text = attr.GetString("text", "")
-
 	ellipsize := attr.GetString("ellipsize", "none")
 	switch ellipsize {
 	case "none":
 		// text.ellipsize = C.PANGO_ELLIPSIZE_NONE
 
 	}
+
+	me.WidgetBase = nux.NewWidgetBase(context, me, attrs...)
+	me.WidgetSize = nux.NewWidgetSize(context, me, attrs...)
+	me.WidgetVisual = NewWidgetVisual(context, me, attrs...)
+	me.WidgetSize.AddOnSizeChanged(me.onSizeChanged)
+	me.WidgetVisual.AddOnVisualChanged(me.onVisualChanged)
+
+	return me
 }
 
-func (me *text) Created(content nux.Widget) {
+func (me *text) OnCreate(content nux.Widget) {
 	nux.OnTapDown(me, me.onTapDown)
 	nux.OnTapUp(me, me.onTapUp)
 	nux.OnTapCancel(me, me.onTapUp)
@@ -204,7 +193,7 @@ func (me *text) Measure(width, height int32) {
 		w := int32(width)
 		h := int32(height)
 
-		outW, outH := nux.MeasureText(me.text, &me.Font, w, h)
+		outW, outH := nux.MeasureText(me.text, me.font, w, h)
 		// log.V("nuxui", "Text '%s' Measure: %d, %d\n", me.text, outW, outH)
 		ms := me.MeasuredSize()
 		if nux.MeasureSpecMode(width) == nux.Auto {
@@ -235,8 +224,9 @@ func (me *text) Draw(canvas nux.Canvas) {
 		ms.Width-ms.Padding.Left-ms.Padding.Right,
 		ms.Height-ms.Padding.Top-ms.Padding.Bottom)
 
+	log.D("nuxui", "Text Draw ==== %s", me.text)
 	if me.text != "" {
-		canvas.DrawText(me.text, &me.Font, int32(ms.Width), int32(ms.Height), &nux.Paint{me.Font.Color, nux.FILL, 2})
+		canvas.DrawText(me.text, me.font, int32(ms.Width), int32(ms.Height), &nux.Paint{me.font.Color, nux.FILL, 2})
 	}
 
 	canvas.Restore()

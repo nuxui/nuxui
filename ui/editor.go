@@ -14,7 +14,6 @@ import (
 type Editor interface {
 	nux.Widget
 	nux.Size
-	nux.Creating
 	nux.Layout
 	nux.Measure
 	nux.Draw
@@ -24,27 +23,39 @@ type Editor interface {
 	SetText(text string)
 }
 
-func NewEditor() Editor {
+func NewEditor(context nux.Context, attrs ...nux.Attr) Editor {
+	attr := getAttr(attrs...)
 	me := &editor{
 		cursorPosition: 0,
 		flicker:        false,
+		text:           attr.GetString("text", ""),
+		font:           nux.NewFont(attr),
 	}
-	me.WidgetSize.Owner = me
-	me.WidgetVisual.Owner = me
+
+	ellipsize := attr.GetString("ellipsize", "none")
+	switch ellipsize {
+	case "none":
+		// text.ellipsize = C.PANGO_ELLIPSIZE_NONE
+	}
+
+	me.WidgetBase = nux.NewWidgetBase(context, me, attrs...)
+	me.WidgetSize = nux.NewWidgetSize(context, me, attrs...)
+	me.WidgetVisual = NewWidgetVisual(context, me, attrs...)
 	me.WidgetSize.AddOnSizeChanged(me.onSizeChanged)
 	me.WidgetVisual.AddOnVisualChanged(me.onVisualChanged)
+
 	return me
 }
 
 type editor struct {
-	nux.WidgetBase
-	nux.WidgetSize
-	WidgetVisual
+	*nux.WidgetBase
+	*nux.WidgetSize
+	*WidgetVisual
 
 	text        string
 	editingText string
 	editingLoc  int32
-	Font        nux.Font
+	font        *nux.Font
 	ellipsize   int
 
 	cursorPosition int
@@ -53,27 +64,7 @@ type editor struct {
 	focus          bool
 }
 
-func (me *editor) Creating(attr nux.Attr) {
-	if attr == nil {
-		attr = nux.Attr{}
-	}
-
-	me.WidgetBase.Creating(attr)
-	me.WidgetSize.Creating(attr)
-	me.WidgetVisual.Creating(attr)
-
-	me.Font.Creating(attr.GetAttr("font", nux.Attr{}))
-
-	me.text = attr.GetString("text", "")
-
-	ellipsize := attr.GetString("ellipsize", "none")
-	switch ellipsize {
-	case "none":
-		// text.ellipsize = C.PANGO_ELLIPSIZE_NONE
-	}
-}
-
-func (me *editor) Created(content nux.Widget) {
+func (me *editor) OnCreate(content nux.Widget) {
 
 	nux.OnTapDown(me, me.onTapDown)
 	nux.OnPanStart(me, me.onPanStart)
@@ -109,7 +100,7 @@ func (me *editor) FocusChanged(focus bool) {
 		nux.StartTextInput()
 		ms := me.MeasuredSize()
 		// TODO:: cursor position
-		nux.SetTextInputRect(float32(ms.Position.X), float32(ms.Position.Y)+me.Font.Size, 0, 0)
+		nux.SetTextInputRect(float32(ms.Position.X), float32(ms.Position.Y)+me.font.Size, 0, 0)
 		me.startTick()
 	} else {
 		nux.StopTextInput()
@@ -155,7 +146,7 @@ func (me *editor) Measure(width, height int32) {
 		w := width
 		h := height
 
-		outW, outH := nux.MeasureText(me.text, &me.Font, w, h)
+		outW, outH := nux.MeasureText(me.text, me.font, w, h)
 		// log.V("nuxui", "Editor MeasureText %s %d %d", me.text, outW, outH)
 		ms := me.MeasuredSize()
 		if nux.MeasureSpecMode(width) == nux.Auto {
@@ -182,7 +173,7 @@ func (me *editor) Draw(canvas nux.Canvas) {
 	end := string(runes[me.cursorPosition:len(runes)])
 	all := fmt.Sprintf("%s%s%s", front, me.editingText, end)
 	m := fmt.Sprintf("%s%s", front, string([]rune(me.editingText)[:me.editingLoc]))
-	outW, outH := nux.MeasureText(m, &me.Font, 1000, 1000)
+	outW, outH := nux.MeasureText(m, me.font, 1000, 1000)
 
 	// TODO has padding?
 	ms := me.MeasuredSize()
@@ -192,9 +183,9 @@ func (me *editor) Draw(canvas nux.Canvas) {
 		ms.Width-ms.Padding.Left-ms.Padding.Right,
 		ms.Height-ms.Padding.Top-ms.Padding.Bottom)
 
-	canvas.DrawText(all, &me.Font, int32(ms.Width), int32(ms.Height), &nux.Paint{me.Font.Color, nux.FILL, 2})
+	canvas.DrawText(all, me.font, int32(ms.Width), int32(ms.Height), &nux.Paint{me.font.Color, nux.FILL, 2})
 	canvas.Translate(outW, 0)
-	p := &nux.Paint{Color: me.Font.Color, Style: nux.FILL, Width: 1}
+	p := &nux.Paint{Color: me.font.Color, Style: nux.FILL, Width: 1}
 
 	if me.flicker {
 		canvas.DrawRect(0, 1, 1, outH-1, p)

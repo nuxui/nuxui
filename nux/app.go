@@ -6,16 +6,12 @@ package nux
 
 import (
 	"github.com/nuxui/nuxui/log"
-	"github.com/nuxui/nuxui/util"
 )
 
 // Application app
 type Application interface {
 	Manifest() Manifest
 	MainWindow() Window
-	// KeyWindow() Window
-	// Windows() []Window
-	// FindWindow() Window
 	// SendEvent(Event)
 	// SendEventAndWait(Event)
 	RequestLayout(Widget)
@@ -31,9 +27,8 @@ func App() Application {
 // Init init application
 func Init(manifest string) {
 	attr := ParseAttr(manifest)
-	if c, ok := App().(Creating); ok {
-		c.Creating(attr)
-	}
+	theApp.manifest = NewManifest(attr.GetAttr("manifest", Attr{}))
+	theApp.window = newWindow(Attr{})
 }
 
 // Run run application
@@ -48,8 +43,8 @@ func (me *application) handleEvent(event Event) {
 		switch event.Action() {
 		case Action_WindowCreated:
 			log.V("nuxui", "Action_WindowCreated")
-			if f, ok := event.Window().(AnyCreated); ok {
-				f.Created(App().Manifest().Main())
+			if f, ok := event.Window().(OnCreate); ok {
+				f.OnCreate()
 			}
 			log.V("nuxui", "Action_WindowCreated end")
 		case Action_WindowMeasured:
@@ -132,21 +127,24 @@ func RequestFocus(widget Widget) {
 
 var decorWindowList map[Widget]Window = map[Widget]Window{}
 
-// GetWidgetWindow get the window of widget  return can be nil
+// GetWidgetWindow get the window of widget  return can be nil if widget not attach to window
 func GetWidgetWindow(widget Widget) Window {
-	if widget.Parent() == nil {
-		if util.GetTypeName(widget) == "github.com/nuxui/nuxui/ui.layer" {
-			if w, ok := decorWindowList[widget]; ok {
-				return w
-			}
-		}
 
-		// log.Fatal("nuxui", "can not run here %T", widget)
-		// widget not attached to window yet
-		return nil
-	}
-	return GetWidgetWindow(widget.Parent())
+	return theApp.window
 }
+
+// if widget.Parent() == nil {
+// 	if util.GetTypeName(widget) == "github.com/nuxui/nuxui/ui.layer" {
+// 		if w, ok := decorWindowList[widget]; ok {
+// 			return w
+// 		}
+// 	}
+
+// 	// log.Fatal("nuxui", "can not run here %T", widget)
+// 	// widget not attached to window yet
+// 	return nil
+// }
+// return GetWidgetWindow(widget.Parent())
 
 func RunOnUI(callback func()) {
 	runOnUI(callback)

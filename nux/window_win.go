@@ -35,88 +35,95 @@ type window struct {
 	surface        *Surface
 	surfaceResized bool
 	paintStruct    C.PAINTSTRUCT
+
+	context Context
 }
 
-func newWindow() *window {
-	return &window{
+func newWindow(attr Attr) *window {
+	me := &window{
+		context:        &context{},
 		surfaceResized: true,
 	}
+
+	me.CreateDecor(me.context, attr)
+	GestureBinding().AddGestureHandler(me.decor, &decorGestureHandler{})
+	return me
 }
 
-func (me *window) Creating(attr Attr) {
-	// TODO width ,height background drawable ...
-	// create decor widget
+// // TODO:: Created(content Widget) content is decor
+// func (me *window) Created(data interface{}) {
+// 	main := data.(string)
+// 	if main == "" {
+// 		log.Fatal("nuxui", "no main widget found.")
+// 	} else {
+// 		mainWidgetCreator := FindRegistedWidgetCreatorByName(main)
+// 		widgetTree := RenderWidget(mainWidgetCreator())
+// 		me.decor.AddChild(widgetTree)
+// 	}
 
-	if me.decor == nil {
-		me.CreatDecor(attr)
-		GestureBinding().AddGestureHandler(me.decor, &decorGestureHandler{})
-	}
+// 	me.excuteCreated(me.decor)
+// }
 
-	if c, ok := me.decor.(Creating); ok {
-		c.Creating(attr)
-	}
-}
+// func (me *window) excuteCreated(widget Widget) {
+// 	if ok, c := widget.(Created); ok {
+// 		c()
+// 	}
 
-// TODO:: Created(content Widget) content is decor
-func (me *window) Created(data interface{}) {
-	main := data.(string)
-	if main == "" {
-		log.Fatal("nuxui", "no main widget found.")
-	} else {
-		mainWidgetCreator := FindRegistedWidgetCreatorByName(main)
-		widgetTree := RenderWidget(mainWidgetCreator())
-		me.decor.AddChild(widgetTree)
-	}
+// 	if ok, c := widget.(Component); ok {
+// 		me.excuteCreated(me.Content())
+// 	}
 
-	if c, ok := me.decor.(Created); ok {
-		c.Created(me.decor)
-	}
-}
+// 	if ok, p := widget.(Parent); ok {
+// 		for _, child := range p.Children() {
+// 			me.excuteCreated(child)
+// 		}
+// 	}
+// }
 
-func (me *window) CreatDecor(attr Attr) Widget {
-	creator := FindRegistedWidgetCreatorByName("github.com/nuxui/nuxui/ui.Layer")
-	w := creator()
-	if p, ok := w.(Parent); ok {
-		me.decor = p
-	} else {
-		log.Fatal("nuxui", "decor must is a Parent")
-	}
+// func (me *window) CreateDecor(attr Attr) Widget {
+// 	creator := FindRegistedWidgetCreatorByName("github.com/nuxui/nuxui/ui.Layer")
+// 	w := creator()
+// 	if p, ok := w.(Parent); ok {
+// 		me.decor = p
+// 	} else {
+// 		log.Fatal("nuxui", "decor must is a Parent")
+// 	}
 
-	decorWindowList[w] = me
+// 	decorWindowList[w] = me
 
-	return me.decor
-}
+// 	return me.decor
+// }
 
-func (me *window) Measure(width, height int32) {
-	if me.decor == nil {
-		return
-	}
+// func (me *window) Measure(width, height int32) {
+// 	if me.decor == nil {
+// 		return
+// 	}
 
-	if s, ok := me.decor.(Size); ok {
-		if s.MeasuredSize().Width == width && s.MeasuredSize().Height == height {
-			// return
-		}
+// 	if s, ok := me.decor.(Size); ok {
+// 		if s.MeasuredSize().Width == width && s.MeasuredSize().Height == height {
+// 			// return
+// 		}
 
-		s.MeasuredSize().Width = width
-		s.MeasuredSize().Height = height
-	}
+// 		s.MeasuredSize().Width = width
+// 		s.MeasuredSize().Height = height
+// 	}
 
-	me.surfaceResized = true
+// 	me.surfaceResized = true
 
-	if f, ok := me.decor.(Measure); ok {
-		f.Measure(width, height)
-	}
-}
+// 	if f, ok := me.decor.(Measure); ok {
+// 		f.Measure(width, height)
+// 	}
+// }
 
-func (me *window) Layout(dx, dy, left, top, right, bottom int32) {
-	if me.decor == nil {
-		return
-	}
+// func (me *window) Layout(dx, dy, left, top, right, bottom int32) {
+// 	if me.decor == nil {
+// 		return
+// 	}
 
-	if f, ok := me.decor.(Layout); ok {
-		f.Layout(dx, dy, left, top, right, bottom)
-	}
-}
+// 	if f, ok := me.decor.(Layout); ok {
+// 		f.Layout(dx, dy, left, top, right, bottom)
+// 	}
+// }
 
 func (me *window) Draw(canvas Canvas) {
 	log.V("nuxui", "window Draw start")
@@ -268,7 +275,7 @@ func (me *window) handleOtherWidgetKeyEvent(p Parent, e KeyEvent) bool {
 			compt = nil
 			if cpt, ok := c.(Component); ok {
 				c = cpt.Content()
-				compt = cpt.Component()
+				compt = cpt
 			}
 			if cp, ok := c.(Parent); ok {
 				if me.handleOtherWidgetKeyEvent(cp, e) {

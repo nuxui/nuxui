@@ -59,3 +59,10 @@ func setNewHeight(ms *nux.MeasuredSize, originHeight, newHeight int32) {
 		}
 	}
 }
+
+func getAttr(attrs ...nux.Attr) nux.Attr {
+	if len(attrs) == 0 {
+		return nux.Attr{}
+	}
+	return attrs[0]
+}

@@ -8,18 +8,29 @@ import (
 	"github.com/nuxui/nuxui/log"
 )
 
-type Creator func() Widget
+type Creator func(Context, ...Attr) Widget
 
 type Widget interface {
 	ID() string
 	SetID(string)
 	Parent() Parent
 	AssignParent(parent Parent)
+	// TODO:: attachToWindow?
 }
 
 type WidgetBase struct {
 	id     string
 	parent Parent
+}
+
+func NewWidgetBase(ctx Context, owner Widget, attrs ...Attr) *WidgetBase {
+	attr := Attr{}
+	if len(attrs) > 0 {
+		attr = attrs[0]
+	}
+	return &WidgetBase{
+		id: attr.GetString("id", ""),
+	}
 }
 
 func (me *WidgetBase) SetID(id string) {
@@ -43,14 +54,16 @@ func (me *WidgetBase) AssignParent(parent Parent) {
 	}
 }
 
-func (me *WidgetBase) Creating(attr Attr) {
-	me.id = attr.GetString("id", "")
-}
-
 type Template interface {
 	Template() string
 }
 
 type Render interface {
 	Render() Widget
+}
+
+type viewfuncs interface {
+	Measure
+	Layout
+	Draw
 }

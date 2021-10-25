@@ -78,10 +78,12 @@ static const char *event_names[] = {
 		     CWDontPropagate|CWColormap|CWCursor)
 
 int _go_nativeLoopPrepared = 0;
+static short g_ime_pos_x ,g_ime_pos_y;
 
 // https://www.x.org/releases/current/doc/libX11/libX11/libX11.html#:~:text=Preedit%20State-,Callbacks,-When%20the%20input
 int nux_PreeditStartCallback(XIC xic, XPointer client_data, XPointer call_data){
-    printf("nux_PreeditStartCallback\n");
+    printf("nux_PreeditStartCallback x=%d, y=%d\n", g_ime_pos_x, g_ime_pos_y);
+
     return -1;
 }
 void nux_PreeditDoneCallback(XIC xic, XPointer client_data, XPointer call_data){
@@ -92,15 +94,6 @@ void nux_PreeditDrawCallback(XIC xic, XPointer client_data, XIMPreeditDrawCallba
     if(call_data->text != NULL){
         go_typeEvent(1, call_data->text->string.multi_byte, call_data->text->length, call_data->caret);
     }
-
-    // XPoint spot;
-    // spot.x = 50;
-    // spot.y = 50;
-    // XVaNestedList preedit_attr;
-    // preedit_attr = XVaCreateNestedList(0, XNSpotLocation, &spot, NULL);
-    // XSetICValues(xic, XNPreeditAttributes, preedit_attr, NULL);
-    // XFree(preedit_attr);
-
 }
 void nux_PreeditCaretCallback(XIC xic, XPointer client_data, XIMPreeditCaretCallbackStruct *call_data){
     printf("nux_PreeditCaretCallback\n");
@@ -326,6 +319,15 @@ void run(){
         case KeyPress:
         case KeyRelease:
         {
+            {
+                XPoint spot;
+                spot.x = 500;//g_ime_pos_x;
+                spot.y = 500; //g_ime_pos_y;
+                XVaNestedList preedit_attr;
+                preedit_attr = XVaCreateNestedList(0, XNSpotLocation, &spot, NULL);
+                XSetICValues(xic, XNPreeditAttributes, preedit_attr, NULL);
+                XFree(preedit_attr);
+            }
             // 1. handle key event
             {
                 KeySym keysym = XkbKeycodeToKeysym(display, event.xkey.keycode, 0, 0);
@@ -415,8 +417,14 @@ void window_getSize(Display* display, Window window, int *width, int *height){
         *height = attribs.height;
 }
 
- void window_setTitle(Display* display, Window window, char *name)
- {
+void window_setTitle(Display* display, Window window, char *name)
+{
     Atom utf8Str = XInternAtom(display, "UTF8_STRING", 0);
     XChangeProperty(display, window, XA_WM_NAME, utf8Str, 8, PropModeReplace, (unsigned char *)name, (int)strlen(name));
- }
+}
+
+
+void setTextInputRect(short x, short y){
+    g_ime_pos_x = x;
+    g_ime_pos_y = y;
+}

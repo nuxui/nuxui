@@ -17,31 +17,19 @@ type Layer interface {
 }
 
 type layer struct {
-	nux.WidgetParent
-	nux.WidgetBase
-	nux.WidgetSize
-	WidgetVisual
+	*nux.WidgetParent
+	*nux.WidgetSize
+	*WidgetVisual
 }
 
-func NewLayer() Layer {
+func NewLayer(context nux.Context, attrs ...nux.Attr) Layer {
 	me := &layer{}
-	me.WidgetParent.Owner = me
-	me.WidgetSize.Owner = me
+	me.WidgetParent = nux.NewWidgetParent(context, me, attrs...)
+	me.WidgetSize = nux.NewWidgetSize(context, me, attrs...)
+	me.WidgetVisual = NewWidgetVisual(context, me, attrs...)
 	me.WidgetSize.AddOnSizeChanged(me.onSizeChanged)
-	me.WidgetVisual.Owner = me
 	me.WidgetVisual.AddOnVisualChanged(me.onVisualChanged)
 	return me
-}
-
-func (me *layer) Creating(attr nux.Attr) {
-	if attr == nil {
-		attr = nux.Attr{}
-	}
-
-	me.WidgetBase.Creating(attr)
-	me.WidgetSize.Creating(attr)
-	me.WidgetParent.Creating(attr)
-	me.WidgetVisual.Creating(attr)
 }
 
 func (me *layer) onSizeChanged(widget nux.Widget) {
@@ -52,7 +40,7 @@ func (me *layer) onVisualChanged(widget nux.Widget) {
 }
 
 func (me *layer) Measure(width, height int32) {
-	// log.I("nuxui", "layer:%s Measure width=%s, height=%s", me.ID(), nux.MeasureSpecString(width), nux.MeasureSpecString(height))
+	log.I("nuxui", "layer:%s Measure width=%s, height=%s", me.ID(), nux.MeasureSpecString(width), nux.MeasureSpecString(height))
 	measureDuration := log.Time()
 	defer log.TimeEnd(measureDuration, "nuxui", "ui.Layer %s Measure", me.ID())
 
@@ -201,7 +189,9 @@ func (me *layer) measure(width, height int32, childrenMeasuredFlags []byte) (out
 
 	for index, child := range me.Children() {
 		if compt, ok := child.(nux.Component); ok {
+			log.D("nuxui", "%T  nux.Component", child)
 			child = compt.Content()
+			log.D("nuxui", "%T  nux.Component 2", child)
 		}
 
 		hPxUsed = 0

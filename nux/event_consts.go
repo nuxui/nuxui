@@ -36,7 +36,6 @@ const (
 	Action_Input
 	Action_Preedit
 
-	Action_WindowCreating
 	Action_WindowCreated
 	Action_WindowMeasured
 	Action_WindowDraw
@@ -128,8 +127,6 @@ func (me EventAction) String() string {
 		return "Action_Preedit"
 	case Action_Pressure:
 		return "Action_Pressure"
-	case Action_WindowCreating:
-		return "Action_WindowCreating"
 	case Action_WindowCreated:
 		return "Action_WindowCreated"
 	case Action_WindowMeasured:

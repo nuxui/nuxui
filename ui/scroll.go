@@ -18,31 +18,20 @@ type Scroll interface {
 }
 
 type scroll struct {
-	nux.WidgetParent
+	*nux.WidgetParent
+	*nux.WidgetSize
+	*WidgetVisual
 	nux.WidgetBase
-	nux.WidgetSize
-	WidgetVisual
 }
 
-func NewScroll() Scroll {
+func NewScroll(context nux.Context, attrs ...nux.Attr) Scroll {
 	me := &scroll{}
-	me.WidgetParent.Owner = me
-	me.WidgetSize.Owner = me
+	me.WidgetParent = nux.NewWidgetParent(context, me, attrs...)
+	me.WidgetSize = nux.NewWidgetSize(context, me, attrs...)
+	me.WidgetVisual = NewWidgetVisual(context, me, attrs...)
 	me.WidgetSize.AddOnSizeChanged(me.onSizeChanged)
-	me.WidgetVisual.Owner = me
 	me.WidgetVisual.AddOnVisualChanged(me.onVisualChanged)
 	return me
-}
-
-func (me *scroll) Creating(attr nux.Attr) {
-	if attr == nil {
-		attr = nux.Attr{}
-	}
-
-	me.WidgetBase.Creating(attr)
-	me.WidgetSize.Creating(attr)
-	me.WidgetParent.Creating(attr)
-	me.WidgetVisual.Creating(attr)
 }
 
 func (me *scroll) onSizeChanged(widget nux.Widget) {
