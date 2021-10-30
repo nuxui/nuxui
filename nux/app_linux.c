@@ -248,9 +248,9 @@ void run(){
         XNextEvent(display, &event);
         filtered = XFilterEvent(&event, None); // filter by input method
         if (event.type < 35){
-            printf("%d, %s, filtered=%d\n", event.type, event_names[event.type], filtered);
+            printf("%d, %s, filtered=%d, serial: %ld\n", event.type, event_names[event.type], filtered, event.xany.serial);
         }else{
-            printf("Event NO: %d\n", event.type);
+            printf("Event NO: %d, serial: %ld\n", event.type, event.xany.serial);
         }
         if(filtered){
             continue;
@@ -377,8 +377,10 @@ void run(){
         }
         case ClientMessage:
         {
-            Atom msg = event.xclient.message_type;
-            printf("ClientMessage atom: %s\n", XGetAtomName(display, msg));
+            printf("ClientMessage atom: %s\n", XGetAtomName(display, event.xclient.message_type));
+            if (strcmp("_user_ev",XGetAtomName(display, event.xclient.message_type)) == 0){
+                go_backToUI();
+            }
         }
         default: /* ignore any other event types. */
             break;
@@ -395,7 +397,6 @@ void invalidate(Display *display, Window window){
     event.xexpose.send_event = True;
     event.xexpose.display = display;
     event.xexpose.window = window;
-    event.xexpose.window = window;
     event.xexpose.x = 0;
     event.xexpose.y = 0;
     event.xexpose.width = 0;
@@ -405,6 +406,19 @@ void invalidate(Display *display, Window window){
     if ( XSendEvent(display, window, False, ExposureMask, &event) == 0 ){
         printf("XSendEvent faild !\n");
     }
+}
+
+void runOnUI(Display *display, Window window){
+    XEvent event;
+    event.xclient.type = ClientMessage;
+    event.xclient.serial = 0;
+    event.xclient.send_event = True;
+    event.xclient.display = display;
+    event.xclient.window = window;
+    event.xclient.message_type = XInternAtom(display, "_user_ev", False);
+    event.xclient.format = 32;
+    event.xclient.data.l[0] = XInternAtom(display, "_user_ev_runOnUI", False);
+    XSendEvent(display, window, False, NoEventMask, &event);
 }
 
 void window_getSize(Display* display, Window window, int *width, int *height){

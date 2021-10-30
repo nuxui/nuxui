@@ -57,6 +57,9 @@ func newWindow(attr Attr) *window {
 
 	me.CreateDecor(me.context, attr)
 	GestureBinding().AddGestureHandler(me.decor, &decorGestureHandler{})
+	log.I("nuxui", "====== mount decor")
+	mountWidget(me.decor, nil)
+	log.I("nuxui", "====== mount decor end ")
 	return me
 }
 

@@ -63,9 +63,6 @@ type application struct {
 }
 
 func (me *application) OnCreate(data interface{}) {
-	if c, ok := me.manifest.(OnCreate); ok {
-		c.OnCreate()
-	}
 }
 
 func (me *application) MainWindow() Window {

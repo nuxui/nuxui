@@ -75,9 +75,6 @@ type application struct {
 }
 
 func (me *application) OnCreate(data interface{}) {
-	if c, ok := me.manifest.(OnCreate); ok {
-		c.OnCreate()
-	}
 }
 
 func (me *application) MainWindow() Window {
@@ -377,13 +374,6 @@ func go_backToUI() {
 	log.V("nuxui", "go_backToUI ..........")
 	callback := <-theApp.runOnUI
 	callback()
-
-	// select {
-	// case f := <-theApp.runOnUI:
-	// 	f()
-	// 	case e := <-theApp.event:
-	// 	case e := <-theApp.eventWaitDone:
-	// }
 }
 
 func runOnUI(callback func()) {

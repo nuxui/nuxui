@@ -4,23 +4,31 @@
 
 package nux
 
-import (
-	"github.com/nuxui/nuxui/log"
-)
-
 type Creator func(Context, ...Attr) Widget
 
 type Widget interface {
-	ID() string
-	SetID(string)
-	Parent() Parent
-	AssignParent(parent Parent)
-	// TODO:: attachToWindow?
+	// ID() string
+	// SetID(string)
+	// Parent() Parent
+	// AssignParent(parent Parent)
+	// IsMounted() bool
+	Info() *WidgetInfo
+}
+
+// type WidgetInfo interface {
+// }
+
+// type State int
+
+type WidgetInfo struct {
+	ID      string
+	Parent  Parent
+	Mounted bool
 }
 
 type WidgetBase struct {
-	id     string
-	parent Parent
+	info  *WidgetInfo
+	owner Widget
 }
 
 func NewWidgetBase(ctx Context, owner Widget, attrs ...Attr) *WidgetBase {
@@ -29,38 +37,25 @@ func NewWidgetBase(ctx Context, owner Widget, attrs ...Attr) *WidgetBase {
 		attr = attrs[0]
 	}
 	return &WidgetBase{
-		id: attr.GetString("id", ""),
+		owner: owner,
+		info: &WidgetInfo{
+			ID:      attr.GetString("id", ""),
+			Mounted: false,
+		},
 	}
 }
 
-func (me *WidgetBase) SetID(id string) {
-	me.id = id
+func (me *WidgetBase) Info() *WidgetInfo {
+	return me.info
 }
 
-func (me *WidgetBase) ID() string {
-	return me.id
-}
+// type Template interface {
+// 	Template() string
+// }
 
-func (me *WidgetBase) Parent() Parent {
-	return me.parent
-}
-
-// parent can be nil, may be remove form parent
-func (me *WidgetBase) AssignParent(parent Parent) {
-	if me.parent == nil {
-		me.parent = parent
-	} else {
-		log.Fatal("nuxui", "The parent of widget '%s' is already assigned, can not assign again.", me.ID())
-	}
-}
-
-type Template interface {
-	Template() string
-}
-
-type Render interface {
-	Render() Widget
-}
+// type Render interface {
+// 	Render() Widget
+// }
 
 type viewfuncs interface {
 	Measure

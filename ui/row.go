@@ -50,9 +50,9 @@ func (me *row) onVisualChanged(widget nux.Widget) {
 }
 
 func (me *row) Measure(width, height int32) {
-	// log.I("nuxui", "ui.Row %s Measure width=%s, height=%s", me.ID(), nux.MeasureSpecString(width), nux.MeasureSpecString(height))
+	// log.I("nuxui", "ui.Row %s Measure width=%s, height=%s", me.Info().ID, nux.MeasureSpecString(width), nux.MeasureSpecString(height))
 	measureDuration := log.Time()
-	defer log.TimeEnd(measureDuration, "nuxui", "ui.Row %s Measure", me.ID())
+	defer log.TimeEnd(measureDuration, "nuxui", "ui.Row %s Measure", me.Info().ID)
 
 	var vPxMax float32   // max horizontal size
 	var vPPt float32     // horizontal padding percent
@@ -298,7 +298,7 @@ func (me *row) Measure(width, height int32) {
 				// ok
 			}
 
-			log.I("nuxui", "measureVertical 1 child:%s, width:%s, height:%s, vPPx:%.2f, vPPt:%.2f, innerHeight:%.2f, canMeasureWidth:%t, measuredFlags:%d", child.ID(), nux.MeasureSpecString(width), nux.MeasureSpecString(height), vPPx, vPPt, innerHeight, canMeasureWidth, 0)
+			log.I("nuxui", "measureVertical 1 child:%s, width:%s, height:%s, vPPx:%.2f, vPPt:%.2f, innerHeight:%.2f, canMeasureWidth:%t, measuredFlags:%d", child.Info().ID, nux.MeasureSpecString(width), nux.MeasureSpecString(height), vPPx, vPPt, innerHeight, canMeasureWidth, 0)
 
 			measuredFlags, vPx := me.measureVertical(width, height, vPPx, vPPt, innerHeight, child, canMeasureWidth, 0)
 
@@ -316,7 +316,7 @@ func (me *row) Measure(width, height int32) {
 		}
 	}
 
-	// log.TimeEnd(measureDuration_1lun, "nuxui", "ui.Column Measure measureDuration_1lun %s", me.ID())
+	// log.TimeEnd(measureDuration_1lun, "nuxui", "ui.Column Measure measureDuration_1lun %s", me.Info().ID)
 
 	// Use the maximum height found in the first traversal as the width in auto mode, and calculate the percent size
 	switch nux.MeasureSpecMode(height) {
@@ -411,7 +411,7 @@ func (me *row) Measure(width, height int32) {
 				needMeasure := true
 				if maxHeightChanged {
 					if measuredFlags&hMeasuredHeightComplete == hMeasuredHeightComplete {
-						log.I("nuxui", "hMeasuredHeightComplete child:%s vpx=%d", child.ID(), (cms.Height + cms.Margin.Top + cms.Margin.Bottom))
+						log.I("nuxui", "hMeasuredHeightComplete child:%s vpx=%d", child.Info().ID, (cms.Height + cms.Margin.Top + cms.Margin.Bottom))
 						if cms.Height+cms.Margin.Top+cms.Margin.Bottom == util.Roundi32(innerHeight) {
 							needMeasure = false
 						}
@@ -419,7 +419,7 @@ func (me *row) Measure(width, height int32) {
 				}
 
 				if needMeasure {
-					// log.I("nuxui", "measureVertical 2 child:%s, width:%s, height:%s, hPPx:%.2f, hPPt:%.2f, innerHeight:%.2f, canMeasureHeight:%t, measuredFlags:%d", child.ID(), nux.MeasureSpecString(width), nux.MeasureSpecString(height), hPPx, hPPt, innerHeight, canMeasureWidth, measuredFlags)
+					// log.I("nuxui", "measureVertical 2 child:%s, width:%s, height:%s, hPPx:%.2f, hPPt:%.2f, innerHeight:%.2f, canMeasureHeight:%t, measuredFlags:%d", child.Info().ID, nux.MeasureSpecString(width), nux.MeasureSpecString(height), hPPx, hPPt, innerHeight, canMeasureWidth, measuredFlags)
 
 					newMeasuredFlags, _ := me.measureVertical(width, height, vPPx, vPPt, innerHeight, child, canMeasureWidth, measuredFlags)
 
@@ -583,7 +583,7 @@ func (me *row) measureVertical(width, height int32, vPPx, vPPt, innerHeight floa
 						vWt += cs.MarginTop().Value()
 					case nux.Auto, nux.Unlimit:
 						// wait until maxWidth measured.
-						log.V("nuxui", "child:%s Margin Top not measured", child.ID())
+						log.V("nuxui", "child:%s Margin Top not measured", child.Info().ID)
 						// ok
 					}
 					// ok
@@ -619,7 +619,7 @@ func (me *row) measureVertical(width, height int32, vPPx, vPPt, innerHeight floa
 						vWt += cs.MarginBottom().Value()
 					case nux.Auto, nux.Unlimit:
 						// wait until max height measured.
-						log.V("nuxui", "child:%s Margin Right not measured", child.ID())
+						log.V("nuxui", "child:%s Margin Right not measured", child.Info().ID)
 						// ok
 					}
 					// ok
@@ -685,11 +685,11 @@ func (me *row) measureVertical(width, height int32, vPPx, vPPt, innerHeight floa
 			}
 		}
 
-		log.V("nuxui", "child: %s, canMeasureWidth=%t, canMeasureHeight=%t", child.ID(), canMeasureWidth, canMeasureHeight)
+		log.V("nuxui", "child: %s, canMeasureWidth=%t, canMeasureHeight=%t", child.Info().ID, canMeasureWidth, canMeasureHeight)
 		if canMeasureWidth && canMeasureHeight {
 			if m, ok := child.(nux.Measure); ok {
 				if hasMeasuredFlags&hMeasuredHeight != hMeasuredHeight {
-					// log.V("nuxui", "child: %s, Measure width=%s, height=%s", child.ID(), nux.MeasureSpecString(width), nux.MeasureSpecString(height))
+					// log.V("nuxui", "child: %s, Measure width=%s, height=%s", child.Info().ID, nux.MeasureSpecString(width), nux.MeasureSpecString(height))
 					m.Measure(cms.Width, cms.Height)
 
 					if cs.Width().Mode() == nux.Ratio {
@@ -795,7 +795,7 @@ func (me *row) measureVertical(width, height int32, vPPx, vPPt, innerHeight floa
 // Responsible for determining the position of the widget align, margin...
 // TODO measure other mode dimen
 func (me *row) Layout(dx, dy, left, top, right, bottom int32) {
-	log.V("nuxui", "row:%s layout %d, %d, %d, %d, %d, %d", me.ID(), dx, dy, left, top, right, bottom)
+	log.V("nuxui", "row:%s layout %d, %d, %d, %d, %d, %d", me.Info().ID, dx, dy, left, top, right, bottom)
 	ms := me.MeasuredSize()
 
 	var l float32 = 0

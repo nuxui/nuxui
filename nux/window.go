@@ -60,27 +60,15 @@ func (me *window) OnCreate() {
 		mainWidgetCreator := FindRegistedWidgetCreatorByName(main)
 		ctx := &context{}
 		// widgetTree := RenderWidget(mainWidgetCreator(ctx, Attr{}))
+		log.I("nuxui", "======  mainWidgetCreator")
 		widgetTree := mainWidgetCreator(ctx, Attr{})
+		log.I("nuxui", "======  decor AddChild  widgetTree begin")
 		me.decor.AddChild(widgetTree)
+		log.I("nuxui", "======  decor AddChild  widgetTree end")
+		mountWidget(me.decor, nil)
+
 	}
 
-	me.excuteCreated(me.decor)
-}
-
-func (me *window) excuteCreated(widget Widget) {
-	if c, ok := widget.(OnCreate); ok {
-		c.OnCreate()
-	}
-
-	if c, ok := widget.(Component); ok {
-		me.excuteCreated(c.Content())
-	}
-
-	if p, ok := widget.(Parent); ok {
-		for _, child := range p.Children() {
-			me.excuteCreated(child)
-		}
-	}
 }
 
 func (me *window) CreateDecor(ctx Context, attr Attr) Widget {

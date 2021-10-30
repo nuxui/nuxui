@@ -60,7 +60,7 @@ func NewText(context nux.Context, attrs ...nux.Attr) Text {
 	return me
 }
 
-func (me *text) OnCreate(content nux.Widget) {
+func (me *text) OnMount(content nux.Widget) {
 	nux.OnTapDown(me, me.onTapDown)
 	nux.OnTapUp(me, me.onTapUp)
 	nux.OnTapCancel(me, me.onTapUp)

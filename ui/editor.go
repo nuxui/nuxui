@@ -64,8 +64,7 @@ type editor struct {
 	focus          bool
 }
 
-func (me *editor) OnCreate(content nux.Widget) {
-
+func (me *editor) OnMount(content nux.Widget) {
 	nux.OnTapDown(me, me.onTapDown)
 	nux.OnPanStart(me, me.onPanStart)
 	nux.OnPanUpdate(me, me.OnPanUpdate)

@@ -17,6 +17,7 @@ package nux
 void run();
 void invalidate(Display *display, Window window);
 void setTextInputRect(short x, short y);
+void runOnUI(Display *display, Window window);
 */
 import "C"
 import (
@@ -75,9 +76,6 @@ type application struct {
 }
 
 func (me *application) OnCreate(data interface{}) {
-	if c, ok := me.manifest.(OnCreate); ok {
-		c.OnCreate()
-	}
 }
 
 func (me *application) MainWindow() Window {
@@ -313,7 +311,11 @@ func go_backToUI() {
 }
 
 func runOnUI(callback func()) {
-	// TODO::
+	go func() {
+		theApp.runOnUI <- callback
+	}()
+	w := theApp.MainWindow().(*window)
+	C.runOnUI(w.display, w.windptr)
 }
 
 func requestRedraw() {

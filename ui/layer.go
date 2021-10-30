@@ -40,9 +40,9 @@ func (me *layer) onVisualChanged(widget nux.Widget) {
 }
 
 func (me *layer) Measure(width, height int32) {
-	log.I("nuxui", "layer:%s Measure width=%s, height=%s", me.ID(), nux.MeasureSpecString(width), nux.MeasureSpecString(height))
+	log.I("nuxui", "layer:%s Measure width=%s, height=%s", me.Info().ID, nux.MeasureSpecString(width), nux.MeasureSpecString(height))
 	measureDuration := log.Time()
-	defer log.TimeEnd(measureDuration, "nuxui", "ui.Layer %s Measure", me.ID())
+	defer log.TimeEnd(measureDuration, "nuxui", "ui.Layer %s Measure", me.Info().ID)
 
 	originWidth := width
 	originHeight := height
@@ -50,14 +50,14 @@ func (me *layer) Measure(width, height int32) {
 	ms := me.MeasuredSize()
 	childrenMeasuredFlags := make([]byte, len(me.Children()))
 	if nux.MeasureSpecMode(width) == nux.Pixel && nux.MeasureSpecMode(height) == nux.Pixel {
-		log.I("nuxui", "layer:%s  measure once", me.ID())
+		log.I("nuxui", "layer:%s  measure once", me.Info().ID)
 		me.measure(width, height, childrenMeasuredFlags)
 	} else {
 		w, h := me.measure(width, height, childrenMeasuredFlags)
-		log.I("nuxui", "layer:%s  measure first w=%s, h=%s", me.ID(), nux.MeasureSpecString(w), nux.MeasureSpecString(h))
+		log.I("nuxui", "layer:%s  measure first w=%s, h=%s", me.Info().ID, nux.MeasureSpecString(w), nux.MeasureSpecString(h))
 		if w != width || h != height {
 			w, h = me.measure(w, h, childrenMeasuredFlags)
-			log.I("nuxui", "layer:%s  measure second w=%s, h=%s", me.ID(), nux.MeasureSpecString(w), nux.MeasureSpecString(h))
+			log.I("nuxui", "layer:%s  measure second w=%s, h=%s", me.Info().ID, nux.MeasureSpecString(w), nux.MeasureSpecString(h))
 		}
 		width = w
 		height = h
@@ -206,7 +206,7 @@ func (me *layer) measure(width, height int32, childrenMeasuredFlags []byte) (out
 
 		measuredFlags = childrenMeasuredFlags[index]
 
-		log.D("nuxui", "layer measure child:%s, measuredFlags=%.8b", child.ID(), measuredFlags)
+		log.D("nuxui", "layer measure child:%s, measuredFlags=%.8b", child.Info().ID, measuredFlags)
 
 		// TODO if child visible == gone , then skip
 
@@ -232,7 +232,7 @@ func (me *layer) measure(width, height int32, childrenMeasuredFlags []byte) (out
 						switch nux.MeasureSpecMode(height) {
 						case nux.Pixel:
 							vWt += cs.MarginTop().Value()
-							log.V("nuxui", "child:%s, ====", child.ID())
+							log.V("nuxui", "child:%s, ====", child.Info().ID)
 							// ok, wait until weight grand total
 						case nux.Auto, nux.Unlimit:
 							// ok, wait max height measured
@@ -403,10 +403,10 @@ func (me *layer) measure(width, height int32, childrenMeasuredFlags []byte) (out
 						// ok, wait max width measured
 					}
 				case nux.Percent:
-					log.V("nuxui", "child:%s parent,px width -> child percent width 0", child.ID())
+					log.V("nuxui", "child:%s parent,px width -> child percent width 0", child.Info().ID)
 					switch nux.MeasureSpecMode(width) {
 					case nux.Pixel:
-						log.V("nuxui", "child:%s parent,px width -> child percent width", child.ID())
+						log.V("nuxui", "child:%s parent,px width -> child percent width", child.Info().ID)
 						w := cs.Width().Value() / 100 * innerWidth
 						cms.Width = nux.MeasureSpec(util.Roundi32(w), nux.Pixel)
 						setRatioHeight(cs, cms, w, nux.Pixel)
@@ -416,13 +416,13 @@ func (me *layer) measure(width, height int32, childrenMeasuredFlags []byte) (out
 						if hPx > 0 {
 							_innerWidth := hPx / (1.0 - hPt/100.0)
 							w := cs.Width().Value() / 100 * _innerWidth
-							log.V("nuxui", "child:%s parent,auto width -> child percent width %f", child.ID(), w)
+							log.V("nuxui", "child:%s parent,auto width -> child percent width %f", child.Info().ID, w)
 							cms.Width = nux.MeasureSpec(util.Roundi32(w), nux.Pixel)
 							setRatioHeight(cs, cms, w, nux.Pixel)
 							// ok
 						} else {
 							canMeasureWidth = false
-							log.V("nuxui", "child:%s parent,auto width -> child percent width 2", child.ID())
+							log.V("nuxui", "child:%s parent,auto width -> child percent width 2", child.Info().ID)
 							//ok, marginLeft width marginRight has no definite value, wait max height measured
 						}
 					}
@@ -491,7 +491,7 @@ func (me *layer) measure(width, height int32, childrenMeasuredFlags []byte) (out
 			if canMeasureWidth && canMeasureHeight {
 				if m, ok := child.(nux.Measure); ok {
 					if measuredFlags&hMeasuredWidth != hMeasuredWidth || measuredFlags&hMeasuredHeight != hMeasuredHeight {
-						log.I("nuxui", "child:%s call measure", child.ID())
+						log.I("nuxui", "child:%s call measure", child.Info().ID)
 						m.Measure(cms.Width, cms.Height)
 
 						if cs.Width().Mode() == nux.Ratio {
@@ -651,7 +651,7 @@ func (me *layer) measure(width, height int32, childrenMeasuredFlags []byte) (out
 				vPxMax = vPx
 			}
 
-			log.V("nuxui", "layer child:%s measured size= %s", child.ID(), cms)
+			log.V("nuxui", "layer child:%s measured size= %s", child.Info().ID, cms)
 		} // if cs, ok := child.(nux.Size); ok
 
 		childrenMeasuredFlags[index] = measuredFlags

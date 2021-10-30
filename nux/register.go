@@ -131,7 +131,7 @@ func Find(widget Widget, id string) Widget {
 }
 
 func find(widget Widget, id string) Widget {
-	if id == widget.ID() {
+	if id == widget.Info().ID {
 		return widget
 	}
 

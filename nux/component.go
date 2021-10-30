@@ -4,8 +4,6 @@
 
 package nux
 
-import "github.com/nuxui/nuxui/log"
-
 type Component interface {
 	Widget
 	SetContent(Widget)
@@ -18,36 +16,41 @@ func NewComponentBase(ctx Context, owner Widget, attrs ...Attr) *ComponentBase {
 		attr = attrs[0]
 	}
 	return &ComponentBase{
-		id: attr.GetString("id", ""),
+		info: &WidgetInfo{
+			ID: attr.GetString("id", ""),
+		},
 	}
 }
 
 type ComponentBase struct {
-	id      string
-	parent  Parent
+	info    *WidgetInfo
 	content Widget
 }
 
-func (me *ComponentBase) SetID(id string) {
-	me.id = id
+func (me *ComponentBase) Info() *WidgetInfo {
+	return me.info
 }
 
-func (me *ComponentBase) ID() string {
-	return me.id
-}
+// func (me *ComponentBase) SetID(id string) {
+// 	me.id = id
+// }
 
-func (me *ComponentBase) Parent() Parent {
-	return me.parent
-}
+// func (me *ComponentBase) ID() string {
+// 	return me.id
+// }
 
-// parent can be nil, may be remove form parent
-func (me *ComponentBase) AssignParent(parent Parent) {
-	if me.parent == nil {
-		me.parent = parent
-	} else {
-		log.Fatal("nuxui", "The parent of widget '%s' is already assigned, can not assign again.", me.ID())
-	}
-}
+// func (me *ComponentBase) Parent() Parent {
+// 	return me.parent
+// }
+
+// // parent can be nil, may be remove form parent
+// func (me *ComponentBase) AssignParent(parent Parent) {
+// 	if me.parent == nil {
+// 		me.parent = parent
+// 	} else {
+// 		log.Fatal("nuxui", "The parent of widget '%s' is already assigned, can not assign again.", me.Info().ID)
+// 	}
+// }
 
 func (me *ComponentBase) SetContent(content Widget) {
 	me.content = content

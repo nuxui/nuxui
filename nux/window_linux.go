@@ -56,6 +56,7 @@ func newWindow(attr Attr) *window {
 
 	me.CreateDecor(me.context, attr)
 	GestureBinding().AddGestureHandler(me.decor, &decorGestureHandler{})
+	mountWidget(me.decor, nil)
 	return me
 }
 

@@ -27,14 +27,14 @@ type Parent interface {
 }
 
 type WidgetParent struct {
-	Owner Parent
+	owner Parent
 	*WidgetBase
 	children []Widget
 }
 
 func NewWidgetParent(ctx Context, owner Parent, attrs ...Attr) *WidgetParent {
 	me := &WidgetParent{
-		Owner:      owner,
+		owner:      owner,
 		WidgetBase: NewWidgetBase(ctx, owner, attrs...),
 		children:   []Widget{},
 	}
@@ -43,18 +43,18 @@ func NewWidgetParent(ctx Context, owner Parent, attrs ...Attr) *WidgetParent {
 }
 
 func (me *WidgetParent) InsertChild(index int, child ...Widget) {
-	if index < 0 && index > len(me.children) {
+	if index < 0 || index > len(me.children) {
 		log.Fatal("nuxui", "index out of range when insert child to parent")
 	} else {
-		for _, c := range child {
-			c.AssignParent(me.Owner)
-		}
-
 		c := make([]Widget, len(me.children)+len(child))
 		c = append(c, me.children[:index]...)
 		c = append(c, child...)
 		c = append(c, me.children[index:]...)
 		me.children = c
+
+		for _, c := range child {
+			MountWidget(c, me.owner)
+		}
 	}
 }
 
@@ -65,19 +65,19 @@ func (me *WidgetParent) AddChild(child ...Widget) {
 	}
 
 	for _, c := range child {
-		c.AssignParent(me.Owner)
+		MountWidget(c, me.owner)
 	}
 
 	me.children = append(me.children, child...)
-	// RequestLayout(me.Owner)
-	// RequestRedraw(me.Owner)
+	// RequestLayout(me.owner)
+	// RequestRedraw(me.owner)
 }
 
 func (me *WidgetParent) Remove(index int) {
-	if index < 0 && index >= len(me.children) {
-		log.Fatal("nuxui", "out of range")
+	if index < 0 || index >= len(me.children) {
+		log.Fatal("nuxui", "index out of range")
 	} else {
-		me.children[index].AssignParent(nil)
+		EjectChild(me.children[index])
 		me.children = append(me.children[:index], me.children[index+1:]...)
 	}
 }
@@ -108,8 +108,8 @@ func (me *WidgetParent) ReplaceChild(src, dest Widget) int {
 	}
 
 	if index != -1 {
-		dest.AssignParent(me.Owner)
-		me.children[index].AssignParent(nil)
+		EjectChild(me.children[index])
+		MountWidget(dest, me.owner)
 		me.children[index] = dest
 	} else {
 		log.Fatal("nuxui", "child is not found in parent")
@@ -121,7 +121,7 @@ func (me *WidgetParent) ReplaceChild(src, dest Widget) int {
 func (me *WidgetParent) GetWidget(id string) Widget {
 	// TODO:: need check me.children is nil?
 	for _, child := range me.children {
-		if child.ID() == id {
+		if child.Info().ID == id {
 			return child
 		}
 	}

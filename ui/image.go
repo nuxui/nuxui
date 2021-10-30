@@ -15,7 +15,6 @@ import (
 type Image interface {
 	nux.Widget
 	nux.Size
-	nux.OnCreate
 	nux.Layout
 	nux.Measure
 	nux.Draw
@@ -98,7 +97,7 @@ func convertScaleTypeFromString(scaleType string) ScaleType {
 	return ScaleType_Center
 }
 
-func (me *image) OnCreate() {
+func (me *image) OnMount() {
 	if me.src != "" {
 		me.srcDrawable = NewImageDrawable(me.src)
 	}
