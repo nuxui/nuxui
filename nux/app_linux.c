@@ -424,19 +424,22 @@ void runOnUI(Display *display, Window window){
 void window_getSize(Display* display, Window window, int *width, int *height){
     XWindowAttributes attribs;
     XGetWindowAttributes(display, window, &attribs);
-
-    if (width)
-        *width = attribs.width;
-    if (height)
-        *height = attribs.height;
+    if (width) {*width = attribs.width;};
+    if (height) {*height = attribs.height;};
 }
 
-void window_setTitle(Display* display, Window window, char *name)
-{
+// TODO:: content size
+void window_getContentSize(Display* display, Window window, int *width, int *height){
+    XWindowAttributes attribs;
+    XGetWindowAttributes(display, window, &attribs);
+    if (width) {*width = attribs.width;};
+    if (height) {*height = attribs.height;};
+}
+
+void window_setTitle(Display* display, Window window, char *name){
     Atom utf8Str = XInternAtom(display, "UTF8_STRING", 0);
     XChangeProperty(display, window, XA_WM_NAME, utf8Str, 8, PropModeReplace, (unsigned char *)name, (int)strlen(name));
 }
-
 
 void setTextInputRect(short x, short y){
     g_ime_pos_x = x;

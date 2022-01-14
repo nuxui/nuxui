@@ -6,17 +6,17 @@ package ui
 
 import (
 	"fmt"
+	"math"
 	"time"
+	"unicode/utf8"
 
+	"github.com/nuxui/nuxui/log"
 	"github.com/nuxui/nuxui/nux"
 )
 
 type Editor interface {
 	nux.Widget
 	nux.Size
-	nux.Layout
-	nux.Measure
-	nux.Draw
 	Visual
 
 	Text() string
@@ -26,16 +26,15 @@ type Editor interface {
 func NewEditor(context nux.Context, attrs ...nux.Attr) Editor {
 	attr := getAttr(attrs...)
 	me := &editor{
-		cursorPosition: 0,
-		flicker:        false,
-		text:           attr.GetString("text", ""),
-		font:           nux.NewFont(attr),
-	}
-
-	ellipsize := attr.GetString("ellipsize", "none")
-	switch ellipsize {
-	case "none":
-		// text.ellipsize = C.PANGO_ELLIPSIZE_NONE
+		cursorPosition:     0,
+		flicker:            false,
+		text:               attr.GetString("text", ""),
+		textSize:           attr.GetFloat32("textSize", 12),
+		textColor:          attr.GetColor("textColor", nux.White),
+		textHighlightColor: attr.GetColor("textHighlightColor", nux.Transparent),
+		paint:              nux.NewPaint(attr.GetAttr("font", nux.Attr{})),
+		paintFlicker:       nux.NewPaint(),
+		// ellipsize: ellipsizeFromName(attr.GetString("ellipsize", "none")),
 	}
 
 	me.WidgetBase = nux.NewWidgetBase(context, me, attrs...)
@@ -43,6 +42,10 @@ func NewEditor(context nux.Context, attrs ...nux.Attr) Editor {
 	me.WidgetVisual = NewWidgetVisual(context, me, attrs...)
 	me.WidgetSize.AddOnSizeChanged(me.onSizeChanged)
 	me.WidgetVisual.AddOnVisualChanged(me.onVisualChanged)
+
+	nux.OnTapDown(me, me.onTapDown)
+	nux.OnPanStart(me, me.onPanStart)
+	nux.OnPanUpdate(me, me.OnPanUpdate)
 
 	return me
 }
@@ -52,32 +55,37 @@ type editor struct {
 	*nux.WidgetSize
 	*WidgetVisual
 
-	text        string
-	editingText string
-	editingLoc  int32
-	font        *nux.Font
-	ellipsize   int
+	text               string
+	textSize           float32
+	textColor          nux.Color
+	textHighlightColor nux.Color
+	editingText        string
+	editingLoc         int32
+	ellipsize          int
+	paint              nux.Paint
+	paintFlicker       nux.Paint
 
-	cursorPosition int
+	cursorPosition uint32
 	flicker        bool
 	flickerTimer   nux.Timer
 	focus          bool
 }
 
 func (me *editor) OnMount(content nux.Widget) {
+	log.D("nuxui", "====== Editor OnMount")
 	nux.OnTapDown(me, me.onTapDown)
 	nux.OnPanStart(me, me.onPanStart)
 	nux.OnPanUpdate(me, me.OnPanUpdate)
 }
 
 func (me *editor) onTapDown(detail nux.GestureDetail) {
-	// TODO:: x, y --> font position
-	me.cursorPosition = len([]rune(me.text))
+	ms := me.MeasuredSize()
+	me.cursorPosition = me.paint.CharacterIndexForPoint(me.text, float32(ms.Width), float32(ms.Height), detail.X(), detail.Y())
 	nux.RequestFocus(me)
 }
 
 func (me *editor) onPanStart(detail nux.GestureDetail) {
-	me.cursorPosition = len([]rune(me.text))
+	me.cursorPosition = uint32(strlen(me.text))
 	nux.RequestFocus(me)
 }
 
@@ -99,7 +107,7 @@ func (me *editor) FocusChanged(focus bool) {
 		nux.StartTextInput()
 		ms := me.MeasuredSize()
 		// TODO:: cursor position
-		nux.SetTextInputRect(float32(ms.Position.X), float32(ms.Position.Y)+me.font.Size, 0, 0)
+		nux.SetTextInputRect(float32(ms.Position.X), float32(ms.Position.Y)+me.paint.TextSize(), 0, 0)
 		me.startTick()
 	} else {
 		nux.StopTextInput()
@@ -145,17 +153,17 @@ func (me *editor) Measure(width, height int32) {
 		w := width
 		h := height
 
-		outW, outH := nux.MeasureText(me.text, me.font, w, h)
+		outW, outH := me.paint.MeasureText(me.text, float32(nux.MeasureSpecValue(w)), float32(nux.MeasureSpecValue(h)))
 		// log.V("nuxui", "Editor MeasureText %s %d %d", me.text, outW, outH)
 		ms := me.MeasuredSize()
 		if nux.MeasureSpecMode(width) == nux.Auto {
-			ms.Width = nux.MeasureSpec(outW+ms.Padding.Left+ms.Padding.Right, nux.Pixel)
+			ms.Width = nux.MeasureSpec(int32(math.Ceil(float64(outW)))+ms.Padding.Left+ms.Padding.Right, nux.Pixel)
 		} else {
 			ms.Width = width
 		}
 
 		if nux.MeasureSpecMode(height) == nux.Auto {
-			ms.Height = nux.MeasureSpec(outH+ms.Padding.Top+ms.Padding.Bottom, nux.Pixel)
+			ms.Height = nux.MeasureSpec(int32(math.Ceil(float64(outH)))+ms.Padding.Top+ms.Padding.Bottom, nux.Pixel)
 		} else {
 			ms.Height = height
 		}
@@ -167,27 +175,31 @@ func (me *editor) Draw(canvas nux.Canvas) {
 		me.Background().Draw(canvas)
 	}
 
+	log.D("nuxui", "Editor Draw:%s", me.text)
+
 	runes := []rune(me.text)
 	front := string(runes[:me.cursorPosition])
-	end := string(runes[me.cursorPosition:len(runes)])
+	end := string(runes[me.cursorPosition:])
 	all := fmt.Sprintf("%s%s%s", front, me.editingText, end)
-	m := fmt.Sprintf("%s%s", front, string([]rune(me.editingText)[:me.editingLoc]))
-	outW, outH := nux.MeasureText(m, me.font, 1000, 1000)
 
 	// TODO has padding?
 	ms := me.MeasuredSize()
 	canvas.Save()
-	canvas.Translate(ms.Padding.Left, ms.Padding.Top)
+	canvas.Translate(float32(ms.Padding.Left), float32(ms.Padding.Top))
 	canvas.ClipRect(0, 0,
-		ms.Width-ms.Padding.Left-ms.Padding.Right,
-		ms.Height-ms.Padding.Top-ms.Padding.Bottom)
+		float32(ms.Width-ms.Padding.Left-ms.Padding.Right),
+		float32(ms.Height-ms.Padding.Top-ms.Padding.Bottom))
 
-	canvas.DrawText(all, me.font, int32(ms.Width), int32(ms.Height), &nux.Paint{me.font.Color, nux.FILL, 2})
-	canvas.Translate(outW, 0)
-	p := &nux.Paint{Color: me.font.Color, Style: nux.FILL, Width: 1}
+	me.paint.SetColor(me.textColor)
+	canvas.DrawText(all, float32(ms.Width-ms.Padding.Left-ms.Padding.Right), float32(ms.Height-ms.Padding.Top-ms.Padding.Bottom), me.paint)
 
+	// draw cursor
+	m := fmt.Sprintf("%s%s", front, string([]rune(me.editingText)[:me.editingLoc]))
+	outW, outH := me.paint.MeasureText(m, 1000, 1000) // TODO:: 1000
+	canvas.Translate(float32(outW), 0)
 	if me.flicker {
-		canvas.DrawRect(0, 1, 1, outH-1, p)
+		me.paintFlicker.SetColor(0xcc000000)
+		canvas.DrawRect(0, 1, 1, float32(outH-1), me.paintFlicker)
 	}
 
 	canvas.Restore()
@@ -225,6 +237,8 @@ func (me *editor) stopTick() {
 }
 
 func (me *editor) OnTypeEvent(event nux.TypeEvent) bool {
+	log.V("nuxui", "Editor OnTypeEvent == %s", event.Text())
+
 	switch event.Action() {
 	case nux.Action_Preedit:
 		me.editingText = event.Text()
@@ -237,9 +251,9 @@ func (me *editor) OnTypeEvent(event nux.TypeEvent) bool {
 		me.editingLoc = 0
 		runes := []rune(me.text)
 		front := string(runes[:me.cursorPosition])
-		end := string(runes[me.cursorPosition:len(runes)])
+		end := string(runes[me.cursorPosition:])
 		ret := fmt.Sprintf("%s%s%s", front, event.Text(), end)
-		me.cursorPosition += len([]rune(event.Text()))
+		me.cursorPosition += uint32(strlen(event.Text()))
 		me.SetText(ret)
 		me.startTick()
 	}
@@ -248,22 +262,22 @@ func (me *editor) OnTypeEvent(event nux.TypeEvent) bool {
 }
 
 func (me *editor) OnKeyEvent(event nux.KeyEvent) bool {
+	log.V("nuxui", "Editor OnKeyEvent")
 	switch event.KeyCode() {
 	case nux.Key_BackSpace:
 		if event.Action() == nux.Action_Down {
-			if len(me.text) == 0 {
-				return false
-			}
-
-			me.cursorPosition--
-			if me.cursorPosition < 0 {
-				me.cursorPosition = 0
+			if utf8.RuneCountInString(me.text) == 0 {
 				return true
 			}
 
+			if me.cursorPosition == 0 {
+				return true
+			}
+			me.cursorPosition--
+
 			runes := []rune(me.text)
 			front := string(runes[:me.cursorPosition])
-			end := string(runes[me.cursorPosition+1 : len(runes)])
+			end := string(runes[me.cursorPosition+1:])
 			ret := fmt.Sprintf("%s%s", front, end)
 			me.SetText(ret)
 			me.startTick()
@@ -271,18 +285,18 @@ func (me *editor) OnKeyEvent(event nux.KeyEvent) bool {
 		}
 	case nux.Key_Delete:
 		if event.Action() == nux.Action_Down {
-			if len(me.text) == 0 {
-				return false
+			if strlen(me.text) == 0 {
+				return true
 			}
 
 			runes := []rune(me.text)
-			if me.cursorPosition+1 > len(runes) {
-				me.cursorPosition = len(runes)
+			if me.cursorPosition+1 > uint32(len(runes)) {
+				me.cursorPosition = uint32(len(runes))
 				return true
 			}
 
 			front := string(runes[:me.cursorPosition])
-			end := string(runes[me.cursorPosition+1 : len(runes)])
+			end := string(runes[me.cursorPosition+1:])
 			ret := fmt.Sprintf("%s%s", front, end)
 			me.SetText(ret)
 			me.startTick()
@@ -290,28 +304,40 @@ func (me *editor) OnKeyEvent(event nux.KeyEvent) bool {
 		}
 	case nux.Key_Left:
 		if event.Action() == nux.Action_Down && me.editingText == "" {
-			me.cursorPosition--
-			if me.cursorPosition < 0 {
-				me.cursorPosition = 0
+			if me.cursorPosition == 0 {
 				return true
 			}
+			me.cursorPosition--
 			nux.RequestRedraw(me)
 			me.startTick()
 		}
 	case nux.Key_Right:
 		if event.Action() == nux.Action_Down && me.editingText == "" {
-			me.cursorPosition++
-			maxlen := len([]rune(me.text))
-			if me.cursorPosition > maxlen {
-				me.cursorPosition = maxlen
+			if me.cursorPosition == uint32(strlen(me.text)) {
 				return true
 			}
+			me.cursorPosition++
 			nux.RequestRedraw(me)
 			me.startTick()
 		}
+	case nux.Key_Tab:
+		if event.Action() == nux.Action_Down {
+			runes := []rune(me.text)
+			front := string(runes[:me.cursorPosition])
+			end := string(runes[me.cursorPosition:])
+			ret := fmt.Sprintf("%s\t%s", front, end)
+			me.cursorPosition++
+			me.SetText(ret)
+			me.startTick()
+			return true
+		}
 	case nux.Key_Up:
 	case nux.Key_Down:
-	case nux.Key_V:
+
 	}
 	return true
+}
+
+func strlen(text string) int {
+	return len([]rune(text))
 }

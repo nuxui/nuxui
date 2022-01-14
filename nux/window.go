@@ -16,14 +16,11 @@ const (
 type Window interface {
 	ID() uint64
 	// Surface() Surface
-	LockCanvas() (Canvas, error)
-	UnlockCanvas() error
-	// OnInputEvent()
+	LockCanvas() Canvas
+	UnlockCanvas(Canvas)
 	Decor() Widget
-	Width() int32
-	Height() int32
-	ContentWidth() int32
-	ContentHeight() int32
+	Size() (width, height int32)
+	ContentSize() (width, height int32)
 	Alpha() float32
 	SetAlpha(alpha float32)
 	Title() string
@@ -59,30 +56,11 @@ func (me *window) OnCreate() {
 	} else {
 		mainWidgetCreator := FindRegistedWidgetCreatorByName(main)
 		ctx := &context{}
-		// widgetTree := RenderWidget(mainWidgetCreator(ctx, Attr{}))
-		log.I("nuxui", "======  mainWidgetCreator")
 		widgetTree := mainWidgetCreator(ctx, Attr{})
-		log.I("nuxui", "======  decor AddChild  widgetTree begin")
 		me.decor.AddChild(widgetTree)
-		log.I("nuxui", "======  decor AddChild  widgetTree end")
 		mountWidget(me.decor, nil)
-
 	}
 
-}
-
-func (me *window) CreateDecor(ctx Context, attr Attr) Widget {
-	creator := FindRegistedWidgetCreatorByName("github.com/nuxui/nuxui/ui.Layer")
-	w := creator(ctx, attr)
-	if p, ok := w.(Parent); ok {
-		me.decor = p
-	} else {
-		log.Fatal("nuxui", "decor must is a Parent")
-	}
-
-	decorWindowList[w] = me
-
-	return me.decor
 }
 
 func (me *window) Measure(width, height int32) {
@@ -98,8 +76,6 @@ func (me *window) Measure(width, height int32) {
 		s.MeasuredSize().Width = width
 		s.MeasuredSize().Height = height
 	}
-
-	me.surfaceResized = true
 
 	if f, ok := me.decor.(Measure); ok {
 		f.Measure(width, height)

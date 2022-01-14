@@ -4,453 +4,185 @@
 
 package nux
 
-/*
-#include <cairo/cairo.h>
-#include <cairo/cairo-pdf.h>
-#include <cairo/cairo-ps.h>
-#include <cairo/cairo-svg.h>
-#include <pango/pangocairo.h>
+import "github.com/nuxui/nuxui/log"
 
-#include <stdlib.h>
-#include <string.h>
-#include <stdint.h>
-#include <stdio.h>
-
-void measureText(cairo_t* cr, char* fontFamily, int fontWeight, int fontSize,
-	char* text, int width, int height, int* outWidth, int* outHeight){
-	PangoLayout *layout;
-	PangoFontDescription *font_description;
-
-	font_description = pango_font_description_new ();
-	pango_font_description_set_family (font_description, fontFamily);
-	// pango_font_description_set_family_static (font_description, "Apple Color Emoji");
-	// pango_font_description_set_weight (font_description, fontWeight);
-	// pango_font_description_set_absolute_size (font_description, fontSize * PANGO_SCALE);
-	// pango_font_description_set_stretch(font_description, PANGO_STRETCH_NORMAL);
-	// pango_font_description_set_style(font_description, PANGO_STYLE_ITALIC);
-	// pango_font_description_set_variant(font_description, PANGO_VARIANT_SMALL_CAPS);
-	// pango_font_description_set_gravity(font_description, PANGO_GRAVITY_NORTH);
-
-	layout = pango_cairo_create_layout (cr);
-	pango_layout_set_font_description (layout, font_description);
-	pango_layout_set_width (layout, width * PANGO_SCALE);
-	pango_layout_set_height (layout, height * PANGO_SCALE);
-	pango_layout_set_text (layout, text, -1);
-	pango_layout_set_wrap (layout, PANGO_WRAP_WORD_CHAR);
-	// pango_layout_set_justify(layout, TRUE);
-	// pango_layout_set_indent(layout, 4);
-	// pango_layout_set_markup(layout, "*", 10);
-	// pango_layout_set_single_paragraph_mode(layout, TRUE);
-	// pango_layout_set_alignment(layout,PANGO_ALIGN_RIGHT);
-
-	pango_layout_get_size(layout, outWidth, outHeight);
-
-	pango_font_description_free (font_description);
-	g_object_unref (layout);
+type Path interface {
+	AddArc(left, top, right, bottom, startAngle, sweepAngle float32)
+	MoveTo(x, y float32)
+	LineTo(x, y float32)
+	Close()
 }
 
-void drawText(cairo_t* cr, char* fontFamily, int fontWeight, int fontSize,
-	char* text, int width, int height){
-	PangoLayout *layout;
-	PangoFontDescription *font_description;
-
-	font_description = pango_font_description_new ();
-	pango_font_description_set_family (font_description, fontFamily);
-	// pango_font_description_set_family_static (font_description, "Apple Color Emoji");
-	// pango_font_description_set_weight (font_description, fontWeight);
-	// pango_font_description_set_absolute_size (font_description, fontSize * PANGO_SCALE);
-	// pango_font_description_set_stretch(font_description, PANGO_STRETCH_NORMAL);
-	// pango_font_description_set_style(font_description, PANGO_STYLE_ITALIC);
-	// pango_font_description_set_variant(font_description, PANGO_VARIANT_SMALL_CAPS);
-	// pango_font_description_set_gravity(font_description, PANGO_GRAVITY_NORTH);
-
-
-	layout = pango_cairo_create_layout (cr);
-	pango_layout_set_font_description (layout, font_description);
-	pango_layout_set_width (layout, width * PANGO_SCALE);
-	pango_layout_set_height (layout, height * PANGO_SCALE);
-	pango_layout_set_text (layout, text, -1);
-	pango_layout_set_wrap (layout, PANGO_WRAP_WORD_CHAR);
-	// pango_layout_set_justify(layout, TRUE);
-	// pango_layout_set_indent(layout, 4);
-	// pango_layout_set_markup(layout, "*", 10);
-	// pango_layout_set_single_paragraph_mode(layout, TRUE);
-	// pango_layout_set_alignment(layout,PANGO_ALIGN_RIGHT);
-
-	pango_cairo_show_layout (cr, layout);
-
-	pango_font_description_free (font_description);
-	g_object_unref (layout);
+type Matrix struct {
+	A float32
+	B float32
+	C float32
+	D float32
+	E float32
+	F float32
 }
-
-*/
-import "C"
-import (
-	"unsafe"
-
-	"github.com/nuxui/nuxui/log"
-)
 
 type Canvas interface {
 	Save()
 	Restore()
 
-	Translate(x, y int32)
-	TranslateF(x, y float32)
-	Scale(x, y int32)
-	ScaleF(x, y float32)
-	Rotate(angle int32)
-	RotateF(angle float32)
-	// Transform()
-	// SetMatrix()
-	// GetMatrix()
-	// Skew()
-	ClipRect(left, top, right, bottom int32)
-	ClipRectF(left, top, right, bottom float32)
-	// ClipPath()
+	Translate(x, y float32)
+	Scale(x, y float32)
+	Rotate(angle float32)
+	Skew(x, y float32)                  // https://developer.android.com/reference/android/graphics/Canvas#skew(float,%20float)
+	Transform(a, b, c, d, e, f float32) //
+	SetMatrix(matrix Matrix)            // https://cairographics.org/manual/cairo-Transformations.html#cairo-set-matrix
+	GetMatrix() Matrix                  // https://cairographics.org/manual/cairo-Transformations.html#cairo-get-matrix
+
+	ClipRect(left, top, right, bottom float32)
+	ClipPath(path Path)
 
 	///////////// draw
-	DrawRect(left, top, right, bottom int32, paint *Paint)
-	DrawRectF(left, top, right, bottom float32, paint *Paint)
-	DrawArc(x, y, radius, angle1, angle2 float32, useCenter bool, paint *Paint)
-	DrawOval(left, top, right, bottom int32, paint *Paint)
-	DrawOvalF(left, top, right, bottom float32, paint *Paint)
-	DrawRoundRect(left, top, right, bottom int32, radius int32, paint *Paint)
-	DrawRoundRectF(left, top, right, bottom float32, radius float32, paint *Paint)
-	// drawPaint(paint *Paint)
+	SetAlpha(alpha float32)
+	DrawRect(left, top, right, bottom float32, paint Paint)
+	DrawRoundRect(left, top, right, bottom float32, radius float32, paint Paint)
+	DrawArc(x, y, radius, startAngle, endAngle float32, useCenter bool, paint Paint)
+	DrawOval(left, top, right, bottom float32, paint Paint)
+	DrawPath(path Path)
 	DrawColor(color Color)
-	DrawAlpha(alpha float32)
-	SetColor(color Color)
-	// GetTextRect(text string, fontFamily string, fontSize float32) C.cairo_text_extents_t
-	DrawText(text string, font *Font, width, height int32, paint *Paint)
-
-	MeasureText(text string, font *Font, width, height int32) (outWidth, outHeight int32)
-
-	// DrawImage(src string, width, height int32)
-	// DrawPNG(*cPNGImage)
 	DrawImage(img Image)
+	DrawText(text string, width, height float32, paint Paint)
 
-	SetAntialias(a int)
-	GetAntialias() int
+	ResetClip()
 
-	UserToDevice(x, y float32)
-
+	Flush()
 	Destroy()
 }
 
-const (
-	FORMAT_INVALID   = -1
-	FORMAT_ARGB32    = 0
-	FORMAT_RGB24     = 1
-	FORMAT_A8        = 2
-	FORMAT_A1        = 3
-	FORMAT_RGB16_565 = 4
-	FORMAT_RGB30     = 5
-)
+type PaintStyle int
 
 const (
-	ANTIALIAS_DEFAULT  = C.CAIRO_ANTIALIAS_DEFAULT
-	ANTIALIAS_NONE     = C.CAIRO_ANTIALIAS_NONE
-	ANTIALIAS_GRAY     = C.CAIRO_ANTIALIAS_GRAY
-	ANTIALIAS_SUBPIXEL = C.CAIRO_ANTIALIAS_SUBPIXEL
-	ANTIALIAS_FAST     = C.CAIRO_ANTIALIAS_FAST
-	ANTIALIAS_GOOD     = C.CAIRO_ANTIALIAS_GOOD
-	ANTIALIAS_BEST     = C.CAIRO_ANTIALIAS_BEST
+	PaintStyle_Fill   PaintStyle = 0
+	PaintStyle_Stroke PaintStyle = 1
+	PaintStyle_Both   PaintStyle = 2
 )
+
+type Paint interface {
+	Color() Color
+	SetColor(color Color)
+	AntiAlias() bool
+	SetAntiAlias(antialias bool)
+	Width() float32
+	SetWidth(width float32)
+	Style() PaintStyle
+	SetStyle(style PaintStyle)
+	TextSize() float32
+	SetTextSize(size float32)
+	MeasureText(text string, width, height float32) (outWidth float32, outHeight float32)
+	CharacterIndexForPoint(text string, width, height float32, x, y float32) uint32
+}
+
+func NewPaint(attrs ...Attr) Paint {
+	attr := Attr{}
+	attr.Merge(attrs...)
+
+	me := &paint{
+		style:      PaintStyle_Fill,
+		textSize:   attr.GetFloat32("textSize", 14),
+		color:      attr.GetColor("color", 0xff000000),
+		antialias:  attr.GetBool("antialias", false),
+		fontFamily: attr.GetString("family", ""),
+		fontWeight: FontWeightFromName(attr.GetString("weight", "normal")),
+		fontItalic: attr.GetString("style", "normal") == "italic",
+	}
+	return me
+}
+
+type FontWeight int
 
 const (
-	PI     = 3.1415926535897932384626433832795028841971
-	PI2    = PI * 2
-	DEGREE = PI / 180.0
+	FontWeight_Thin       FontWeight = 100
+	FontWeight_ExtraLight FontWeight = 200
+	FontWeight_Light      FontWeight = 300
+	FontWeight_Normal     FontWeight = 400
+	FontWeight_Medium     FontWeight = 500
+	FontWeight_SemiBold   FontWeight = 600
+	FontWeight_Bold       FontWeight = 700
+	FontWeight_ExtraBold  FontWeight = 800
+	FontWeight_Black      FontWeight = 900
 )
 
-func newCanvas() Canvas {
-	return &canvas{}
-}
-
-// Canvas c
-type canvas struct {
-	ptr *C.cairo_t
-}
-
-func (me *canvas) Save() {
-	C.cairo_save(me.ptr)
-}
-
-func (me *canvas) Restore() {
-	C.cairo_restore(me.ptr)
-}
-
-func (me *canvas) Translate(x, y int32) {
-	C.cairo_translate(me.ptr, C.double(x), C.double(y))
-}
-
-func (me *canvas) TranslateF(x, y float32) {
-	C.cairo_translate(me.ptr, C.double(x), C.double(y))
-}
-
-func (me *canvas) Scale(x, y int32) {
-	C.cairo_scale(me.ptr, C.double(x), C.double(y))
-}
-
-func (me *canvas) ScaleF(x, y float32) {
-	C.cairo_scale(me.ptr, C.double(x), C.double(y))
-}
-
-func (me *canvas) Rotate(angle int32) {
-	C.cairo_rotate(me.ptr, C.double(angle))
-}
-
-func (me *canvas) RotateF(angle float32) {
-	C.cairo_rotate(me.ptr, C.double(angle))
-}
-
-// TODO https://cairographics.org/manual/cairo-Transformations.html#cairo-transform
-func (me *canvas) Transform() {
-}
-
-// TODO https://cairographics.org/manual/cairo-Transformations.html#cairo-set-matrix
-func (me *canvas) SetMatrix() {
-}
-
-// TODO https://cairographics.org/manual/cairo-Transformations.html#cairo-get-matrix
-func (me *canvas) GetMatrix() {
-}
-
-// TODO https://developer.android.com/reference/android/graphics/Canvas#skew(float,%20float)
-func (me *canvas) Skew() {
-}
-
-func (me *canvas) ClipRect(left, top, right, bottom int32) {
-	me.ClipRectF(float32(left), float32(top), float32(right), float32(bottom))
-}
-
-func (me *canvas) ClipRectF(left, top, right, bottom float32) {
-	if right < left || bottom < top {
-		log.Fatal("nuxui", "invalid rect for clip")
-	}
-	C.cairo_rectangle(me.ptr, C.double(left), C.double(top), C.double(right-left), C.double(bottom-top))
-	C.cairo_clip(me.ptr)
-}
-
-func (me *canvas) ClipPath() {
-	// TODO::
-}
-
-func (me *canvas) DrawRect(left, top, right, bottom int32, paint *Paint) {
-	me.DrawRectF(float32(left), float32(top), float32(right), float32(bottom), paint)
-}
-
-func (me *canvas) DrawRectF(left, top, right, bottom float32, paint *Paint) {
-	if right <= left || bottom <= top {
-		return
-	}
-
-	fix := paint.Style == STROKE && int32(paint.Width)%2 != 0
-	if fix {
-		// C.cairo_identity_matrix(me.ptr)
-		me.Save()
-		me.TranslateF(-0.5, -0.5)
-
-	}
-
-	C.cairo_rectangle(me.ptr, C.double(left), C.double(top), C.double(right-left), C.double(bottom-top))
-	me.drawPaint(paint)
-
-	if fix {
-		me.Restore()
+func FontWeightFromName(name string) FontWeight {
+	switch name {
+	case "thin":
+		return FontWeight_Thin
+	case "extraLight":
+		return FontWeight_ExtraLight
+	case "light":
+		return FontWeight_Light
+	case "normal":
+		return FontWeight_Normal
+	case "medium":
+		return FontWeight_Medium
+	case "semiBold":
+		return FontWeight_SemiBold
+	case "bold":
+		return FontWeight_Bold
+	case "extraBold":
+		return FontWeight_ExtraBold
+	case "black":
+		return FontWeight_Black
+	default:
+		log.E("nuxui", "unknow font weight name %s", name)
+		return FontWeight_Normal
 	}
 }
 
-func (me *canvas) DrawArc(x, y, radius, angle1, angle2 float32, useCenter bool, paint *Paint) {
-	if useCenter {
-		// TODO
-		C.cairo_arc(me.ptr, C.double(x), C.double(y), C.double(radius), C.double(angle1*DEGREE), C.double(angle2*DEGREE))
-		me.drawPaint(paint)
-	} else {
-		C.cairo_arc(me.ptr, C.double(x), C.double(y), C.double(radius), C.double(angle1*DEGREE), C.double(angle2*DEGREE))
-		me.drawPaint(paint)
-	}
+type paint struct {
+	color      Color
+	style      PaintStyle
+	width      float32
+	textSize   float32
+	antialias  bool
+	fontFamily string
+	fontWeight FontWeight
+	fontItalic bool
 }
 
-func (me *canvas) DrawOval(left, top, right, bottom int32, paint *Paint) {
-	me.DrawOvalF(float32(left), float32(top), float32(right), float32(bottom), paint)
+func (me *paint) Color() Color {
+	return me.color
 }
 
-func (me *canvas) DrawOvalF(left, top, right, bottom float32, paint *Paint) {
-	if left > right || top > bottom {
-		return
-	}
-
-	me.Save()
-	width := right - left
-	height := bottom - top
-	var centerX, centerY, scaleX, scaleY, radius float32
-	if width > height {
-		centerX = left + width/2.0
-		centerY = top + width/2.0
-		scaleX = 1.0
-		scaleY = height / width
-		radius = width / 2.0
-	} else {
-		centerX = left + height/2.0
-		centerY = top + height/2.0
-		scaleX = width / height
-		scaleY = 1.0
-		radius = height / 2.0
-	}
-
-	C.cairo_scale(me.ptr, C.double(scaleX), C.double(scaleY))
-	C.cairo_arc(me.ptr, C.double(centerX), C.double(centerY), C.double(radius), C.double(0), C.double(PI2))
-	me.drawPaint(paint)
-	me.Restore()
+func (me *paint) SetColor(color Color) {
+	me.color = color
 }
 
-func (me *canvas) DrawRoundRect(left, top, right, bottom, radius int32, paint *Paint) {
-	me.DrawRoundRectF(float32(left), float32(top), float32(right), float32(bottom), float32(radius), paint)
+func (me *paint) AntiAlias() bool {
+	return me.antialias
 }
 
-func (me *canvas) DrawRoundRectF(left, top, right, bottom, radius float32, paint *Paint) {
-	C.cairo_new_sub_path(me.ptr)
-	C.cairo_arc(me.ptr, C.double(right-radius), C.double(top+radius), C.double(radius), -90*DEGREE, 0)
-	C.cairo_arc(me.ptr, C.double(right-radius), C.double(bottom-radius), C.double(radius), 0, 90*DEGREE)
-	C.cairo_arc(me.ptr, C.double(left+radius), C.double(bottom-radius), C.double(radius), 90*DEGREE, 180*DEGREE)
-	C.cairo_arc(me.ptr, C.double(left+radius), C.double(top+radius), C.double(radius), 180*DEGREE, 270*DEGREE)
-	C.cairo_close_path(me.ptr)
-	me.drawPaint(paint)
+func (me *paint) SetAntiAlias(antialias bool) {
+	me.antialias = antialias
 }
 
-func (me *canvas) drawPaint(paint *Paint) {
-	a := float32((paint.Color>>24)&0xff) / 255
-	r := float32((paint.Color>>16)&0xff) / 255
-	g := float32((paint.Color>>8)&0xff) / 255
-	b := float32((paint.Color)&0xff) / 255
-	// C.cairo_fill_preserve(me.ptr)
-	C.cairo_set_source_rgba(me.ptr, C.double(r), C.double(g), C.double(b), C.double(a))
-	C.cairo_set_line_width(me.ptr, C.double(paint.Width))
-	switch paint.Style {
-	case STROKE:
-		C.cairo_stroke(me.ptr)
-	case FILL:
-		C.cairo_fill(me.ptr)
-	}
+func (me *paint) Width() float32 {
+	return me.width
 }
 
-func (me *canvas) DrawColor(color Color) {
-	a := float32((color>>24)&0xff) / 255
-	r := float32((color>>16)&0xff) / 255
-	g := float32((color>>8)&0xff) / 255
-	b := float32((color)&0xff) / 255
-	C.cairo_set_source_rgba(me.ptr, C.double(r), C.double(g), C.double(b), C.double(a))
-	// t1 := time.Now()
-	C.cairo_paint(me.ptr)
-	// log.V("nuxui", "cairo_paint used time %d", time.Now().Sub(t1).Milliseconds())
+func (me *paint) SetWidth(width float32) {
+	me.width = width
+}
+func (me *paint) Style() PaintStyle {
+	return me.style
 }
 
-func (me *canvas) DrawAlpha(alpha float32) {
-	C.cairo_paint_with_alpha(me.ptr, C.double(alpha))
+func (me *paint) SetStyle(style PaintStyle) {
+	me.style = style
 }
 
-func (me *canvas) SetColor(color Color) {
-	a := float32((color>>24)&0xff) / 255
-	r := float32((color>>16)&0xff) / 255
-	g := float32((color>>8)&0xff) / 255
-	b := float32((color)&0xff) / 255
-	C.cairo_set_source_rgba(me.ptr, C.double(r), C.double(g), C.double(b), C.double(a))
+func (me *paint) TextSize() float32 {
+	return me.textSize
 }
 
-func (me *canvas) GetTextRect(text string, fontFamily string, fontSize float32) C.cairo_text_extents_t {
-	str := C.CString(text)
-	font := C.CString(fontFamily)
-	C.cairo_select_font_face(me.ptr, font, C.CAIRO_FONT_SLANT_NORMAL, C.CAIRO_FONT_WEIGHT_NORMAL)
-
-	C.cairo_set_font_size(me.ptr, C.double(fontSize))
-
-	var extents C.cairo_text_extents_t
-	C.cairo_text_extents(me.ptr, str, (*C.cairo_text_extents_t)(unsafe.Pointer(&extents)))
-	C.free(unsafe.Pointer(str))
-	C.free(unsafe.Pointer(font))
-	return extents
+func (me *paint) SetTextSize(size float32) {
+	me.textSize = size
 }
 
-func (me *canvas) DrawText(text string, font *Font, width, height int32, paint *Paint) {
-	fontFamily := C.CString(font.Family)
-	ctext := C.CString(text)
-	me.SetColor(paint.Color)
-	C.drawText(me.ptr, fontFamily, C.int(font.Weight), C.int(font.Size), ctext, C.int(width), C.int(height))
-	me.drawPaint(paint)
-	C.free(unsafe.Pointer(fontFamily))
-	C.free(unsafe.Pointer(ctext))
-}
-
-func (me *canvas) MeasureText(text string, font *Font, width, height int32) (outWidth, outHeight int32) {
-	fontFamily := C.CString(font.Family)
-	ctext := C.CString(text)
-	var w, h C.int
-	C.measureText(me.ptr, fontFamily, C.int(font.Weight), C.int(font.Size), ctext, C.int(width), C.int(height), &w, &h)
-	outWidth = int32(float64(w)/float64(C.PANGO_SCALE) + 0.99999)
-	outHeight = int32(float64(h)/float64(C.PANGO_SCALE) + 0.99999)
-	C.free(unsafe.Pointer(fontFamily))
-	C.free(unsafe.Pointer(ctext))
-	return
-}
-
-func (me *canvas) DrawImage(img Image) {
-	C.cairo_set_source_surface(me.ptr, img.Buffer(), 0, 0)
-	C.cairo_paint(me.ptr)
-}
-
-func (me *canvas) deviceToUser(x, y float32) {
-	dx := C.double(x)
-	dy := C.double(y)
-	C.cairo_device_to_user(me.ptr, &dx, &dy)
-}
-
-func (me *canvas) UserToDevice(x, y float32) {
-	me.userToDevice(x, y)
-}
-
-func (me *canvas) userToDevice(x, y float32) {
-	dx := C.double(x)
-	dy := C.double(y)
-	C.cairo_user_to_device(me.ptr, &dx, &dy)
-	log.V("nuxui", "userToDevice x=%f, y=%f, dx=%f, dy=%f", x, y, dx, dy)
-	C.cairo_device_to_user(me.ptr, &dx, &dy)
-	log.V("nuxui", "deviceToUser x=%f, y=%f, dx=%f, dy=%f", x, y, dx, dy)
-}
-
-func (me *canvas) SetAntialias(a int) {
-	C.cairo_set_antialias(me.ptr, C.cairo_antialias_t(a))
-}
-
-func (me *canvas) GetAntialias() int {
-	return int(C.cairo_get_antialias(me.ptr))
-}
-
-func (me *canvas) Destroy() {
-	C.cairo_destroy(me.ptr)
-}
-
-var canvas4measure Canvas = &canvas{ptr: C.cairo_create(nil)}
-
-func MeasureText(text string, font *Font, width, height int32) (outWidth, outHeight int32) {
-	// md := log.Time()
-	// defer log.TimeEnd("nuxui", "canvas MeasureText", md)
-	return canvas4measure.MeasureText(text, font, width, height)
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////
-/////////////                         Paint                           ///////////////////
-/////////////////////////////////////////////////////////////////////////////////////////
-
-const (
-	STROKE        = 0
-	FILL          = 1
-	FILLANDSTROKE = 2
-)
-
-type Paint struct {
-	Color Color
-	Style int32
-	Width float32
-}
+// func (me *paint) MeasureText(text string, start, end int32) (width float32, height float32) {
+// 	return
+// }

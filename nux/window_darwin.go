@@ -2,13 +2,13 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build darwin
+//go:build darwin && !ios
 
 package nux
 
 /*
 #cgo CFLAGS: -x objective-c -DGL_SILENCE_DEPRECATION
-#cgo LDFLAGS: -framework Cocoa -framework OpenGL
+#cgo LDFLAGS: -framework Cocoa
 #import <Carbon/Carbon.h> // for HIToolbox/Events.h
 #import <Cocoa/Cocoa.h>
 
@@ -16,11 +16,9 @@ char*   window_title(uintptr_t window);
 void    window_setTitle(uintptr_t window, char* title);
 float   window_alpha(uintptr_t window);
 void    window_setAlpha(uintptr_t window, float alpha);
-int32_t window_getWidth(uintptr_t window);
-int32_t window_getHeight(uintptr_t window);
-int32_t window_getContentWidth(uintptr_t window);
-int32_t window_getContentHeight(uintptr_t window);
-void*   window_getCGContext(uintptr_t window);
+void    window_getSize(uintptr_t window, int32_t *width, int32_t *height);
+void    window_getContentSize(uintptr_t window, int32_t *width, int32_t *height);
+CGContextRef window_getCGContext(uintptr_t window);
 */
 import "C"
 
@@ -30,7 +28,6 @@ import (
 	"github.com/nuxui/nuxui/log"
 )
 
-// merge window and activity ?
 type window struct {
 	windptr      C.uintptr_t
 	decor        Parent
@@ -43,16 +40,13 @@ type window struct {
 	initEvent PointerEvent
 	timer     Timer
 
-	context        Context
-	surface        *Surface
-	surfaceResized bool
-	cgContext      uintptr
+	context Context
+	canvas  Canvas
 }
 
 func newWindow(attr Attr) *window {
 	me := &window{
-		context:        &context{},
-		surfaceResized: true,
+		context: &context{},
 	}
 
 	me.CreateDecor(me.context, attr)
@@ -63,65 +57,57 @@ func newWindow(attr Attr) *window {
 	return me
 }
 
+func (me *window) CreateDecor(ctx Context, attr Attr) Widget {
+	creator := FindRegistedWidgetCreatorByName("github.com/nuxui/nuxui/ui.Layer")
+	w := creator(ctx, attr)
+	if p, ok := w.(Parent); ok {
+		me.decor = p
+	} else {
+		log.Fatal("nuxui", "decor must is a Parent")
+	}
+
+	decorWindowList[w] = me
+
+	return me.decor
+}
+
 func (me *window) Draw(canvas Canvas) {
-	log.V("nuxui", "window Draw start")
+	// log.V("nuxui", "window Draw start")
 	if me.decor != nil {
 		if f, ok := me.decor.(Draw); ok {
-			log.V("nuxui", "window Draw canvas save")
+			_, h := me.ContentSize()
 			canvas.Save()
-			// TODO:: canvas clip
-			canvas.Translate(0, me.ContentHeight())
+			canvas.Translate(0, float32(h))
 			canvas.Scale(1, -1)
-			log.V("nuxui", "window Draw canvas scale then draw")
 			f.Draw(canvas)
 			canvas.Restore()
 		}
 	}
-	log.V("nuxui", "window Draw end")
 }
 
 func (me *window) ID() uint64 {
 	return 0
 }
 
-func (me *window) Width() int32 {
-	return int32(C.window_getWidth(me.windptr))
+func (me *window) Size() (width, height int32) {
+	var w, h C.int32_t
+	C.window_getSize(me.windptr, &w, &h)
+	return int32(w), int32(h)
 }
 
-func (me *window) Height() int32 {
-	return int32(C.window_getHeight(me.windptr))
+func (me *window) ContentSize() (width, height int32) {
+	var w, h C.int32_t
+	C.window_getContentSize(me.windptr, &w, &h)
+	return int32(w), int32(h)
 }
 
-func (me *window) ContentWidth() int32 {
-	return int32(C.window_getContentWidth(me.windptr))
+func (me *window) LockCanvas() Canvas {
+	me.canvas = newCanvas(C.window_getCGContext(me.windptr))
+	return me.canvas
 }
 
-func (me *window) ContentHeight() int32 {
-	return int32(C.window_getContentHeight(me.windptr))
-}
-
-func (me *window) LockCanvas() (Canvas, error) {
-	w := me.ContentWidth()
-	h := me.ContentHeight()
-	if me.surface == nil {
-		me.cgContext = uintptr(C.window_getCGContext(me.windptr))
-		me.surface = newSurfaceQuartzWithCGContext(me.cgContext, w, h)
-	} else {
-		// TODO:: did cairo_surface has method to resize instead of recreate
-		if me.surfaceResized {
-			me.surface.GetCanvas().Destroy()
-			me.surface.Destroy()
-			me.cgContext = uintptr(C.window_getCGContext(me.windptr))
-			me.surface = newSurfaceQuartzWithCGContext(me.cgContext, w, h)
-			me.surfaceResized = false
-		}
-	}
-	return me.surface.GetCanvas(), nil
-}
-
-func (me *window) UnlockCanvas() error {
-	me.surface.Flush()
-	return nil
+func (me *window) UnlockCanvas(c Canvas) {
+	me.canvas.Flush()
 }
 
 func (me *window) Decor() Widget {

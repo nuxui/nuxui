@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build darwin
+//go:build darwin && !ios
 
 package nux
 
@@ -296,7 +296,7 @@ var lastModifierKeyEvent map[KeyCode]bool = map[KeyCode]bool{}
 
 //export go_drawEvent
 func go_drawEvent(windptr C.uintptr_t) {
-	log.V("nuxui", "go_drawEvent -----")
+	// log.V("nuxui", "go_drawEvent -----")
 	e := &event{
 		window: theApp.findWindow(windptr),
 		time:   time.Now(),
@@ -384,7 +384,7 @@ func runOnUI(callback func()) {
 }
 
 func requestRedraw() {
-	log.V("nuxui", "requestRedraw invalidate")
+	// log.V("nuxui", "requestRedraw invalidate")
 	C.invalidate()
 }
 

@@ -88,7 +88,7 @@ func (me Attr) GetColor(key string, defaultValue Color) (result Color) {
 				result = defaultValue
 			} else {
 				t = strings.TrimPrefix(t, "#")
-				if len(t) == 6 {
+				if strlen(t) == 6 {
 					t = "FF" + t
 				}
 				v, e := strconv.ParseUint(t, 16, 32)
@@ -335,6 +335,14 @@ func (me Attr) GetStringArray(key string, defaultValue []string) []string {
 		}
 	}
 	return defaultValue
+}
+
+func (me Attr) Merge(attr ...Attr) {
+	for _, a := range attr {
+		for k, v := range a {
+			me[k] = v
+		}
+	}
 }
 
 func (me Attr) String() string {
@@ -665,4 +673,8 @@ func (me *attr) nextString(end rune) string {
 
 out:
 	return ret
+}
+
+func strlen(text string) int {
+	return len([]rune(text))
 }

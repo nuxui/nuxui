@@ -29,9 +29,9 @@ func ParseColor(color string, defaultValue Color) Color {
 		return defaultValue
 	}
 
-	if len(color) >= 1 && color[0] == '#' {
+	if strlen(color) >= 1 && color[0] == '#' {
 		color = strings.Replace(color, "#", "", 1)
-	} else if len(color) >= 2 && color[0] == '0' && color[1] == 'x' {
+	} else if strlen(color) >= 2 && color[0] == '0' && color[1] == 'x' {
 		color = strings.Replace(color, "0x", "", 1)
 	}
 
@@ -42,4 +42,12 @@ func ParseColor(color string, defaultValue Color) Color {
 	}
 
 	return Color(i)
+}
+
+func (me Color) ARGBf() (a, r, g, b float32) {
+	a = float32((me>>24)&0xff) / 255
+	r = float32((me>>16)&0xff) / 255
+	g = float32((me>>8)&0xff) / 255
+	b = float32((me)&0xff) / 255
+	return
 }

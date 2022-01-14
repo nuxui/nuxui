@@ -31,27 +31,6 @@ func (me *ComponentBase) Info() *WidgetInfo {
 	return me.info
 }
 
-// func (me *ComponentBase) SetID(id string) {
-// 	me.id = id
-// }
-
-// func (me *ComponentBase) ID() string {
-// 	return me.id
-// }
-
-// func (me *ComponentBase) Parent() Parent {
-// 	return me.parent
-// }
-
-// // parent can be nil, may be remove form parent
-// func (me *ComponentBase) AssignParent(parent Parent) {
-// 	if me.parent == nil {
-// 		me.parent = parent
-// 	} else {
-// 		log.Fatal("nuxui", "The parent of widget '%s' is already assigned, can not assign again.", me.Info().ID)
-// 	}
-// }
-
 func (me *ComponentBase) SetContent(content Widget) {
 	me.content = content
 	// content.AssignParent(me)
@@ -60,44 +39,3 @@ func (me *ComponentBase) SetContent(content Widget) {
 func (me *ComponentBase) Content() Widget {
 	return me.content
 }
-
-// type Component interface {
-// 	Parent
-// 	Component() Widget
-// 	Content() Widget
-// }
-
-// type component struct {
-// 	WidgetParent
-// 	component Widget
-// 	content   Widget
-// }
-
-// /*
-// NewComponent component, child not nil
-// */
-// func NewComponent(compt, content Widget) Component {
-// 	if compt == nil {
-// 		log.Fatal("nuxui", "component can not ne nil")
-// 	}
-
-// 	if content == nil {
-// 		log.Fatal("nuxui", "child can not ne nil")
-// 	}
-
-// 	me := &component{
-// 		component: compt,
-// 		content:   content,
-// 	}
-// 	me.WidgetParent.Owner = me
-// 	content.AssignParent(me)
-// 	return me
-// }
-
-// func (me *component) Component() Widget {
-// 	return me.component
-// }
-
-// func (me *component) Content() Widget {
-// 	return me.content
-// }

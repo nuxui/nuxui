@@ -56,6 +56,9 @@ func NewImage(context nux.Context, attrs ...nux.Attr) Image {
 	me.WidgetVisual = NewWidgetVisual(context, me, attrs...)
 	me.WidgetSize.AddOnSizeChanged(me.onSizeChanged)
 	me.WidgetVisual.AddOnVisualChanged(me.onVisualChanged)
+	if me.src != "" {
+		me.srcDrawable = NewImageDrawable(me.src)
+	}
 	return me
 }
 
@@ -117,8 +120,9 @@ func (me *image) Layout(dx, dy, left, top, right, bottom int32) {
 
 	var imgW, imgH float32
 	if me.srcDrawable != nil {
-		imgW = float32(me.srcDrawable.Width())
-		imgH = float32(me.srcDrawable.Height())
+		w, h := me.srcDrawable.Size()
+		imgW = float32(w)
+		imgH = float32(h)
 	}
 	innerW := ms.Width - ms.Padding.Left - ms.Padding.Right
 	innerH := ms.Height - ms.Padding.Top - ms.Padding.Bottom
@@ -229,14 +233,15 @@ func (me *image) Layout(dx, dy, left, top, right, bottom int32) {
 func (me *image) Measure(width, height int32) {
 	if nux.MeasureSpecMode(width) == nux.Auto || nux.MeasureSpecMode(height) == nux.Auto {
 		ms := me.MeasuredSize()
+		dw, dh := me.srcDrawable.Size()
 		if nux.MeasureSpecMode(width) == nux.Auto && me.srcDrawable != nil {
-			ms.Width = nux.MeasureSpec(me.srcDrawable.Width()+ms.Padding.Left+ms.Padding.Right, nux.Pixel)
+			ms.Width = nux.MeasureSpec(dw+ms.Padding.Left+ms.Padding.Right, nux.Pixel)
 		} else {
 			ms.Width = width
 		}
 
 		if nux.MeasureSpecMode(height) == nux.Auto && me.srcDrawable != nil {
-			ms.Height = nux.MeasureSpec(me.srcDrawable.Height()+ms.Padding.Top+ms.Padding.Bottom, nux.Pixel)
+			ms.Height = nux.MeasureSpec(dh+ms.Padding.Top+ms.Padding.Bottom, nux.Pixel)
 		} else {
 			ms.Height = height
 		}
@@ -275,27 +280,29 @@ func (me *image) onVisualChanged(widget nux.Widget) {
 }
 
 func (me *image) Draw(canvas nux.Canvas) {
+	canvas.Save()
+
 	if me.Background() != nil {
 		me.Background().Draw(canvas)
 	}
 
-	canvas.Save()
 	ms := me.MeasuredSize()
-	canvas.Translate(ms.Padding.Left, ms.Padding.Top)
+	canvas.Translate(float32(ms.Padding.Left), float32(ms.Padding.Top))
 	canvas.ClipRect(0, 0,
-		ms.Width-ms.Padding.Left-ms.Padding.Right,
-		ms.Height-ms.Padding.Top-ms.Padding.Bottom)
+		float32(ms.Width-ms.Padding.Left-ms.Padding.Right),
+		float32(ms.Height-ms.Padding.Top-ms.Padding.Bottom))
 
 	if me.srcDrawable != nil {
-		canvas.TranslateF(me.offsetX, me.offsetY)
-		canvas.ScaleF(me.scaleX, me.scaleY)
+		canvas.Translate(me.offsetX, me.offsetY)
+		canvas.Scale(me.scaleX, me.scaleY)
 		me.srcDrawable.Draw(canvas)
 	}
-	canvas.Restore()
 
 	if me.Foreground() != nil {
 		me.Foreground().Draw(canvas)
 	}
+
+	canvas.Restore()
 }
 
 func (me *image) Src() string {

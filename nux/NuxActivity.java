@@ -5,74 +5,189 @@
 package org.nuxui.app;
 
 import android.app.Activity;
-import android.app.NativeActivity;
-import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.os.Build;
 import android.os.Bundle;
+import android.text.Layout;
+import android.text.StaticLayout;
+import android.text.TextPaint;
 import android.util.Log;
-import android.view.KeyCharacterMap;
-import android.view.WindowManager;
+import android.view.MotionEvent;
+import android.view.SurfaceHolder;
+import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
+import android.view.WindowManager;
+import android.content.res.Resources;
+import android.graphics.RectF;
+import android.graphics.Rect;
+import java.io.IOException;
 
-public class NuxActivity extends NativeActivity {
-	// private static NuxActivity nuxActivity;
+public class NuxActivity extends Activity implements SurfaceHolder.Callback2 {
+    public static final String META_DATA_LIB_NAME = "android.app.lib_name";
+    private static final String KEY_NATIVE_SAVED_STATE = "android:native_state";
 
-	// public NuxActivity() {
-	// 	super();
-	// 	nuxActivity = this;
-	// }
+    private native void onCreateNative(byte[] nativeSavedState, float density);
+    private native void onStartNative();
+    private native void onRestartNative();
+    private native void onResumeNative();
+    private native void onPauseNative();
+    private native void onStopNative();
+    private native void onDestroyNative();
+    private native void surfaceRedrawNeededNative(SurfaceHolder holder);
+    private native void surfaceCreatedNative(SurfaceHolder holder);
+    private native void surfaceChangedNative(SurfaceHolder holder, int format, int width, int height);
+    private native void surfaceDestroyedNative(SurfaceHolder holder);
 
-	// String getTmpdir() {
-	// 	return getCacheDir().getAbsolutePath();
-	// }
+    private NuxView mNuxView;
 
-	// static int getRune(int deviceId, int keyCode, int metaState) {
-	// 	try {
-	// 		int rune = KeyCharacterMap.load(deviceId).get(keyCode, metaState);
-	// 		if (rune == 0) {
-	// 			return -1;
-	// 		}
-	// 		return rune;
-	// 	} catch (KeyCharacterMap.UnavailableException e) {
-	// 		return -1;
-	// 	} catch (Exception e) {
-	// 		Log.e("nuxui", "exception reading KeyCharacterMap", e);
-	// 		return -1;
-	// 	}
-	// }
+    private void load(){
+        String libname = "nuxui";
+        ActivityInfo ai;
+        try {
+            ai = getPackageManager().getActivityInfo(
+                    getIntent().getComponent(), PackageManager.GET_META_DATA);
+            if (ai.metaData != null) {
+                String ln = ai.metaData.getString(META_DATA_LIB_NAME);
+                if (ln != null) libname = ln;
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            throw new RuntimeException("Error getting activity info", e);
+        }
 
-	@Override
-	public void onCreate(Bundle savedInstanceState) {
-		Log.info("nuxui", "activity onCreate")
-		// requestWindowFeature(Window.FEATURE_NO_TITLE);
-		// getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        System.loadLibrary(libname);
 
-		setTranslucentStatus(0);
+    }
 
+    @Override
+    protected void onCreate( Bundle savedInstanceState) {
+        Log.i("nuxui", "onCreate myPid=" + android.os.Process.myPid() + ", myTid="+android.os.Process.myTid()+", thread="+Thread.currentThread().getId());
 
-		super.onCreate(savedInstanceState);
-		Log.info("nuxui", "activity onCreate after super.onCreate(savedInstanceState)")
-	}
+		requestWindowFeature(Window.FEATURE_NO_TITLE);
+        
+        super.onCreate(savedInstanceState);
 
-	private void setTranslucentStatus(int on) {
-		Window win = getWindow();  
-		WindowManager.LayoutParams winParams = win.getAttributes();  
-		final int bits = WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS;  
-		if (on <= 0) {  
-			winParams.flags &= ~bits;  
-		} else {  
-			winParams.flags |= bits;  
-		}  
-		win.setAttributes(winParams);  
-	}
+        load();
 
-	public int getStatusBarHeight() { 
-		int result = 0;
-		int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
-		if (resourceId > 0) {
-			result = getResources().getDimensionPixelSize(resourceId);
-		} 
-		return result;
-  	} 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            Window window = this.getWindow();
+            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+            window.setStatusBarColor(0x40000000);
+            window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+        }
+
+        mNuxView = new NuxView(this);
+        mNuxView.getHolder().addCallback(this);
+        ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT);
+        setContentView(mNuxView, params);
+        mNuxView.requestFocus();
+
+        byte[] nativeSavedState = savedInstanceState != null
+                ? savedInstanceState.getByteArray(KEY_NATIVE_SAVED_STATE) : null;
+        onCreateNative(nativeSavedState, Resources.getSystem().getDisplayMetrics().density);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        onStartNative();
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        onRestartNative();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        onResumeNative();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        onPauseNative();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        onStopNative();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        onDestroyNative();
+    }
+
+    @Override
+    public void surfaceRedrawNeeded(SurfaceHolder holder) {
+        Log.i("nuxui", "surfaceRedrawNeeded myPid=" + android.os.Process.myPid() + ", myTid="+android.os.Process.myTid()+", thread="+Thread.currentThread().getId());
+        surfaceRedrawNeededNative(holder);
+    }
+
+    @Override
+    public void surfaceCreated(SurfaceHolder holder) {
+        Log.i("nuxui", "surfaceCreated myPid=" + android.os.Process.myPid() + ", myTid="+android.os.Process.myTid()+", thread="+Thread.currentThread().getId());
+        surfaceCreatedNative(holder);
+    }
+
+    @Override
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+        Log.i("nuxui", "surfaceChanged myPid=" + android.os.Process.myPid() + ", myTid="+android.os.Process.myTid()+", thread="+Thread.currentThread().getId());
+        surfaceChangedNative(holder, format, width, height);
+    }
+
+    @Override
+    public void surfaceDestroyed(SurfaceHolder holder) {
+        Log.i("nuxui", "surfaceDestroyed myPid=" + android.os.Process.myPid() + ", myTid="+android.os.Process.myTid()+", thread="+Thread.currentThread().getId());
+        surfaceDestroyedNative(holder);
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        Log.i("nuxui", "onTouchEvent myPid=" + android.os.Process.myPid() + ", myTid="+android.os.Process.myTid()+", thread="+Thread.currentThread().getId());
+        return super.onTouchEvent(event);
+    }
+
+    public static void drawText(Canvas canvas ,String text, int width,  TextPaint paint){
+        Log.i("nuxui", "drawText myPid=" + android.os.Process.myPid() + ", myTid="+android.os.Process.myTid()+", thread="+Thread.currentThread().getId());
+        StaticLayout mTextLayout = new StaticLayout(text, paint, width, Layout.Alignment.ALIGN_NORMAL, 1.0f, 0, false);
+        mTextLayout.draw(canvas);
+    }
+
+    public static StaticLayout createStaticLayout(String text, int width,  TextPaint paint){
+        return new StaticLayout(text, paint, width, Layout.Alignment.ALIGN_NORMAL, 1.0f, 0, false);
+    }
+
+    public static Bitmap createImage(String fileName){
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        Bitmap b = null;
+        try{
+            if (fileName.startsWith("assets/")){
+                Log.i("nuxui", "createImage myPid=" + android.os.Process.myPid() + ", myTid="+android.os.Process.myTid()+", thread="+Thread.currentThread().getId());
+                String s = fileName.substring(7, fileName.length());
+                b = BitmapFactory.decodeStream(NuxApplication.instance().getAssets().open(s));
+                Log.i("nuxui", "startsWith assets: " + s + " b=" + b);
+                return b;
+            }else{
+                Log.i("nuxui", "not startsWith assets: " + fileName);
+                b = BitmapFactory.decodeFile(fileName, options);
+            }
+        } catch (IOException e) {
+            Log.i("nuxui", "startsWith assets " + e);
+            e.printStackTrace();
+        }
+        return b;
+    }
 }

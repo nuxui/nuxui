@@ -7,7 +7,7 @@
 package nux
 
 /*
-
+#cgo pkg-config: x11
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -100,7 +100,7 @@ func (me *application) Terminate() {
 }
 
 //export go_windowCreated
-func go_windowCreated(windptr C.uintptr_t, display *C.Display, visual *C.Visual) {
+func go_windowCreated(windptr C.Window, display *C.Display, visual *C.Visual) {
 	theApp.window.windptr = windptr
 	theApp.window.display = display
 	theApp.window.visual = visual
@@ -108,7 +108,7 @@ func go_windowCreated(windptr C.uintptr_t, display *C.Display, visual *C.Visual)
 }
 
 //export go_windowResized
-func go_windowResized(windptr C.uintptr_t, width, height int32) {
+func go_windowResized(windptr C.Window, width, height int32) {
 	w := theApp.findWindow(windptr)
 	if width != w.width || height != w.height {
 		windowAction(windptr, Action_WindowMeasured)
@@ -116,11 +116,11 @@ func go_windowResized(windptr C.uintptr_t, width, height int32) {
 }
 
 //export go_windowDraw
-func go_windowDraw(windptr C.uintptr_t) {
+func go_windowDraw(windptr C.Window) {
 	windowAction(windptr, Action_WindowDraw)
 }
 
-func windowAction(windptr C.uintptr_t, action EventAction) {
+func windowAction(windptr C.Window, action EventAction) {
 	e := &event{
 		time:   time.Now(),
 		etype:  Type_WindowEvent,
@@ -131,7 +131,7 @@ func windowAction(windptr C.uintptr_t, action EventAction) {
 	theApp.handleEvent(e)
 }
 
-func (me *application) findWindow(windptr C.uintptr_t) *window {
+func (me *application) findWindow(windptr C.Window) *window {
 	if me.window.windptr == windptr {
 		return me.window
 	}
@@ -172,7 +172,7 @@ func setTextInputRect(x, y, w, h float32) {
 var lastMouseEvent map[MouseButton]PointerEvent = map[MouseButton]PointerEvent{}
 
 //export go_mouseEvent
-func go_mouseEvent(windptr C.uintptr_t, etype int32, x, y float32, buttonNumber uint32) {
+func go_mouseEvent(windptr C.Window, etype int32, x, y float32, buttonNumber uint32) {
 	log.V("nuxui", "go_mouseEvent x=%f, y=%f, buttonNumber=%d", x, y, buttonNumber)
 	e := &pointerEvent{
 		event: event{
@@ -219,7 +219,7 @@ func go_mouseEvent(windptr C.uintptr_t, etype int32, x, y float32, buttonNumber 
 }
 
 //export go_scrollEvent
-func go_scrollEvent(windptr C.uintptr_t, x, y, scrollX, scrollY float32) {
+func go_scrollEvent(windptr C.Window, x, y, scrollX, scrollY float32) {
 	log.V("nuxui", "go_scrollEvent, x=%f, y=%f, scrollX=%f, scrollY=%f", x, y, scrollX, scrollY)
 	e := &scrollEvent{
 		event: event{
@@ -240,7 +240,7 @@ func go_scrollEvent(windptr C.uintptr_t, x, y, scrollX, scrollY float32) {
 var lastModifierKeyEvent map[KeyCode]bool = map[KeyCode]bool{}
 
 //export go_drawEvent
-func go_drawEvent(windptr C.uintptr_t) {
+func go_drawEvent(windptr C.Window) {
 	log.V("nuxui", "go_drawEvent -----")
 	e := &event{
 		window: theApp.findWindow(windptr),
@@ -253,7 +253,7 @@ func go_drawEvent(windptr C.uintptr_t) {
 }
 
 //export go_keyEvent
-func go_keyEvent(windptr C.uintptr_t, etype uint, keyCode uint16, modifierFlags uint, repeat byte, chars *C.char) {
+func go_keyEvent(windptr C.Window, etype uint, keyCode uint16, modifierFlags uint, repeat byte, chars *C.char) {
 	e := &keyEvent{
 		event: event{
 			window: theApp.findWindow(windptr),

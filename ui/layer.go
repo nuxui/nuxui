@@ -42,7 +42,9 @@ func (me *layer) onVisualChanged(widget nux.Widget) {
 func (me *layer) Measure(width, height int32) {
 	log.I("nuxui", "layer:%s Measure width=%s, height=%s", me.Info().ID, nux.MeasureSpecString(width), nux.MeasureSpecString(height))
 	measureDuration := log.Time()
+	log.I("nuxui", "layer:%s  Measure === 0 ", me.Info().ID)
 	defer log.TimeEnd(measureDuration, "nuxui", "ui.Layer %s Measure", me.Info().ID)
+	log.I("nuxui", "layer:%s  Measure === 1 ", me.Info().ID)
 
 	originWidth := width
 	originHeight := height
@@ -63,6 +65,7 @@ func (me *layer) Measure(width, height int32) {
 		height = h
 	}
 
+	log.I("nuxui", "layer:%s  Measure === 2 ", me.Info().ID)
 	setNewWidth(ms, originWidth, width)
 	setNewHeight(ms, originHeight, height)
 }
@@ -767,8 +770,8 @@ func (me *layer) Draw(canvas nux.Canvas) {
 			cms := cs.MeasuredSize()
 			if draw, ok := child.(nux.Draw); ok {
 				canvas.Save()
-				canvas.Translate(cms.Position.Left, cms.Position.Top)
-				canvas.ClipRect(0, 0, cms.Width, cms.Height)
+				canvas.Translate(float32(cms.Position.Left), float32(cms.Position.Top))
+				canvas.ClipRect(0, 0, float32(cms.Width), float32(cms.Height))
 				draw.Draw(canvas)
 				canvas.Restore()
 			}

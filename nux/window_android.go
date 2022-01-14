@@ -3,7 +3,6 @@
 // license that can be found in the LICENSE file.
 
 //go:build android
-// +build android
 
 package nux
 
@@ -21,84 +20,64 @@ package nux
 #include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
+
+jobject surfaceHolder_lockCanvas(jobject surfaceHolder);
+void surfaceHolder_unlockCanvas(jobject surfaceHolder, jobject canvas);
+
 */
 import "C"
 import (
-	"errors"
-
 	"github.com/nuxui/nuxui/log"
 )
 
-// merge window and activity ?
 type window struct {
-	actptr  *C.ANativeActivity
-	windptr *C.ANativeWindow
-	decor   Parent
+	jnienv        *C.JNIEnv
+	activity      C.jobject
+	surfaceHolder C.jobject
+	decor         Parent
+	width         int32
+	height        int32
+	delegate      WindowDelegate
+	focusWidget   Widget
+
+	initEvent PointerEvent
+	timer     Timer
+
+	context Context
 }
 
-func newWindow() *window {
-	return &window{}
-}
-
-func (me *window) Creating(attr Attr) {
-	// TODO width ,height background drawable ...
-	// create decor widget
-
-	if me.decor == nil {
-		me.decor = NewDecor()
+func newWindow(attr Attr) *window {
+	me := &window{
+		context: &context{},
 	}
 
-	if c, ok := me.decor.(Creating); ok {
-		c.Creating(attr)
-	}
+	me.CreateDecor(me.context, attr)
+	GestureBinding().AddGestureHandler(me.decor, &decorGestureHandler{})
+	log.I("nuxui", "====== mount decor")
+	mountWidget(me.decor, nil)
+	log.I("nuxui", "====== mount decor end ")
+	return me
 }
 
-func (me *window) OnCreate(data interface{}) {
-	main := data.(string)
-	if main == "" {
-		log.Fatal("nuxui", "no main widget found.")
+func (me *window) CreateDecor(ctx Context, attr Attr) Widget {
+	creator := FindRegistedWidgetCreatorByName("github.com/nuxui/nuxui/ui.Layer")
+	attr.Set("padding", Attr{"top": "75px"})
+	w := creator(ctx, attr)
+	if p, ok := w.(Parent); ok {
+		me.decor = p
 	} else {
-		mainWidgetCreator := FindRegistedWidgetCreatorByName(main)
-		widgetTree := RenderWidget(mainWidgetCreator())
-		me.decor.AddChild(widgetTree)
+		log.Fatal("nuxui", "decor must is a Parent")
 	}
 
-	if c, ok := me.decor.(OnCreate); ok {
-		c.OnCreate(me.decor)
-	}
+	decorWindowList[w] = me
+
+	return me.decor
 }
 
-func (me *window) Measure(width, height int32) {
-	if me.decor == nil {
-		return
-	}
-
-	if s, ok := me.decor.(Size); ok {
-		s.MeasuredSize().Width = width
-		s.MeasuredSize().Height = height
-	}
-
-	if f, ok := me.decor.(Measure); ok {
-		f.Measure(width, height)
-	}
-}
-
-func (me *window) Layout(dx, dy, left, top, right, bottom int32) {
-	if me.decor == nil {
-		return
-	}
-
-	if f, ok := me.decor.(Layout); ok {
-		f.Layout(dx, dy, left, top, right, bottom)
-	}
-}
-
-// this canvas is nil
 func (me *window) Draw(canvas Canvas) {
 	if me.decor != nil {
 		if f, ok := me.decor.(Draw); ok {
 			canvas.Save()
-			// TODO:: canvas clip
 			f.Draw(canvas)
 			canvas.Restore()
 		}
@@ -109,39 +88,195 @@ func (me *window) ID() uint64 {
 	return 0
 }
 
-func (me *window) Width() int32 {
-	if me.windptr == nil {
-		return 0
+func (me *window) Size() (width, height int32) {
+	if me.jnienv == nil {
+		return 0, 0
 	}
-
-	return int32(C.ANativeWindow_getWidth(me.windptr))
-}
-func (me *window) Height() int32 {
-	if me.windptr == nil {
-		return 0
-	}
-
-	return int32(C.ANativeWindow_getHeight(me.windptr))
+	return me.width, me.height
 }
 
-func (me *window) LockCanvas() (Canvas, error) {
-	var buffer C.ANativeWindow_Buffer
-	var rect C.ARect
-	if C.ANativeWindow_lock(me.windptr, &buffer, &rect) != 0 {
-		return nil, errors.New("Unable to lock android window buffer")
-	}
-
-	surface := NewSurfaceFromData(buffer.bits, FORMAT_ARGB32, int(buffer.width), int(buffer.height), int(buffer.stride*4))
-	return surface.GetCanvas(), nil
+func (me *window) ContentSize() (width, height int32) {
+	return me.Size()
 }
 
-func (me *window) UnlockCanvas() error {
-	if C.ANativeWindow_unlockAndPost(me.windptr) != 0 {
-		errors.New("Unable to unlock android window buffer")
-	}
-	return nil
+func (me *window) LockCanvas() Canvas {
+	canvas := C.surfaceHolder_lockCanvas(me.surfaceHolder)
+	return newCanvas(canvas)
+}
+
+func (me *window) UnlockCanvas(c Canvas) {
+	C.surfaceHolder_unlockCanvas(me.surfaceHolder, c.(*canvas).ptr)
 }
 
 func (me *window) Decor() Widget {
 	return me.decor
+}
+
+func (me *window) Alpha() float32 {
+	return 0
+}
+
+func (me *window) SetAlpha(alpha float32) {
+}
+
+func (me *window) Title() string {
+	return ""
+}
+
+func (me *window) SetTitle(title string) {
+}
+
+func (me *window) SetDelegate(delegate WindowDelegate) {
+	me.delegate = delegate
+}
+
+func (me *window) Delegate() WindowDelegate {
+	return me.delegate
+}
+
+func (me *window) handlePointerEvent(e PointerEvent) {
+	me.switchFocusIfPossible(e)
+
+	if me.delegate != nil {
+		if f, ok := me.delegate.(windowDelegate_HandlePointerEvent); ok {
+			f.HandlePointerEvent(e)
+			return
+		}
+	}
+
+	gestureManagerInstance.handlePointerEvent(me.Decor(), e)
+}
+
+func (me *window) handleScrollEvent(e ScrollEvent) {
+	gestureManagerInstance.handleScrollEvent(me.Decor(), e)
+}
+
+func (me *window) handleKeyEvent(e KeyEvent) {
+	if me.focusWidget != nil {
+		if f, ok := me.focusWidget.(KeyEventHandler); ok {
+			if f.OnKeyEvent(e) {
+				return
+			} else {
+				goto other
+			}
+		}
+	} else {
+		goto other
+	}
+
+other:
+	if me.decor != nil {
+		me.handleOtherWidgetKeyEvent(me.decor, e)
+	}
+}
+
+func (me *window) handleOtherWidgetKeyEvent(p Parent, e KeyEvent) bool {
+	if p.ChildrenCount() > 0 {
+		var compt Widget
+		for _, c := range p.Children() {
+			compt = nil
+			if cpt, ok := c.(Component); ok {
+				c = cpt.Content()
+				compt = cpt
+			}
+			if cp, ok := c.(Parent); ok {
+				if me.handleOtherWidgetKeyEvent(cp, e) {
+					return true
+				}
+			} else if f, ok := c.(KeyEventHandler); ok {
+				if f.OnKeyEvent(e) {
+					return true
+				}
+			}
+
+			if compt != nil {
+				if f, ok := compt.(KeyEventHandler); ok {
+					if f.OnKeyEvent(e) {
+						return true
+					}
+				}
+			}
+		}
+	}
+	return false
+}
+
+func (me *window) handleTypeEvent(e TypeEvent) {
+	if me.focusWidget != nil {
+		if f, ok := me.focusWidget.(TypeEventHandler); ok {
+			f.OnTypeEvent(e)
+			return
+		}
+	}
+
+	log.E("nuxui", "none widget handle typing event")
+}
+
+func (me *window) requestFocus(widget Widget) {
+	if me.focusWidget == widget {
+		return
+	}
+
+	if me.focusWidget != nil {
+		if f, ok := me.focusWidget.(Focus); ok && f.HasFocus() {
+			f.FocusChanged(false)
+		}
+	}
+
+	if f, ok := widget.(Focus); ok {
+		if f.Focusable() {
+			me.focusWidget = widget
+			if !f.HasFocus() {
+				f.FocusChanged(true)
+			}
+		}
+	}
+}
+
+func (me *window) switchFocusIfPossible(event PointerEvent) {
+	if event.Type() != Type_PointerEvent || !event.IsPrimary() {
+		return
+	}
+
+	switch event.Action() {
+	case Action_Down:
+		me.initEvent = event
+		if event.Kind() == Kind_Mouse {
+			me.switchFocusAtPoint(event.X(), event.Y())
+		}
+	case Action_Move:
+		if event.Kind() == Kind_Touch {
+			if me.timer != nil {
+				if me.initEvent.Distance(event.X(), event.Y()) >= GESTURE_MIN_PAN_DISTANCE {
+					me.switchFocusAtPoint(me.initEvent.X(), me.initEvent.Y())
+				}
+			}
+		}
+	case Action_Up:
+		if event.Kind() == Kind_Touch {
+			if event.Time().UnixNano()-me.initEvent.Time().UnixNano() < GESTURE_LONG_PRESS_TIMEOUT.Nanoseconds() {
+				me.switchFocusAtPoint(event.X(), event.Y())
+			}
+		}
+	}
+
+}
+
+func (me *window) switchFocusAtPoint(x, y float32) {
+	if me.focusWidget != nil {
+		if s, ok := me.focusWidget.(Size); ok {
+			ms := s.MeasuredSize()
+			if x >= float32(ms.Position.X) && x <= float32(ms.Position.X+ms.Width) &&
+				y >= float32(ms.Position.Y) && y <= float32(ms.Position.Y+ms.Height) {
+				// point is in current focus widget, do not need change focus
+				return
+			}
+		}
+
+		if f, ok := me.focusWidget.(Focus); ok && f.HasFocus() {
+			me.focusWidget = nil
+			f.FocusChanged(false)
+		}
+	}
+
 }

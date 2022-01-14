@@ -617,8 +617,8 @@ func (me *scroll) Draw(canvas nux.Canvas) {
 			cms := cs.MeasuredSize()
 			if draw, ok := child.(nux.Draw); ok {
 				canvas.Save()
-				canvas.Translate(cms.Position.Left, cms.Position.Top)
-				canvas.ClipRect(0, 0, cms.Width, cms.Height)
+				canvas.Translate(float32(cms.Position.Left), float32(cms.Position.Top))
+				canvas.ClipRect(0, 0, float32(cms.Width), float32(cms.Height))
 				draw.Draw(canvas)
 				canvas.Restore()
 			}

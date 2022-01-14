@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build android
+//go:build android
 
 #include <jni.h>
 #include <dlfcn.h>
@@ -21,294 +21,374 @@
 #include <android/native_activity.h>
 #include "_cgo_export.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#define LOG_VERB(...) __android_log_print(ANDROID_LOG_VERBOSE, "nux", __VA_ARGS__)
-#define LOG_ERR(...) __android_log_print(ANDROID_LOG_ERROR, "nux", __VA_ARGS__)
-#define LOG_FATAL(...) __android_log_print(ANDROID_LOG_FATAL, "nux", __VA_ARGS__)
+#define LOG_VERB(...) __android_log_print(ANDROID_LOG_VERBOSE, "nuxui", __VA_ARGS__)
+#define LOG_ERR(...) __android_log_print(ANDROID_LOG_ERROR, "nuxui", __VA_ARGS__)
+#define LOG_FATAL(...) __android_log_print(ANDROID_LOG_FATAL, "nuxui", __VA_ARGS__)
 
-struct android_app {
-    ANativeActivity* activity;
-    AConfiguration* config;
-    ALooper* looper;
-    AInputQueue* inputQueue;
-    ANativeWindow* window;
-
-    int msgread;
-    int msgwrite;
-    pthread_t thread;
-    pthread_mutex_t mutex;
-    pthread_cond_t cond;
-
-	void* savedState;
-    size_t savedStateSize;
-
-    AInputQueue* pendingInputQueue;
-    ANativeWindow* pendingWindow;
-    ARect pendingContentRect;
-
-	int running;
-	int destroyed;
-};
-
-enum {
-    APP_CMD_INPUT_CHANGED = 1,
-    APP_CMD_DESTROY = 2,
-};
-
-enum {
-    LOOPER_ID_CMD = 1,
-    LOOPER_ID_INPUT = 2,
-    LOOPER_ID_USER = 3,
-};
+static jfloat sDensity = 1;
 
 // Call the Go main.main
 void call_main_main(){
-	uintptr_t mainPC = (uintptr_t)dlsym(RTLD_DEFAULT, "main.main");
+	uintptr_t mainPC = dlsym(RTLD_DEFAULT, "main.main");
 	if (!mainPC) {
 		LOG_FATAL("missing main.main");
 	}
-	callMain(mainPC);
+	go_callMain(mainPC);
+}
+
+static jclass find_class(JNIEnv *env, const char *class_name) {
+    jclass clazz = (*env)->FindClass(env, class_name);
+    if (clazz == NULL) {
+        (*env)->ExceptionClear(env);
+        LOG_FATAL("cannot find %s", class_name);
+        return NULL;
+    }
+    return clazz;
 }
 
 static jmethodID find_method(JNIEnv *env, jclass clazz, const char *name, const char *sig) {
-	jmethodID m = (*env)->GetMethodID(env, clazz, name, sig);
-	if (m == 0) {
-		(*env)->ExceptionClear(env);
-		LOG_FATAL("cannot find method %s %s", name, sig);
-		return 0;
-	}
-	return m;
-}
-
-// Fix per Google for bug https://code.google.com/p/android/issues/detail?id=41755
-void process_input(struct android_app* app) {
-    AInputEvent* event = NULL;
-    while (AInputQueue_getEvent(app->inputQueue, &event) >= 0) {
-		LOG_VERB("new event %d", AInputEvent_getType(event));
-
-		// https://developer.android.com/ndk/reference/group/input#ainputqueue_predispatchevent
-        if (AInputQueue_preDispatchEvent(app->inputQueue, event) != 0) { 
-			LOG_VERB("AInputQueue_preDispatchEvent %d", AInputEvent_getType(event));
-            continue;
-        }
-        int32_t handled = (int32_t)onInputEvent(event);
-        AInputQueue_finishEvent(app->inputQueue, event, handled);
+    jmethodID m = (*env)->GetMethodID(env, clazz, name, sig);
+    if (m == 0) {
+        (*env)->ExceptionClear(env);
+        LOG_FATAL("cannot find method %s %s", name, sig);
+        return 0;
     }
+    return m;
 }
 
-void android_app_pre_exec_cmd(struct android_app* android_app, int8_t cmd) {
-    switch (cmd) {
-        case APP_CMD_INPUT_CHANGED:
-            LOG_VERB("APP_CMD_INPUT_CHANGED\n");
-            pthread_mutex_lock(&android_app->mutex);
-            if (android_app->inputQueue != NULL) {
-                AInputQueue_detachLooper(android_app->inputQueue);
-            }
-            android_app->inputQueue = android_app->pendingInputQueue;
-            if (android_app->inputQueue != NULL) {
-                LOG_VERB("Attaching input queue to looper");
-                AInputQueue_attachLooper(android_app->inputQueue, android_app->looper, LOOPER_ID_INPUT, NULL, NULL);
-            }
-            pthread_cond_broadcast(&android_app->cond);
-            pthread_mutex_unlock(&android_app->mutex);
-            break;
+static jmethodID find_static_method(JNIEnv *env, jclass clazz, const char *name, const char *sig) {
+    jmethodID m = (*env)->GetStaticMethodID(env, clazz, name, sig);
+    if (m == 0) {
+        (*env)->ExceptionClear(env);
+        LOG_FATAL("cannot find method %s %s", name, sig);
+        return 0;
     }
+    return m;
 }
 
-void android_app_loop(struct android_app *android_app){
-	int events;
-	int ident;
-	int8_t cmd;
-	while(1){
-		events = 0;
-		ident = 0;
-		cmd = 0;
+JNIEnv* jnienv;
 
-		ident = ALooper_pollAll(-1, NULL, &events, NULL);
-		switch (ident) {
-		case LOOPER_ID_CMD:
-			if ( read(android_app->msgread, &cmd, sizeof(cmd)) == sizeof(cmd) ) {
-                if (cmd == APP_CMD_DESTROY) {
-                    goto end;
-                }
-				android_app_pre_exec_cmd(android_app, cmd);
-			} else {
-				LOG_ERR("No data on command pipe!");
-			}
-			break;
-		case LOOPER_ID_INPUT:
-			process_input(android_app);
-			break;
-		case LOOPER_ID_USER:
-			break;
-		}
-	}
-end:
-    LOG_VERB("exited, end of android looper");
-}
-
-void android_app_destroy(struct android_app *android_app){
-    LOG_VERB("android_app_destroied");
-    // ANativeActivity_finish(android_app->activity);
-
-    close(android_app->msgread);
-    close(android_app->msgwrite);
-    pthread_cond_destroy(&android_app->cond);
-    pthread_mutex_destroy(&android_app->mutex);
-    free(android_app);
-}
-
-void* android_app_entry(void* param) {
-    struct android_app* android_app = (struct android_app*)param;
-	
-	// https://developer.android.com/ndk/reference/group/configuration
-    android_app->config = AConfiguration_new();
-    AConfiguration_fromAssetManager(android_app->config, android_app->activity->assetManager);
-
-    ALooper* looper = ALooper_prepare(ALOOPER_PREPARE_ALLOW_NON_CALLBACKS);
-    ALooper_addFd(looper, android_app->msgread, LOOPER_ID_CMD, ALOOPER_EVENT_INPUT, NULL, NULL);
-    android_app->looper = looper;
-
-    pthread_mutex_lock(&android_app->mutex);
-    android_app->running = 1;
-    pthread_cond_broadcast(&android_app->cond);
-    pthread_mutex_unlock(&android_app->mutex);
-
-    nativeLoopPrepared();
-
-    android_app_loop(android_app);
-
-    ALooper_removeFd(looper, android_app->msgread);
-    ALooper_release(looper);
-
-    pthread_mutex_lock(&android_app->mutex);
-    android_app->running = 0;
-    pthread_cond_broadcast(&android_app->cond);
-    pthread_mutex_unlock(&android_app->mutex);
-
-
-
-    // android_app_destroy(android_app);
-    return NULL;
-}
-
-struct android_app* android_app_create(ANativeActivity* activity, void* savedState, size_t savedStateSize) {
-    call_main_main();
-
-    initWindow(activity);
+struct{
     
-    // window.creating called must before pthread_create
-    // init window at here
+    jclass clazz;
+    jobject thiz;
+    jmethodID drawText;
+    jmethodID createStaticLayout;
+    jmethodID createImage;
+} Activity;
 
-    struct android_app* android_app = (struct android_app*)malloc(sizeof(struct android_app));
-    memset(android_app, 0, sizeof(struct android_app));
-    android_app->activity = activity;
+struct {
+    jclass clazz;
+    jmethodID lockCanvas;
+    jmethodID unlockCanvasAndPost;
+} SurfaceHolder;
 
-	// createApp( (uintptr_t)android_app);
+struct {
+    jclass clazz;
+    jmethodID init;
+    jmethodID setColor;
+    jmethodID setTextSize;
+    jmethodID setStyle;
+    jmethodID setAntiAlias;
+} Paint;
 
-    pthread_mutex_init(&android_app->mutex, NULL);
-    pthread_cond_init(&android_app->cond, NULL);
+struct {
+    jclass clazz;
+    jfieldID FILL;
+} Style;
 
-    if (savedState != NULL) {
-        android_app->savedState = malloc(savedStateSize);
-        android_app->savedStateSize = savedStateSize;
-        memcpy(android_app->savedState, savedState, savedStateSize);
-    }
+struct {
+    JNIEnv* env;
+    jclass clazz;
+    jmethodID save;
+    jmethodID restore;
+    jmethodID translate;
+    jmethodID scale;
+    jmethodID rotate;
+    jmethodID clipRect;
+    jmethodID drawColor;
+    jmethodID drawBitmap;
+} Canvas;
 
-    int msgpipe[2];
-    if (pipe(msgpipe)) {
-        LOG_FATAL("could not create pipe: %s", strerror(errno));
-        return NULL;
-    }
-    android_app->msgread = msgpipe[0];
-    android_app->msgwrite = msgpipe[1];
+struct {
+    jclass clazz;
+    jmethodID init;
+    jmethodID create;
+    jmethodID getWidth;
+    jmethodID getHeight;
+} StaticLayout;
 
-    pthread_attr_t attr; 
-    pthread_attr_init(&attr);
-    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-    pthread_create(&android_app->thread, &attr, android_app_entry, android_app);
+struct {
+    jclass clazz;
+    jmethodID getWidth;
+    jmethodID getHeight;
+    jmethodID recycle;
+} Bitmap;
 
-    // Wait for thread to start.
-    pthread_mutex_lock(&android_app->mutex);
-    while (!android_app->running) {
-        pthread_cond_wait(&android_app->cond, &android_app->mutex);
-    }
-    pthread_mutex_unlock(&android_app->mutex);
+struct {
+    jclass clazz;
+    jmethodID init;
+} Rect;
 
-    return android_app;
+struct {
+    jclass clazz;
+    jmethodID init;
+} RectF;
+
+void initClasses(JNIEnv *env, jobject activity){
+    jnienv = env;
+
+    jclass clsActivity = find_class(env, "org/nuxui/app/NuxActivity");
+    Activity.thiz = (*env)->NewGlobalRef(env, activity);
+    Activity.clazz = (*env)->NewGlobalRef(env, clsActivity);
+    Activity.drawText = find_static_method(env, Activity.clazz, "drawText", "(Landroid/graphics/Canvas;Ljava/lang/String;ILandroid/text/TextPaint;)V");
+    Activity.createStaticLayout = find_static_method(env, Activity.clazz, "createStaticLayout", "(Ljava/lang/String;ILandroid/text/TextPaint;)Landroid/text/StaticLayout;");
+    Activity.createImage = find_static_method(env, Activity.clazz, "createImage", "(Ljava/lang/String;)Landroid/graphics/Bitmap;");
+
+    jclass clsSurfaceHolder = find_class(env, "android/view/SurfaceHolder");
+    SurfaceHolder.clazz = (*env)->NewGlobalRef(env, clsSurfaceHolder);
+    SurfaceHolder.lockCanvas = find_method(env, SurfaceHolder.clazz, "lockCanvas", "()Landroid/graphics/Canvas;");
+    SurfaceHolder.unlockCanvasAndPost = find_method(env, SurfaceHolder.clazz, "unlockCanvasAndPost", "(Landroid/graphics/Canvas;)V");
+
+    jclass clsPaint = find_class(env, "android/text/TextPaint");
+    Paint.clazz = (*env)->NewGlobalRef(env, clsPaint);
+    Paint.init = find_method(env, Paint.clazz, "<init>", "()V");
+    Paint.setColor = find_method(env, Paint.clazz, "setColor", "(I)V");
+    Paint.setTextSize = find_method(env, Paint.clazz, "setTextSize", "(F)V");
+    Paint.setStyle = find_method(env, Paint.clazz, "setStyle", "(Landroid/graphics/Paint$Style;)V");
+    Paint.setAntiAlias = find_method(env, Paint.clazz, "setAntiAlias", "(Z)V");
+
+    jclass clsStyle = find_class(env, "android/graphics/Paint$Style");
+    Style.clazz = (*env)->NewGlobalRef(env, clsStyle);
+    Style.FILL = (*env)->GetStaticFieldID(env, Style.clazz, "FILL", "Landroid/graphics/Paint$Style;");
+
+    jclass clsCanvas = find_class(env, "android/graphics/Canvas");
+    Canvas.clazz = (*env)->NewGlobalRef(env, clsCanvas);
+    Canvas.save = find_method(env, Canvas.clazz, "save", "()I");
+    Canvas.restore = find_method(env, Canvas.clazz, "restore", "()V");
+    Canvas.translate = find_method(env, Canvas.clazz, "translate", "(FF)V");
+    Canvas.scale = find_method(env, Canvas.clazz, "scale", "(FF)V");
+    Canvas.rotate = find_method(env, Canvas.clazz, "rotate", "(F)V");
+    Canvas.clipRect = find_method(env, Canvas.clazz, "clipRect", "(FFFF)Z");
+    Canvas.drawColor = find_method(env, Canvas.clazz, "drawColor", "(I)V");
+    Canvas.drawBitmap = find_method(env, Canvas.clazz, "drawBitmap", "(Landroid/graphics/Bitmap;Landroid/graphics/Rect;Landroid/graphics/RectF;Landroid/graphics/Paint;)V");
+
+    jclass clsStaticLayout = find_class(env, "android/text/StaticLayout");
+    StaticLayout.clazz = (*env)->NewGlobalRef(env, clsStaticLayout);
+    StaticLayout.init = find_method(env, StaticLayout.clazz, "<init>", "(Ljava/lang/CharSequence;Landroid/text/TextPaint;ILandroid/text/Layout$Alignment;FFZ)V");
+    StaticLayout.getWidth = find_method(env, StaticLayout.clazz, "getWidth", "()I");
+    StaticLayout.getHeight = find_method(env, StaticLayout.clazz, "getHeight", "()I");
+
+    jclass clsBitmap = find_class(env, "android/graphics/Bitmap");
+    Bitmap.clazz = (*env)->NewGlobalRef(env, clsBitmap);
+    Bitmap.getWidth = find_method(env, Bitmap.clazz, "getWidth", "()I");
+    Bitmap.getHeight = find_method(env, Bitmap.clazz, "getHeight", "()I");
+    Bitmap.recycle = find_method(env, Bitmap.clazz, "recycle", "()V");
+
+    jclass clsRect = find_class(env, "android/graphics/Rect");
+    Rect.clazz = (*env)->NewGlobalRef(env, clsRect);
+    Rect.init = find_method(env, Rect.clazz, "<init>", "(IIII)V");
+
+    jclass clsRectF = find_class(env, "android/graphics/RectF");
+    RectF.clazz = (*env)->NewGlobalRef(env, clsRectF);
+    RectF.init = find_method(env, RectF.clazz, "<init>", "(FFFF)V");
 }
 
-void android_app_write_cmd(struct android_app* android_app, int8_t cmd) {
-    if (write(android_app->msgwrite, &cmd, sizeof(cmd)) != sizeof(cmd)) {
-        LOG_ERR("Failure writing android_app cmd: %s\n", strerror(errno));
-    }
+void deleteGlobalRef(jobject globalRef){
+    (*jnienv)->DeleteGlobalRef(jnienv, globalRef);
 }
 
-void android_app_set_input(struct android_app* android_app, AInputQueue* inputQueue) {
-    pthread_mutex_lock(&android_app->mutex);
-    android_app->pendingInputQueue = inputQueue;
-    android_app_write_cmd(android_app, APP_CMD_INPUT_CHANGED);
-    while (android_app->inputQueue != android_app->pendingInputQueue) {
-        pthread_cond_wait(&android_app->cond, &android_app->mutex);
-    }
-    pthread_mutex_unlock(&android_app->mutex);
+void deleteLocalRef(jobject localRef){
+    (*jnienv)->DeleteLocalRef(jnienv, localRef);
 }
 
-void onInputQueueCreated(ANativeActivity *activity, AInputQueue *queue){
-    LOG_VERB("onInputQueueCreated");
-	android_app_set_input((struct android_app*)activity->instance, queue);
+jobject new_Rect(jint left, jint top, jint right, jint bottom){
+    return (*jnienv)->NewObject(jnienv, Rect.clazz, Rect.init, left, top, right, bottom);
 }
 
-void onInputQueueDestroyed(ANativeActivity *activity, AInputQueue *queue){
-    LOG_VERB("onInputQueueDestroyed");
-	android_app_set_input((struct android_app*)activity->instance, NULL);
+jobject new_RectF(jfloat left, jfloat top, jfloat right, jfloat bottom){
+    return (*jnienv)->NewObject(jnienv, RectF.clazz, RectF.init, left, top, right, bottom);
 }
 
-void onDestroyA(ANativeActivity *activity){
-    LOG_VERB("onDestroyA");
-    onDestroy(activity);
-
-    struct android_app* android_app = (struct android_app*)activity->instance;
-    pthread_mutex_lock(&android_app->mutex);
-    android_app_write_cmd(android_app, APP_CMD_DESTROY);
-    while (android_app->running != 0) {
-        pthread_cond_wait(&android_app->cond, &android_app->mutex);
-    }
-    pthread_mutex_unlock(&android_app->mutex);
-
-    close(android_app->msgread);
-    close(android_app->msgwrite);
-    pthread_cond_destroy(&android_app->cond);
-    pthread_mutex_destroy(&android_app->mutex);
-    free(android_app);
-
-    LOG_VERB("onDestroyA end");
+jobject surfaceHolder_lockCanvas(jobject surfaceHolder){
+    return (*jnienv)->CallObjectMethod(jnienv, surfaceHolder, SurfaceHolder.lockCanvas);
 }
 
-void ANativeActivity_onCreate(ANativeActivity *activity, void* savedState, size_t savedStateSize) {
-    LOG_VERB("ANativeActivity_onCreate");
-	// These functions match the methods on Activity, described at
-	// https://developer.android.com/ndk/reference/struct/a-native-activity-callbacks#struct_a_native_activity_callbacks
-	//
-	// Note that onNativeWindowResized is not called on resize. Avoid it.
-	// https://code.google.com/p/android/issues/detail?id=180645
-
-    activity->callbacks->onStart = onStart;
-    activity->callbacks->onResume = onResume;
-    activity->callbacks->onPause = onPause;
-    activity->callbacks->onStop = onStop;
-	activity->callbacks->onDestroy = onDestroyA;
-    activity->callbacks->onLowMemory = onLowMemory;
-    activity->callbacks->onInputQueueCreated = onInputQueueCreated;
-    activity->callbacks->onInputQueueDestroyed = onInputQueueDestroyed;
-    activity->callbacks->onSaveInstanceState = onSaveInstanceState;
-    activity->callbacks->onConfigurationChanged = onConfigurationChanged;
-    activity->callbacks->onContentRectChanged = onContentRectChanged;
-    activity->callbacks->onNativeWindowCreated = onNativeWindowCreated;
-	activity->callbacks->onNativeWindowResized = onNativeWindowResized;
-	activity->callbacks->onNativeWindowRedrawNeeded = onNativeWindowRedrawNeeded;
-    activity->callbacks->onWindowFocusChanged = onWindowFocusChanged;
-    activity->callbacks->onNativeWindowDestroyed = onNativeWindowDestroyed;
-
-	activity->instance = android_app_create(activity, savedState, savedStateSize);
+void surfaceHolder_unlockCanvas(jobject surfaceHolder, jobject canvas){
+    (*jnienv)->CallVoidMethod(jnienv, surfaceHolder, SurfaceHolder.unlockCanvasAndPost, canvas);
 }
+
+jint canvas_save(jobject canvas){
+    return (*jnienv)->CallIntMethod(jnienv, canvas, Canvas.save);
+}
+
+void canvas_restore(jobject canvas){
+    (*jnienv)->CallVoidMethod(jnienv, canvas, Canvas.restore);
+}
+
+void canvas_translate(jobject canvas, jfloat x, jfloat y){
+    (*jnienv)->CallVoidMethod(jnienv, canvas, Canvas.translate, x, y);
+}
+
+void canvas_scale(jobject canvas, jfloat x, jfloat y){
+    (*jnienv)->CallVoidMethod(jnienv, canvas, Canvas.scale, x, y);
+}
+
+void canvas_rotate(jobject canvas, jfloat degrees){
+    (*jnienv)->CallVoidMethod(jnienv, canvas, Canvas.rotate, degrees);
+}
+
+void canvas_clipRect(jobject canvas, jfloat left, jfloat top, jfloat right, jfloat bottom){
+    jboolean ret = (*jnienv)->CallBooleanMethod(jnienv, canvas, Canvas.clipRect, left, top, right, bottom);
+}
+
+void canvas_drawColor(jobject canvas, uint32_t color){
+    (*jnienv)->CallVoidMethod(jnienv, canvas, Canvas.drawColor, color);
+}
+
+void canvas_drawBitmap(jobject canvas, jobject bitmap, jfloat left, jfloat top, jfloat right, jfloat bottom, jobject paint){
+    jobject rect = new_Rect(0,0,0,0);
+    jobject rectf = new_RectF(left, top, right, bottom);
+    (*jnienv)->CallVoidMethod(jnienv, canvas, Canvas.drawBitmap, bitmap, NULL, rectf, paint);
+    (*jnienv)->DeleteLocalRef(jnienv, rect);
+    (*jnienv)->DeleteLocalRef(jnienv, rectf);
+}
+
+void canvas_drawText(jobject canvas, char* text, jint width, jobject paint){
+    jstring str = (*jnienv)->NewStringUTF(jnienv, text);
+    (*jnienv)->CallStaticVoidMethod(jnienv, Activity.clazz, Activity.drawText, canvas, str, width, paint);
+    (*jnienv)->DeleteLocalRef(jnienv, str);
+}
+
+// --------------- StaticLayout ----------------------
+
+jobject new_StaticLayout(jstring text, jint width, jobject paint){
+    return (*jnienv)->CallStaticObjectMethod(jnienv, Activity.clazz, Activity.createStaticLayout, text, width, paint);
+}
+
+jint staticLayout_getWidth(jobject staticLayout){
+    return (*jnienv)->CallIntMethod(jnienv, staticLayout, StaticLayout.getWidth);
+}
+
+jint staticLayout_getHeight(jobject staticLayout){
+    return (*jnienv)->CallIntMethod(jnienv, staticLayout, StaticLayout.getHeight);
+}
+
+// --------------- Paint ----------------------
+
+jobject new_Paint(){
+    return (*jnienv)->NewObject(jnienv, Paint.clazz, Paint.init);
+}
+
+void paint_setTextSize(jobject paint, jfloat textSize){
+    textSize *= sDensity;
+    (*jnienv)->CallVoidMethod(jnienv, paint, Paint.setTextSize, textSize);
+}
+
+void paint_setColor(jobject paint, uint32_t color){
+    (*jnienv)->CallVoidMethod(jnienv, paint, Paint.setColor, color);
+}
+
+void paint_setStyle(jobject paint, jint style){
+    // LOG_ERR("Paint.setStyle=%p objPaint=%p Style.FILL=%p", Paint.setStyle, objPaint, Style.FILL);
+    // (*jnienv)->CallVoidMethod(jnienv, paint, Paint.setStyle, Style.FILL);
+}
+
+void paint_setAntiAlias(jobject paint, jboolean aa){
+    (*jnienv)->CallVoidMethod(jnienv, paint, Paint.setAntiAlias, aa);
+}
+
+void paint_measureText(jobject paint, char* text, jint width, jint *outWidth, jint* outHeight){
+    jstring str = (*jnienv)->NewStringUTF(jnienv, text);
+    jobject layout = new_StaticLayout(str, width, paint);
+    *outWidth = staticLayout_getWidth(layout);
+    *outHeight = staticLayout_getHeight(layout);
+    (*jnienv)->DeleteLocalRef(jnienv, str);
+    (*jnienv)->DeleteLocalRef(jnienv, layout);
+}
+
+// --------------- Bitmap ----------------------
+
+jobject createImage(char* fileName){
+    jstring str = (*jnienv)->NewStringUTF(jnienv, fileName);
+    jobject bitmap = (*jnienv)->CallStaticObjectMethod(jnienv, Activity.clazz, Activity.createImage, str);
+    (*jnienv)->DeleteLocalRef(jnienv, str);
+    return (*jnienv)->NewGlobalRef(jnienv, bitmap);
+}
+
+jint bitmap_getWidth(jobject bitmap){
+    return (*jnienv)->CallIntMethod(jnienv, bitmap, Bitmap.getWidth);
+}
+
+jint bitmap_getHeight(jobject bitmap){
+    return (*jnienv)->CallIntMethod(jnienv, bitmap, Bitmap.getHeight);
+}
+
+void bitmap_recycle(jobject bitmap){
+    (*jnienv)->CallIntMethod(jnienv, bitmap, Bitmap.recycle);
+    (*jnienv)->DeleteGlobalRef(jnienv, bitmap);
+}
+
+// --------------- NuxActivity lifecycle ----------------------
+
+void Java_org_nuxui_app_NuxActivity_onCreateNative(JNIEnv *env, jobject activity, jbyteArray native_saved_state, jfloat density) {
+    sDensity = density;
+    LOG_VERB("NuxActivity_onCreateNative thiz=%p, gettid = %d", activity, gettid());
+    initClasses(env, activity);
+    call_main_main();
+}
+
+void Java_org_nuxui_app_NuxActivity_onStartNative(JNIEnv *env, jobject activity) {
+    LOG_VERB("NuxActivity_onStartNative begin ");
+}
+
+void Java_org_nuxui_app_NuxActivity_onRestartNative(JNIEnv *env, jobject activity) {
+    LOG_VERB("NuxActivity_onRestartNative begin ");
+}
+
+void Java_org_nuxui_app_NuxActivity_onResumeNative(JNIEnv *env, jobject activity) {
+    LOG_VERB("NuxActivity_onResumeNative begin ");
+}
+
+void Java_org_nuxui_app_NuxActivity_onPauseNative(JNIEnv *env, jobject activity) {
+    LOG_VERB("NuxActivity_onPauseNative begin ");
+}
+
+void Java_org_nuxui_app_NuxActivity_onStopNative(JNIEnv *env, jobject activity) {
+    LOG_VERB("NuxActivity_onStopNative begin ");
+}
+
+void Java_org_nuxui_app_NuxActivity_onDestroyNative(JNIEnv *env, jobject activity) {
+    LOG_VERB("NuxActivity_onDestroyNative begin ");
+}
+
+void Java_org_nuxui_app_NuxActivity_surfaceRedrawNeededNative(JNIEnv *env, jobject activity, jobject surfaceHolder) {
+    LOG_VERB("NuxActivity_surfaceRedrawNeededNative begin ");
+    go_onNativeWindowRedrawNeeded(env, activity, surfaceHolder);
+}
+
+void Java_org_nuxui_app_NuxActivity_surfaceCreatedNative(JNIEnv *env, jobject activity, jobject surfaceHolder) {
+    LOG_VERB("NuxActivity_surfaceCreatedNative activity=%ud,%p, surfaceHolder=%ud,%p", activity, activity, surfaceHolder, surfaceHolder);
+    go_onNativeWindowCreated(env, activity, surfaceHolder);
+}
+
+void Java_org_nuxui_app_NuxActivity_surfaceChangedNative(JNIEnv *env, jobject activity, jobject surfaceHolder,
+                                                         jint format, jint width, jint height) {
+    LOG_VERB("NuxActivity_surfaceChangedNative begin ");
+    go_onNativeWindowResized(env, activity, surfaceHolder, format, width, height);
+}
+
+void Java_org_nuxui_app_NuxActivity_surfaceDestroyedNative(JNIEnv *env, jobject activity, jobject surfaceHolder) {
+    LOG_VERB("NuxActivity_surfaceDestroyedNative begin ");
+}
+
+
+#ifdef __cplusplus
+}
+#endif
+
+

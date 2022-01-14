@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build darwin
+//go:build darwin && !ios
 
 #include "_cgo_export.h"
 #import <Cocoa/Cocoa.h>
@@ -286,9 +286,18 @@ int cg_changed = 0;
 @implementation NuxView
 - (void)drawRect:(NSRect)dirtyRect
 {
-    NSLog(@"NuxView drawRect");
+    // NSLog(@"NuxView drawRect");
+
+    CGContextRef cgContext = [NSGraphicsContext currentContext].CGContext;
+    [NSGraphicsContext saveGraphicsState];
+    // Flip text
+    NSGraphicsContext* context = [NSGraphicsContext graphicsContextWithCGContext: cgContext flipped: true];
+    [NSGraphicsContext setCurrentContext: context];
+
     NuxWindow* w = (NuxWindow*)[self window];
     go_drawEvent((uintptr_t)w);
+
+    [NSGraphicsContext restoreGraphicsState];
 }
 @end
 
@@ -629,7 +638,7 @@ void setTextInputRect(float x, float y, float w, float h)
 void invalidate(){
     dispatch_async(dispatch_get_main_queue(), ^{
         @autoreleasepool{
-            NSLog(@"------ post invalidate -------");
+            // NSLog(@"------ post invalidate -------");
             NuxWindow* nuxWindow = (NuxWindow*)[NSApp keyWindow];
             if(nuxWindow.nuxview != nil){
                 [nuxWindow.nuxview setNeedsDisplay:YES];
@@ -679,28 +688,27 @@ void window_setAlpha(uintptr_t window, float alpha){
     ((NSWindow*)window).alphaValue = alpha;
 }
 
-int32_t window_getWidth(uintptr_t window){
-    return (int32_t)([(NSWindow*)window frame].size.width);
+void window_getSize(uintptr_t window, int32_t *width, int32_t *height){
+  CGSize size = [(NSWindow*)window frame].size;
+  if(width){*width = (int32_t)size.width;};
+  if(height){*height = (int32_t)size.height;};
 }
 
-int32_t window_getHeight(uintptr_t window){
-    return (int32_t)([(NSWindow*)window frame].size.height);
+void window_getContentSize(uintptr_t window, int32_t *width, int32_t *height){
+  CGSize size = [[(NSWindow*)window contentView] bounds].size;
+  if(width){*width = (int32_t)size.width;};
+  if(height){*height = (int32_t)size.height;};
 }
 
-int32_t window_getContentWidth(uintptr_t window){
-    return (int32_t)([[(NSWindow*)window contentView] bounds].size.width);
-}
-
-int32_t window_getContentHeight(uintptr_t window){
-    return (int32_t)([[(NSWindow*)window contentView] bounds].size.height);
-}
-
-uintptr_t window_getCGContext(uintptr_t window){
-    // NSWindow* w = (NSWindow*)window;
-    // [w graphicsContext] Deprecated macOS 10.0~10.14
-    // NSLog(@"1 gc=%@, ref=%@", [w graphicsContext], [w graphicsContext].CGContext);
-    // NSLog(@"2 gc=%@, ref=%@", [NSGraphicsContext currentContext], [NSGraphicsContext currentContext].CGContext);
-    return (uintptr_t)[NSGraphicsContext currentContext];
+// uintptr_t window_getCGContext(uintptr_t window){
+//     // NSWindow* w = (NSWindow*)window;
+//     // [w graphicsContext] Deprecated macOS 10.0~10.14
+//     // NSLog(@"1 gc=%@, ref=%@", [w graphicsContext], [w graphicsContext].CGContext);
+//     // NSLog(@"2 gc=%@, ref=%@", [NSGraphicsContext currentContext], [NSGraphicsContext currentContext].CGContext);
+//     return (uintptr_t)[NSGraphicsContext currentContext];
+// }
+CGContextRef window_getCGContext(uintptr_t window){
+    return [NSGraphicsContext currentContext].CGContext;
 }
 // ############################### nuxwindow end #################################
 

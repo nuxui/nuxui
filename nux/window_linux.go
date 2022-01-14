@@ -10,10 +10,13 @@ package nux
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <cairo/cairo.h>
+#include <cairo/cairo-xlib.h>
 
 #include <X11/Xlib.h>
 
 void window_getSize(Display* display, Window window, int32_t *width, int32_t *height);
+void window_getContentSize(Display* display, Window window, int32_t *width, int32_t *height);
 void window_setTitle(Display* display, Window window, char *name);
 */
 import "C"
@@ -24,9 +27,12 @@ import (
 	"github.com/nuxui/nuxui/log"
 )
 
-// merge window and activity ?
 type window struct {
-	windptr      C.uintptr_t // TODO:: need by user code, how to use unsafe.Pointer
+	windptr C.Window
+	display *C.Display
+	visual  *C.Visual
+	surface *C.cairo_surface_t
+
 	decor        Parent
 	buffer       unsafe.Pointer
 	bufferWidth  int32
@@ -37,11 +43,6 @@ type window struct {
 	initEvent PointerEvent
 	timer     Timer
 
-	surface        *Surface
-	display        *C.Display
-	visual         *C.Visual
-	surfaceResized bool
-
 	context Context
 	width   int32
 	height  int32
@@ -50,14 +51,27 @@ type window struct {
 
 func newWindow(attr Attr) *window {
 	me := &window{
-		context:        &context{},
-		surfaceResized: true,
+		context: &context{},
 	}
 
 	me.CreateDecor(me.context, attr)
 	GestureBinding().AddGestureHandler(me.decor, &decorGestureHandler{})
 	mountWidget(me.decor, nil)
 	return me
+}
+
+func (me *window) CreateDecor(ctx Context, attr Attr) Widget {
+	creator := FindRegistedWidgetCreatorByName("github.com/nuxui/nuxui/ui.Layer")
+	w := creator(ctx, attr)
+	if p, ok := w.(Parent); ok {
+		me.decor = p
+	} else {
+		log.Fatal("nuxui", "decor must is a Parent")
+	}
+
+	decorWindowList[w] = me
+
+	return me.decor
 }
 
 // func (me *window) Created() {
@@ -158,42 +172,29 @@ func (me *window) ID() uint64 {
 	return 0
 }
 
-func (me *window) Width() int32 {
-	var width, height C.int
-	C.window_getSize(me.display, me.windptr, &width, &height)
-	return int32(width)
+func (me *window) Size() (width, height int32) {
+	var w, h C.int32_t
+	C.window_getSize(me.display, me.windptr, &w, &h)
+	return int32(w), int32(h)
 }
 
-func (me *window) Height() int32 {
-	var width, height C.int
-	C.window_getSize(me.display, me.windptr, &width, &height)
-	return int32(height)
+func (me *window) ContentSize() (width, height int32) {
+	var w, h C.int32_t
+	C.window_getContentSize(me.display, me.windptr, &w, &h)
+	return int32(w), int32(h)
 }
 
-func (me *window) ContentWidth() int32 {
-	// TODO::
-	return me.Width()
+func (me *window) LockCanvas() Canvas {
+	w, h := me.ContentSize()
+	me.surface = C.cairo_xlib_surface_create(me.display, me.windptr, me.visual, C.int(w), C.int(h))
+	return newCanvas(me.surface)
 }
 
-func (me *window) ContentHeight() int32 {
-	// TODO::
-	return me.Height()
-}
-
-func (me *window) LockCanvas() (Canvas, error) {
-	w := me.ContentWidth()
-	h := me.ContentHeight()
-	log.V("nux", "LockCanvas ###### %d, %d", w, h)
-	me.surface = newSurfaceXlib(me.display, me.windptr, me.visual, w, h)
-	return me.surface.GetCanvas(), nil
-}
-
-func (me *window) UnlockCanvas() error {
-	me.surface.GetCanvas().Destroy()
-	me.surface.Flush()
-	me.surface.Destroy()
-	C.XFlush(me.display)
-	return nil
+func (me *window) UnlockCanvas(c Canvas) {
+	// me.surface.GetCanvas().Destroy()
+	// me.surface.Flush()
+	// me.surface.Destroy()
+	// C.XFlush(me.display)
 }
 
 func (me *window) Decor() Widget {

@@ -30,12 +30,8 @@ func (me *colorDrawable) SetColor(color nux.Color) {
 	me.color = color
 }
 
-func (me *colorDrawable) Width() int32 {
-	return 0
-}
-
-func (me *colorDrawable) Height() int32 {
-	return 0
+func (me *colorDrawable) Size() (width, height int32) {
+	return 0, 0
 }
 
 func (me *colorDrawable) Draw(canvas nux.Canvas) {

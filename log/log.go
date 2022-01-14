@@ -118,7 +118,7 @@ func (me *logger) TimeEnd(id uint32, tag string, format string, msg ...interface
 
 	if ok {
 		dur := time.Now().UnixNano() - t.UnixNano()
-		me.output(me.depth, "0;36", DEBUG, "D", tag, "%s: %dus,%.2fms", fmt.Sprintf(format, msg...), dur/1e3, float32(dur)/1e6)
+		me.output(me.depth, "0;36", DEBUG, "D", tag, "%s [%dus,%.2fms]", fmt.Sprintf(format, msg...), dur/1e3, float32(dur)/1e6)
 	} else {
 		me.output(me.depth, "1;33", WARN, "W", tag, "%s: has no timer found.", msg)
 	}

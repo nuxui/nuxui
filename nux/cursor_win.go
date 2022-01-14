@@ -6,44 +6,39 @@
 
 package nux
 
-/*
-#include <windows.h>
-#include <windowsx.h>
-*/
-import "C"
 import (
 	"github.com/nuxui/nuxui/log"
+	"github.com/nuxui/nuxui/nux/internal/win32"
 )
 
 // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-geticoninfoexw
 
 func getCursorScreenPosition() (x, y float32) {
-	var p C.POINT
-	if C.GetCursorPos(&p) > 0 {
-		return float32(p.x), float32(p.y)
+	var p win32.POINT
+	err := win32.GetCursorPos(&p)
+	if err != nil {
+		log.E("nux", "windows GetCursorPos faild: %s", err.Error())
+		return
 	}
-	log.E("nux", "windows GetCursorPos faild.")
-	return
+	return float32(p.X), float32(p.Y)
 }
 
 func cursorPositionScreenToWindow(wind Window, x0, y0 float32) (x, y float32) {
-	var p C.POINT
-	p.x = C.LONG(x0)
-	p.y = C.LONG(y0)
-	if C.ScreenToClient(wind.(*window).windptr, &p) > 0 {
-		return float32(p.x), float32(p.y)
+	p := &win32.POINT{X: int32(x0), Y: int32(y0)}
+	err := win32.ScreenToClient(wind.(*window).hwnd, p)
+	if err != nil {
+		log.E("nux", "windows ScreenToClient faild: %s", err.Error())
+		return
 	}
-	log.E("nux", "windows ScreenToClient faild.")
-	return
+	return float32(p.X), float32(p.Y)
 }
 
 func cursorPositionWindowToScreen(wind Window, x0, y0 float32) (x, y float32) {
-	var p C.POINT
-	p.x = C.LONG(x0)
-	p.y = C.LONG(y0)
-	if C.ClientToScreen(wind.(*window).windptr, &p) > 0 {
-		return float32(p.x), float32(p.y)
+	p := &win32.POINT{X: int32(x0), Y: int32(y0)}
+	err := win32.ClientToScreen(wind.(*window).hwnd, p)
+	if err != nil {
+		log.E("nux", "windows ClientToScreen faild: %s", err.Error())
+		return
 	}
-	log.E("nux", "windows ClientToScreen faild.")
-	return
+	return float32(p.X), float32(p.Y)
 }

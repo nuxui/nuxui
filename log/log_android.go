@@ -2,7 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build android
+//go:build android
+
 package log
 
 /*
@@ -20,6 +21,7 @@ import "C"
 import (
 	"fmt"
 	"io"
+	"time"
 	"unsafe"
 )
 
@@ -31,12 +33,13 @@ func new(out io.Writer, prefix string, flags int, depth int) Logger {
 		prefix: prefix,
 		level:  VERBOSE,
 		logs:   make(chan string, lBufferSize),
+		timer:  map[uint32]time.Time{},
 	}
 
 	return me
 }
 
-func (me *logger) output(depth int, level Level, levelTag string, tag string, format string, msg ...interface{}) {
+func (me *logger) output(depth int, color string, level Level, levelTag string, tag string, format string, msg ...interface{}) {
 	ctag := C.CString(tag)
 	str := fmt.Sprintf(format, msg...)
 	cmsg := C.CString(str)

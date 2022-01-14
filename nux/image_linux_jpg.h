@@ -1,3 +1,5 @@
+//go:build linux && !android
+
 /* Copyright 2018 Bernhard R. Fischer, 4096R/8E24F29D <bf@abenteuerland.at>
  *
  * This file is part of Cairo_JPG.

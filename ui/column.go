@@ -859,14 +859,14 @@ func (me *column) Layout(dx, dy, left, top, right, bottom int32) {
 }
 
 func (me *column) Draw(canvas nux.Canvas) {
-	log.D("nuxui", "column Draw %d, %d", me.MeasuredSize().Width, me.MeasuredSize().Height)
+	// log.D("nuxui", "column Draw %d, %d", me.MeasuredSize().Width, me.MeasuredSize().Height)
 
 	if me.Background() != nil {
 		me.Background().Draw(canvas)
 	}
 
 	canvas.Save()
-	canvas.Translate(me.ScrollX(), me.ScrollY())
+	canvas.Translate(float32(me.ScrollX()), float32(me.ScrollY()))
 
 	for _, child := range me.Children() {
 		if compt, ok := child.(nux.Component); ok {
@@ -878,8 +878,8 @@ func (me *column) Draw(canvas nux.Canvas) {
 			cms := cs.MeasuredSize()
 			if draw, ok := child.(nux.Draw); ok {
 				canvas.Save()
-				canvas.Translate(cms.Position.Left, cms.Position.Top)
-				canvas.ClipRect(0, 0, cms.Width, cms.Height)
+				canvas.Translate(float32(cms.Position.Left), float32(cms.Position.Top))
+				canvas.ClipRect(0, 0, float32(cms.Width), float32(cms.Height))
 				draw.Draw(canvas)
 				canvas.Restore()
 			}

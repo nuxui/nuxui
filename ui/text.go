@@ -7,9 +7,9 @@ package ui
 // TODO Text can automatically fine-tune the spacing to ensure that the font occupies the entire line. Basic Text does not do this and uses the new AlignedText
 
 import (
+	"math"
 	"time"
 
-	"github.com/nuxui/nuxui/log"
 	"github.com/nuxui/nuxui/nux"
 	"github.com/nuxui/nuxui/util"
 )
@@ -17,9 +17,6 @@ import (
 type Text interface {
 	nux.Widget
 	nux.Size
-	nux.Layout
-	nux.Measure
-	nux.Draw
 	Visual
 
 	Text() string
@@ -31,9 +28,12 @@ type text struct {
 	*nux.WidgetSize
 	*WidgetVisual
 
-	text      string
-	font      *nux.Font
-	ellipsize int
+	text               string
+	textSize           float32
+	textColor          nux.Color
+	textHighlightColor nux.Color
+	paint              nux.Paint
+	ellipsize          int
 
 	downTime time.Time
 }
@@ -41,14 +41,12 @@ type text struct {
 func NewText(context nux.Context, attrs ...nux.Attr) Text {
 	attr := getAttr(attrs...)
 	me := &text{
-		text: attr.GetString("text", ""),
-		font: nux.NewFont(attr.GetAttr("font", nux.Attr{})),
-	}
-	ellipsize := attr.GetString("ellipsize", "none")
-	switch ellipsize {
-	case "none":
-		// text.ellipsize = C.PANGO_ELLIPSIZE_NONE
-
+		text:               attr.GetString("text", ""),
+		textSize:           attr.GetFloat32("textSize", 12),
+		textColor:          attr.GetColor("textColor", nux.White),
+		textHighlightColor: attr.GetColor("textHighlightColor", nux.Transparent),
+		paint:              nux.NewPaint(attr.GetAttr("font", nux.Attr{})),
+		// ellipsize: ellipsizeFromName(attr.GetString("ellipsize", "none")),
 	}
 
 	me.WidgetBase = nux.NewWidgetBase(context, me, attrs...)
@@ -193,19 +191,20 @@ func (me *text) Measure(width, height int32) {
 		w := int32(width)
 		h := int32(height)
 
-		outW, outH := nux.MeasureText(me.text, me.font, w, h)
-		// log.V("nuxui", "Text '%s' Measure: %d, %d\n", me.text, outW, outH)
+		me.paint.SetTextSize(me.textSize)
+		outW, outH := me.paint.MeasureText(me.text, float32(nux.MeasureSpecValue(w)), float32(nux.MeasureSpecValue(h)))
+
 		ms := me.MeasuredSize()
 		if nux.MeasureSpecMode(width) == nux.Auto {
 			w := (float32(outW) + hPPx) / (1.0 - hPPt/100.0)
-			ms.Width = nux.MeasureSpec(util.Roundi32(w), nux.Pixel)
+			ms.Width = nux.MeasureSpec(int32(math.Ceil(float64(w))), nux.Pixel)
 		} else {
 			ms.Width = width
 		}
 
 		if nux.MeasureSpecMode(height) == nux.Auto {
 			h := (float32(outH) + vPPx) / (1.0 - vPPt/100.0)
-			ms.Height = nux.MeasureSpec(util.Roundi32(h), nux.Pixel)
+			ms.Height = nux.MeasureSpec(int32(math.Ceil(float64(h))), nux.Pixel)
 		} else {
 			ms.Height = height
 		}
@@ -219,14 +218,15 @@ func (me *text) Draw(canvas nux.Canvas) {
 
 	ms := me.MeasuredSize()
 	canvas.Save()
-	canvas.Translate(ms.Padding.Left, ms.Padding.Top)
+	canvas.Translate(float32(ms.Padding.Left), float32(ms.Padding.Top))
 	canvas.ClipRect(0, 0,
-		ms.Width-ms.Padding.Left-ms.Padding.Right,
-		ms.Height-ms.Padding.Top-ms.Padding.Bottom)
+		float32(ms.Width-ms.Padding.Left-ms.Padding.Right),
+		float32(ms.Height-ms.Padding.Top-ms.Padding.Bottom))
 
-	log.D("nuxui", "Text Draw ==== %s", me.text)
 	if me.text != "" {
-		canvas.DrawText(me.text, me.font, int32(ms.Width), int32(ms.Height), &nux.Paint{me.font.Color, nux.FILL, 2})
+		me.paint.SetTextSize(me.textSize)
+		me.paint.SetColor(me.textColor)
+		canvas.DrawText(me.text, float32(ms.Width), float32(ms.Height), me.paint)
 	}
 
 	canvas.Restore()

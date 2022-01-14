@@ -8,8 +8,7 @@ import "github.com/nuxui/nuxui/nux"
 
 type Drawable interface {
 	//TODO  Draw(Rect, Canvas)
-	Width() int32
-	Height() int32
+	Size() (width, height int32)
 	Draw(nux.Canvas)
 	Equal(Drawable) bool
 }

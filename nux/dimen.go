@@ -156,7 +156,7 @@ func ParseDimen(s string) (Dimen, error) {
 	} else if s == "unlimit" {
 		return ADimen(0, Unlimit), nil
 	} else if strings.HasSuffix(s, "%") {
-		v, e := strconv.ParseFloat(string(s[0:len(s)-1]), 32)
+		v, e := strconv.ParseFloat(string(s[0:strlen(s)-1]), 32)
 		if e != nil {
 			return 0, fmt.Errorf(`invalid Percent dimension format: "%s"`, s)
 		}
@@ -164,13 +164,13 @@ func ParseDimen(s string) (Dimen, error) {
 	} else if s == "0" {
 		return 0, nil
 	} else if strings.HasSuffix(s, "px") {
-		v, e := strconv.ParseFloat(string(s[0:len(s)-2]), 32)
+		v, e := strconv.ParseFloat(string(s[0:strlen(s)-2]), 32)
 		if e != nil {
 			return 0, fmt.Errorf(`invalid Pixel dimension format: "%s"`, s)
 		}
 		return ADimen(float32(v), Pixel), nil
 	} else if strings.HasSuffix(s, "wt") {
-		v, e := strconv.ParseFloat(string(s[0:len(s)-2]), 32)
+		v, e := strconv.ParseFloat(string(s[0:strlen(s)-2]), 32)
 		if e != nil {
 			return 0, fmt.Errorf(`invalid Weight dimension format: "%s"`, s)
 		}

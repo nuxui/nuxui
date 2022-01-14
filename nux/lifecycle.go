@@ -71,21 +71,21 @@ func mountWidget(child Widget, parent Parent) {
 
 	if parent != nil && !parent.Info().Mounted {
 		// parent is not mounted, do nothing
-		log.I("nuxui", " return  == child.(OnMount)=%s,  %T", child.Info().ID, child)
+		// log.I("nuxui", " return  == child.(OnMount)=%s,  %T", child.Info().ID, child)
 		return
 	}
 
 	child.Info().Parent = parent
-	log.I("nuxui", "child.(OnMount)=%s,  %T", child.Info().ID, child)
+	// log.I("nuxui", "child.(OnMount)=%s,  %T", child.Info().ID, child)
 	if f, ok := child.(OnMount); ok {
-		log.I("nuxui", "child.(OnMount)=true", child.Info().ID)
+		// log.I("nuxui", "child.(OnMount)=true", child.Info().ID)
 		f.OnMount()
 		child.Info().Mounted = true
 	}
 
 	if p, ok := child.(Parent); ok {
 		for _, c := range p.Children() {
-			log.I("nuxui", "child.(OnMount)=%s,  %T", child.Info().ID, child)
+			// log.I("nuxui", "child.(OnMount)=%s,  %T", child.Info().ID, child)
 			if f, ok := c.(OnMount); ok {
 				f.OnMount()
 				c.Info().Mounted = true

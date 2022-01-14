@@ -6,43 +6,35 @@
 
 package nux
 
-/*
-#include <windows.h>
-#include <windowsx.h>
-*/
-import "C"
-
 import (
-	"syscall"
-	"unsafe"
-
 	"github.com/nuxui/nuxui/log"
+	"github.com/nuxui/nuxui/nux/internal/win32"
 )
 
-// merge window and activity ?
 type window struct {
-	windptr      C.HWND // TODO:: need by user code, how to use unsafe.Pointer
-	decor        Parent
-	buffer       unsafe.Pointer
-	bufferWidth  int32
-	bufferHeight int32
-	delegate     WindowDelegate
-	focusWidget  Widget
+	hwnd        uintptr
+	decor       Parent
+	delegate    WindowDelegate
+	focusWidget Widget
 
 	initEvent PointerEvent
 	timer     Timer
 
-	surface        *Surface
-	surfaceResized bool
-	paintStruct    C.PAINTSTRUCT
+	preHdc      uintptr
+	hdcBuffer   uintptr
+	hBitMap     uintptr
+	canvas      *canvas
+	paintStruct win32.PAINTSTRUCT
 
 	context Context
 }
 
 func newWindow(attr Attr) *window {
 	me := &window{
-		context:        &context{},
-		surfaceResized: true,
+		hwnd:      0,
+		preHdc:    0,
+		hdcBuffer: 0,
+		context:   &context{},
 	}
 
 	me.CreateDecor(me.context, attr)
@@ -51,90 +43,37 @@ func newWindow(attr Attr) *window {
 	return me
 }
 
-// // TODO:: Created(content Widget) content is decor
-// func (me *window) Created(data interface{}) {
-// 	main := data.(string)
-// 	if main == "" {
-// 		log.Fatal("nuxui", "no main widget found.")
-// 	} else {
-// 		mainWidgetCreator := FindRegistedWidgetCreatorByName(main)
-// 		widgetTree := RenderWidget(mainWidgetCreator())
-// 		me.decor.AddChild(widgetTree)
-// 	}
+func (me *window) CreateDecor(ctx Context, attr Attr) Widget {
+	creator := FindRegistedWidgetCreatorByName("github.com/nuxui/nuxui/ui.Layer")
+	w := creator(ctx, attr)
+	if p, ok := w.(Parent); ok {
+		me.decor = p
+	} else {
+		log.Fatal("nuxui", "decor must is a Parent")
+	}
 
-// 	me.excuteCreated(me.decor)
-// }
+	decorWindowList[w] = me
 
-// func (me *window) excuteCreated(widget Widget) {
-// 	if ok, c := widget.(Created); ok {
-// 		c()
-// 	}
-
-// 	if ok, c := widget.(Component); ok {
-// 		me.excuteCreated(me.Content())
-// 	}
-
-// 	if ok, p := widget.(Parent); ok {
-// 		for _, child := range p.Children() {
-// 			me.excuteCreated(child)
-// 		}
-// 	}
-// }
-
-// func (me *window) CreateDecor(attr Attr) Widget {
-// 	creator := FindRegistedWidgetCreatorByName("github.com/nuxui/nuxui/ui.Layer")
-// 	w := creator()
-// 	if p, ok := w.(Parent); ok {
-// 		me.decor = p
-// 	} else {
-// 		log.Fatal("nuxui", "decor must is a Parent")
-// 	}
-
-// 	decorWindowList[w] = me
-
-// 	return me.decor
-// }
-
-// func (me *window) Measure(width, height int32) {
-// 	if me.decor == nil {
-// 		return
-// 	}
-
-// 	if s, ok := me.decor.(Size); ok {
-// 		if s.MeasuredSize().Width == width && s.MeasuredSize().Height == height {
-// 			// return
-// 		}
-
-// 		s.MeasuredSize().Width = width
-// 		s.MeasuredSize().Height = height
-// 	}
-
-// 	me.surfaceResized = true
-
-// 	if f, ok := me.decor.(Measure); ok {
-// 		f.Measure(width, height)
-// 	}
-// }
-
-// func (me *window) Layout(dx, dy, left, top, right, bottom int32) {
-// 	if me.decor == nil {
-// 		return
-// 	}
-
-// 	if f, ok := me.decor.(Layout); ok {
-// 		f.Layout(dx, dy, left, top, right, bottom)
-// 	}
-// }
+	return me.decor
+}
 
 func (me *window) Draw(canvas Canvas) {
 	log.V("nuxui", "window Draw start")
 	if me.decor != nil {
 		if f, ok := me.decor.(Draw); ok {
 			log.V("nuxui", "window Draw canvas save")
+			var rectClient win32.RECT
+			win32.GetClientRect(me.hwnd, &rectClient)
+
+			win32.PatBlt(me.hdcBuffer, 0, 0, rectClient.Right-rectClient.Left, rectClient.Bottom-rectClient.Top, win32.WHITENESS)
+
 			canvas.Save()
-			// TODO:: canvas clip
+			canvas.ClipRect(0, 0, float32(rectClient.Right-rectClient.Left), float32(rectClient.Bottom-rectClient.Top))
 			f.Draw(canvas)
 			canvas.Restore()
+			canvas.Flush()
+
+			win32.BitBlt(me.preHdc, 0, 0, rectClient.Right-rectClient.Left, rectClient.Bottom-rectClient.Top, me.hdcBuffer, 0, 0, win32.SRCCOPY)
 		}
 	}
 	log.V("nuxui", "window Draw end")
@@ -144,49 +83,44 @@ func (me *window) ID() uint64 {
 	return 0
 }
 
-func (me *window) Width() int32 {
-	var rect C.RECT
-	if C.GetWindowRect(me.windptr, &rect) > 0 {
-		return int32(rect.right - rect.left)
+func (me *window) Size() (width, height int32) {
+	var rect win32.RECT
+	if err := win32.GetWindowRect(me.hwnd, &rect); err == nil {
+		return rect.Right - rect.Left, rect.Bottom - rect.Top
 	}
-	return 0
+	return 0, 0
 }
 
-func (me *window) Height() int32 {
-	var rect C.RECT
-	if C.GetWindowRect(me.windptr, &rect) > 0 {
-		return int32(rect.bottom - rect.top)
+func (me *window) ContentSize() (width, height int32) {
+	var rect win32.RECT
+	if err := win32.GetClientRect(me.hwnd, &rect); err == nil {
+		return rect.Right - rect.Left, rect.Bottom - rect.Top
 	}
-	return 0
+	return 0, 0
 }
 
-func (me *window) ContentWidth() int32 {
-	var rect C.RECT
-	if C.GetClientRect(me.windptr, &rect) > 0 {
-		return int32(rect.right - rect.left)
+func (me *window) LockCanvas() Canvas {
+	hdc, _ := win32.BeginPaint(me.hwnd, &me.paintStruct)
+	if me.preHdc != hdc {
+		if me.preHdc != 0 {
+			me.canvas.Destroy()
+			win32.DeleteObject(me.hBitMap)
+			win32.DeleteDC(me.preHdc)
+		}
+		me.preHdc = hdc
+		var rectClient win32.RECT
+		win32.GetClientRect(me.hwnd, &rectClient)
+		me.hdcBuffer, _ = win32.CreateCompatibleDC(hdc)
+		me.hBitMap, _ = win32.CreateCompatibleBitmap(hdc, rectClient.Right-rectClient.Left, rectClient.Bottom-rectClient.Top)
+		win32.SelectObject(me.hdcBuffer, me.hBitMap)
+
+		me.canvas = newCanvas(me.hdcBuffer)
 	}
-	return 0
+	return me.canvas
 }
 
-func (me *window) ContentHeight() int32 {
-	var rect C.RECT
-	if C.GetClientRect(me.windptr, &rect) > 0 {
-		return int32(rect.bottom - rect.top)
-	}
-	return 0
-}
-
-func (me *window) LockCanvas() (Canvas, error) {
-	hdc := C.BeginPaint(me.windptr, &me.paintStruct)
-	me.surface = newSurfaceWin32(hdc)
-	return me.surface.GetCanvas(), nil
-}
-
-func (me *window) UnlockCanvas() error {
-	me.surface.GetCanvas().Destroy()
-	me.surface.Flush()
-	C.EndPaint(me.windptr, &me.paintStruct)
-	return nil
+func (me *window) UnlockCanvas(c Canvas) {
+	win32.EndPaint(me.hwnd, &me.paintStruct)
 }
 
 func (me *window) Decor() Widget {
@@ -195,33 +129,33 @@ func (me *window) Decor() Widget {
 
 // TODO:: use int? set 0.5 and return 127,0.498039
 func (me *window) Alpha() float32 {
-	var pcrKey C.COLORREF
-	var pbAlpha C.BYTE
-	var pdwFlags C.DWORD
-	if C.GetLayeredWindowAttributes(me.windptr, &pcrKey, &pbAlpha, &pdwFlags) > 0 {
+	var pbAlpha byte
+	extstyle, _ := win32.GetWindowLong(me.hwnd, win32.GWL_EXSTYLE)
+	win32.SetWindowLong(me.hwnd, win32.GWL_EXSTYLE, extstyle|win32.WS_EX_LAYERED)
+	if err := win32.GetLayeredWindowAttributes(me.hwnd, nil, &pbAlpha, nil); err == nil {
 		return float32(float32(pbAlpha) / 255.0)
 	}
 	return 1.0
 }
 
 func (me *window) SetAlpha(alpha float32) {
-	C.SetWindowLong(me.windptr, C.GWL_EXSTYLE, C.GetWindowLong(me.windptr, C.GWL_EXSTYLE)|C.WS_EX_LAYERED)
-	C.SetLayeredWindowAttributes(me.windptr, 0, C.BYTE(255.0*alpha), C.LWA_ALPHA)
+	extstyle, _ := win32.GetWindowLong(me.hwnd, win32.GWL_EXSTYLE)
+	win32.SetWindowLong(me.hwnd, win32.GWL_EXSTYLE, extstyle|win32.WS_EX_LAYERED)
+	win32.SetLayeredWindowAttributes(me.hwnd, 0, byte(255.0*alpha), win32.LWA_ALPHA)
 }
 
-func (me *window) Title() string {
-	textLen := C.GetWindowTextLengthW(me.windptr) + 1
-	buf := make([]uint16, textLen)
-	C.GetWindowTextW(me.windptr, (*C.WCHAR)(&buf[0]), textLen)
-	return syscall.UTF16ToString(buf)
+func (me *window) Title() (title string) {
+	title, err := win32.GetWindowText(me.hwnd)
+	if err != nil {
+		log.E("nux", "get window title error: %s", err.Error())
+		return
+	}
+	return title
 }
 
 func (me *window) SetTitle(title string) {
-	ctitle, err := syscall.UTF16PtrFromString(title)
-	if err != nil {
+	if err := win32.SetWindowText(me.hwnd, title); err != nil {
 		log.E("nux", "set window title error: %s", err.Error())
-	} else {
-		C.SetWindowTextW(me.windptr, (*C.WCHAR)(ctitle))
 	}
 }
 

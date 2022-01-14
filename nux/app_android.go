@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build android
+//go:build android
 
 package nux
 
@@ -20,9 +20,11 @@ package nux
 #include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
+
 */
 import "C"
 import (
+	// "runtime"
 	"time"
 	"unsafe"
 
@@ -31,10 +33,37 @@ import (
 )
 
 var theApp = &application{
-	event:              make(chan Event),
-	eventWaitDone:      make(chan Event),
-	eventDone:          make(chan struct{}),
+	runOnUI:            make(chan func()),
 	nativeLoopPrepared: make(chan struct{}),
+	drawSignal:         make(chan struct{}, drawSignalSize),
+}
+
+const (
+	drawSignalSize = 50
+)
+
+func init() {
+	// runtime.LockOSThread() // TODO:: RunOnJVM
+
+	timerLoopInstance.init()
+
+	go func() {
+		<-theApp.nativeLoopPrepared
+		// TODO:: paint not ok?
+		log.V("nuxui", "<- nativeLoopPrepared")
+		var i, l int
+		for {
+			<-theApp.drawSignal
+			l = len(theApp.drawSignal)
+			for i = 0; i != l; i++ {
+				<-theApp.drawSignal
+			}
+			log.V("nuxui", "<-theApp.drawSignal requestRedraw")
+
+			requestRedraw()
+			time.Sleep(16 * time.Millisecond)
+		}
+	}()
 }
 
 func app() Application {
@@ -44,32 +73,12 @@ func app() Application {
 type application struct {
 	manifest           Manifest
 	window             *window
-	event              chan Event
-	eventWaitDone      chan Event
-	eventDone          chan struct{}
+	runOnUI            chan func()
 	nativeLoopPrepared chan struct{}
+	drawSignal         chan struct{}
 }
 
-func (me *application) Creating(attr Attr) {
-	if me.manifest == nil {
-		me.manifest = NewManifest()
-	}
-
-	if c, ok := me.manifest.(Creating); ok {
-		c.Creating(attr.GetAttr("manifest", Attr{}))
-	}
-
-	if me.window == nil {
-		me.window = newWindow()
-	}
-
-	me.window.Creating(attr)
-}
-
-func (me *application) Created(data interface{}) {
-	if c, ok := me.manifest.(AnyCreated); ok {
-		c.Created(data)
-	}
+func (me *application) OnCreate(data interface{}) {
 }
 
 func (me *application) MainWindow() Window {
@@ -80,205 +89,185 @@ func (me *application) Manifest() Manifest {
 	return me.manifest
 }
 
-func (me *application) SendEvent(event Event) {
-	me.event <- event
+func (me *application) Terminate() {
 }
 
-func (me *application) SendEventAndWait(event Event) {
-	me.eventWaitDone <- event
-	<-me.eventDone
-}
-
-func (me *application) findWindow(activity *C.ANativeActivity, awindow *C.ANativeWindow) *window {
-	if me.window.actptr == nil || me.window.windptr == nil {
-		return nil
+func (me *application) RequestRedraw(widget Widget) {
+	if l := len(theApp.drawSignal); l >= drawSignalSize {
+		for i := 0; i != l-1; i++ {
+			<-theApp.drawSignal
+		}
 	}
-
-	if me.window.actptr == activity || me.window.windptr == awindow {
-		return me.window
-	}
-
-	return nil
+	theApp.drawSignal <- struct{}{}
 }
 
 func run() {
-	go func() {
-		<-theApp.nativeLoopPrepared
-		theApp.loop()
-	}()
+	// defer runtime.UnlockOSThread()
+	// if tid := uint64(C.threadID()); tid != initThreadID {
+	// 	log.Fatal("nuxui", "main called on thread %d, but init ran on %d", tid, initThreadID)
+	// }
 }
 
-//export nativeLoopPrepared
-func nativeLoopPrepared() {
+//export go_nativeLoopPrepared
+func go_nativeLoopPrepared() {
 	theApp.nativeLoopPrepared <- struct{}{}
 }
 
-//export initWindow
-func initWindow(activity *C.ANativeActivity) {
-	theApp.window.actptr = activity
+//export go_initWindow
+func go_initWindow(activity C.jobject) {
+	theApp.window.activity = activity
 	// TODO set width height background drawable
 }
 
-//export callMain
-func callMain(mainPC uintptr) {
+//export go_callMain
+func go_callMain(mainPC uintptr) {
 	callfn.CallFn(mainPC)
 }
 
-//export onInputEvent
-func onInputEvent(event *C.AInputEvent) int32 {
-	log.V("nuxui", "onInputEvent")
-	// log.V("nuxui", "onInputEvent type %d", C.AInputEvent_getType(event))
-	// // https://developer.android.com/ndk/reference/group/input#group___input_1gaac34dfe6c6b73b43a4656c9dce041034
-	// switch C.AInputEvent_getType(event) {
-	// case C.AINPUT_EVENT_TYPE_KEY:
-	// case C.AINPUT_EVENT_TYPE_MOTION:
-	// 	// events := convertMouseMotionEvent(event)
-	// 	// wind := GetWindowByID(0)
-	// 	log.V("nuxui", "AINPUT_EVENT_TYPE_MOTION")
-	// 	for _, e := range events {
-	// 		log.V("nuxui", "DispatchPointerEvent %s", e)
-	// 		// ui.DispatchPointerEvent(rootWidget, e)
-	// 	}
-	// 	// case C.AINPUT_EVENT_TYPE_FOCUS:
-	// }
-	// // drawFrame()
-	// log.V("nuxui", "onInputEvent end")
-
-	e := &inputEvent{
-		id:     1,
-		time:   time.Now(),
-		action: 0,
-	}
-
-	theApp.SendEvent(e)
-	return 0
-}
-
-//export onStart
-func onStart(activity *C.ANativeActivity) {
+//export go_onStart
+func go_onStart(activity C.jobject) {
 	log.V("nuxui", "onStart")
 }
 
-//export onResume
-func onResume(activity *C.ANativeActivity) {
+//export go_onResume
+func go_onResume(activity C.jobject) {
 	log.V("nuxui", "onResume")
 }
 
-//export onPause
-func onPause(activity *C.ANativeActivity) {
+//export go_onPause
+func go_onPause(activity C.jobject) {
 	log.V("nuxui", "onPause")
 }
 
-//export onStop
-func onStop(activity *C.ANativeActivity) {
+//export go_onStop
+func go_onStop(activity C.jobject) {
 	log.V("nuxui", "onStop")
 }
 
-//export onDestroy
-func onDestroy(activity *C.ANativeActivity) {
+//export go_onDestroy
+func go_onDestroy(activity C.jobject) {
 	log.V("nuxui", "go onDestroy")
-	e := &event{
-		id:    1,
-		time:  time.Now(),
-		etype: Type_AppExit,
-	}
-	theApp.SendEventAndWait(e)
-	log.V("nuxui", "go onDestroy end")
 }
 
-//export onLowMemory
-func onLowMemory(activity *C.ANativeActivity) {
+//export go_onLowMemory
+func go_onLowMemory(activity C.jobject) {
 	log.V("nuxui", "onLowMemory")
 }
 
-//export onSaveInstanceState
-func onSaveInstanceState(activity *C.ANativeActivity, outSize *C.size_t) unsafe.Pointer {
+//export go_onSaveInstanceState
+func go_onSaveInstanceState(activity C.jobject, outSize *C.size_t) unsafe.Pointer {
 	log.V("nuxui", "onSaveInstanceState")
 	return nil
 }
 
-//export onConfigurationChanged
-func onConfigurationChanged(activity *C.ANativeActivity) {
+//export go_onConfigurationChanged
+func go_onConfigurationChanged(activity C.jobject) {
 	log.V("nuxui", "onConfigurationChanged")
 }
 
-//export onContentRectChanged
-func onContentRectChanged(activity *C.ANativeActivity, rect *C.ARect) {
+//export go_onContentRectChanged
+func go_onContentRectChanged(activity C.jobject, rect *C.ARect) {
 	log.V("nuxui", "onContentRectChanged")
 }
 
 //------------------------ window events ----------------------------
 
-//export onNativeWindowCreated
-func onNativeWindowCreated(activity *C.ANativeActivity, awindow *C.ANativeWindow) {
-	log.V("nuxui", "onNativeWindowCreated")
-	theApp.window.actptr = activity
-	theApp.window.windptr = awindow
-
-	// on activity created, call window creating, then get window attrs to init window
-	// send created
-	e := &windowEvent{
-		id:     1,
-		time:   time.Now(),
-		action: Action_WindowCreated,
-		window: theApp.findWindow(activity, awindow),
-	}
-
-	theApp.SendEventAndWait(e)
+//export go_onNativeWindowCreated
+func go_onNativeWindowCreated(jnienv *C.JNIEnv, activity C.jobject, surfaceHolder C.jobject) {
+	theApp.window.jnienv = jnienv
+	theApp.window.activity = activity
+	theApp.window.surfaceHolder = surfaceHolder
+	windowAction(activity, Action_WindowCreated)
+	log.V("nuxui", "windowAction Action_WindowCreated surfaceHolder=%d", surfaceHolder)
 }
 
-//export onNativeWindowResized
-func onNativeWindowResized(activity *C.ANativeActivity, awindow *C.ANativeWindow) {
-	log.V("nuxui", "onNativeWindowResized")
-	e := &windowEvent{
-		id:     1,
-		time:   time.Now(),
-		action: Action_WindowMeasured,
-		window: theApp.findWindow(activity, awindow),
-	}
-
-	theApp.SendEventAndWait(e)
+//export go_onNativeWindowResized
+func go_onNativeWindowResized(jnienv *C.JNIEnv, activity C.jobject, surfaceHolder C.jobject, format, width, height C.int) {
+	log.V("nuxui", "onNativeWindowResized surfaceHolder=%d", surfaceHolder)
+	theApp.window.jnienv = jnienv
+	theApp.window.activity = activity
+	theApp.window.surfaceHolder = surfaceHolder
+	theApp.window.width = int32(width)
+	theApp.window.height = int32(height)
+	windowAction(activity, Action_WindowMeasured)
 }
 
-//export onNativeWindowRedrawNeeded
-func onNativeWindowRedrawNeeded(activity *C.ANativeActivity, awindow *C.ANativeWindow) {
-	log.V("nuxui", "onNativeWindowRedrawNeeded")
-	e := &windowEvent{
-		id:     1,
-		time:   time.Now(),
-		action: Action_WindowDraw,
-		window: theApp.findWindow(activity, awindow),
-	}
-
-	theApp.SendEventAndWait(e)
+//export go_onNativeWindowRedrawNeeded
+func go_onNativeWindowRedrawNeeded(jnienv *C.JNIEnv, activity C.jobject, surfaceHolder C.jobject) {
+	log.V("nuxui", "onNativeWindowRedrawNeeded surfaceHolder=%d", surfaceHolder)
+	theApp.window.jnienv = jnienv
+	theApp.window.activity = activity
+	theApp.window.surfaceHolder = surfaceHolder
+	windowAction(activity, Action_WindowDraw)
 }
 
-//export onWindowFocusChanged
-func onWindowFocusChanged(activity *C.ANativeActivity, hasFocus C.int) {
+func windowAction(activity C.jobject, action EventAction) {
+	e := &windowEvent{
+		event: event{
+			time:   time.Now(),
+			etype:  Type_WindowEvent,
+			action: action,
+			window: theApp.window,
+		},
+	}
+
+	theApp.handleEvent(e)
+}
+
+func startTextInput() {
+}
+
+func stopTextInput() {
+}
+
+func setTextInputRect(x, y, w, h float32) {
+}
+
+//export go_backToUI
+func go_backToUI() {
+	log.V("nuxui", "go_backToUI ..........")
+	callback := <-theApp.runOnUI
+	callback()
+}
+
+func runOnUI(callback func()) {
+	// go func() {
+	// 	theApp.runOnUI <- callback
+	// }()
+	// C.backToUI()
+}
+
+func requestRedraw() {
+	log.V("nuxui", "requestRedraw invalidate")
+	// C.invalidate()
+}
+
+//export go_onWindowFocusChanged
+func go_onWindowFocusChanged(activity C.jobject, hasFocus C.int) {
 	log.V("nuxui", "onWindowFocusChanged")
-	e := &windowEvent{
-		id:     1,
-		time:   time.Now(),
-		action: Action_WindowFocusGained,
-		window: theApp.findWindow(activity, nil),
-	}
+	// e := &windowEvent{
+	// 	id:     1,
+	// 	time:   time.Now(),
+	// 	action: Action_WindowFocusGained,
+	// 	window: theApp.findWindow(activity, nil),
+	// }
 
-	if hasFocus == 0 {
-		e.action = Action_WindowFocusLost
-	}
+	// if hasFocus == 0 {
+	// 	e.action = Action_WindowFocusLost
+	// }
 
-	theApp.SendEventAndWait(e)
+	// theApp.SendEventAndWait(e)
 }
 
-//export onNativeWindowDestroyed
-func onNativeWindowDestroyed(activity *C.ANativeActivity, awindow *C.ANativeWindow) {
+//export go_onNativeWindowDestroyed
+func go_onNativeWindowDestroyed(activity C.jobject, awindow *C.ANativeWindow) {
 	log.V("nuxui", "onNativeWindowDestroyed")
-	e := &windowEvent{
-		id:     1,
-		time:   time.Now(),
-		action: Action_WindowDraw,
-		window: theApp.findWindow(activity, awindow),
-	}
+	// e := &windowEvent{
+	// 	id:     1,
+	// 	time:   time.Now(),
+	// 	action: Action_WindowDraw,
+	// 	window: theApp.findWindow(activity, awindow),
+	// }
 
-	theApp.SendEventAndWait(e)
+	// theApp.SendEventAndWait(e)
 }

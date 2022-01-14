@@ -48,21 +48,21 @@ func (me *application) handleEvent(event Event) {
 			}
 			log.V("nuxui", "Action_WindowCreated end")
 		case Action_WindowMeasured:
-			log.V("nuxui", "Action_WindowMeasured width=%d, height=%d", event.Window().ContentWidth(), event.Window().ContentHeight())
+			w, h := event.Window().ContentSize()
+			log.V("nuxui", "Action_WindowMeasured width=%d, height=%d", w, h)
 			if f, ok := event.Window().(Measure); ok {
-				f.Measure(event.Window().ContentWidth(), event.Window().ContentHeight())
+				f.Measure(w, h)
 			}
 
 			if f, ok := event.Window().(Layout); ok {
-				f.Layout(0, 0, 0, 0, event.Window().ContentWidth(), event.Window().ContentHeight())
+				f.Layout(0, 0, 0, 0, w, h)
 			}
 		case Action_WindowDraw:
 			// log.V("nuxui", "Action_WindowDraw")
 			if f, ok := event.Window().(Draw); ok {
-				if canvas, err := event.Window().LockCanvas(); err == nil {
-					f.Draw(canvas)
-					event.Window().UnlockCanvas()
-				}
+				canvas := event.Window().LockCanvas()
+				f.Draw(canvas)
+				event.Window().UnlockCanvas(canvas)
 			}
 		}
 	// App().MainWindow()

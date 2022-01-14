@@ -25,18 +25,11 @@ func NewImageDrawable(src string) ImageDrawable {
 	return &imageDrawable{}
 }
 
-func (me *imageDrawable) Width() int32 {
+func (me *imageDrawable) Size() (width, height int32) {
 	if me.image == nil {
-		return 0
+		return 0, 0
 	}
-	return me.image.Width()
-}
-
-func (me *imageDrawable) Height() int32 {
-	if me.image == nil {
-		return 0
-	}
-	return me.image.Height()
+	return me.image.Size()
 }
 
 func (me *imageDrawable) Draw(canvas nux.Canvas) {
