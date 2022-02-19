@@ -9,7 +9,7 @@ import "time"
 type GestureState int
 
 const (
-	GestureState_Ready GestureState = 1 + iota
+	GestureState_Ready GestureState = iota + 1
 	GestureState_Possible
 	GestureState_Accepted
 	GestureState_Rejected
@@ -17,7 +17,7 @@ const (
 
 const (
 	GESTURE_DOWN_DELAY                 = 100 * time.Millisecond
-	GESTURE_DOWN2UP_DELAY              = 100
+	GESTURE_DOWN2UP_DELAY              = 100 * time.Millisecond
 	GESTURE_LONG_PRESS_TIMEOUT         = 500 * time.Millisecond
 	GESTURE_DOUBLETAP_TIMEOUT          = 300 * time.Millisecond
 	GESTURE_MIN_PAN_DISTANCE   float32 = 10 /*use dp*/

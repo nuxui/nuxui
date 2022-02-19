@@ -28,14 +28,14 @@ const (
 )
 
 type Logger interface {
-	V(tag string, format string, msg ...interface{})
-	D(tag string, format string, msg ...interface{})
-	I(tag string, format string, msg ...interface{})
-	W(tag string, format string, msg ...interface{})
-	E(tag string, format string, msg ...interface{})
-	Fatal(tag string, format string, msg ...interface{}) // TODO:: print log, print stack, exit
+	V(tag string, format string, msg ...any)
+	D(tag string, format string, msg ...any)
+	I(tag string, format string, msg ...any)
+	W(tag string, format string, msg ...any)
+	E(tag string, format string, msg ...any)
+	Fatal(tag string, format string, msg ...any) // TODO:: print log, print stack, exit
 	Time() (id uint32)
-	TimeEnd(id uint32, tag string, format string, msg ...interface{})
+	TimeEnd(id uint32, tag string, format string, msg ...any)
 	SetOutput(w io.Writer)
 	Flags() int
 	SetFlags(flag int)
@@ -75,27 +75,27 @@ func New(out io.Writer, prefix string, flags int) Logger {
 	return new(out, prefix, flags, 1)
 }
 
-func (me *logger) V(tag string, format string, msg ...interface{}) {
+func (me *logger) V(tag string, format string, msg ...any) {
 	me.output(me.depth, "", VERBOSE, "V", tag, format, msg...)
 }
 
-func (me *logger) D(tag string, format string, msg ...interface{}) {
+func (me *logger) D(tag string, format string, msg ...any) {
 	me.output(me.depth, "0;36", DEBUG, "D", tag, format, msg...)
 }
 
-func (me *logger) I(tag string, format string, msg ...interface{}) {
+func (me *logger) I(tag string, format string, msg ...any) {
 	me.output(me.depth, "0;32", INFO, "I", tag, format, msg...)
 }
 
-func (me *logger) W(tag string, format string, msg ...interface{}) {
+func (me *logger) W(tag string, format string, msg ...any) {
 	me.output(me.depth, "1;33", WARN, "W", tag, format, msg...)
 }
 
-func (me *logger) E(tag string, format string, msg ...interface{}) {
+func (me *logger) E(tag string, format string, msg ...any) {
 	me.output(me.depth, "1;31", ERROR, "E", tag, format, msg...)
 }
 
-func (me *logger) Fatal(tag string, format string, msg ...interface{}) {
+func (me *logger) Fatal(tag string, format string, msg ...any) {
 	me.output(me.depth, "97;41", ERROR, "Fatal", tag, format, msg...)
 	panic(fmt.Sprintf(format, msg...))
 }
@@ -109,7 +109,7 @@ func (me *logger) Time() (id uint32) {
 	return
 }
 
-func (me *logger) TimeEnd(id uint32, tag string, format string, msg ...interface{}) {
+func (me *logger) TimeEnd(id uint32, tag string, format string, msg ...any) {
 	var t time.Time
 	var ok bool
 	me.mux.Lock()
@@ -164,27 +164,27 @@ func (me *logger) Close() {
 
 var std = new(os.Stdout, "", LstdFlags, 2)
 
-func V(tag string, format string, msg ...interface{}) {
+func V(tag string, format string, msg ...any) {
 	std.V(tag, format, msg...)
 }
 
-func D(tag string, format string, msg ...interface{}) {
+func D(tag string, format string, msg ...any) {
 	std.D(tag, format, msg...)
 }
 
-func I(tag string, format string, msg ...interface{}) {
+func I(tag string, format string, msg ...any) {
 	std.I(tag, format, msg...)
 }
 
-func W(tag string, format string, msg ...interface{}) {
+func W(tag string, format string, msg ...any) {
 	std.W(tag, format, msg...)
 }
 
-func E(tag string, format string, msg ...interface{}) {
+func E(tag string, format string, msg ...any) {
 	std.E(tag, format, msg...)
 }
 
-func Fatal(tag string, format string, msg ...interface{}) {
+func Fatal(tag string, format string, msg ...any) {
 	std.Fatal(tag, format, msg...)
 }
 
@@ -192,7 +192,7 @@ func Time() (id uint32) {
 	return std.Time()
 }
 
-func TimeEnd(id uint32, tag string, format string, msg ...interface{}) {
+func TimeEnd(id uint32, tag string, format string, msg ...any) {
 	std.TimeEnd(id, tag, format, msg...)
 }
 

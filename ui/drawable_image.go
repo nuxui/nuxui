@@ -7,15 +7,25 @@ package ui
 import "github.com/nuxui/nuxui/nux"
 
 type ImageDrawable interface {
-	Drawable
+	nux.Drawable
 }
 
 type imageDrawable struct {
-	image nux.Image
+	x      int32
+	y      int32
+	width  int32
+	height int32
+	image  nux.Image
 }
 
-// TODO:: if src exised
-func NewImageDrawable(src string) ImageDrawable {
+// TODO:: if src exised, duplicate image
+func NewImageDrawable(owner nux.Widget, attrs ...nux.Attr) ImageDrawable {
+	attr := nux.MergeAttrs(attrs...)
+	return NewImageDrawableWithSource(attr.GetString("src", ""))
+}
+
+// TODO:: rename
+func NewImageDrawableWithSource(src string) ImageDrawable {
 	if src != "" {
 		return &imageDrawable{
 			image: nux.CreateImage(src),
@@ -32,10 +42,21 @@ func (me *imageDrawable) Size() (width, height int32) {
 	return me.image.Size()
 }
 
-func (me *imageDrawable) Draw(canvas nux.Canvas) {
-	canvas.DrawImage(me.image)
+func (me *imageDrawable) SetBounds(x, y, width, height int32) {
+	me.x = x
+	me.y = y
+	me.width = width
+	me.height = height
 }
 
-func (me *imageDrawable) Equal(drawable Drawable) bool {
+func (me *imageDrawable) Draw(canvas nux.Canvas) {
+	canvas.Save()
+	canvas.Translate(float32(me.x), float32(me.y))
+	canvas.DrawImage(me.image)
+	canvas.Restore()
+}
+
+func (me *imageDrawable) Equal(drawable nux.Drawable) bool {
+	// TODO::
 	return false
 }

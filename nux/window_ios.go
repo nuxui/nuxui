@@ -37,25 +37,23 @@ type window struct {
 	initEvent PointerEvent
 	timer     Timer
 
-	context   Context
 	cgContext uintptr
 }
 
 func newWindow(attr Attr) *window {
 	me := &window{
-		context: &context{},
 	}
 
-	me.CreateDecor(me.context, attr)
-	GestureBinding().AddGestureHandler(me.decor, &decorGestureHandler{})
+	me.CreateDecor(attr)
+	GestureManager().AddGestureHandler(me.decor, &decorGestureHandler{})
 	log.I("nuxui", "====== mount decor")
 	mountWidget(me.decor, nil)
 	log.I("nuxui", "====== mount decor end ")
 	return me
 }
 
-func (me *window) CreateDecor(ctx Context, attr Attr) Widget {
-	creator := FindRegistedWidgetCreatorByName("github.com/nuxui/nuxui/ui.Layer")
+func (me *window) CreateDecor(attr Attr) Widget {
+	creator := FindRegistedWidgetCreator("github.com/nuxui/nuxui/ui.Layer")
 	w := creator(ctx, attr)
 	if p, ok := w.(Parent); ok {
 		me.decor = p
@@ -269,9 +267,9 @@ func (me *window) switchFocusIfPossible(event PointerEvent) {
 func (me *window) switchFocusAtPoint(x, y float32) {
 	if me.focusWidget != nil {
 		if s, ok := me.focusWidget.(Size); ok {
-			ms := s.MeasuredSize()
-			if x >= float32(ms.Position.X) && x <= float32(ms.Position.X+ms.Width) &&
-				y >= float32(ms.Position.Y) && y <= float32(ms.Position.Y+ms.Height) {
+			frame := s.Frame()
+			if x >= float32(frame.X) && x <= float32(frame.X+frame.Width) &&
+				y >= float32(frame.Position.Y) && y <= float32(frame.Position.Y+frame.Height) {
 				// point is in current focus widget, do not need change focus
 				return
 			}

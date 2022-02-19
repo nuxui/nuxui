@@ -25,7 +25,6 @@ func OnTapCancel(widget Widget, callback GestureCallback) {
 	addTapCallback(widget, _ACTION_TAP_CANCEL, callback)
 }
 
-// TODO:: widget will auto clear all gesture when destroy
 func RemoveTapGesture(widget Widget, callback GestureCallback) {
 	removeTapCallback(widget, _ACTION_TAP, callback)
 }
@@ -43,18 +42,18 @@ func RemoveTapCancelGesture(widget Widget, callback GestureCallback) {
 }
 
 func addTapCallback(widget Widget, which int, callback GestureCallback) {
-	if r := GestureBinding().FindGestureRecognizer(widget, (*tapGestureRecognizer)(nil)); r != nil {
+	if r := GestureManager().FindGestureRecognizer(widget, (*tapGestureRecognizer)(nil)); r != nil {
 		recognizer := r.(*tapGestureRecognizer)
 		recognizer.addCallback(which, callback)
 	} else {
 		recognizer := newTapGestureRecognizer(widget)
 		recognizer.addCallback(which, callback)
-		GestureBinding().AddGestureRecognizer(widget, recognizer)
+		GestureManager().AddGestureRecognizer(widget, recognizer)
 	}
 }
 
 func removeTapCallback(widget Widget, which int, callback GestureCallback) {
-	if r := GestureBinding().FindGestureRecognizer(widget, (*tapGestureRecognizer)(nil)); r != nil {
+	if r := GestureManager().FindGestureRecognizer(widget, (*tapGestureRecognizer)(nil)); r != nil {
 		recognizer := r.(*tapGestureRecognizer)
 		recognizer.removeCallback(which, callback)
 	}
@@ -141,11 +140,14 @@ func (me *tapGestureRecognizer) PointerAllowed(event PointerEvent) bool {
 func (me *tapGestureRecognizer) HandlePointerEvent(event PointerEvent) {
 	switch event.Action() {
 	case Action_Down:
+		log.V("nuxui", "HandlePointerEvent Action_Down ")
+
 		me.initEvent = event
 		pointer := event.Pointer()
 		GestureArenaManager().Add(pointer, me)
 
 		if event.Kind() == Kind_Touch {
+			me.state = GestureState_Possible
 			me.timer = NewTimerBackToUI(GESTURE_DOWN_DELAY, func() {
 				me.invokeTapDown(pointer)
 			})
@@ -153,8 +155,12 @@ func (me *tapGestureRecognizer) HandlePointerEvent(event PointerEvent) {
 			me.invokeTapDown(pointer)
 		}
 	case Action_Up:
+		log.V("nuxui", "HandlePointerEvent Action_Up ")
+
 		// do not accept proactive, wait GestureArea sweep
-	case Action_Move:
+	case Action_Drag:
+		log.V("nuxui", "HandlePointerEvent Action_Move ")
+
 		if me.state == GestureState_Possible {
 			if me.initEvent.Distance(event.X(), event.Y()) >= GESTURE_MIN_PAN_DISTANCE {
 				GestureArenaManager().Resolve(event.Pointer(), me, false)
@@ -164,6 +170,8 @@ func (me *tapGestureRecognizer) HandlePointerEvent(event PointerEvent) {
 }
 
 func (me *tapGestureRecognizer) RejectGesture(pointer int64) {
+	log.V("nuxui", "tapGestureRecognizer RejectGesture ")
+
 	if me.state == GestureState_Possible {
 		me.invokeTapCancel()
 	}
@@ -176,11 +184,20 @@ func (me *tapGestureRecognizer) AccpetGesture(pointer int64) {
 		me.timer = nil
 	}
 
+	log.V("nuxui", "AccpetGesture me.state = %d", me.state)
 	if me.state == GestureState_Possible {
 		me.invokeTapDown(pointer)
 		me.invokeTapUpAndTap(pointer)
 	}
 	me.reset()
+}
+
+func (me *tapGestureRecognizer) Clear(widget Widget) {
+	if me.initEvent != nil {
+		GestureArenaManager().Resolve(me.initEvent.Pointer(), me, false)
+	}
+	me.reset()
+	me.callbacks = [][]GestureCallback{[]GestureCallback{}, []GestureCallback{}, []GestureCallback{}, []GestureCallback{}}
 }
 
 func (me *tapGestureRecognizer) reset() {

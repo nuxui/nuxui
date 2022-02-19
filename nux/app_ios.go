@@ -74,7 +74,7 @@ type application struct {
 	drawSignal         chan struct{}
 }
 
-func (me *application) OnCreate(data interface{}) {
+func (me *application) OnCreate(data any) {
 }
 
 func (me *application) MainWindow() Window {

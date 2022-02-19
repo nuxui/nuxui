@@ -4,6 +4,12 @@
 
 package nux
 
-func Use(use ...any) {
+type Theme interface {
+	GetAttr(widgetName, themeName, themeKind, styleName string) Attr
+}
 
+var appTheme Theme
+
+func UseTheme(theme Theme) {
+	appTheme = theme
 }

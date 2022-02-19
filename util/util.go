@@ -11,7 +11,7 @@ import (
 	"github.com/nuxui/nuxui/log"
 )
 
-func GetTypeName(a interface{}) string {
+func TypeName(a any) string {
 	if a == nil {
 		return ""
 	}
@@ -32,14 +32,14 @@ func Absi32(v int32) int32 {
 }
 
 // TODO:: unit test ptr and args
-func ReflectCall(ptr interface{}, funcName string, args ...interface{}) {
+func ReflectCall(ptr any, funcName string, args ...any) {
 	if len(funcName) == 0 {
 		log.E("nuxui", "ReflectCall receive a empty func name")
 		return
 	}
 
 	if r := funcName[0]; r < 'A' || r > 'Z' {
-		log.E("nuxui", "ReflectCall can not execute '%s' unexport function '%s'", GetTypeName(ptr), funcName)
+		log.E("nuxui", "ReflectCall can not execute '%s' unexport function '%s'", TypeName(ptr), funcName)
 		return
 	}
 
@@ -56,13 +56,13 @@ func ReflectCall(ptr interface{}, funcName string, args ...interface{}) {
 	method.Call(in)
 }
 
-func Ref2Ptr(ptr interface{}) uintptr {
+func Ref2Ptr(ptr any) uintptr {
 	// TODO::
 	return 0
 }
 
 // SameFunc compare two func and return true if equal
-func SameFunc(a, b interface{}) bool {
+func SameFunc(a, b any) bool {
 	if a == nil || b == nil {
 		return a == b
 	}

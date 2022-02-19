@@ -10,6 +10,7 @@ import (
 	"math"
 	"time"
 
+	"github.com/nuxui/nuxui/log"
 	"github.com/nuxui/nuxui/nux"
 	"github.com/nuxui/nuxui/util"
 )
@@ -38,43 +39,47 @@ type text struct {
 	downTime time.Time
 }
 
-func NewText(context nux.Context, attrs ...nux.Attr) Text {
-	attr := getAttr(attrs...)
+func NewText(attrs ...nux.Attr) Text {
+	attr := nux.MergeAttrs(attrs...)
 	me := &text{
 		text:               attr.GetString("text", ""),
 		textSize:           attr.GetFloat32("textSize", 12),
 		textColor:          attr.GetColor("textColor", nux.White),
 		textHighlightColor: attr.GetColor("textHighlightColor", nux.Transparent),
-		paint:              nux.NewPaint(attr.GetAttr("font", nux.Attr{})),
+		paint:              nux.NewPaint(),
+		// paint:              nux.NewPaint(attr.GetAttr("font", nux.Attr{})),
 		// ellipsize: ellipsizeFromName(attr.GetString("ellipsize", "none")),
 	}
 
-	me.WidgetBase = nux.NewWidgetBase(context, me, attrs...)
-	me.WidgetSize = nux.NewWidgetSize(context, me, attrs...)
-	me.WidgetVisual = NewWidgetVisual(context, me, attrs...)
-	me.WidgetSize.AddOnSizeChanged(me.onSizeChanged)
-	me.WidgetVisual.AddOnVisualChanged(me.onVisualChanged)
+	me.WidgetBase = nux.NewWidgetBase(attrs...)
+	me.WidgetSize = nux.NewWidgetSize(attrs...)
+	me.WidgetVisual = NewWidgetVisual(me, attrs...)
+	me.WidgetSize.AddSizeObserver(me.onSizeChanged)
 
 	return me
 }
 
 func (me *text) OnMount(content nux.Widget) {
+	log.I("nuxui", "text OnMount")
 	nux.OnTapDown(me, me.onTapDown)
 	nux.OnTapUp(me, me.onTapUp)
 	nux.OnTapCancel(me, me.onTapUp)
+	if f, ok := me.background.(nux.OnMount); ok {
+		f.OnMount()
+	}
 }
 
 func (me *text) onTapDown(detail nux.GestureDetail) {
 	me.SetBackgroundColor(0xFF938276)
 	me.downTime = time.Now()
-	nux.NewTimerBackToUI(nux.GESTURE_DOWN2UP_DELAY*time.Millisecond, func() {
+	nux.NewTimerBackToUI(nux.GESTURE_DOWN2UP_DELAY, func() {
 
 	})
 }
 
 func (me *text) onTapUp(detail nux.GestureDetail) {
-	if sub := time.Since(me.downTime); sub < nux.GESTURE_DOWN2UP_DELAY*time.Millisecond {
-		nux.NewTimerBackToUI(nux.GESTURE_DOWN2UP_DELAY*time.Millisecond-sub, func() {
+	if sub := time.Since(me.downTime); sub < nux.GESTURE_DOWN2UP_DELAY {
+		nux.NewTimerBackToUI(nux.GESTURE_DOWN2UP_DELAY-sub, func() {
 			me.doTapUp(detail)
 		})
 	} else {
@@ -86,11 +91,8 @@ func (me *text) doTapUp(detail nux.GestureDetail) {
 	me.SetBackgroundColor(0xFFFFFFFF)
 }
 
-func (me *text) onSizeChanged(widget nux.Widget) {
-
-}
-func (me *text) onVisualChanged(widget nux.Widget) {
-	nux.RequestRedraw(me)
+func (me *text) onSizeChanged() {
+	nux.RequestLayout(me)
 }
 
 func (me *text) Text() string {
@@ -105,8 +107,14 @@ func (me *text) SetText(text string) {
 }
 
 // Responsible for determining the position of the widget align, margin...
-func (me *text) Layout(dx, dy, left, top, right, bottom int32) {
-	// log.V("nuxui", "text layout %d, %d, %d, %d, %d, %d", dx, dy, left, top, right, bottom)
+func (me *text) Layout(x, y, width, height int32) {
+	if me.Background() != nil {
+		me.Background().SetBounds(x, y, width, height)
+	}
+
+	if me.Foreground() != nil {
+		me.Foreground().SetBounds(x, y, width, height)
+	}
 }
 
 func (me *text) Measure(width, height int32) {
@@ -118,71 +126,71 @@ func (me *text) Measure(width, height int32) {
 	var hPPt float32
 	var hPPx float32
 
-	ms := me.MeasuredSize()
+	frame := me.Frame()
 
 	// 1. Calculate its own padding size
-	if me.HasPadding() {
-		switch me.PaddingLeft().Mode() {
+	if me.Padding() != nil {
+		switch me.Padding().Left.Mode() {
 		case nux.Pixel:
-			l := me.PaddingLeft().Value()
-			ms.Padding.Left = util.Roundi32(l)
+			l := me.Padding().Left.Value()
+			frame.Padding.Left = util.Roundi32(l)
 			hPPx += l
 		case nux.Percent:
 			switch nux.MeasureSpecMode(width) {
 			case nux.Pixel:
-				l := me.PaddingLeft().Value() / 100 * float32(nux.MeasureSpecValue(width))
-				ms.Padding.Left = util.Roundi32(l)
+				l := me.Padding().Left.Value() / 100 * float32(nux.MeasureSpecValue(width))
+				frame.Padding.Left = util.Roundi32(l)
 				hPPx += l
 			case nux.Auto:
-				hPPt += me.PaddingLeft().Value()
+				hPPt += me.Padding().Left.Value()
 			}
 		}
 
-		switch me.PaddingRight().Mode() {
+		switch me.Padding().Right.Mode() {
 		case nux.Pixel:
-			r := me.PaddingRight().Value()
-			ms.Padding.Right = util.Roundi32(r)
+			r := me.Padding().Right.Value()
+			frame.Padding.Right = util.Roundi32(r)
 			hPPx += r
 		case nux.Percent:
 			switch nux.MeasureSpecMode(width) {
 			case nux.Pixel:
-				r := me.PaddingRight().Value() / 100 * float32(nux.MeasureSpecValue(width))
-				ms.Padding.Right = util.Roundi32(r)
+				r := me.Padding().Right.Value() / 100 * float32(nux.MeasureSpecValue(width))
+				frame.Padding.Right = util.Roundi32(r)
 				hPPx += r
 			case nux.Auto:
-				hPPt += me.PaddingRight().Value()
+				hPPt += me.Padding().Right.Value()
 			}
 		}
 
-		switch me.PaddingTop().Mode() {
+		switch me.Padding().Top.Mode() {
 		case nux.Pixel:
-			t := me.PaddingTop().Value()
-			ms.Padding.Top = util.Roundi32(t)
+			t := me.Padding().Top.Value()
+			frame.Padding.Top = util.Roundi32(t)
 			vPPx += t
 		case nux.Percent:
 			switch nux.MeasureSpecMode(height) {
 			case nux.Pixel:
-				t := me.PaddingTop().Value() / 100 * float32(nux.MeasureSpecValue(height))
-				ms.Padding.Top = util.Roundi32(t)
+				t := me.Padding().Top.Value() / 100 * float32(nux.MeasureSpecValue(height))
+				frame.Padding.Top = util.Roundi32(t)
 				vPPx += t
 			case nux.Auto:
-				vPPt += me.PaddingTop().Value()
+				vPPt += me.Padding().Top.Value()
 			}
 		}
 
-		switch me.PaddingBottom().Mode() {
+		switch me.Padding().Bottom.Mode() {
 		case nux.Pixel:
-			b := me.PaddingBottom().Value()
-			ms.Padding.Bottom = util.Roundi32(b)
+			b := me.Padding().Bottom.Value()
+			frame.Padding.Bottom = util.Roundi32(b)
 			vPPx += b
 		case nux.Percent:
 			switch nux.MeasureSpecMode(height) {
 			case nux.Pixel:
-				b := me.PaddingBottom().Value() / 100 * float32(nux.MeasureSpecValue(height))
-				ms.Padding.Bottom = util.Roundi32(b)
+				b := me.Padding().Bottom.Value() / 100 * float32(nux.MeasureSpecValue(height))
+				frame.Padding.Bottom = util.Roundi32(b)
 				vPPx += b
 			case nux.Auto:
-				vPPt += me.PaddingBottom().Value()
+				vPPt += me.Padding().Bottom.Value()
 			}
 		}
 	}
@@ -194,19 +202,19 @@ func (me *text) Measure(width, height int32) {
 		me.paint.SetTextSize(me.textSize)
 		outW, outH := me.paint.MeasureText(me.text, float32(nux.MeasureSpecValue(w)), float32(nux.MeasureSpecValue(h)))
 
-		ms := me.MeasuredSize()
+		frame := me.Frame()
 		if nux.MeasureSpecMode(width) == nux.Auto {
 			w := (float32(outW) + hPPx) / (1.0 - hPPt/100.0)
-			ms.Width = nux.MeasureSpec(int32(math.Ceil(float64(w))), nux.Pixel)
+			frame.Width = nux.MeasureSpec(int32(math.Ceil(float64(w))), nux.Pixel)
 		} else {
-			ms.Width = width
+			frame.Width = width
 		}
 
 		if nux.MeasureSpecMode(height) == nux.Auto {
 			h := (float32(outH) + vPPx) / (1.0 - vPPt/100.0)
-			ms.Height = nux.MeasureSpec(int32(math.Ceil(float64(h))), nux.Pixel)
+			frame.Height = nux.MeasureSpec(int32(math.Ceil(float64(h))), nux.Pixel)
 		} else {
-			ms.Height = height
+			frame.Height = height
 		}
 	}
 }
@@ -216,22 +224,20 @@ func (me *text) Draw(canvas nux.Canvas) {
 		me.Background().Draw(canvas)
 	}
 
-	ms := me.MeasuredSize()
+	frame := me.Frame()
 	canvas.Save()
-	canvas.Translate(float32(ms.Padding.Left), float32(ms.Padding.Top))
-	canvas.ClipRect(0, 0,
-		float32(ms.Width-ms.Padding.Left-ms.Padding.Right),
-		float32(ms.Height-ms.Padding.Top-ms.Padding.Bottom))
+	canvas.Translate(float32(frame.X), float32(frame.Y))
+	canvas.Translate(float32(frame.Padding.Left), float32(frame.Padding.Top))
 
 	if me.text != "" {
 		me.paint.SetTextSize(me.textSize)
 		me.paint.SetColor(me.textColor)
-		canvas.DrawText(me.text, float32(ms.Width), float32(ms.Height), me.paint)
+		canvas.DrawText(me.text, float32(frame.Width), float32(frame.Height), me.paint)
 	}
-
 	canvas.Restore()
 
 	if me.Foreground() != nil {
 		me.Foreground().Draw(canvas)
 	}
+
 }

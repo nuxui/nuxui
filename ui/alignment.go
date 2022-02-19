@@ -15,12 +15,7 @@ type Align struct {
 }
 
 func NewAlign(attr nux.Attr) *Align {
-	a := &Align{}
-	a.Init(attr)
-	return a
-}
-
-func (me *Align) Init(attr nux.Attr) {
+	me := &Align{}
 	vertical := attr.GetString("vertical", "top")
 	horizontal := attr.GetString("horizontal", "left")
 
@@ -47,4 +42,5 @@ func (me *Align) Init(attr nux.Attr) {
 		me.Horizontal = Left
 		log.Fatal("nuxui", "Unknow alignment '%s' for horizontal, only support 'left', 'center', 'right'", horizontal)
 	}
+	return me
 }

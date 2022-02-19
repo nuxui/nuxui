@@ -28,7 +28,7 @@ type column struct {
 	childrenHeight float32
 }
 
-func NewColumn(context nux.Context, attrs ...nux.Attr) Column {
+func NewColumn(attrs ...nux.Attr) Column {
 	attr := nux.Attr{}
 	if len(attrs) == 0 {
 		attr = attrs[0]
@@ -36,18 +36,14 @@ func NewColumn(context nux.Context, attrs ...nux.Attr) Column {
 	me := &column{
 		align: NewAlign(attr.GetAttr("align", nux.Attr{})),
 	}
-	me.WidgetSize = nux.NewWidgetSize(context, me, attrs...)
-	me.WidgetParent = nux.NewWidgetParent(context, me, attrs...)
-	me.WidgetVisual = NewWidgetVisual(context, me, attrs...)
-	me.WidgetSize.AddOnSizeChanged(me.onSizeChanged)
-	me.WidgetVisual.AddOnVisualChanged(me.onVisualChanged)
+	me.WidgetSize = nux.NewWidgetSize(attrs...)
+	me.WidgetParent = nux.NewWidgetParent(me, attrs...)
+	me.WidgetVisual = NewWidgetVisual(me, attrs...)
+	me.WidgetSize.AddSizeObserver(me.onSizeChanged)
 	return me
 }
 
-func (me *column) onSizeChanged(widget nux.Widget) {
-
-}
-func (me *column) onVisualChanged(widget nux.Widget) {
+func (me *column) onSizeChanged() {
 
 }
 
@@ -80,91 +76,91 @@ func (me *column) Measure(width, height int32) {
 	childrenMeasuredFlags := make([]byte, len(me.Children()))
 	maxWidthChanged := false
 
-	ms := me.MeasuredSize()
+	frame := me.Frame()
 	me.childrenHeight = 0
 
 	// 1. Calculate its own padding size
-	if me.HasPadding() {
-		switch me.PaddingLeft().Mode() {
+	if me.Padding() != nil {
+		switch me.Padding().Left.Mode() {
 		case nux.Pixel:
-			l := me.PaddingLeft().Value()
-			ms.Padding.Left = util.Roundi32(l)
+			l := me.Padding().Left.Value()
+			frame.Padding.Left = util.Roundi32(l)
 			hPPx += l
 			hPPxUsed += l
 			// ok
 		case nux.Percent:
 			switch nux.MeasureSpecMode(width) {
 			case nux.Pixel:
-				l := me.PaddingLeft().Value() / 100.0 * float32(nux.MeasureSpecValue(width))
-				ms.Padding.Left = util.Roundi32(l)
+				l := me.Padding().Left.Value() / 100.0 * float32(nux.MeasureSpecValue(width))
+				frame.Padding.Left = util.Roundi32(l)
 				hPPx += l
 				hPPxUsed += l
 				// ok
 			case nux.Auto, nux.Unlimit:
-				hPPt += me.PaddingLeft().Value()
+				hPPt += me.Padding().Left.Value()
 				// ok, wait until maxWidth measured
 			}
 		}
 
-		switch me.PaddingRight().Mode() {
+		switch me.Padding().Right.Mode() {
 		case nux.Pixel:
-			r := me.PaddingRight().Value()
-			ms.Padding.Right = util.Roundi32(r)
+			r := me.Padding().Right.Value()
+			frame.Padding.Right = util.Roundi32(r)
 			hPPx += r
 			hPPxUsed += r
 			// ok
 		case nux.Percent:
 			switch nux.MeasureSpecMode(width) {
 			case nux.Pixel:
-				r := me.PaddingRight().Value() / 100.0 * float32(nux.MeasureSpecValue(width))
-				ms.Padding.Right = util.Roundi32(r)
+				r := me.Padding().Right.Value() / 100.0 * float32(nux.MeasureSpecValue(width))
+				frame.Padding.Right = util.Roundi32(r)
 				hPPx += r
 				hPPxUsed += r
 				// ok
 			case nux.Auto, nux.Unlimit:
-				hPPt += me.PaddingRight().Value()
+				hPPt += me.Padding().Right.Value()
 				// ok, wait until maxWidth measured
 			}
 		}
 
-		switch me.PaddingTop().Mode() {
+		switch me.Padding().Top.Mode() {
 		case nux.Pixel:
-			t := me.PaddingTop().Value()
-			ms.Padding.Top = util.Roundi32(t)
+			t := me.Padding().Top.Value()
+			frame.Padding.Top = util.Roundi32(t)
 			vPPx += t
 			vPPxUsed += t
 			// ok
 		case nux.Percent:
 			switch nux.MeasureSpecMode(height) {
 			case nux.Pixel:
-				t := me.PaddingTop().Value() / 100.0 * float32(nux.MeasureSpecValue(height))
-				ms.Padding.Top = util.Roundi32(t)
+				t := me.Padding().Top.Value() / 100.0 * float32(nux.MeasureSpecValue(height))
+				frame.Padding.Top = util.Roundi32(t)
 				vPPx += t
 				vPPxUsed += t
 				// ok
 			case nux.Auto, nux.Unlimit:
-				vPPt += me.PaddingTop().Value()
+				vPPt += me.Padding().Top.Value()
 				// ok, wait until height measured
 			}
 		}
 
-		switch me.PaddingBottom().Mode() {
+		switch me.Padding().Bottom.Mode() {
 		case nux.Pixel:
-			b := me.PaddingBottom().Value()
-			ms.Padding.Bottom = util.Roundi32(b)
+			b := me.Padding().Bottom.Value()
+			frame.Padding.Bottom = util.Roundi32(b)
 			vPPx += b
 			vPPxUsed += b
 			// ok
 		case nux.Percent:
 			switch nux.MeasureSpecMode(height) {
 			case nux.Pixel:
-				b := me.PaddingBottom().Value() / 100.0 * float32(nux.MeasureSpecValue(height))
-				ms.Padding.Bottom = util.Roundi32(b)
+				b := me.Padding().Bottom.Value() / 100.0 * float32(nux.MeasureSpecValue(height))
+				frame.Padding.Bottom = util.Roundi32(b)
 				vPPx += b
 				vPPxUsed += b
 				// ok
 			case nux.Auto, nux.Unlimit:
-				vPPt += me.PaddingBottom().Value()
+				vPPt += me.Padding().Bottom.Value()
 				// ok, wait until height measured
 			}
 		}
@@ -183,69 +179,69 @@ func (me *column) Measure(width, height int32) {
 
 		// TODO:: layout changed, but child do not need measured
 		if cs, ok := child.(nux.Size); ok {
-			cms := cs.MeasuredSize()
+			cf := cs.Frame()
 
 			// nux.Unlimit ???????
-			cms.Width = nux.MeasureSpec(0, nux.Unlimit)
-			cms.Height = nux.MeasureSpec(0, nux.Unlimit)
+			cf.Width = nux.MeasureSpec(0, nux.Unlimit)
+			cf.Height = nux.MeasureSpec(0, nux.Unlimit)
 
-			if cs.HasMargin() {
-				switch cs.MarginTop().Mode() {
+			if cm := cs.Margin(); cm != nil {
+				switch cm.Top.Mode() {
 				case nux.Pixel:
-					t := cs.MarginTop().Value()
-					cms.Margin.Top = util.Roundi32(t)
+					t := cm.Top.Value()
+					cf.Margin.Top = util.Roundi32(t)
 					vPx += t
 					vPxUsed += t
 					// ok
 				case nux.Weight:
 					switch nux.MeasureSpecMode(height) {
 					case nux.Pixel:
-						vWt += cs.MarginTop().Value()
+						vWt += cm.Top.Value()
 						// ok, wait until weight grand total
 					case nux.Auto, nux.Unlimit:
-						cms.Margin.Top = 0
+						cf.Margin.Top = 0
 						// ok
 					}
 				case nux.Percent:
 					switch nux.MeasureSpecMode(height) {
 					case nux.Pixel:
-						t := cs.MarginTop().Value() / 100 * innerHeight
-						cms.Margin.Top = util.Roundi32(t)
+						t := cm.Top.Value() / 100 * innerHeight
+						cf.Margin.Top = util.Roundi32(t)
 						vPx += t
 						vPxUsed += t
 						// ok
 					case nux.Auto, nux.Unlimit:
-						vPt += cs.MarginTop().Value()
+						vPt += cm.Top.Value()
 						// ok, wait until percent grand total
 					}
 				}
 
-				switch cs.MarginBottom().Mode() {
+				switch cm.Bottom.Mode() {
 				case nux.Pixel:
-					b := cs.MarginBottom().Value()
-					cms.Margin.Bottom = util.Roundi32(b)
+					b := cm.Bottom.Value()
+					cf.Margin.Bottom = util.Roundi32(b)
 					vPx += b
 					vPxUsed += b
 					// ok
 				case nux.Weight:
 					switch nux.MeasureSpecMode(height) {
 					case nux.Pixel:
-						vWt += cs.MarginBottom().Value()
+						vWt += cm.Bottom.Value()
 						// ok, wait until weight grand total
 					case nux.Auto, nux.Unlimit:
-						cms.Margin.Bottom = 0
+						cf.Margin.Bottom = 0
 						// ok
 					}
 				case nux.Percent:
 					switch nux.MeasureSpecMode(height) {
 					case nux.Pixel:
-						b := cs.MarginBottom().Value() / 100 * innerHeight
-						cms.Margin.Bottom = util.Roundi32(b)
+						b := cm.Bottom.Value() / 100 * innerHeight
+						cf.Margin.Bottom = util.Roundi32(b)
 						vPx += b
 						vPxUsed += b
 						// ok
 					case nux.Auto, nux.Unlimit:
-						vPt += cs.MarginBottom().Value()
+						vPt += cm.Bottom.Value()
 						// ok, wait until percent grand total
 					}
 				}
@@ -257,8 +253,8 @@ func (me *column) Measure(width, height int32) {
 			switch cs.Height().Mode() {
 			case nux.Pixel:
 				h := cs.Height().Value()
-				cms.Height = nux.MeasureSpec(util.Roundi32(h), nux.Pixel)
-				setRatioWidth(cs, cms, h, nux.Pixel)
+				cf.Height = nux.MeasureSpec(util.Roundi32(h), nux.Pixel)
+				setRatioWidth(cs, cf, h, nux.Pixel)
 				// ok
 			case nux.Weight:
 				switch nux.MeasureSpecMode(height) {
@@ -269,16 +265,16 @@ func (me *column) Measure(width, height int32) {
 						canMeasureHeight = false
 					}
 				case nux.Auto, nux.Unlimit:
-					cms.Height = nux.MeasureSpec(0, nux.Pixel)
-					setRatioWidth(cs, cms, 0, nux.Pixel)
+					cf.Height = nux.MeasureSpec(0, nux.Pixel)
+					setRatioWidth(cs, cf, 0, nux.Pixel)
 					// ok
 				}
 			case nux.Percent:
 				switch nux.MeasureSpecMode(height) {
 				case nux.Pixel:
 					h := cs.Height().Value() / 100 * innerHeight
-					cms.Height = nux.MeasureSpec(util.Roundi32(h), nux.Pixel)
-					setRatioWidth(cs, cms, h, nux.Pixel)
+					cf.Height = nux.MeasureSpec(util.Roundi32(h), nux.Pixel)
+					setRatioWidth(cs, cf, h, nux.Pixel)
 					// ok
 				case nux.Auto, nux.Unlimit:
 					vPt += cs.Height().Value()
@@ -295,8 +291,8 @@ func (me *column) Measure(width, height int32) {
 				// ok
 			case nux.Auto, nux.Unlimit:
 				h := innerHeight - vPxUsed
-				cms.Height = nux.MeasureSpec(util.Roundi32(h), cs.Height().Mode())
-				setRatioWidth(cs, cms, h, nux.Pixel)
+				cf.Height = nux.MeasureSpec(util.Roundi32(h), cs.Height().Mode())
+				setRatioWidth(cs, cf, h, nux.Pixel)
 				// ok
 			}
 
@@ -305,8 +301,8 @@ func (me *column) Measure(width, height int32) {
 			measuredFlags, hPx := me.measureHorizontal(width, height, hPPx, hPPt, innerWidth, child, canMeasureHeight, 0)
 
 			// add height to vPxUsed after height measured
-			if nux.MeasureSpecMode(cms.Height) == nux.Pixel {
-				vPxUsed += float32(cms.Height)
+			if nux.MeasureSpecMode(cf.Height) == nux.Pixel {
+				vPxUsed += float32(cf.Height)
 			}
 
 			// find max innerWidth
@@ -331,17 +327,17 @@ func (me *column) Measure(width, height int32) {
 			maxWidthChanged = true
 		}
 
-		if me.HasPadding() {
-			if me.PaddingLeft().Mode() == nux.Percent {
-				l := me.PaddingLeft().Value() / 100 * w
-				ms.Padding.Left = util.Roundi32(l)
+		if me.Padding() != nil {
+			if me.Padding().Left.Mode() == nux.Percent {
+				l := me.Padding().Left.Value() / 100 * w
+				frame.Padding.Left = util.Roundi32(l)
 				hPPx += l
 				hPPxUsed += l
 			}
 
-			if me.PaddingRight().Mode() == nux.Percent {
-				r := me.PaddingRight().Value() / 100 * w
-				ms.Padding.Right = util.Roundi32(r)
+			if me.Padding().Right.Mode() == nux.Percent {
+				r := me.Padding().Right.Value() / 100 * w
+				frame.Padding.Right = util.Roundi32(r)
 				hPPx += r
 				hPPxUsed += r
 			}
@@ -363,7 +359,7 @@ func (me *column) Measure(width, height int32) {
 		}
 
 		if cs, ok := child.(nux.Size); ok {
-			cms := cs.MeasuredSize()
+			cf := cs.Frame()
 
 			canMeasureHeight := true
 
@@ -371,16 +367,16 @@ func (me *column) Measure(width, height int32) {
 			switch nux.MeasureSpecMode(height) {
 			case nux.Pixel:
 				// Vertical weight only works for nux.Pixel Mode
-				if cs.HasMargin() {
-					if cs.MarginTop().Mode() == nux.Weight {
-						t := cs.MarginTop().Value() / vWt * vPxRemain
-						cms.Margin.Top = util.Roundi32(t)
+				if cm := cs.Margin(); cm != nil {
+					if cm.Top.Mode() == nux.Weight {
+						t := cm.Top.Value() / vWt * vPxRemain
+						cf.Margin.Top = util.Roundi32(t)
 						vPx += t
 					}
 
-					if cs.MarginBottom().Mode() == nux.Weight {
-						b := cs.MarginBottom().Value() / vWt * vPxRemain
-						cms.Margin.Bottom = util.Roundi32(b)
+					if cm.Bottom.Mode() == nux.Weight {
+						b := cm.Bottom.Value() / vWt * vPxRemain
+						cf.Margin.Bottom = util.Roundi32(b)
 						vPx += b
 					}
 				}
@@ -388,11 +384,11 @@ func (me *column) Measure(width, height int32) {
 				if cs.Height().Mode() == nux.Weight {
 					if vWt > 0 && vPxRemain > 0 {
 						h := cs.Height().Value() / vWt * vPxRemain
-						cms.Height = nux.MeasureSpec(util.Roundi32(h), nux.Pixel)
-						setRatioWidth(cs, cms, h, nux.Pixel)
+						cf.Height = nux.MeasureSpec(util.Roundi32(h), nux.Pixel)
+						setRatioWidth(cs, cf, h, nux.Pixel)
 					} else {
-						cms.Height = nux.MeasureSpec(0, nux.Pixel)
-						setRatioWidth(cs, cms, 0, nux.Pixel)
+						cf.Height = nux.MeasureSpec(0, nux.Pixel)
+						setRatioWidth(cs, cf, 0, nux.Pixel)
 					}
 				}
 			case nux.Auto, nux.Unlimit:
@@ -413,8 +409,8 @@ func (me *column) Measure(width, height int32) {
 				needMeasure := true
 				if maxWidthChanged {
 					if measuredFlags&hMeasuredWidthComplete == hMeasuredWidthComplete {
-						log.I("nuxui", "hMeasuredWidthComplete child:%s hpx=%d", child.Info().ID, (cms.Width + cms.Margin.Left + cms.Margin.Right))
-						if cms.Width+cms.Margin.Left+cms.Margin.Right == util.Roundi32(innerWidth) {
+						log.I("nuxui", "hMeasuredWidthComplete child:%s hpx=%d", child.Info().ID, (cf.Width + cf.Margin.Left + cf.Margin.Right))
+						if cf.Width+cf.Margin.Left+cf.Margin.Right == util.Roundi32(innerWidth) {
 							needMeasure = false
 						}
 					}
@@ -430,8 +426,8 @@ func (me *column) Measure(width, height int32) {
 			}
 
 			// Accumulate child.height that was not accumulated before to get the total value of vPx
-			if nux.MeasureSpecMode(cms.Height) == nux.Pixel {
-				vPx += float32(cms.Height)
+			if nux.MeasureSpecMode(cf.Height) == nux.Pixel {
+				vPx += float32(cf.Height)
 			}
 
 		}
@@ -449,15 +445,15 @@ func (me *column) Measure(width, height int32) {
 		height = nux.MeasureSpec(util.Roundi32(h), nux.Pixel)
 
 		if vPPt > 0 {
-			if me.HasPadding() {
-				if me.PaddingTop().Mode() == nux.Percent {
-					t := me.PaddingTop().Value() / 100.0 * h
-					ms.Padding.Top = util.Roundi32(t)
+			if me.Padding() != nil {
+				if me.Padding().Top.Mode() == nux.Percent {
+					t := me.Padding().Top.Value() / 100.0 * h
+					frame.Padding.Top = util.Roundi32(t)
 				}
 
-				if me.PaddingBottom().Mode() == nux.Percent {
-					b := me.PaddingBottom().Value() / 100.0 * h
-					ms.Padding.Bottom = util.Roundi32(b)
+				if me.Padding().Bottom.Mode() == nux.Percent {
+					b := me.Padding().Bottom.Value() / 100.0 * h
+					frame.Padding.Bottom = util.Roundi32(b)
 				}
 			}
 		}
@@ -469,24 +465,24 @@ func (me *column) Measure(width, height int32) {
 				}
 
 				if cs, ok := child.(nux.Size); ok {
-					cms := cs.MeasuredSize()
+					cf := cs.Frame()
 
-					if cs.HasMargin() {
-						if cs.MarginTop().Mode() == nux.Percent {
-							t := cs.MarginTop().Value() / 100.0 * innerHeight
-							cms.Margin.Top = util.Roundi32(t)
+					if cm := cs.Margin(); cm != nil {
+						if cm.Top.Mode() == nux.Percent {
+							t := cm.Top.Value() / 100.0 * innerHeight
+							cf.Margin.Top = util.Roundi32(t)
 						}
 
-						if cs.MarginBottom().Mode() == nux.Percent {
-							b := cs.MarginBottom().Value() / 100.0 * innerHeight
-							cms.Margin.Bottom = util.Roundi32(b)
+						if cm.Bottom.Mode() == nux.Percent {
+							b := cm.Bottom.Value() / 100.0 * innerHeight
+							cf.Margin.Bottom = util.Roundi32(b)
 						}
 					}
 
 					if cs.Height().Mode() == nux.Percent {
 						ch := cs.Height().Value() / 100 * innerHeight
-						cms.Height = nux.MeasureSpec(util.Roundi32(ch), nux.Pixel)
-						setRatioWidth(cs, cms, h, nux.Pixel)
+						cf.Height = nux.MeasureSpec(util.Roundi32(ch), nux.Pixel)
+						setRatioWidth(cs, cf, h, nux.Pixel)
 					}
 
 					if measuredFlags := childrenMeasuredFlags[index]; measuredFlags != hMeasuredWidthComplete {
@@ -505,8 +501,8 @@ func (me *column) Measure(width, height int32) {
 
 	// log.I("nuxui", "originWidth=%s, originHeight=%s", nux.MeasureSpecString(originWidth), nux.MeasureSpecString(originHeight))
 
-	setNewWidth(ms, originWidth, width)
-	setNewHeight(ms, originHeight, height)
+	setNewWidth(frame, originWidth, width)
+	setNewHeight(frame, originHeight, height)
 }
 
 // return hpx in innerWidth
@@ -521,11 +517,11 @@ func (me *column) measureHorizontal(width, height int32, hPPx, hPPt, innerWidth 
 	var hPxRemain float32
 
 	if cs, ok := child.(nux.Size); ok {
-		cms := cs.MeasuredSize()
+		cf := cs.Frame()
 
 		// if alrady measured complete, return
 		if hasMeasuredFlags == hMeasuredWidthComplete {
-			if hpx := cms.Width + cms.Margin.Left + cms.Margin.Right; hpx == nux.MeasureSpecValue(width) {
+			if hpx := cf.Width + cf.Margin.Left + cf.Margin.Right; hpx == nux.MeasureSpecValue(width) {
 				return hasMeasuredFlags, float32(hpx)
 			}
 		}
@@ -537,8 +533,8 @@ func (me *column) measureHorizontal(width, height int32, hPPx, hPPt, innerWidth 
 			switch cs.Width().Mode() {
 			case nux.Pixel:
 				w := cs.Width().Value()
-				cms.Width = nux.MeasureSpec(util.Roundi32(w), nux.Pixel)
-				setRatioHeight(cs, cms, w, nux.Pixel)
+				cf.Width = nux.MeasureSpec(util.Roundi32(w), nux.Pixel)
+				setRatioHeight(cs, cf, w, nux.Pixel)
 				// ok
 			case nux.Weight:
 				switch nux.MeasureSpecMode(width) {
@@ -552,8 +548,8 @@ func (me *column) measureHorizontal(width, height int32, hPPx, hPPt, innerWidth 
 				switch nux.MeasureSpecMode(width) {
 				case nux.Pixel:
 					w := cs.Width().Value() / 100 * innerWidth
-					cms.Width = nux.MeasureSpec(util.Roundi32(w), nux.Pixel)
-					setRatioHeight(cs, cms, w, nux.Pixel)
+					cf.Width = nux.MeasureSpec(util.Roundi32(w), nux.Pixel)
+					setRatioHeight(cs, cf, w, nux.Pixel)
 					// ok
 				case nux.Auto, nux.Unlimit:
 					// wait until maxWidth measured
@@ -569,12 +565,12 @@ func (me *column) measureHorizontal(width, height int32, hPPx, hPPt, innerWidth 
 		}
 
 		// 2. First determine the known size of width, add weight and percentage
-		if cs.HasMargin() {
+		if cm := cs.Margin(); cm != nil {
 			if hasMeasuredFlags&hMeasuredMarginLeft != hMeasuredMarginLeft {
-				switch cs.MarginLeft().Mode() {
+				switch cm.Left.Mode() {
 				case nux.Pixel:
-					l := cs.MarginLeft().Value()
-					cms.Margin.Left = util.Roundi32(l)
+					l := cm.Left.Value()
+					cf.Margin.Left = util.Roundi32(l)
 					hPx += l
 					hPxUsed += l
 					measuredFlags |= hMeasuredMarginLeft
@@ -582,7 +578,7 @@ func (me *column) measureHorizontal(width, height int32, hPPx, hPPt, innerWidth 
 				case nux.Weight:
 					switch nux.MeasureSpecMode(width) {
 					case nux.Pixel:
-						hWt += cs.MarginLeft().Value()
+						hWt += cm.Left.Value()
 					case nux.Auto, nux.Unlimit:
 						// wait until maxWidth measured.
 						log.V("nuxui", "child:%s Margin Left not measured", child.Info().ID)
@@ -592,8 +588,8 @@ func (me *column) measureHorizontal(width, height int32, hPPx, hPPt, innerWidth 
 				case nux.Percent:
 					switch nux.MeasureSpecMode(width) {
 					case nux.Pixel:
-						l := cs.MarginLeft().Value() / 100 * innerWidth
-						cms.Margin.Left = util.Roundi32(l)
+						l := cm.Left.Value() / 100 * innerWidth
+						cf.Margin.Left = util.Roundi32(l)
 						hPx += l
 						hPxUsed += l
 						measuredFlags |= hMeasuredMarginLeft
@@ -607,10 +603,10 @@ func (me *column) measureHorizontal(width, height int32, hPPx, hPPt, innerWidth 
 			}
 
 			if hasMeasuredFlags&hMeasuredMarginRight != hMeasuredMarginRight {
-				switch cs.MarginRight().Mode() {
+				switch cm.Right.Mode() {
 				case nux.Pixel:
-					r := cs.MarginRight().Value()
-					cms.Margin.Right = int32(r)
+					r := cm.Right.Value()
+					cf.Margin.Right = int32(r)
 					hPx += r
 					hPxUsed += r
 					measuredFlags |= hMeasuredMarginRight
@@ -618,7 +614,7 @@ func (me *column) measureHorizontal(width, height int32, hPPx, hPPt, innerWidth 
 				case nux.Weight:
 					switch nux.MeasureSpecMode(width) {
 					case nux.Pixel:
-						hWt += cs.MarginRight().Value()
+						hWt += cm.Right.Value()
 					case nux.Auto, nux.Unlimit:
 						// wait until maxWidth measured.
 						log.V("nuxui", "child:%s Margin Right not measured", child.Info().ID)
@@ -628,8 +624,8 @@ func (me *column) measureHorizontal(width, height int32, hPPx, hPPt, innerWidth 
 				case nux.Percent:
 					switch nux.MeasureSpecMode(width) {
 					case nux.Pixel:
-						r := cs.MarginRight().Value() / 100 * innerWidth
-						cms.Margin.Right = util.Roundi32(r)
+						r := cm.Right.Value() / 100 * innerWidth
+						cf.Margin.Right = util.Roundi32(r)
 						hPx += r
 						hPxUsed += r
 						measuredFlags |= hMeasuredMarginRight
@@ -663,8 +659,8 @@ func (me *column) measureHorizontal(width, height int32, hPPx, hPPt, innerWidth 
 				case nux.Pixel:
 					wt := cs.Width().Value() + hWt
 					w := cs.Width().Value() / wt * hPxRemain
-					cms.Width = nux.MeasureSpec(util.Roundi32(w), nux.Pixel)
-					setRatioHeight(cs, cms, w, nux.Pixel)
+					cf.Width = nux.MeasureSpec(util.Roundi32(w), nux.Pixel)
+					setRatioHeight(cs, cf, w, nux.Pixel)
 					// ok
 				case nux.Auto, nux.Unlimit:
 					// wait until maxWidth measured.
@@ -681,8 +677,8 @@ func (me *column) measureHorizontal(width, height int32, hPPx, hPPt, innerWidth 
 				}
 			// case nux.Ratio: has measured
 			case nux.Auto, nux.Unlimit:
-				cms.Width = nux.MeasureSpec(util.Roundi32(hPxRemain), cs.Width().Mode())
-				setRatioHeight(cs, cms, hPxRemain, nux.Pixel)
+				cf.Width = nux.MeasureSpec(util.Roundi32(hPxRemain), cs.Width().Mode())
+				setRatioHeight(cs, cf, hPxRemain, nux.Pixel)
 				// ok
 			}
 		}
@@ -692,44 +688,44 @@ func (me *column) measureHorizontal(width, height int32, hPPx, hPPt, innerWidth 
 			if m, ok := child.(nux.Measure); ok {
 				if hasMeasuredFlags&hMeasuredWidth != hMeasuredWidth {
 					// log.V("nuxui", "child: %s, Measure width=%s, height=%s", child.Info().ID, nux.MeasureSpecString(width), nux.MeasureSpecString(height))
-					m.Measure(cms.Width, cms.Height)
+					m.Measure(cf.Width, cf.Height)
 
 					if cs.Width().Mode() == nux.Ratio {
-						oldWidth := cms.Width
-						cms.Width = nux.MeasureSpec(util.Roundi32(float32(cms.Height)*cs.Width().Value()), nux.Pixel)
-						if oldWidth != cms.Width {
+						oldWidth := cf.Width
+						cf.Width = nux.MeasureSpec(util.Roundi32(float32(cf.Height)*cs.Width().Value()), nux.Pixel)
+						if oldWidth != cf.Width {
 							log.W("nuxui", "Size auto and ratio make measure twice, please optimization layout")
-							m.Measure(cms.Width, cms.Height)
+							m.Measure(cf.Width, cf.Height)
 						}
 					}
 
 					if cs.Height().Mode() == nux.Ratio {
-						oldHeight := cms.Height
-						cms.Height = nux.MeasureSpec(util.Roundi32(float32(cms.Width)/cs.Height().Value()), nux.Pixel)
-						if oldHeight != cms.Height {
+						oldHeight := cf.Height
+						cf.Height = nux.MeasureSpec(util.Roundi32(float32(cf.Width)/cs.Height().Value()), nux.Pixel)
+						if oldHeight != cf.Height {
 							log.W("nuxui", "Size auto and ratio make measure twice, please optimization layout")
-							m.Measure(cms.Width, cms.Height)
+							m.Measure(cf.Width, cf.Height)
 						}
 					}
 					measuredFlags |= hMeasuredWidth
 				}
 
-				hPxRemain -= float32(cms.Width)
-				hPx += float32(cms.Width)
+				hPxRemain -= float32(cf.Width)
+				hPx += float32(cf.Width)
 
-				if cs.HasMargin() {
+				if cm := cs.Margin(); cm != nil {
 					if hasMeasuredFlags&hMeasuredMarginLeft != hMeasuredMarginLeft {
-						switch cs.MarginLeft().Mode() {
+						switch cm.Left.Mode() {
 						// case nux.Pixel: has measured
 						case nux.Weight:
 							switch nux.MeasureSpecMode(width) {
 							case nux.Pixel:
 								if hWt > 0 && hPxRemain > 0 {
-									cms.Margin.Left = util.Roundi32(cs.MarginLeft().Value() / hWt * hPxRemain)
+									cf.Margin.Left = util.Roundi32(cm.Left.Value() / hWt * hPxRemain)
 								} else {
-									cms.Margin.Left = 0
+									cf.Margin.Left = 0
 								}
-								hPx += float32(cms.Margin.Left)
+								hPx += float32(cf.Margin.Left)
 								measuredFlags |= hMeasuredMarginLeft
 								// ok
 							case nux.Auto, nux.Unlimit:
@@ -747,17 +743,17 @@ func (me *column) measureHorizontal(width, height int32, hPPx, hPPt, innerWidth 
 					}
 
 					if hasMeasuredFlags&hMeasuredMarginRight != hMeasuredMarginRight {
-						switch cs.MarginRight().Mode() {
+						switch cm.Right.Mode() {
 						// case nux.Pixel: has measured
 						case nux.Weight:
 							switch nux.MeasureSpecMode(width) {
 							case nux.Pixel:
 								if hWt > 0 && hPxRemain > 0 {
-									cms.Margin.Right = util.Roundi32(cs.MarginRight().Value() / hWt * hPxRemain)
+									cf.Margin.Right = util.Roundi32(cm.Right.Value() / hWt * hPxRemain)
 								} else {
-									cms.Margin.Right = 0
+									cf.Margin.Right = 0
 								}
-								hPx += float32(cms.Margin.Right)
+								hPx += float32(cf.Margin.Right)
 								measuredFlags |= hMeasuredMarginRight
 								// ok
 							case nux.Auto, nux.Unlimit:
@@ -796,18 +792,26 @@ func (me *column) measureHorizontal(width, height int32, hPPx, hPPt, innerWidth 
 
 // Responsible for determining the position of the widget align, margin
 // TODO measure other mode dimen
-func (me *column) Layout(dx, dy, left, top, right, bottom int32) {
-	log.D("nuxui", "column layout %d, %d, %d, %d, %d, %d", dx, dy, left, top, right, bottom)
-	ms := me.MeasuredSize()
+func (me *column) Layout(x, y, width, height int32) {
+	log.D("nuxui", "column layout %d, %d, %d, %d", x, y, width, height)
+	if me.Background() != nil {
+		me.Background().SetBounds(x, y, width, height)
+	}
+
+	if me.Foreground() != nil {
+		me.Foreground().SetBounds(x, y, width, height)
+	}
+
+	frame := me.Frame()
 
 	var l float32 = 0
 	var t float32 = 0
 
-	var innerHeight float32 = float32(bottom - top)
-	var innerWidth float32 = float32(right - left)
+	var innerHeight float32 = float32(width)
+	var innerWidth float32 = float32(height)
 
-	innerHeight -= float32(ms.Padding.Top + ms.Padding.Bottom)
-	innerWidth -= float32(ms.Padding.Left + ms.Padding.Right)
+	innerHeight -= float32(frame.Padding.Top + frame.Padding.Bottom)
+	innerWidth -= float32(frame.Padding.Left + frame.Padding.Right)
 	switch me.align.Vertical {
 	case Top:
 		t = 0
@@ -816,7 +820,7 @@ func (me *column) Layout(dx, dy, left, top, right, bottom int32) {
 	case Bottom:
 		t = innerHeight - me.childrenHeight
 	}
-	t += float32(ms.Padding.Top)
+	t += float32(frame.Padding.Top)
 
 	for _, child := range me.Children() {
 		if compt, ok := child.(nux.Component); ok {
@@ -825,70 +829,53 @@ func (me *column) Layout(dx, dy, left, top, right, bottom int32) {
 
 		l = 0
 		if cs, ok := child.(nux.Size); ok {
-			cms := cs.MeasuredSize()
+			cf := cs.Frame()
 
-			if cs.Width().Mode() == nux.Weight || (cs.MarginLeft().Mode() == nux.Weight || cs.MarginRight().Mode() == nux.Weight) {
-				l += float32(ms.Padding.Left + cms.Margin.Left)
+			cm := cs.Margin()
+			if cs.Width().Mode() == nux.Weight || (cm != nil && (cm.Left.Mode() == nux.Weight || cm.Right.Mode() == nux.Weight)) {
+				l += float32(frame.Padding.Left + cf.Margin.Left)
 			} else {
 				switch me.align.Horizontal {
 				case Left:
 					l += 0
 				case Center:
-					l += innerWidth/2 - float32(cms.Width)/2
+					l += innerWidth/2 - float32(cf.Width)/2
 				case Right:
-					l += innerWidth - float32(cms.Width)
+					l += innerWidth - float32(cf.Width)
 				}
-				l += float32(ms.Padding.Left + cms.Margin.Left)
+				l += float32(frame.Padding.Left + cf.Margin.Left)
 			}
 
-			t += float32(cms.Margin.Top)
+			t += float32(cf.Margin.Top)
 
-			cms.Position.Left = util.Roundi32(l)
-			cms.Position.Top = util.Roundi32(t)
-			cms.Position.Right = cms.Position.Left + cms.Width
-			cms.Position.Bottom = cms.Position.Top + cms.Height
-			cms.Position.X = dx + int32(l)
-			cms.Position.Y = dy + int32(t)
+			cf.X = x + int32(l)
+			cf.Y = y + int32(t)
 			if cl, ok := child.(nux.Layout); ok {
-				cl.Layout(cms.Position.X, cms.Position.Y, cms.Position.Left, cms.Position.Top, cms.Position.Right, cms.Position.Bottom)
+				cl.Layout(cf.X, cf.Y, cf.Width, cf.Height)
 			}
 
-			t += float32(cms.Height + cms.Margin.Bottom)
+			t += float32(cf.Height + cf.Margin.Bottom)
 		}
 	}
 }
 
 func (me *column) Draw(canvas nux.Canvas) {
-	// log.D("nuxui", "column Draw %d, %d", me.MeasuredSize().Width, me.MeasuredSize().Height)
-
 	if me.Background() != nil {
 		me.Background().Draw(canvas)
 	}
-
-	canvas.Save()
-	canvas.Translate(float32(me.ScrollX()), float32(me.ScrollY()))
 
 	for _, child := range me.Children() {
 		if compt, ok := child.(nux.Component); ok {
 			child = compt.Content()
 		}
 
-		// TODO if child visible == gone , then skip
-		if cs, ok := child.(nux.Size); ok {
-			cms := cs.MeasuredSize()
-			if draw, ok := child.(nux.Draw); ok {
-				canvas.Save()
-				canvas.Translate(float32(cms.Position.Left), float32(cms.Position.Top))
-				canvas.ClipRect(0, 0, float32(cms.Width), float32(cms.Height))
-				draw.Draw(canvas)
-				canvas.Restore()
-			}
+		if draw, ok := child.(nux.Draw); ok {
+			draw.Draw(canvas)
 		}
 	}
-
-	canvas.Restore()
 
 	if me.Foreground() != nil {
 		me.Foreground().Draw(canvas)
 	}
+
 }

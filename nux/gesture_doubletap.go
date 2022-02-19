@@ -10,19 +10,19 @@ import (
 )
 
 func OnDoubleTap(widget Widget, callback GestureCallback) {
-	if r := GestureBinding().FindGestureRecognizer(widget, (*doubleTapGestureRecognizer)(nil)); r != nil {
+	if r := GestureManager().FindGestureRecognizer(widget, (*doubleTapGestureRecognizer)(nil)); r != nil {
 		recognizer := r.(*doubleTapGestureRecognizer)
 		recognizer.addCallback(_ACTION_DOUBLETAP, callback)
 	} else {
 		recognizer := newDoubleTapGestureRecognizer(widget)
 		recognizer.addCallback(_ACTION_DOUBLETAP, callback)
-		GestureBinding().AddGestureRecognizer(widget, recognizer)
+		GestureManager().AddGestureRecognizer(widget, recognizer)
 	}
 }
 
 // widget will auto clear all gesture when destroy
 func RemoveDoubleTapGesture(widget Widget, callback GestureCallback) {
-	if r := GestureBinding().FindGestureRecognizer(widget, (*doubleTapGestureRecognizer)(nil)); r != nil {
+	if r := GestureManager().FindGestureRecognizer(widget, (*doubleTapGestureRecognizer)(nil)); r != nil {
 		recognizer := r.(*doubleTapGestureRecognizer)
 		recognizer.removeCallback(_ACTION_DOUBLETAP, callback)
 	}
@@ -53,7 +53,7 @@ func newDoubleTapGestureRecognizer(target Widget) *doubleTapGestureRecognizer {
 	}
 
 	return &doubleTapGestureRecognizer{
-		callbacks:          [][]GestureCallback{[]GestureCallback{}, []GestureCallback{}, []GestureCallback{}, []GestureCallback{}},
+		callbacks:          [][]GestureCallback{[]GestureCallback{}},
 		rejectFirstPointer: 0,
 		firstTap:           nil,
 		secondTap:          nil,
@@ -142,6 +142,17 @@ func (me *doubleTapGestureRecognizer) AccpetGesture(pointer int64) {
 		me.invokeDoubleTap()
 		me.reset()
 	}
+}
+
+func (me *doubleTapGestureRecognizer) Clear(widget Widget) {
+	if me.firstTap != nil {
+		GestureArenaManager().Resolve(me.firstTap.Pointer(), me, false)
+	}
+	if me.secondTap != nil {
+		GestureArenaManager().Resolve(me.secondTap.Pointer(), me, false)
+	}
+	me.reset()
+	me.callbacks = [][]GestureCallback{[]GestureCallback{}}
 }
 
 func (me *doubleTapGestureRecognizer) reset() {

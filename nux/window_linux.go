@@ -43,7 +43,6 @@ type window struct {
 	initEvent PointerEvent
 	timer     Timer
 
-	context Context
 	width   int32
 	height  int32
 	title   string
@@ -51,18 +50,16 @@ type window struct {
 
 func newWindow(attr Attr) *window {
 	me := &window{
-		context: &context{},
 	}
 
-	me.CreateDecor(me.context, attr)
-	GestureBinding().AddGestureHandler(me.decor, &decorGestureHandler{})
+	me.CreateDecor(attr)
 	mountWidget(me.decor, nil)
 	return me
 }
 
-func (me *window) CreateDecor(ctx Context, attr Attr) Widget {
-	creator := FindRegistedWidgetCreatorByName("github.com/nuxui/nuxui/ui.Layer")
-	w := creator(ctx, attr)
+func (me *window) CreateDecor(attr Attr) Widget {
+	creator := FindRegistedWidgetCreator("github.com/nuxui/nuxui/ui.Layer")
+	w := creator(attr)
 	if p, ok := w.(Parent); ok {
 		me.decor = p
 	} else {
@@ -79,7 +76,7 @@ func (me *window) CreateDecor(ctx Context, attr Attr) Widget {
 // 	if main == "" {
 // 		log.Fatal("nuxui", "no main widget found.")
 // 	} else {
-// 		mainWidgetCreator := FindRegistedWidgetCreatorByName(main)
+// 		mainWidgetCreator := FindRegistedWidgetCreator(main)
 // 		ctx := &context{}
 // 		// widgetTree := RenderWidget(mainWidgetCreator(ctx, Attr{}))
 // 		widgetTree := mainWidgetCreator(ctx, Attr{})
@@ -105,8 +102,8 @@ func (me *window) CreateDecor(ctx Context, attr Attr) Widget {
 // 	}
 // }
 
-// func (me *window) CreateDecor(ctx Context, attr Attr) Widget {
-// 	creator := FindRegistedWidgetCreatorByName("github.com/nuxui/nuxui/ui.Layer")
+// func (me *window) CreateDecor(attr Attr) Widget {
+// 	creator := FindRegistedWidgetCreator("github.com/nuxui/nuxui/ui.Layer")
 // 	w := creator(ctx, attr)
 // 	if p, ok := w.(Parent); ok {
 // 		me.decor = p
@@ -128,12 +125,12 @@ func (me *window) CreateDecor(ctx Context, attr Attr) Widget {
 // 	me.height = height
 
 // 	if s, ok := me.decor.(Size); ok {
-// 		if s.MeasuredSize().Width == width && s.MeasuredSize().Height == height {
+// 		if s.Frame().Width == width && s.Frame().Height == height {
 // 			// return
 // 		}
 
-// 		s.MeasuredSize().Width = width
-// 		s.MeasuredSize().Height = height
+// 		s.Frame().Width = width
+// 		s.Frame().Height = height
 // 	}
 
 // 	me.surfaceResized = true
@@ -152,20 +149,21 @@ func (me *window) CreateDecor(ctx Context, attr Attr) Widget {
 // 		f.Layout(dx, dy, left, top, right, bottom)
 // 	}
 // }
+var TestDraw func(Canvas)
 
 func (me *window) Draw(canvas Canvas) {
-	log.V("nuxui", "window Draw start")
 	if me.decor != nil {
 		if f, ok := me.decor.(Draw); ok {
-			log.V("nuxui", "window Draw canvas save")
 			canvas.Save()
-			// TODO:: canvas clip
 			f.Draw(canvas)
-			// canvas.DrawColor(0xffff00ff)
 			canvas.Restore()
 		}
 	}
-	log.V("nuxui", "window Draw end")
+
+	if TestDraw != nil {
+		TestDraw(canvas)
+		return
+	}
 }
 
 func (me *window) ID() uint64 {
@@ -240,11 +238,11 @@ func (me *window) handlePointerEvent(e PointerEvent) {
 		}
 	}
 
-	gestureManagerInstance.handlePointerEvent(me.Decor(), e)
+	hitTestResultManagerInstance.handlePointerEvent(me.Decor(), e)
 }
 
 func (me *window) handleScrollEvent(e ScrollEvent) {
-	gestureManagerInstance.handleScrollEvent(me.Decor(), e)
+	hitTestResultManagerInstance.handleScrollEvent(me.Decor(), e)
 }
 
 func (me *window) handleKeyEvent(e KeyEvent) {
@@ -361,9 +359,9 @@ func (me *window) switchFocusIfPossible(event PointerEvent) {
 func (me *window) switchFocusAtPoint(x, y float32) {
 	if me.focusWidget != nil {
 		if s, ok := me.focusWidget.(Size); ok {
-			ms := s.MeasuredSize()
-			if x >= float32(ms.Position.X) && x <= float32(ms.Position.X+ms.Width) &&
-				y >= float32(ms.Position.Y) && y <= float32(ms.Position.Y+ms.Height) {
+			frame := s.Frame()
+			if x >= float32(frame.X) && x <= float32(frame.X+frame.Width) &&
+				y >= float32(frame.Y) && y <= float32(frame.Y+frame.Height) {
 				// point is in current focus widget, do not need change focus
 				return
 			}

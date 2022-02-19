@@ -8,6 +8,20 @@
 #import <Cocoa/Cocoa.h>
 #include <pthread.h>
 
+static uint64 mainThreadId;
+
+uint64 threadID() {
+	uint64 id;
+	if (pthread_threadid_np(pthread_self(), &id)) {
+		abort();
+	}
+	return id;
+}
+
+int isMainThread(){
+    return mainThreadId == threadID();
+}
+
 static const NSRange kEmptyRange = { NSNotFound, 0 };
 bool mainWindowCreated = false;
 
@@ -547,6 +561,7 @@ int cg_changed = 0;
 
 void runApp()
 {
+    mainThreadId = threadID();
 	@autoreleasepool{
 		[NuxApplication sharedApplication];
 		
@@ -732,10 +747,5 @@ void cursor_positionScreenToWindow(uintptr_t window, CGFloat x, CGFloat y, CGFlo
 }
 // ############################### cursor end   #################################
 
-uint64 threadID() {
-	uint64 id;
-	if (pthread_threadid_np(pthread_self(), &id)) {
-		abort();
-	}
-	return id;
-}
+
+

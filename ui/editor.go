@@ -23,8 +23,8 @@ type Editor interface {
 	SetText(text string)
 }
 
-func NewEditor(context nux.Context, attrs ...nux.Attr) Editor {
-	attr := getAttr(attrs...)
+func NewEditor(attrs ...nux.Attr) Editor {
+	attr := nux.MergeAttrs(attrs...)
 	me := &editor{
 		cursorPosition:     0,
 		flicker:            false,
@@ -32,19 +32,19 @@ func NewEditor(context nux.Context, attrs ...nux.Attr) Editor {
 		textSize:           attr.GetFloat32("textSize", 12),
 		textColor:          attr.GetColor("textColor", nux.White),
 		textHighlightColor: attr.GetColor("textHighlightColor", nux.Transparent),
-		paint:              nux.NewPaint(attr.GetAttr("font", nux.Attr{})),
-		paintFlicker:       nux.NewPaint(),
+		paint:              nux.NewPaint(),
+		// paint:              nux.NewPaint(attr.GetAttr("font", nux.Attr{})),
+		paintFlicker: nux.NewPaint(),
 		// ellipsize: ellipsizeFromName(attr.GetString("ellipsize", "none")),
 	}
 
-	me.WidgetBase = nux.NewWidgetBase(context, me, attrs...)
-	me.WidgetSize = nux.NewWidgetSize(context, me, attrs...)
-	me.WidgetVisual = NewWidgetVisual(context, me, attrs...)
-	me.WidgetSize.AddOnSizeChanged(me.onSizeChanged)
-	me.WidgetVisual.AddOnVisualChanged(me.onVisualChanged)
+	me.WidgetBase = nux.NewWidgetBase(attrs...)
+	me.WidgetSize = nux.NewWidgetSize(attrs...)
+	me.WidgetVisual = NewWidgetVisual(me, attrs...)
+	me.WidgetSize.AddSizeObserver(me.onSizeChanged)
 
 	nux.OnTapDown(me, me.onTapDown)
-	nux.OnPanStart(me, me.onPanStart)
+	nux.OnPanDown(me, me.onPanStart)
 	nux.OnPanUpdate(me, me.OnPanUpdate)
 
 	return me
@@ -74,13 +74,13 @@ type editor struct {
 func (me *editor) OnMount(content nux.Widget) {
 	log.D("nuxui", "====== Editor OnMount")
 	nux.OnTapDown(me, me.onTapDown)
-	nux.OnPanStart(me, me.onPanStart)
+	nux.OnPanDown(me, me.onPanStart)
 	nux.OnPanUpdate(me, me.OnPanUpdate)
 }
 
 func (me *editor) onTapDown(detail nux.GestureDetail) {
-	ms := me.MeasuredSize()
-	me.cursorPosition = me.paint.CharacterIndexForPoint(me.text, float32(ms.Width), float32(ms.Height), detail.X(), detail.Y())
+	frame := me.Frame()
+	me.cursorPosition = me.paint.CharacterIndexForPoint(me.text, float32(frame.Width), float32(frame.Height), detail.X(), detail.Y())
 	nux.RequestFocus(me)
 }
 
@@ -105,9 +105,9 @@ func (me *editor) FocusChanged(focus bool) {
 	me.focus = focus
 	if focus {
 		nux.StartTextInput()
-		ms := me.MeasuredSize()
+		frame := me.Frame()
 		// TODO:: cursor position
-		nux.SetTextInputRect(float32(ms.Position.X), float32(ms.Position.Y)+me.paint.TextSize(), 0, 0)
+		nux.SetTextInputRect(float32(frame.X), float32(frame.Y)+me.paint.TextSize(), 0, 0)
 		me.startTick()
 	} else {
 		nux.StopTextInput()
@@ -115,12 +115,8 @@ func (me *editor) FocusChanged(focus bool) {
 	}
 }
 
-func (me *editor) onSizeChanged(widget nux.Widget) {
+func (me *editor) onSizeChanged() {
 	nux.RequestLayout(me)
-}
-
-func (me *editor) onVisualChanged(widget nux.Widget) {
-	nux.RequestRedraw(me)
 }
 
 func (me *editor) Text() string {
@@ -135,18 +131,6 @@ func (me *editor) SetText(text string) {
 	}
 }
 
-func (me *editor) Layout(dx, dy, left, top, right, bottom int32) {
-	ms := me.MeasuredSize()
-
-	// setFrame
-	ms.Position.Left = left
-	ms.Position.Top = top
-	ms.Position.Right = right
-	ms.Position.Bottom = bottom
-	ms.Position.X = dx
-	ms.Position.Y = dy
-}
-
 func (me *editor) Measure(width, height int32) {
 	if nux.MeasureSpecMode(width) == nux.Auto || nux.MeasureSpecMode(height) == nux.Auto {
 
@@ -155,18 +139,28 @@ func (me *editor) Measure(width, height int32) {
 
 		outW, outH := me.paint.MeasureText(me.text, float32(nux.MeasureSpecValue(w)), float32(nux.MeasureSpecValue(h)))
 		// log.V("nuxui", "Editor MeasureText %s %d %d", me.text, outW, outH)
-		ms := me.MeasuredSize()
+		frame := me.Frame()
 		if nux.MeasureSpecMode(width) == nux.Auto {
-			ms.Width = nux.MeasureSpec(int32(math.Ceil(float64(outW)))+ms.Padding.Left+ms.Padding.Right, nux.Pixel)
+			frame.Width = nux.MeasureSpec(int32(math.Ceil(float64(outW)))+frame.Padding.Left+frame.Padding.Right, nux.Pixel)
 		} else {
-			ms.Width = width
+			frame.Width = width
 		}
 
 		if nux.MeasureSpecMode(height) == nux.Auto {
-			ms.Height = nux.MeasureSpec(int32(math.Ceil(float64(outH)))+ms.Padding.Top+ms.Padding.Bottom, nux.Pixel)
+			frame.Height = nux.MeasureSpec(int32(math.Ceil(float64(outH)))+frame.Padding.Top+frame.Padding.Bottom, nux.Pixel)
 		} else {
-			ms.Height = height
+			frame.Height = height
 		}
+	}
+}
+
+func (me *editor) Layout(x, y, width, height int32) {
+	if me.Background() != nil {
+		me.Background().SetBounds(x, y, width, height)
+	}
+
+	if me.Foreground() != nil {
+		me.Foreground().SetBounds(x, y, width, height)
 	}
 }
 
@@ -175,23 +169,18 @@ func (me *editor) Draw(canvas nux.Canvas) {
 		me.Background().Draw(canvas)
 	}
 
-	log.D("nuxui", "Editor Draw:%s", me.text)
-
 	runes := []rune(me.text)
 	front := string(runes[:me.cursorPosition])
 	end := string(runes[me.cursorPosition:])
 	all := fmt.Sprintf("%s%s%s", front, me.editingText, end)
 
-	// TODO has padding?
-	ms := me.MeasuredSize()
+	frame := me.Frame()
 	canvas.Save()
-	canvas.Translate(float32(ms.Padding.Left), float32(ms.Padding.Top))
-	canvas.ClipRect(0, 0,
-		float32(ms.Width-ms.Padding.Left-ms.Padding.Right),
-		float32(ms.Height-ms.Padding.Top-ms.Padding.Bottom))
+	canvas.Translate(float32(frame.X), float32(frame.Y))
+	canvas.Translate(float32(frame.Padding.Left), float32(frame.Padding.Top))
 
 	me.paint.SetColor(me.textColor)
-	canvas.DrawText(all, float32(ms.Width-ms.Padding.Left-ms.Padding.Right), float32(ms.Height-ms.Padding.Top-ms.Padding.Bottom), me.paint)
+	canvas.DrawText(all, float32(frame.Width-frame.Padding.Left-frame.Padding.Right), float32(frame.Height-frame.Padding.Top-frame.Padding.Bottom), me.paint)
 
 	// draw cursor
 	m := fmt.Sprintf("%s%s", front, string([]rune(me.editingText)[:me.editingLoc]))
@@ -207,6 +196,7 @@ func (me *editor) Draw(canvas nux.Canvas) {
 	if me.Foreground() != nil {
 		me.Foreground().Draw(canvas)
 	}
+
 }
 
 func (me *editor) startTick() {

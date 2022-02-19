@@ -19,7 +19,7 @@ type Event interface {
 	Type() EventType
 	Action() EventAction
 	Window() Window
-	Data() interface{}
+	Data() any
 }
 
 type event struct {
@@ -27,7 +27,7 @@ type event struct {
 	etype  EventType
 	action EventAction
 	window Window
-	data   interface{}
+	data   any
 }
 
 func (me *event) Time() time.Time {
@@ -46,7 +46,7 @@ func (me *event) Window() Window {
 	return me.window
 }
 
-func (me *event) Data() interface{} {
+func (me *event) Data() any {
 	return me.data
 }
 

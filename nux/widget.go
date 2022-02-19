@@ -4,7 +4,9 @@
 
 package nux
 
-type Creator func(Context, ...Attr) Widget
+import "github.com/nuxui/nuxui/log"
+
+type WidgetCreator func(...Attr) Widget
 
 type Widget interface {
 	// ID() string
@@ -24,20 +26,16 @@ type WidgetInfo struct {
 	ID      string
 	Parent  Parent
 	Mounted bool
+	Mixins  []any
 }
 
 type WidgetBase struct {
-	info  *WidgetInfo
-	owner Widget
+	info *WidgetInfo
 }
 
-func NewWidgetBase(ctx Context, owner Widget, attrs ...Attr) *WidgetBase {
-	attr := Attr{}
-	if len(attrs) > 0 {
-		attr = attrs[0]
-	}
+func NewWidgetBase(attrs ...Attr) *WidgetBase {
+	attr := MergeAttrs(attrs...)
 	return &WidgetBase{
-		owner: owner,
 		info: &WidgetInfo{
 			ID:      attr.GetString("id", ""),
 			Mounted: false,
@@ -49,16 +47,24 @@ func (me *WidgetBase) Info() *WidgetInfo {
 	return me.info
 }
 
-// type Template interface {
-// 	Template() string
-// }
-
-// type Render interface {
-// 	Render() Widget
-// }
+func AddMixins(widget Widget, mixin any) {
+	for _, m := range widget.Info().Mixins {
+		if m == mixin {
+			log.E("nuxui", "the mixin %T is already existed.", mixin)
+			return
+		}
+	}
+	widget.Info().Mixins = append(widget.Info().Mixins, mixin)
+}
 
 type viewfuncs interface {
 	Measure
 	Layout
 	Draw
+}
+
+func isView(widget Widget) bool {
+	_, ret := widget.(viewfuncs)
+
+	return ret
 }

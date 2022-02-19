@@ -5,46 +5,69 @@
 package ui
 
 import (
+	"reflect"
+
 	"github.com/nuxui/nuxui/nux"
 )
 
 type ColorDrawable interface {
-	Drawable
+	nux.Drawable
 	Color() nux.Color
 	SetColor(nux.Color)
 }
 
-func NewColorDrawable() ColorDrawable {
-	return &colorDrawable{color: nux.Transparent}
+func NewColorDrawable(owner nux.Widget, attrs ...nux.Attr) ColorDrawable {
+	attr := nux.MergeAttrs(attrs...)
+	return NewColorDrawableWithColor(attr.GetColor("color", nux.Transparent))
+}
+
+func NewColorDrawableWithColor(color nux.Color) ColorDrawable {
+	paint := nux.NewPaint()
+	paint.SetColor(color)
+	return &colorDrawable{paint: paint}
 }
 
 type colorDrawable struct {
-	color nux.Color
-}
-
-func (me *colorDrawable) Color() nux.Color {
-	return me.color
-}
-
-func (me *colorDrawable) SetColor(color nux.Color) {
-	me.color = color
+	x      int32
+	y      int32
+	width  int32
+	height int32
+	paint  nux.Paint
 }
 
 func (me *colorDrawable) Size() (width, height int32) {
-	return 0, 0
+	return me.width, me.height
+}
+
+func (me *colorDrawable) SetBounds(x, y, width, height int32) {
+	me.x = x
+	me.y = y
+	me.width = width
+	me.height = height
+}
+
+func (me *colorDrawable) Color() nux.Color {
+	return me.paint.Color()
+}
+
+func (me *colorDrawable) SetColor(color nux.Color) {
+	me.paint.SetColor(color)
 }
 
 func (me *colorDrawable) Draw(canvas nux.Canvas) {
-	// t1 := time.Now()
-	canvas.DrawColor(me.color)
-	// log.V("nuxui", "draw DrawColor used time %d", time.Now().Sub(t1).Milliseconds())
+	canvas.DrawRect(float32(me.x), float32(me.y), float32(me.width), float32(me.height), me.paint)
 }
 
-func (me *colorDrawable) Equal(drawable Drawable) bool {
-	if c, ok := drawable.(*colorDrawable); ok {
-		if me.color == c.color {
-			return true
-		}
-	}
-	return false
+func (me *colorDrawable) Equal(drawable nux.Drawable) bool {
+	return reflect.DeepEqual(me, drawable)
+	// if c, ok := drawable.(*colorDrawable); ok {
+	// 	if me.paint.Color().Equal(c.paint.Color()) &&
+	// 		me.left == c.left &&
+	// 		me.top == c.top &&
+	// 		me.right == c.right &&
+	// 		me.bottom == c.bottom {
+	// 		return true
+	// 	}
+	// }
+	// return false
 }

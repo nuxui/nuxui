@@ -35,7 +35,7 @@ type Measure interface {
 }
 
 type Layout interface {
-	Layout(dx, dy, left, top, right, bottom int32)
+	Layout(x, y, width, height int32)
 }
 
 type Draw interface {
@@ -62,11 +62,12 @@ func mountWidget(child Widget, parent Parent) {
 	}
 
 	if (child.Info().Parent != nil) != child.Info().Mounted {
-		log.Fatal("nuxui", "The widget '%s' has wrong mount state with parent '%s'.", child.Info().ID, parent.Info().ID)
+		log.E("nuxui", "The widget %T:'%s' has wrong mount state with parent '%T'.", child, child.Info().ID, parent)
+		return
 	}
 
 	if child.Info().Mounted {
-		log.Fatal("nuxui", "The widget '%s' is already mounted to parent '%s'.", child.Info().ID, parent.Info().ID)
+		log.Fatal("nuxui", "The widget '%s' is already mounted to parent '%T'.", child.Info().ID, parent)
 	}
 
 	if parent != nil && !parent.Info().Mounted {
@@ -80,7 +81,12 @@ func mountWidget(child Widget, parent Parent) {
 	if f, ok := child.(OnMount); ok {
 		// log.I("nuxui", "child.(OnMount)=true", child.Info().ID)
 		f.OnMount()
-		child.Info().Mounted = true
+	}
+	child.Info().Mounted = true
+	for _, m := range child.Info().Mixins {
+		if mf, ok := m.(OnMount); ok {
+			mf.OnMount()
+		}
 	}
 
 	if p, ok := child.(Parent); ok {
@@ -88,8 +94,17 @@ func mountWidget(child Widget, parent Parent) {
 			// log.I("nuxui", "child.(OnMount)=%s,  %T", child.Info().ID, child)
 			if f, ok := c.(OnMount); ok {
 				f.OnMount()
-				c.Info().Mounted = true
 			}
+			c.Info().Mounted = true
+			if c.Info().ID == "xxx" {
+				log.I("nuxui", "xxx mixins %s", c.Info().Mixins)
+			}
+			for _, m := range c.Info().Mixins {
+				if mf, ok := m.(OnMount); ok {
+					mf.OnMount()
+				}
+			}
+
 			if compt, ok := c.(Component); ok {
 				c = compt.Content()
 			}

@@ -78,7 +78,12 @@ static const char *event_names[] = {
 		     CWDontPropagate|CWColormap|CWCursor)
 
 int _go_nativeLoopPrepared = 0;
+static pid_t mainThreadId;
 static short g_ime_pos_x ,g_ime_pos_y;
+
+int isMainThread(){
+    return mainThreadId == gettid();
+}
 
 // https://www.x.org/releases/current/doc/libX11/libX11/libX11.html#:~:text=Preedit%20State-,Callbacks,-When%20the%20input
 int nux_PreeditStartCallback(XIC xic, XPointer client_data, XPointer call_data){
@@ -131,6 +136,8 @@ void run(){
     XSetWindowAttributes winattr = { 0 };
     XIM xim;
     XIC xic;
+
+    mainThreadId = gettid();
 
     // HACK: If the application has left the locale as "C" then both wide
     //       character text input and explicit UTF-8 input via XIM will break

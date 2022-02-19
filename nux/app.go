@@ -55,14 +55,15 @@ func (me *application) handleEvent(event Event) {
 			}
 
 			if f, ok := event.Window().(Layout); ok {
-				f.Layout(0, 0, 0, 0, w, h)
+				f.Layout(0, 0, w, h)
 			}
 		case Action_WindowDraw:
 			// log.V("nuxui", "Action_WindowDraw")
 			if f, ok := event.Window().(Draw); ok {
-				canvas := event.Window().LockCanvas()
-				f.Draw(canvas)
-				event.Window().UnlockCanvas(canvas)
+				if canvas := event.Window().LockCanvas(); canvas != nil {
+					f.Draw(canvas)
+					event.Window().UnlockCanvas(canvas)
+				}
 			}
 		}
 	// App().MainWindow()
@@ -134,7 +135,7 @@ func GetWidgetWindow(widget Widget) Window {
 }
 
 // if widget.Parent() == nil {
-// 	if util.GetTypeName(widget) == "github.com/nuxui/nuxui/ui.layer" {
+// 	if util.TypeName(widget) == "github.com/nuxui/nuxui/ui.layer" {
 // 		if w, ok := decorWindowList[widget]; ok {
 // 			return w
 // 		}
@@ -148,4 +149,8 @@ func GetWidgetWindow(widget Widget) Window {
 
 func RunOnUI(callback func()) {
 	runOnUI(callback)
+}
+
+func IsMainThread() bool {
+	return isMainThread()
 }

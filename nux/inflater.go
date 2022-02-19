@@ -4,9 +4,13 @@
 
 package nux
 
-import "github.com/nuxui/nuxui/log"
+import (
+	"strings"
 
-func InflateLayout(ctx Context, parent Widget, layout string) Widget {
+	"github.com/nuxui/nuxui/log"
+)
+
+func InflateLayout(parent Widget, layout string) Widget {
 	attrs := ParseAttr(layout)
 	layoutAttr := attrs.GetAttr("layout", nil)
 	if layoutAttr == nil {
@@ -14,11 +18,11 @@ func InflateLayout(ctx Context, parent Widget, layout string) Widget {
 		return parent
 	}
 
-	return Inflate(ctx, parent, layoutAttr)
+	return InflateLayoutAttr(parent, layoutAttr)
 }
 
-func Inflate(ctx Context, parent Widget, attr Attr) Widget {
-	widget := inflate(ctx, nil, attr)
+func InflateLayoutAttr(parent Widget, attr Attr) Widget {
+	widget := inflateLayoutAttr(nil, attr)
 
 	if parent == nil {
 		return widget
@@ -28,7 +32,7 @@ func Inflate(ctx Context, parent Widget, attr Attr) Widget {
 		c.SetContent(widget)
 	} else if p, ok := parent.(Parent); ok {
 		p.AddChild(parent)
-	} else if IsView(parent) {
+	} else if isView(parent) {
 		log.Fatal("nuxui", "%T is not a parent widget", parent)
 		return nil
 	}
@@ -36,22 +40,36 @@ func Inflate(ctx Context, parent Widget, attr Attr) Widget {
 	return parent
 }
 
-func inflate(ctx Context, parent Widget, attr Attr) Widget {
+func inflateLayoutAttr(parent Widget, attr Attr) Widget {
 	widgetName := attr.GetString("widget", "")
 	if widgetName == "" {
 		log.Fatal("nuxui", `must specified "widget"`)
 		return nil
 	}
 
-	widgetCreator := FindRegistedWidgetCreatorByName(widgetName)
-	widget := widgetCreator(ctx, attr)
+	widgetCreator := FindRegistedWidgetCreator(widgetName)
+
+	var widget Widget
+	if theme := attr.GetAttr("theme", nil); theme != nil {
+		if themeAttr := appTheme.GetAttr(
+			widgetName,
+			theme.GetString("name", ""),
+			theme.GetString("kind", ""),
+			theme.GetString("style", "")); themeAttr != nil {
+			widget = widgetCreator(themeAttr, attr)
+		}
+	}
+
+	if widget == nil {
+		widget = widgetCreator(attr)
+	}
 
 	if childrenNode, ok := attr["children"]; ok {
-		if children, ok := childrenNode.([]interface{}); ok {
+		if children, ok := childrenNode.([]any); ok {
 			if p, ok := widget.(Parent); ok {
 				for _, child := range children {
 					if childAttr, ok := child.(Attr); ok {
-						childWidget := inflate(ctx, widget, childAttr)
+						childWidget := inflateLayoutAttr(widget, childAttr)
 						p.AddChild(childWidget)
 					}
 				}
@@ -63,4 +81,35 @@ func inflate(ctx Context, parent Widget, attr Attr) Widget {
 		}
 	}
 	return widget
+}
+
+func InflateDrawable(owner Widget, drawable any) Drawable {
+	if drawable == nil {
+		return nil
+	}
+
+	switch t := drawable.(type) {
+	case string:
+		if strings.HasPrefix(t, "#") {
+			return InflateDrawable(owner, Attr{"drawable": "github.com/nuxui/nuxui/ui.ColorDrawable", "color": t})
+		} else if strings.HasPrefix(t, "assets/") {
+			return InflateDrawable(owner, Attr{"drawable": "github.com/nuxui/nuxui/ui.ImageDrawable", "src": t})
+		} else if strings.HasPrefix(t, "http://") {
+			return InflateDrawable(owner, Attr{"drawable": "github.com/nuxui/nuxui/ui.ImageDrawable", "src": t})
+		}
+	case Attr:
+		return InflateDrawableAttr(owner, t)
+	}
+	return nil
+}
+
+func InflateDrawableAttr(owner Widget, attr Attr) Drawable {
+	drawableName := attr.GetString("drawable", "")
+	if drawableName == "" {
+		log.Fatal("nuxui", `must specified "drawable"`)
+		return nil
+	}
+
+	drawableCreator := FindRegistedDrawableCreator(drawableName)
+	return drawableCreator(owner, attr)
 }

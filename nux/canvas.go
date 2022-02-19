@@ -6,13 +6,6 @@ package nux
 
 import "github.com/nuxui/nuxui/log"
 
-type Path interface {
-	AddArc(left, top, right, bottom, startAngle, sweepAngle float32)
-	MoveTo(x, y float32)
-	LineTo(x, y float32)
-	Close()
-}
-
 type Matrix struct {
 	A float32
 	B float32
@@ -34,17 +27,18 @@ type Canvas interface {
 	SetMatrix(matrix Matrix)            // https://cairographics.org/manual/cairo-Transformations.html#cairo-set-matrix
 	GetMatrix() Matrix                  // https://cairographics.org/manual/cairo-Transformations.html#cairo-get-matrix
 
-	ClipRect(left, top, right, bottom float32)
+	ClipRect(x, y, width, height float32)
+	ClipRoundRect(x, y, width, height, radius float32)
 	ClipPath(path Path)
 
 	///////////// draw
 	SetAlpha(alpha float32)
-	DrawRect(left, top, right, bottom float32, paint Paint)
-	DrawRoundRect(left, top, right, bottom float32, radius float32, paint Paint)
+	DrawRect(x, y, width, height float32, paint Paint)
+	DrawRoundRect(x, y, width, height float32, radius float32, paint Paint)
 	DrawArc(x, y, radius, startAngle, endAngle float32, useCenter bool, paint Paint)
-	DrawOval(left, top, right, bottom float32, paint Paint)
+	DrawOval(x, y, width, height float32, paint Paint)
 	DrawPath(path Path)
-	DrawColor(color Color)
+	// DrawColor(color Color)
 	DrawImage(img Image)
 	DrawText(text string, width, height float32, paint Paint)
 
@@ -73,22 +67,39 @@ type Paint interface {
 	SetStyle(style PaintStyle)
 	TextSize() float32
 	SetTextSize(size float32)
+	SetShadow(color Color, offsetX, offsetY, blur float32)
+	Shadow() (color Color, offsetX, offsetY, blur float32)
+	HasShadow() bool
 	MeasureText(text string, width, height float32) (outWidth float32, outHeight float32)
 	CharacterIndexForPoint(text string, width, height float32, x, y float32) uint32
 }
 
-func NewPaint(attrs ...Attr) Paint {
-	attr := Attr{}
-	attr.Merge(attrs...)
+// func NewPaint(attrs ...Attr) Paint {
+// 	attr := Attr{}
+// 	attr.Merge(attrs...)
+
+// 	me := &paint{
+// 		style:      PaintStyle_Fill,
+// 		textSize:   attr.GetFloat32("textSize", 14),
+// 		color:      attr.GetColor("color", 0xff000000),
+// 		antialias:  attr.GetBool("antialias", false),
+// 		fontFamily: attr.GetString("family", ""),
+// 		fontWeight: FontWeightFromName(attr.GetString("weight", "normal")),
+// 		fontItalic: attr.GetString("style", "normal") == "italic",
+// 	}
+// 	return me
+// }
+
+func NewPaint() Paint {
 
 	me := &paint{
 		style:      PaintStyle_Fill,
-		textSize:   attr.GetFloat32("textSize", 14),
-		color:      attr.GetColor("color", 0xff000000),
-		antialias:  attr.GetBool("antialias", false),
-		fontFamily: attr.GetString("family", ""),
-		fontWeight: FontWeightFromName(attr.GetString("weight", "normal")),
-		fontItalic: attr.GetString("style", "normal") == "italic",
+		textSize:   14,
+		color:      0xff000000,
+		antialias:  false,
+		fontFamily: "",
+		fontWeight: FontWeight_Normal,
+		fontItalic: false,
 	}
 	return me
 }
@@ -134,14 +145,18 @@ func FontWeightFromName(name string) FontWeight {
 }
 
 type paint struct {
-	color      Color
-	style      PaintStyle
-	width      float32
-	textSize   float32
-	antialias  bool
-	fontFamily string
-	fontWeight FontWeight
-	fontItalic bool
+	color       Color
+	style       PaintStyle
+	width       float32
+	textSize    float32
+	antialias   bool
+	fontFamily  string
+	fontWeight  FontWeight
+	fontItalic  bool
+	shadowColor Color
+	shadowX     float32
+	shadowY     float32
+	shadowBlur  float32
 }
 
 func (me *paint) Color() Color {
@@ -181,6 +196,21 @@ func (me *paint) TextSize() float32 {
 
 func (me *paint) SetTextSize(size float32) {
 	me.textSize = size
+}
+
+func (me *paint) SetShadow(color Color, offsetX, offsetY, blur float32) {
+	me.shadowColor = color
+	me.shadowX = offsetX
+	me.shadowY = offsetY
+	me.shadowBlur = blur
+}
+
+func (me *paint) Shadow() (color Color, offsetX, offsetY, blur float32) {
+	return me.shadowColor, me.shadowX, me.shadowY, me.shadowBlur
+}
+
+func (me *paint) HasShadow() bool {
+	return me.shadowColor != 0 && me.shadowBlur > 0
 }
 
 // func (me *paint) MeasureText(text string, start, end int32) (width float32, height float32) {

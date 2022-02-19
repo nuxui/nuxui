@@ -25,8 +25,6 @@ type window struct {
 	hBitMap     uintptr
 	canvas      *canvas
 	paintStruct win32.PAINTSTRUCT
-
-	context Context
 }
 
 func newWindow(attr Attr) *window {
@@ -34,18 +32,17 @@ func newWindow(attr Attr) *window {
 		hwnd:      0,
 		preHdc:    0,
 		hdcBuffer: 0,
-		context:   &context{},
 	}
 
-	me.CreateDecor(me.context, attr)
-	GestureBinding().AddGestureHandler(me.decor, &decorGestureHandler{})
+	me.CreateDecor(attr)
+	GestureManager().AddGestureHandler(me.decor, &decorGestureHandler{})
 	mountWidget(me.decor, nil)
 	return me
 }
 
-func (me *window) CreateDecor(ctx Context, attr Attr) Widget {
-	creator := FindRegistedWidgetCreatorByName("github.com/nuxui/nuxui/ui.Layer")
-	w := creator(ctx, attr)
+func (me *window) CreateDecor(attr Attr) Widget {
+	creator := FindRegistedWidgetCreator("github.com/nuxui/nuxui/ui.Layer")
+	w := creator(attr)
 	if p, ok := w.(Parent); ok {
 		me.decor = p
 	} else {
@@ -58,10 +55,8 @@ func (me *window) CreateDecor(ctx Context, attr Attr) Widget {
 }
 
 func (me *window) Draw(canvas Canvas) {
-	log.V("nuxui", "window Draw start")
 	if me.decor != nil {
 		if f, ok := me.decor.(Draw); ok {
-			log.V("nuxui", "window Draw canvas save")
 			var rectClient win32.RECT
 			win32.GetClientRect(me.hwnd, &rectClient)
 
@@ -76,7 +71,6 @@ func (me *window) Draw(canvas Canvas) {
 			win32.BitBlt(me.preHdc, 0, 0, rectClient.Right-rectClient.Left, rectClient.Bottom-rectClient.Top, me.hdcBuffer, 0, 0, win32.SRCCOPY)
 		}
 	}
-	log.V("nuxui", "window Draw end")
 }
 
 func (me *window) ID() uint64 {
@@ -298,9 +292,9 @@ func (me *window) switchFocusIfPossible(event PointerEvent) {
 func (me *window) switchFocusAtPoint(x, y float32) {
 	if me.focusWidget != nil {
 		if s, ok := me.focusWidget.(Size); ok {
-			ms := s.MeasuredSize()
-			if x >= float32(ms.Position.X) && x <= float32(ms.Position.X+ms.Width) &&
-				y >= float32(ms.Position.Y) && y <= float32(ms.Position.Y+ms.Height) {
+			frame := s.Frame()
+			if x >= float32(frame.X) && x <= float32(frame.X+frame.Width) &&
+				y >= float32(frame.Y) && y <= float32(frame.Y+frame.Height) {
 				// point is in current focus widget, do not need change focus
 				return
 			}

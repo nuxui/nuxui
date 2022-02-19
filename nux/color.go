@@ -51,3 +51,7 @@ func (me Color) ARGBf() (a, r, g, b float32) {
 	b = float32((me)&0xff) / 255
 	return
 }
+
+func (me Color) Equal(color Color) bool {
+	return uint32(me) == uint32(color)
+}

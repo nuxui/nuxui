@@ -18,6 +18,7 @@ void run();
 void invalidate(Display *display, Window window);
 void setTextInputRect(short x, short y);
 void runOnUI(Display *display, Window window);
+int isMainThread();
 */
 import "C"
 import (
@@ -75,7 +76,7 @@ type application struct {
 	drawSignal         chan struct{}
 }
 
-func (me *application) OnCreate(data interface{}) {
+func (me *application) OnCreate(data any) {
 }
 
 func (me *application) MainWindow() Window {
@@ -326,4 +327,8 @@ func requestRedraw() {
 func convertModifierFlags(flags uint) uint32 {
 	// TODO::
 	return 0
+}
+
+func isMainThread() bool {
+	return C.isMainThread() > 0
 }

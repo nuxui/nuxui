@@ -5,108 +5,78 @@
 package nux
 
 import (
-	"time"
-
 	"github.com/nuxui/nuxui/log"
+	"github.com/nuxui/nuxui/util"
 )
+
+type GestureCallback func(detail GestureDetail)
 
 type GestureRecognizer interface {
 	GestureArenaMember
 	PointerAllowed(event PointerEvent) bool
 	HandlePointerEvent(event PointerEvent)
-	//TODO:: Clear(widget Widget) // clear callbacks of widget
+	Clear(widget Widget) // clear callbacks of widget when unmount widget
 }
 
-type GestureCallback func(detail GestureDetail)
+// ------------- gestureRecognizerManager -------------------------
 
-type GestureDetail interface {
-	Target() Widget
-	Time() time.Time
-	Kind() Kind
-	X() float32
-	Y() float32
-	WindowX() float32
-	WindowY() float32
-	ScrollX() float32
-	ScrollY() float32
+func GestureManager() *gestureRecognizerManager {
+	return gestureManager
 }
 
-type gestureDetail struct {
-	target  Widget
-	time    time.Time
-	kind    Kind
-	x       float32
-	y       float32
-	windowX float32
-	windowY float32
-	scrollX float32
-	scrollY float32
+var gestureManager *gestureRecognizerManager = &gestureRecognizerManager{
+	gestureRecognizers: map[Widget][]GestureRecognizer{},
 }
 
-func (me *gestureDetail) Target() Widget   { return me.target }
-func (me *gestureDetail) Time() time.Time  { return me.time }
-func (me *gestureDetail) Kind() Kind       { return me.kind }
-func (me *gestureDetail) X() float32       { return me.x }
-func (me *gestureDetail) Y() float32       { return me.y }
-func (me *gestureDetail) WindowX() float32 { return me.windowX }
-func (me *gestureDetail) WindowY() float32 { return me.windowY }
-func (me *gestureDetail) ScrollX() float32 { return me.scrollX }
-func (me *gestureDetail) ScrollY() float32 { return me.scrollY }
+type gestureRecognizerManager struct {
+	gestureRecognizers map[Widget][]GestureRecognizer
+}
 
-func pointerEventToDetail(event PointerEvent, target Widget) GestureDetail {
-	if target == nil {
-		log.Fatal("nuxui", "target can not be nil")
+func (me *gestureRecognizerManager) getGestureRecognizers(widget Widget) []GestureRecognizer {
+	return me.gestureRecognizers[widget]
+}
+
+func (me *gestureRecognizerManager) AddGestureRecognizer(widget Widget, recognizer GestureRecognizer) {
+	if recognizer == nil || widget == nil {
+		return
 	}
 
-	if event == nil {
-		return &gestureDetail{target: target}
-	}
-
-	x := event.X()
-	y := event.Y()
-	if s, ok := target.(Size); ok {
-		ms := s.MeasuredSize()
-		x = event.X() - float32(ms.Position.X)
-		y = event.Y() - float32(ms.Position.Y)
-	}
-
-	return &gestureDetail{
-		target:  target,
-		time:    event.Time(),
-		kind:    event.Kind(),
-		x:       x,
-		y:       y,
-		windowX: event.X(),
-		windowY: event.Y(),
+	if rs, ok := me.gestureRecognizers[widget]; ok {
+		if debug_gesture {
+			name := util.TypeName(recognizer)
+			for _, r := range rs {
+				rname := util.TypeName(r)
+				if name == rname {
+					log.Fatal("nuxui", "The gesture recognizer '%s' is existed.", name)
+					break
+				}
+			}
+		}
+		me.gestureRecognizers[widget] = append(rs, recognizer)
+	} else {
+		me.gestureRecognizers[widget] = []GestureRecognizer{recognizer}
 	}
 }
 
-func scrollEventToDetail(event ScrollEvent, target Widget) GestureDetail {
-	if target == nil {
-		log.Fatal("nuxui", "target can not be nil")
+func (me *gestureRecognizerManager) ClearGestureRecognizer(widget Widget) {
+	if rs, ok := me.gestureRecognizers[widget]; ok {
+		for _, r := range rs {
+			r.Clear(widget)
+		}
+
+		delete(me.gestureRecognizers, widget)
+	}
+}
+
+func (me *gestureRecognizerManager) FindGestureRecognizer(widget Widget, recognizerType GestureRecognizer) GestureRecognizer {
+	if rs, ok := me.gestureRecognizers[widget]; ok {
+		name := util.TypeName(recognizerType)
+		for _, r := range rs {
+			if util.TypeName(r) == name {
+				return r
+			}
+		}
 	}
 
-	if event == nil {
-		return &gestureDetail{target: target}
-	}
-
-	x := event.X()
-	y := event.Y()
-	if s, ok := target.(Size); ok {
-		ms := s.MeasuredSize()
-		x = event.X() - float32(ms.Position.X)
-		y = event.Y() - float32(ms.Position.Y)
-	}
-
-	return &gestureDetail{
-		target:  target,
-		time:    event.Time(),
-		kind:    Kind_None,
-		x:       x,
-		y:       y,
-		windowX: event.X(),
-		windowY: event.Y(),
-		scrollX: event.ScrollX(),
-		scrollY: event.ScrollY(),
-	}
+	return nil
 }

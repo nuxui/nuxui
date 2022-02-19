@@ -182,7 +182,7 @@ func (me *canvas) DrawRect(left, top, right, bottom float32, paint Paint) {
 	if fix {
 		// C.cairo_identity_matrix(me.ptr)
 		me.Save()
-		me.Translate(-0.5, -0.5)
+		me.Translate(0.5, 0.5)
 
 	}
 
@@ -195,6 +195,18 @@ func (me *canvas) DrawRect(left, top, right, bottom float32, paint Paint) {
 }
 
 func (me *canvas) DrawRoundRect(left, top, right, bottom float32, radius float32, paint Paint) {
+	if right <= left || bottom <= top {
+		return
+	}
+
+	fix := paint.Style() == PaintStyle_Stroke && int32(paint.Width())%2 != 0
+	if fix {
+		// C.cairo_identity_matrix(me.ptr)
+		me.Save()
+		me.Translate(0.5, 0.5)
+
+	}
+
 	C.cairo_new_sub_path(me.ptr)
 	C.cairo_arc(me.ptr, C.double(right-radius), C.double(top+radius), C.double(radius), -90*DEGREE, 0)
 	C.cairo_arc(me.ptr, C.double(right-radius), C.double(bottom-radius), C.double(radius), 0, 90*DEGREE)
@@ -202,6 +214,10 @@ func (me *canvas) DrawRoundRect(left, top, right, bottom float32, radius float32
 	C.cairo_arc(me.ptr, C.double(left+radius), C.double(top+radius), C.double(radius), 180*DEGREE, 270*DEGREE)
 	C.cairo_close_path(me.ptr)
 	me.drawPaint(paint)
+
+	if fix {
+		me.Restore()
+	}
 }
 
 func (me *canvas) DrawArc(x, y, radius, startAngle, endAngle float32, useCenter bool, paint Paint) {

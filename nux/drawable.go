@@ -2,13 +2,13 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package ui
+package nux
 
-import "github.com/nuxui/nuxui/nux"
+type DrawableCreator func(Widget, ...Attr) Drawable
 
 type Drawable interface {
-	//TODO  Draw(Rect, Canvas)
 	Size() (width, height int32)
-	Draw(nux.Canvas)
+	SetBounds(x, y, width, height int32)
+	Draw(canvas Canvas)
 	Equal(Drawable) bool
 }

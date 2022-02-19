@@ -39,7 +39,7 @@ func new(out io.Writer, prefix string, flags int, depth int) Logger {
 	return me
 }
 
-func (me *logger) output(depth int, color string, level Level, levelTag string, tag string, format string, msg ...interface{}) {
+func (me *logger) output(depth int, color string, level Level, levelTag string, tag string, format string, msg ...any) {
 	ctag := C.CString(tag)
 	str := fmt.Sprintf(format, msg...)
 	cmsg := C.CString(str)

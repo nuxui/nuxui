@@ -9,7 +9,7 @@ import (
 	"github.com/nuxui/nuxui/util"
 )
 
-func setRatioHeight(cs nux.Size, cms *nux.MeasuredSize, width float32, mode nux.Mode) {
+func setRatioHeight(cs nux.Size, cms *nux.Frame, width float32, mode nux.Mode) {
 	if cs.Height().Mode() == nux.Ratio {
 		if cms.Width == 0 {
 			cms.Height = 0
@@ -19,7 +19,7 @@ func setRatioHeight(cs nux.Size, cms *nux.MeasuredSize, width float32, mode nux.
 	}
 }
 
-func setRatioWidth(cs nux.Size, cms *nux.MeasuredSize, height float32, mode nux.Mode) {
+func setRatioWidth(cs nux.Size, cms *nux.Frame, height float32, mode nux.Mode) {
 	if cs.Width().Mode() == nux.Ratio {
 		if cms.Height == 0 {
 			cms.Width = 0
@@ -29,40 +29,33 @@ func setRatioWidth(cs nux.Size, cms *nux.MeasuredSize, height float32, mode nux.
 	}
 }
 
-func setNewWidth(ms *nux.MeasuredSize, originWidth, newWidth int32) {
+func setNewWidth(frame *nux.Frame, originWidth, newWidth int32) {
 	switch nux.MeasureSpecMode(originWidth) {
 	case nux.Pixel:
-		ms.Width = originWidth
+		frame.Width = originWidth
 	case nux.Unlimit:
-		ms.Width = newWidth
+		frame.Width = newWidth
 	case nux.Auto:
 		if nux.MeasureSpecValue(newWidth) > nux.MeasureSpecValue(originWidth) {
-			ms.Width = nux.MeasureSpec(nux.MeasureSpecValue(originWidth), nux.Pixel)
+			frame.Width = nux.MeasureSpec(nux.MeasureSpecValue(originWidth), nux.Pixel)
 		} else {
-			ms.Width = newWidth
+			frame.Width = newWidth
 		}
 	}
 
 }
 
-func setNewHeight(ms *nux.MeasuredSize, originHeight, newHeight int32) {
+func setNewHeight(frame *nux.Frame, originHeight, newHeight int32) {
 	switch nux.MeasureSpecMode(originHeight) {
 	case nux.Pixel:
-		ms.Height = originHeight
+		frame.Height = originHeight
 	case nux.Unlimit:
-		ms.Height = newHeight
+		frame.Height = newHeight
 	case nux.Auto:
 		if nux.MeasureSpecValue(newHeight) > nux.MeasureSpecValue(originHeight) {
-			ms.Height = nux.MeasureSpec(nux.MeasureSpecValue(originHeight), nux.Pixel)
+			frame.Height = nux.MeasureSpec(nux.MeasureSpecValue(originHeight), nux.Pixel)
 		} else {
-			ms.Height = newHeight
+			frame.Height = newHeight
 		}
 	}
-}
-
-func getAttr(attrs ...nux.Attr) nux.Attr {
-	if len(attrs) == 0 {
-		return nux.Attr{}
-	}
-	return attrs[0]
 }

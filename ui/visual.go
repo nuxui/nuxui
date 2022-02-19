@@ -5,8 +5,6 @@
 package ui
 
 import (
-	"unsafe"
-
 	"github.com/nuxui/nuxui/log"
 	"github.com/nuxui/nuxui/nux"
 )
@@ -14,74 +12,45 @@ import (
 type OnVisualChanged func(nux.Widget)
 
 type Visual interface {
-	Border()
-	SetBorder()
-	Background() Drawable
-	SetBackground(Drawable)
+	Background() nux.Drawable
+	SetBackground(nux.Drawable)
 	SetBackgroundColor(nux.Color)
-	Foreground() Drawable
-	SetForeground(Drawable)
+	Foreground() nux.Drawable
+	SetForeground(nux.Drawable)
 	SetForegroundColor(nux.Color)
 	Visible() Visible
 	SetVisible(visible Visible)
-	AddOnVisualChanged(callback OnVisualChanged)
-	RemoveOnVisualChanged(callback OnVisualChanged)
 	Translucent() bool // TODO:: Can the event penetrate ?
 	SetTranslucent(bool)
 }
 
 type WidgetVisual struct {
-	Owner                    nux.Widget
-	background               Drawable // TODO replace type to *Drawable
-	foreground               Drawable
-	visible                  Visible
-	onVisualChangedCallbacks []unsafe.Pointer
-	translucent              bool
+	owner       nux.Widget
+	background  nux.Drawable
+	foreground  nux.Drawable
+	visible     Visible
+	translucent bool
 }
 
-func NewWidgetVisual(ctx nux.Context, owner nux.Widget, attrs ...nux.Attr) *WidgetVisual {
-	attr := nux.Attr{}
-	if len(attrs) > 0 {
-		attr = attrs[0]
-	}
+func NewWidgetVisual(owner nux.Widget, attrs ...nux.Attr) *WidgetVisual {
+	attr := nux.MergeAttrs(attrs...)
+
 	me := &WidgetVisual{
-		Owner: owner,
-	}
-
-	bg := NewColorDrawable()
-	bg.SetColor(attr.GetColor("background", nux.Transparent))
-	me.background = bg
-
-	foreground := NewColorDrawable()
-	foreground.SetColor(attr.GetColor("foreground", nux.Transparent))
-	me.foreground = foreground
-
-	me.translucent = attr.GetBool("translucent", false)
-
-	visible := attr.GetString("visible", "show")
-	switch visible {
-	case "show":
-		me.visible = Show
-	case "hide":
-		me.visible = Hide
-	case "gone":
-		me.visible = Gone
-	default:
-		log.Fatal("nuxui", "visible should be 'show', 'hide' or 'gone'")
+		owner:       owner,
+		visible:     visibleFromString(attr.GetString("visible", "show")),
+		translucent: attr.GetBool("translucent", false),
+		background:  nux.InflateDrawable(owner, attr.Get("background", nil)),
+		foreground:  nux.InflateDrawable(owner, attr.Get("foreground", nil)),
 	}
 
 	return me
 }
 
-func (me *WidgetVisual) Border() {}
-
-func (me *WidgetVisual) SetBorder() {}
-
-func (me *WidgetVisual) Background() Drawable {
+func (me *WidgetVisual) Background() nux.Drawable {
 	return me.background
 }
 
-func (me *WidgetVisual) SetBackground(background Drawable) {
+func (me *WidgetVisual) SetBackground(background nux.Drawable) {
 	if me.background != background && (me.background == nil || !me.background.Equal(background)) {
 		me.background = background
 		me.doVisualChanged()
@@ -89,20 +58,19 @@ func (me *WidgetVisual) SetBackground(background Drawable) {
 }
 
 func (me *WidgetVisual) SetBackgroundColor(background nux.Color) {
-	b := NewColorDrawable()
-	b.SetColor(background)
+	b := NewColorDrawableWithColor(background)
 
-	if me.background != b && (me.background == nil || !me.background.Equal(b)) {
+	if me.background == nil || !me.background.Equal(b) {
 		me.background = b
 		me.doVisualChanged()
 	}
 }
 
-func (me *WidgetVisual) Foreground() Drawable {
+func (me *WidgetVisual) Foreground() nux.Drawable {
 	return me.foreground
 }
 
-func (me *WidgetVisual) SetForeground(foreground Drawable) {
+func (me *WidgetVisual) SetForeground(foreground nux.Drawable) {
 	if me.foreground != foreground && (me.foreground == nil || !me.foreground.Equal(foreground)) {
 		me.foreground = foreground
 		me.doVisualChanged()
@@ -110,10 +78,9 @@ func (me *WidgetVisual) SetForeground(foreground Drawable) {
 }
 
 func (me *WidgetVisual) SetForegroundColor(foreground nux.Color) {
-	f := NewColorDrawable()
-	f.SetColor(foreground)
+	f := NewColorDrawableWithColor(foreground)
 
-	if me.foreground != f && (me.foreground == nil || !me.foreground.Equal(f)) {
+	if me.foreground == nil || !me.foreground.Equal(f) {
 		me.foreground = f
 		me.doVisualChanged()
 	}
@@ -133,50 +100,28 @@ func (me *WidgetVisual) SetVisible(visible Visible) {
 	}
 }
 
-func (me *WidgetVisual) AddOnVisualChanged(callback OnVisualChanged) {
-	if callback == nil {
-		return
-	}
-
-	if me.onVisualChangedCallbacks == nil {
-		me.onVisualChangedCallbacks = []unsafe.Pointer{}
-	}
-
-	p := unsafe.Pointer(&callback)
-	for _, o := range me.onVisualChangedCallbacks {
-		if o == p {
-			log.Fatal("nuxui", "The OnVisualChanged callback is existed.")
-		}
-	}
-
-	me.onVisualChangedCallbacks = append(me.onVisualChangedCallbacks, unsafe.Pointer(&callback))
-}
-
-func (me *WidgetVisual) RemoveOnVisualChanged(callback OnVisualChanged) {
-	if me.onVisualChangedCallbacks != nil && callback != nil {
-		p := unsafe.Pointer(&callback)
-		for i, o := range me.onVisualChangedCallbacks {
-			if o == p {
-				me.onVisualChangedCallbacks = append(me.onVisualChangedCallbacks[:i], me.onVisualChangedCallbacks[i+1:]...)
-			}
-		}
-	}
-}
-
-func (me *WidgetVisual) doVisualChanged() {
-	if me.Owner == nil {
-		log.Fatal("nuxui", "set target for WidgetVisual first.")
-	}
-
-	for _, c := range me.onVisualChangedCallbacks {
-		(*(*OnVisualChanged)(c))(me.Owner)
-	}
-}
-
 func (me *WidgetVisual) Translucent() bool {
 	return me.translucent
 }
 
 func (me *WidgetVisual) SetTranslucent(translucent bool) {
 	me.translucent = translucent
+}
+
+func (me *WidgetVisual) doVisualChanged() {
+	nux.RequestRedraw(me.owner)
+}
+
+func visibleFromString(visible string) Visible {
+	switch visible {
+	case "show":
+		return Show
+	case "hide":
+		return Hide
+	case "gone":
+		return Gone
+	default:
+		log.Fatal("nuxui", "visible should be 'show', 'hide' or 'gone'")
+	}
+	return Show
 }

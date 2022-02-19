@@ -54,9 +54,8 @@ func (me *window) OnCreate() {
 	if main == "" {
 		log.Fatal("nuxui", "no main widget found.")
 	} else {
-		mainWidgetCreator := FindRegistedWidgetCreatorByName(main)
-		ctx := &context{}
-		widgetTree := mainWidgetCreator(ctx, Attr{})
+		mainWidgetCreator := FindRegistedWidgetCreator(main)
+		widgetTree := mainWidgetCreator(Attr{})
 		me.decor.AddChild(widgetTree)
 		mountWidget(me.decor, nil)
 	}
@@ -69,12 +68,13 @@ func (me *window) Measure(width, height int32) {
 	}
 
 	if s, ok := me.decor.(Size); ok {
-		if s.MeasuredSize().Width == width && s.MeasuredSize().Height == height {
+		f := s.Frame()
+		if f.Width == width && f.Height == height {
 			// return
 		}
 
-		s.MeasuredSize().Width = width
-		s.MeasuredSize().Height = height
+		f.Width = width
+		f.Height = height
 	}
 
 	if f, ok := me.decor.(Measure); ok {
@@ -82,36 +82,12 @@ func (me *window) Measure(width, height int32) {
 	}
 }
 
-func (me *window) Layout(dx, dy, left, top, right, bottom int32) {
+func (me *window) Layout(x, y, width, height int32) {
 	if me.decor == nil {
 		return
 	}
 
 	if f, ok := me.decor.(Layout); ok {
-		f.Layout(dx, dy, left, top, right, bottom)
+		f.Layout(x, y, width, height)
 	}
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////
-
-type decorGestureHandler struct {
-}
-
-func (me *decorGestureHandler) AddGestureRecoginer(recognizer GestureRecognizer) {
-}
-
-func (me *decorGestureHandler) RemoveGestureRecoginer(recognizer GestureRecognizer) {
-}
-
-func (me *decorGestureHandler) HandlePointerEvent(event PointerEvent) {
-	switch event.Action() {
-	case Action_Down:
-		GestureArenaManager().Close(event.Pointer())
-	case Action_Up:
-		GestureArenaManager().Sweep(event.Pointer())
-	}
-}
-
-func (me *decorGestureHandler) FindGestureRecognizer(recognizer GestureRecognizer) GestureRecognizer {
-	return nil
 }

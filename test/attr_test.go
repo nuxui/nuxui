@@ -5,6 +5,7 @@
 package test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/nuxui/nuxui/log"
@@ -59,6 +60,33 @@ var template = `
 
 func TestAttr(t *testing.T) {
 	defer log.Close()
-	attr := nux.ParseAttr(template)
-	log.V("test", "%s", attr)
+	// attr := nux.ParseAttr(template)
+	// log.V("test", "%s", attr)
+
+	a := nux.Attr{
+		"age":  1,
+		"name": "nihao",
+	}
+	fmt.Println(a.GetString("name", "1"))
+	printMapTemplate(a, 0)
+}
+
+func printMapTemplate(data nux.Attr, depth int) {
+	s := ""
+	for i := 0; i != depth; i++ {
+		s += "  "
+	}
+
+	s2 := s + "  "
+	fmt.Println(s + "{")
+	for k, v := range data {
+		switch t := v.(type) {
+		case nux.Attr:
+			fmt.Printf(s2+"%s: ", k)
+			printMapTemplate(t, depth+1)
+		default:
+			fmt.Printf(s2+"%s: %s,\n", k, t)
+		}
+	}
+	fmt.Println(s + "}")
 }

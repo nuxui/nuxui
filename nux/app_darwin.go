@@ -19,6 +19,8 @@ void invalidate();
 void backToUI();
 
 uint64 threadID();
+int isMainThread();
+
 */
 import "C"
 import (
@@ -74,7 +76,7 @@ type application struct {
 	drawSignal         chan struct{}
 }
 
-func (me *application) OnCreate(data interface{}) {
+func (me *application) OnCreate(data any) {
 }
 
 func (me *application) MainWindow() Window {
@@ -407,4 +409,8 @@ func convertModifierFlags(flags uint) uint32 {
 	}
 
 	return mods
+}
+
+func isMainThread() bool {
+	return C.isMainThread() > 0
 }

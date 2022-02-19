@@ -40,26 +40,22 @@ type window struct {
 	initEvent PointerEvent
 	timer     Timer
 
-	context Context
-	canvas  Canvas
+	canvas Canvas
 }
 
 func newWindow(attr Attr) *window {
-	me := &window{
-		context: &context{},
-	}
+	me := &window{}
 
-	me.CreateDecor(me.context, attr)
-	GestureBinding().AddGestureHandler(me.decor, &decorGestureHandler{})
+	me.CreateDecor(attr)
 	log.I("nuxui", "====== mount decor")
 	mountWidget(me.decor, nil)
 	log.I("nuxui", "====== mount decor end ")
 	return me
 }
 
-func (me *window) CreateDecor(ctx Context, attr Attr) Widget {
-	creator := FindRegistedWidgetCreatorByName("github.com/nuxui/nuxui/ui.Layer")
-	w := creator(ctx, attr)
+func (me *window) CreateDecor(attr Attr) Widget {
+	creator := FindRegistedWidgetCreator("github.com/nuxui/nuxui/ui.Layer")
+	w := creator(attr)
 	if p, ok := w.(Parent); ok {
 		me.decor = p
 	} else {
@@ -71,8 +67,11 @@ func (me *window) CreateDecor(ctx Context, attr Attr) Widget {
 	return me.decor
 }
 
+var TestDraw func(Canvas)
+
 func (me *window) Draw(canvas Canvas) {
 	// log.V("nuxui", "window Draw start")
+
 	if me.decor != nil {
 		if f, ok := me.decor.(Draw); ok {
 			_, h := me.ContentSize()
@@ -82,6 +81,11 @@ func (me *window) Draw(canvas Canvas) {
 			f.Draw(canvas)
 			canvas.Restore()
 		}
+	}
+
+	if TestDraw != nil {
+		TestDraw(canvas)
+		return
 	}
 }
 
@@ -143,6 +147,8 @@ func (me *window) Delegate() WindowDelegate {
 func (me *window) handlePointerEvent(e PointerEvent) {
 	me.switchFocusIfPossible(e)
 
+	// log.I("nuxui", "handlePointerEvent x=%f, y=%f", e.X(), e.Y())
+
 	if me.delegate != nil {
 		if f, ok := me.delegate.(windowDelegate_HandlePointerEvent); ok {
 			f.HandlePointerEvent(e)
@@ -150,11 +156,11 @@ func (me *window) handlePointerEvent(e PointerEvent) {
 		}
 	}
 
-	gestureManagerInstance.handlePointerEvent(me.Decor(), e)
+	hitTestResultManagerInstance.handlePointerEvent(me.Decor(), e)
 }
 
 func (me *window) handleScrollEvent(e ScrollEvent) {
-	gestureManagerInstance.handleScrollEvent(me.Decor(), e)
+	hitTestResultManagerInstance.handleScrollEvent(me.Decor(), e)
 }
 
 func (me *window) handleKeyEvent(e KeyEvent) {
@@ -271,9 +277,9 @@ func (me *window) switchFocusIfPossible(event PointerEvent) {
 func (me *window) switchFocusAtPoint(x, y float32) {
 	if me.focusWidget != nil {
 		if s, ok := me.focusWidget.(Size); ok {
-			ms := s.MeasuredSize()
-			if x >= float32(ms.Position.X) && x <= float32(ms.Position.X+ms.Width) &&
-				y >= float32(ms.Position.Y) && y <= float32(ms.Position.Y+ms.Height) {
+			f := s.Frame()
+			if x >= float32(f.X) && x <= float32(f.X+f.Width) &&
+				y >= float32(f.Y) && y <= float32(f.Y+f.Height) {
 				// point is in current focus widget, do not need change focus
 				return
 			}

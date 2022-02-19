@@ -71,8 +71,8 @@ void drawText(char *text, CGFloat width, CGFloat height, uint32_t color, uint32_
 		NSTextStorage *textStorage = [[NSTextStorage alloc]initWithString:textstr
 			attributes:@{
 				NSFontAttributeName: font,
-				NSBackgroundColorAttributeName: [NSColor colorWithCalibratedRed:r0 green:g0 blue:b0 alpha:a0],
-				NSForegroundColorAttributeName: [NSColor colorWithCalibratedRed:r green:g blue:b alpha:a],
+				NSBackgroundColorAttributeName: [NSColor colorWithSRGBRed:r0 green:g0 blue:b0 alpha:a0],
+				NSForegroundColorAttributeName: [NSColor colorWithSRGBRed:r green:g blue:b alpha:a],
 			}];
 		NSLayoutManager *layoutManager = [[NSLayoutManager alloc] init];
 		NSTextContainer *textContainer = [[NSTextContainer alloc] initWithSize: NSMakeSize(width, height)];
@@ -91,6 +91,11 @@ void drawImage(CGContextRef ctx, CGFloat x, CGFloat y, CGFloat width, CGFloat he
 	CGContextDrawImage(ctx, CGRectMake(x, y, width, height), image);
 	CGContextRestoreGState(ctx);
 }
+
+void setShadow(CGContextRef ctx, CGFloat x, CGFloat y, CGFloat blur, CGFloat a, CGFloat r, CGFloat g, CGFloat b){
+	CGColorRef color = [[NSColor colorWithSRGBRed:r green:g blue:b alpha:a] CGColor];
+	CGContextSetShadowWithColor(ctx, CGSizeMake(x, -y), blur, color);
+}
 */
 import "C"
 import (
@@ -98,14 +103,12 @@ import (
 )
 
 type canvas struct {
-	ptr  C.CGContextRef
-	clip *RectF
+	ptr C.CGContextRef
 }
 
 func newCanvas(ref C.CGContextRef) *canvas {
 	return &canvas{
-		ptr:  ref,
-		clip: &RectF{0, 0, 99999, 99999},
+		ptr: ref,
 	}
 }
 
@@ -150,24 +153,40 @@ func (me *canvas) GetMatrix() Matrix {
 	return Matrix{}
 }
 
-func (me *canvas) ClipRect(left, top, right, bottom float32) {
-	C.CGContextClipToRect(me.ptr, C.CGRectMake(C.CGFloat(left), C.CGFloat(top), C.CGFloat(right), C.CGFloat(bottom)))
-	me.clip.Left = left
-	me.clip.Top = top
-	me.clip.Right = right
-	me.clip.Bottom = bottom
+func (me *canvas) ClipRect(x, y, width, height float32) {
+	C.CGContextClipToRect(me.ptr, C.CGRectMake(C.CGFloat(x), C.CGFloat(y), C.CGFloat(width), C.CGFloat(height)))
+}
+
+func (me *canvas) ClipRoundRect(x, y, width, height, radius float32) {
+	rect := C.CGRectMake(C.CGFloat(x), C.CGFloat(y), C.CGFloat(width), C.CGFloat(height))
+	path := C.CGPathCreateWithRoundedRect(rect, C.CGFloat(radius), C.CGFloat(radius), nil)
+	C.CGContextAddPath(me.ptr, path)
+	C.CGContextClip(me.ptr)
 }
 
 func (me *canvas) ClipPath(path Path) {
 	// TODO::
 }
+
 func (me *canvas) SetAlpha(alpha float32) {
 	C.CGContextSetAlpha(me.ptr, C.CGFloat(alpha))
 }
 
-func (me *canvas) DrawRect(left, top, right, bottom float32, paint Paint) {
+func (me *canvas) DrawRect(x, y, width, height float32, paint Paint) {
 	a, r, g, b := paint.Color().ARGBf()
-	rect := C.CGRectMake(C.CGFloat(left), C.CGFloat(top), C.CGFloat(right), C.CGFloat(bottom))
+	fix := paint.Style() == PaintStyle_Stroke && int32(paint.Width())%2 != 0
+	if fix {
+		x += 1
+		y += 1
+	}
+
+	if fix {
+		me.Save()
+		me.Translate(-0.5, -0.5)
+	}
+
+	rect := C.CGRectMake(C.CGFloat(x), C.CGFloat(y), C.CGFloat(width), C.CGFloat(height))
+
 	switch paint.Style() {
 	case PaintStyle_Fill:
 		C.CGContextSetRGBFillColor(me.ptr, C.CGFloat(r), C.CGFloat(g), C.CGFloat(b), C.CGFloat(a))
@@ -181,10 +200,61 @@ func (me *canvas) DrawRect(left, top, right, bottom float32, paint Paint) {
 		C.CGContextSetRGBStrokeColor(me.ptr, C.CGFloat(r), C.CGFloat(g), C.CGFloat(b), C.CGFloat(a))
 		C.CGContextStrokeRectWithWidth(me.ptr, rect, C.CGFloat(paint.Width()))
 	}
+
+	if fix {
+		me.Restore()
+	}
 }
 
-func (me *canvas) DrawRoundRect(left, top, right, bottom float32, radius float32, paint Paint) {
-	// TODO::
+func (me *canvas) DrawRoundRect(x, y, width, height float32, radius float32, paint Paint) {
+	a, r, g, b := paint.Color().ARGBf()
+	fix := paint.Style() == PaintStyle_Stroke && int32(paint.Width())%2 != 0
+	if fix {
+		x += 1
+		y += 1
+	}
+
+	if fix {
+		me.Save()
+		me.Translate(-0.5, -0.5)
+	}
+
+	rect := C.CGRectMake(C.CGFloat(x), C.CGFloat(y), C.CGFloat(width), C.CGFloat(height))
+
+	path := C.CGPathCreateWithRoundedRect(rect, C.CGFloat(radius), C.CGFloat(radius), nil)
+	C.CGContextAddPath(me.ptr, path)
+	C.CGContextSetLineWidth(me.ptr, C.CGFloat(paint.Width()))
+
+	hasShadow := false
+	if sc, sx, sy, sb := paint.Shadow(); sc != 0 && sb > 0 {
+		hasShadow = true
+		me.Save()
+		a0, r0, g0, b0 := sc.ARGBf()
+		C.setShadow(me.ptr, C.CGFloat(sx), C.CGFloat(sy), C.CGFloat(sb), C.CGFloat(a0), C.CGFloat(r0), C.CGFloat(g0), C.CGFloat(b0))
+	}
+
+	switch paint.Style() {
+	case PaintStyle_Fill:
+		C.CGContextSetRGBFillColor(me.ptr, C.CGFloat(r), C.CGFloat(g), C.CGFloat(b), C.CGFloat(a))
+		C.CGContextFillPath(me.ptr)
+	case PaintStyle_Stroke:
+		C.CGContextSetRGBStrokeColor(me.ptr, C.CGFloat(r), C.CGFloat(g), C.CGFloat(b), C.CGFloat(a))
+		C.CGContextStrokePath(me.ptr)
+	case PaintStyle_Both:
+		C.CGContextSetRGBFillColor(me.ptr, C.CGFloat(r), C.CGFloat(g), C.CGFloat(b), C.CGFloat(a))
+		C.CGContextFillPath(me.ptr)
+		C.CGContextSetRGBStrokeColor(me.ptr, C.CGFloat(r), C.CGFloat(g), C.CGFloat(b), C.CGFloat(a))
+		C.CGContextStrokePath(me.ptr)
+	}
+	C.CGPathRelease(path)
+
+	if hasShadow {
+		me.Restore()
+	}
+
+	if fix {
+		me.Restore()
+	}
 }
 
 func (me *canvas) DrawArc(x, y, radius, startAngle, endAngle float32, useCenter bool, paint Paint) {
@@ -200,19 +270,12 @@ func (me *canvas) DrawArc(x, y, radius, startAngle, endAngle float32, useCenter 
 	C.CGContextAddArc(me.ptr, C.CGFloat(x), C.CGFloat(y), C.CGFloat(radius), C.CGFloat(startAngle), C.CGFloat(endAngle), clockwise)
 }
 
-func (me *canvas) DrawOval(left, top, right, bottom float32, paint Paint) {
-	C.CGContextFillEllipseInRect(me.ptr, C.CGRectMake(C.CGFloat(left), C.CGFloat(top), C.CGFloat(right), C.CGFloat(bottom)))
+func (me *canvas) DrawOval(x, y, width, height float32, paint Paint) {
+	C.CGContextFillEllipseInRect(me.ptr, C.CGRectMake(C.CGFloat(x), C.CGFloat(y), C.CGFloat(width), C.CGFloat(height)))
 }
 
 func (me *canvas) DrawPath(path Path) {
 	// TODO::
-}
-
-func (me *canvas) DrawColor(color Color) {
-	paint := NewPaint()
-	paint.SetColor(color)
-	paint.SetStyle(PaintStyle_Fill)
-	me.DrawRect(me.clip.Left, me.clip.Top, me.clip.Right, me.clip.Bottom, paint)
 }
 
 func (me *canvas) DrawImage(img Image) {
