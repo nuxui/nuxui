@@ -20,6 +20,8 @@ type Visual interface {
 	SetForegroundColor(nux.Color)
 	Visible() Visible
 	SetVisible(visible Visible)
+	Disable() bool
+	SetDisable(bool)
 	Translucent() bool // TODO:: Can the event penetrate ?
 	SetTranslucent(bool)
 }
@@ -29,6 +31,7 @@ type WidgetVisual struct {
 	background  nux.Drawable
 	foreground  nux.Drawable
 	visible     Visible
+	disable     bool
 	translucent bool
 }
 
@@ -39,8 +42,9 @@ func NewWidgetVisual(owner nux.Widget, attrs ...nux.Attr) *WidgetVisual {
 		owner:       owner,
 		visible:     visibleFromString(attr.GetString("visible", "show")),
 		translucent: attr.GetBool("translucent", false),
-		background:  nux.InflateDrawable(owner, attr.Get("background", nil)),
-		foreground:  nux.InflateDrawable(owner, attr.Get("foreground", nil)),
+		background:  nux.InflateDrawable(attr.Get("background", nil)),
+		foreground:  nux.InflateDrawable(attr.Get("foreground", nil)),
+		disable:     attr.GetBool("disable", false),
 	}
 
 	return me
@@ -58,8 +62,15 @@ func (me *WidgetVisual) SetBackground(background nux.Drawable) {
 }
 
 func (me *WidgetVisual) SetBackgroundColor(background nux.Color) {
-	b := NewColorDrawableWithColor(background)
+	if me.background != nil {
+		if c, ok := me.background.(ColorDrawable); ok {
+			c.SetColor(background)
+			me.doVisualChanged()
+			return
+		}
+	}
 
+	b := NewColorDrawableWithColor(background)
 	if me.background == nil || !me.background.Equal(b) {
 		me.background = b
 		me.doVisualChanged()
@@ -78,8 +89,15 @@ func (me *WidgetVisual) SetForeground(foreground nux.Drawable) {
 }
 
 func (me *WidgetVisual) SetForegroundColor(foreground nux.Color) {
-	f := NewColorDrawableWithColor(foreground)
+	if me.foreground != nil {
+		if c, ok := me.foreground.(ColorDrawable); ok {
+			c.SetColor(foreground)
+			me.doVisualChanged()
+			return
+		}
+	}
 
+	f := NewColorDrawableWithColor(foreground)
 	if me.foreground == nil || !me.foreground.Equal(f) {
 		me.foreground = f
 		me.doVisualChanged()
@@ -106,6 +124,14 @@ func (me *WidgetVisual) Translucent() bool {
 
 func (me *WidgetVisual) SetTranslucent(translucent bool) {
 	me.translucent = translucent
+}
+
+func (me *WidgetVisual) Disable() bool {
+	return me.disable
+}
+
+func (me *WidgetVisual) SetDisable(disable bool) {
+	me.disable = disable
 }
 
 func (me *WidgetVisual) doVisualChanged() {

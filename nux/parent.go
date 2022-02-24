@@ -17,7 +17,7 @@ type Parent interface {
 	Widget
 	InsertChild(index int, child ...Widget)
 	AddChild(child ...Widget)
-	Remove(index int)
+	RemoveChildAt(index int)
 	RemoveChild(child Widget) (index int)
 	ReplaceChild(src, dest Widget) (index int)
 	Children() []Widget // the order of Children is from bottom to top
@@ -73,7 +73,7 @@ func (me *WidgetParent) AddChild(child ...Widget) {
 	// RequestRedraw(me.owner)
 }
 
-func (me *WidgetParent) Remove(index int) {
+func (me *WidgetParent) RemoveChildAt(index int) {
 	if index < 0 || index >= len(me.children) {
 		log.Fatal("nuxui", "index out of range")
 	} else {
@@ -91,7 +91,7 @@ func (me *WidgetParent) RemoveChild(child Widget) int {
 	}
 
 	if index != -1 {
-		me.Remove(index)
+		me.RemoveChildAt(index)
 	} else {
 		log.Fatal("nuxui", "child is not found in parent widget")
 	}

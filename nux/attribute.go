@@ -24,6 +24,7 @@ func MergeAttrs(attrs ...Attr) Attr {
 	if l == 1 {
 		return attrs[0]
 	}
+	// TODO:: use new attr or attrs[0]?
 	attr := attrs[0]
 	i := 0
 	for _, atr := range attrs {
@@ -108,6 +109,8 @@ func (me Attr) GetColor(key string, defaultValue Color) (result Color) {
 	result = defaultValue
 	if attr, ok := me[key]; ok {
 		switch t := attr.(type) {
+		case Color:
+			return t
 		case string:
 			t = strings.TrimSpace(t)
 			if !strings.HasPrefix(t, "#") {

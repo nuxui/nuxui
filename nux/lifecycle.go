@@ -12,12 +12,12 @@ type OnCreate interface {
 	OnCreate()
 }
 
-type OnMount interface {
-	OnMount()
+type Mount interface {
+	Mount()
 }
 
-type OnEject interface {
-	OnEject()
+type Eject interface {
+	Eject()
 }
 
 // // Active, it does not mean Focused, it should be Actived and it can also run animation
@@ -51,65 +51,44 @@ func MountWidget(child Widget, parent Parent) {
 		log.Fatal("nuxui", "parent can not be nil when mount widget.")
 		return
 	}
+
+	if (child.Info().Parent != nil) != child.Info().Mounted {
+		log.Fatal("nuxui", "The widget %T:'%s' has wrong mount state with parent '%T'.", child, child.Info().ID, parent)
+		return
+	}
 	mountWidget(child, parent)
 }
 
 func mountWidget(child Widget, parent Parent) {
-	if parent == nil {
-		log.I("nuxui", "mountWidget child=%s, parent=nil", child.Info().ID)
-	} else {
-		log.I("nuxui", "mountWidget child=%s, parent=%s", child.Info().ID, parent.Info().ID)
-	}
-
-	if (child.Info().Parent != nil) != child.Info().Mounted {
-		log.E("nuxui", "The widget %T:'%s' has wrong mount state with parent '%T'.", child, child.Info().ID, parent)
-		return
-	}
-
 	if child.Info().Mounted {
-		log.Fatal("nuxui", "The widget '%s' is already mounted to parent '%T'.", child.Info().ID, parent)
+		log.Fatal("nuxui", "The widget '%T:%s' is already mounted to parent '%T'.", child, child.Info().ID, parent)
 	}
 
 	if parent != nil && !parent.Info().Mounted {
 		// parent is not mounted, do nothing
-		// log.I("nuxui", " return  == child.(OnMount)=%s,  %T", child.Info().ID, child)
 		return
 	}
 
+	// mount child to parent
 	child.Info().Parent = parent
-	// log.I("nuxui", "child.(OnMount)=%s,  %T", child.Info().ID, child)
-	if f, ok := child.(OnMount); ok {
-		// log.I("nuxui", "child.(OnMount)=true", child.Info().ID)
-		f.OnMount()
+	if f, ok := child.(Mount); ok {
+		f.Mount()
 	}
-	child.Info().Mounted = true
 	for _, m := range child.Info().Mixins {
-		if mf, ok := m.(OnMount); ok {
-			mf.OnMount()
+		if mf, ok := m.(Mount); ok {
+			mf.Mount()
 		}
 	}
+	child.Info().Mounted = true
 
 	if p, ok := child.(Parent); ok {
 		for _, c := range p.Children() {
-			// log.I("nuxui", "child.(OnMount)=%s,  %T", child.Info().ID, child)
-			if f, ok := c.(OnMount); ok {
-				f.OnMount()
-			}
-			c.Info().Mounted = true
-			if c.Info().ID == "xxx" {
-				log.I("nuxui", "xxx mixins %s", c.Info().Mixins)
-			}
-			for _, m := range c.Info().Mixins {
-				if mf, ok := m.(OnMount); ok {
-					mf.OnMount()
-				}
-			}
-
-			if compt, ok := c.(Component); ok {
-				c = compt.Content()
-			}
 			mountWidget(c, p)
 		}
+	}
+
+	if compt, ok := child.(Component); ok {
+		mountWidget(compt.Content(), parent)
 	}
 }
 
@@ -118,30 +97,24 @@ func EjectChild(child Widget) {
 		log.Fatal("nuxui", "child can not be nil when eject widget.")
 		return
 	}
-	ejectChild(child)
-}
 
-func ejectChild(child Widget) {
-	if child.Info().Parent == nil {
+	if child.Info().Parent == nil || !child.Info().Mounted {
 		log.Fatal("nuxui", "The widget '%s' is already ejected", child.Info().ID)
 	}
 
-	child.Info().Parent = nil
-	if f, ok := child.(OnEject); ok {
-		f.OnEject()
-		child.Info().Mounted = false
+	if f, ok := child.(Eject); ok {
+		f.Eject()
 	}
+	child.Info().Mounted = false
+	child.Info().Parent = nil
 
 	if p, ok := child.(Parent); ok {
 		for _, c := range p.Children() {
-			if f, ok := c.(OnEject); ok {
-				f.OnEject()
-				c.Info().Mounted = false
-			}
-			if compt, ok := c.(Component); ok {
-				c = compt.Content()
-			}
-			ejectChild(c)
+			EjectChild(c)
 		}
+	}
+
+	if compt, ok := child.(Component); ok {
+		EjectChild(compt.Content())
 	}
 }

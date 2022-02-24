@@ -10,22 +10,13 @@ type ImageDrawable interface {
 	nux.Drawable
 }
 
-type imageDrawable struct {
-	x      int32
-	y      int32
-	width  int32
-	height int32
-	image  nux.Image
-}
-
 // TODO:: if src exised, duplicate image
-func NewImageDrawable(owner nux.Widget, attrs ...nux.Attr) ImageDrawable {
+func NewImageDrawable(attrs ...nux.Attr) ImageDrawable {
 	attr := nux.MergeAttrs(attrs...)
-	return NewImageDrawableWithSource(attr.GetString("src", ""))
+	return NewImageDrawableWithResource(attr.GetString("src", ""))
 }
 
-// TODO:: rename
-func NewImageDrawableWithSource(src string) ImageDrawable {
+func NewImageDrawableWithResource(src string) ImageDrawable {
 	if src != "" {
 		return &imageDrawable{
 			image: nux.CreateImage(src),
@@ -33,6 +24,23 @@ func NewImageDrawableWithSource(src string) ImageDrawable {
 	}
 
 	return &imageDrawable{}
+}
+
+type imageDrawable struct {
+	x      int32
+	y      int32
+	width  int32
+	height int32
+	image  nux.Image
+	state  nux.Attr
+}
+
+func (me *imageDrawable) SetState(state nux.Attr) {
+	nux.MergeAttrs(me.state, state)
+}
+
+func (me *imageDrawable) State() nux.Attr {
+	return me.state
 }
 
 func (me *imageDrawable) Size() (width, height int32) {

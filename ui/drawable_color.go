@@ -16,23 +16,37 @@ type ColorDrawable interface {
 	SetColor(nux.Color)
 }
 
-func NewColorDrawable(owner nux.Widget, attrs ...nux.Attr) ColorDrawable {
+func NewColorDrawable(attrs ...nux.Attr) ColorDrawable {
 	attr := nux.MergeAttrs(attrs...)
-	return NewColorDrawableWithColor(attr.GetColor("color", nux.Transparent))
+	me := &colorDrawable{
+		paint:     nux.NewPaint(),
+		drawables: attr,
+	}
+	return me
 }
 
 func NewColorDrawableWithColor(color nux.Color) ColorDrawable {
-	paint := nux.NewPaint()
-	paint.SetColor(color)
-	return &colorDrawable{paint: paint}
+	return NewColorDrawable(nux.Attr{
+		"state":  "normal",
+		"normal": color,
+	})
 }
 
 type colorDrawable struct {
-	x      int32
-	y      int32
-	width  int32
-	height int32
-	paint  nux.Paint
+	x         int32
+	y         int32
+	width     int32
+	height    int32
+	paint     nux.Paint
+	drawables nux.Attr
+}
+
+func (me *colorDrawable) SetState(state nux.Attr) {
+	nux.MergeAttrs(me.drawables, state)
+}
+
+func (me *colorDrawable) State() nux.Attr {
+	return me.drawables
 }
 
 func (me *colorDrawable) Size() (width, height int32) {
@@ -47,15 +61,20 @@ func (me *colorDrawable) SetBounds(x, y, width, height int32) {
 }
 
 func (me *colorDrawable) Color() nux.Color {
-	return me.paint.Color()
+	return me.drawables.GetColor(me.drawables.GetString("state", "normal"), 0)
 }
 
 func (me *colorDrawable) SetColor(color nux.Color) {
-	me.paint.SetColor(color)
+	me.drawables.Set("normal", color)
+	me.drawables.Set("state", "normal")
 }
 
 func (me *colorDrawable) Draw(canvas nux.Canvas) {
-	canvas.DrawRect(float32(me.x), float32(me.y), float32(me.width), float32(me.height), me.paint)
+	c := me.Color()
+	if c != 0 {
+		me.paint.SetColor(me.Color())
+		canvas.DrawRect(float32(me.x), float32(me.y), float32(me.width), float32(me.height), me.paint)
+	}
 }
 
 func (me *colorDrawable) Equal(drawable nux.Drawable) bool {

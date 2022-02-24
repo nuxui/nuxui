@@ -56,7 +56,7 @@ func NewImage(attrs ...nux.Attr) Image {
 	me.WidgetVisual = NewWidgetVisual(me, attrs...)
 	me.WidgetSize.AddSizeObserver(me.onSizeChanged)
 	if me.src != "" {
-		me.srcDrawable = NewImageDrawableWithSource(me.src)
+		me.srcDrawable = NewImageDrawableWithResource(me.src)
 	}
 	return me
 }
@@ -99,9 +99,9 @@ func convertScaleTypeFromString(scaleType string) ScaleType {
 	return ScaleType_Center
 }
 
-func (me *image) OnMount() {
+func (me *image) Mount() {
 	if me.src != "" {
-		me.srcDrawable = NewImageDrawableWithSource(me.src)
+		me.srcDrawable = NewImageDrawableWithResource(me.src)
 	}
 }
 
@@ -301,7 +301,7 @@ func (me *image) SetSrc(src string) {
 	me.src = src
 
 	if me.src != "" {
-		me.srcDrawable = NewImageDrawableWithSource(me.src)
+		me.srcDrawable = NewImageDrawableWithResource(me.src)
 	}
 
 	nux.RequestLayout(me)

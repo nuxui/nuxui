@@ -16,8 +16,7 @@ func init() {
 	nux.RegisterWidget((*Image)(nil), func(attrs ...nux.Attr) nux.Widget { return NewImage(attrs...) })
 	nux.RegisterWidget((*Editor)(nil), func(attrs ...nux.Attr) nux.Widget { return NewEditor(attrs...) })
 
-	nux.RegisterDrawable((*ColorDrawable)(nil), func(owner nux.Widget, attrs ...nux.Attr) nux.Drawable { return NewColorDrawable(owner, attrs...) })
-	nux.RegisterDrawable((*ImageDrawable)(nil), func(owner nux.Widget, attrs ...nux.Attr) nux.Drawable { return NewImageDrawable(owner, attrs...) })
-	nux.RegisterDrawable((*ShapeDrawable)(nil), func(owner nux.Widget, attrs ...nux.Attr) nux.Drawable { return NewShapeDrawable(owner, attrs...) })
-	nux.RegisterDrawable((*StateDrawable)(nil), func(owner nux.Widget, attrs ...nux.Attr) nux.Drawable { return NewStateDrawable(owner, attrs...) })
+	nux.RegisterDrawable((*ColorDrawable)(nil), func(attrs ...nux.Attr) nux.Drawable { return NewColorDrawable(attrs...) })
+	nux.RegisterDrawable((*ImageDrawable)(nil), func(attrs ...nux.Attr) nux.Drawable { return NewImageDrawable(attrs...) })
+	nux.RegisterDrawable((*ShapeDrawable)(nil), func(attrs ...nux.Attr) nux.Drawable { return NewShapeDrawable(attrs...) })
 }

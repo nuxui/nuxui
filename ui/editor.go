@@ -71,8 +71,8 @@ type editor struct {
 	focus          bool
 }
 
-func (me *editor) OnMount(content nux.Widget) {
-	log.D("nuxui", "====== Editor OnMount")
+func (me *editor) Mount() {
+	log.D("nuxui", "====== Editor Mount")
 	nux.OnTapDown(me, me.onTapDown)
 	nux.OnPanDown(me, me.onPanStart)
 	nux.OnPanUpdate(me, me.OnPanUpdate)

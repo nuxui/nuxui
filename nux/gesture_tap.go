@@ -87,7 +87,7 @@ func newTapGestureRecognizer(target Widget) *tapGestureRecognizer {
 	}
 
 	return &tapGestureRecognizer{
-		callbacks:   [][]GestureCallback{[]GestureCallback{}, []GestureCallback{}, []GestureCallback{}, []GestureCallback{}},
+		callbacks:   [][]GestureCallback{{}, {}, {}, {}},
 		initEvent:   nil,
 		target:      target,
 		timer:       nil,
@@ -147,7 +147,6 @@ func (me *tapGestureRecognizer) HandlePointerEvent(event PointerEvent) {
 		GestureArenaManager().Add(pointer, me)
 
 		if event.Kind() == Kind_Touch {
-			me.state = GestureState_Possible
 			me.timer = NewTimerBackToUI(GESTURE_DOWN_DELAY, func() {
 				me.invokeTapDown(pointer)
 			})
@@ -155,9 +154,12 @@ func (me *tapGestureRecognizer) HandlePointerEvent(event PointerEvent) {
 			me.invokeTapDown(pointer)
 		}
 	case Action_Up:
-		log.V("nuxui", "HandlePointerEvent Action_Up ")
-
 		// do not accept proactive, wait GestureArea sweep
+		log.V("nuxui", "HandlePointerEvent Action_Up ")
+		if me.state == GestureState_Accepted {
+			me.invokeTapUpAndTap(event.Pointer())
+		}
+
 	case Action_Drag:
 		log.V("nuxui", "HandlePointerEvent Action_Move ")
 
@@ -175,21 +177,22 @@ func (me *tapGestureRecognizer) RejectGesture(pointer int64) {
 	if me.state == GestureState_Possible {
 		me.invokeTapCancel()
 	}
+
 	me.reset()
 }
 
 func (me *tapGestureRecognizer) AccpetGesture(pointer int64) {
 	if me.timer != nil {
+		r := me.timer.Running()
 		me.timer.Cancel()
 		me.timer = nil
+
+		if r {
+			me.invokeTapDown(pointer)
+		}
 	}
 
-	log.V("nuxui", "AccpetGesture me.state = %d", me.state)
-	if me.state == GestureState_Possible {
-		me.invokeTapDown(pointer)
-		me.invokeTapUpAndTap(pointer)
-	}
-	me.reset()
+	me.state = GestureState_Accepted
 }
 
 func (me *tapGestureRecognizer) Clear(widget Widget) {
@@ -197,7 +200,7 @@ func (me *tapGestureRecognizer) Clear(widget Widget) {
 		GestureArenaManager().Resolve(me.initEvent.Pointer(), me, false)
 	}
 	me.reset()
-	me.callbacks = [][]GestureCallback{[]GestureCallback{}, []GestureCallback{}, []GestureCallback{}, []GestureCallback{}}
+	me.callbacks = [][]GestureCallback{{}, {}, {}, {}}
 }
 
 func (me *tapGestureRecognizer) reset() {
@@ -238,8 +241,6 @@ func (me *tapGestureRecognizer) invokeTapUpAndTap(pointer int64) {
 		return
 	}
 
-	me.state = GestureState_Accepted
-
 	for _, cb := range me.callbacks[_ACTION_TAP_UP] {
 		cb(pointerEventToDetail(me.initEvent, me.target))
 	}
@@ -247,4 +248,6 @@ func (me *tapGestureRecognizer) invokeTapUpAndTap(pointer int64) {
 	for _, cb := range me.callbacks[_ACTION_TAP] {
 		cb(pointerEventToDetail(me.initEvent, me.target))
 	}
+
+	me.reset()
 }

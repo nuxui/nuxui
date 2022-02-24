@@ -31,7 +31,7 @@ func InflateLayoutAttr(parent Widget, attr Attr) Widget {
 	if c, ok := parent.(Component); ok {
 		c.SetContent(widget)
 	} else if p, ok := parent.(Parent); ok {
-		p.AddChild(parent)
+		p.AddChild(widget)
 	} else if isView(parent) {
 		log.Fatal("nuxui", "%T is not a parent widget", parent)
 		return nil
@@ -64,6 +64,8 @@ func inflateLayoutAttr(parent Widget, attr Attr) Widget {
 		widget = widgetCreator(attr)
 	}
 
+	widget.Info().Self = widget
+
 	if childrenNode, ok := attr["children"]; ok {
 		if children, ok := childrenNode.([]any); ok {
 			if p, ok := widget.(Parent); ok {
@@ -83,7 +85,8 @@ func inflateLayoutAttr(parent Widget, attr Attr) Widget {
 	return widget
 }
 
-func InflateDrawable(owner Widget, drawable any) Drawable {
+// return: can be nil
+func InflateDrawable(drawable any) Drawable {
 	if drawable == nil {
 		return nil
 	}
@@ -91,19 +94,19 @@ func InflateDrawable(owner Widget, drawable any) Drawable {
 	switch t := drawable.(type) {
 	case string:
 		if strings.HasPrefix(t, "#") {
-			return InflateDrawable(owner, Attr{"drawable": "github.com/nuxui/nuxui/ui.ColorDrawable", "color": t})
+			return InflateDrawable(Attr{"drawable": "github.com/nuxui/nuxui/ui.ColorDrawable", "normal": t})
 		} else if strings.HasPrefix(t, "assets/") {
-			return InflateDrawable(owner, Attr{"drawable": "github.com/nuxui/nuxui/ui.ImageDrawable", "src": t})
+			return InflateDrawable(Attr{"drawable": "github.com/nuxui/nuxui/ui.ImageDrawable", "src": t})
 		} else if strings.HasPrefix(t, "http://") {
-			return InflateDrawable(owner, Attr{"drawable": "github.com/nuxui/nuxui/ui.ImageDrawable", "src": t})
+			return InflateDrawable(Attr{"drawable": "github.com/nuxui/nuxui/ui.ImageDrawable", "src": t})
 		}
 	case Attr:
-		return InflateDrawableAttr(owner, t)
+		return InflateDrawableAttr(t)
 	}
 	return nil
 }
 
-func InflateDrawableAttr(owner Widget, attr Attr) Drawable {
+func InflateDrawableAttr(attr Attr) Drawable {
 	drawableName := attr.GetString("drawable", "")
 	if drawableName == "" {
 		log.Fatal("nuxui", `must specified "drawable"`)
@@ -111,5 +114,5 @@ func InflateDrawableAttr(owner Widget, attr Attr) Drawable {
 	}
 
 	drawableCreator := FindRegistedDrawableCreator(drawableName)
-	return drawableCreator(owner, attr)
+	return drawableCreator(attr)
 }

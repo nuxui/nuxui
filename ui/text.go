@@ -59,36 +59,51 @@ func NewText(attrs ...nux.Attr) Text {
 	return me
 }
 
-func (me *text) OnMount(content nux.Widget) {
-	log.I("nuxui", "text OnMount")
+func (me *text) Mount() {
+	log.I("nuxui", "text Mount")
 	nux.OnTapDown(me, me.onTapDown)
 	nux.OnTapUp(me, me.onTapUp)
 	nux.OnTapCancel(me, me.onTapUp)
-	if f, ok := me.background.(nux.OnMount); ok {
-		f.OnMount()
-	}
+}
+
+func (me *text) Eject() {
+	log.I("nuxui", "text Eject")
 }
 
 func (me *text) onTapDown(detail nux.GestureDetail) {
-	me.SetBackgroundColor(0xFF938276)
-	me.downTime = time.Now()
-	nux.NewTimerBackToUI(nux.GESTURE_DOWN2UP_DELAY, func() {
-
-	})
-}
-
-func (me *text) onTapUp(detail nux.GestureDetail) {
-	if sub := time.Since(me.downTime); sub < nux.GESTURE_DOWN2UP_DELAY {
-		nux.NewTimerBackToUI(nux.GESTURE_DOWN2UP_DELAY-sub, func() {
-			me.doTapUp(detail)
-		})
-	} else {
-		me.doTapUp(detail)
+	log.V("nuxui", "text onTapDown")
+	changed := false
+	if !me.Disable() {
+		if me.Background() != nil {
+			me.Background().SetState(nux.Attr{"state": "pressed"})
+			changed = true
+		}
+		if me.Foreground() != nil {
+			me.Foreground().SetState(nux.Attr{"state": "pressed"})
+			changed = true
+		}
+	}
+	if changed {
+		nux.RequestRedraw(me)
 	}
 }
 
-func (me *text) doTapUp(detail nux.GestureDetail) {
-	me.SetBackgroundColor(0xFFFFFFFF)
+func (me *text) onTapUp(detail nux.GestureDetail) {
+	log.V("nuxui", "text onTapUp")
+	changed := false
+	if !me.Disable() {
+		if me.Background() != nil {
+			me.Background().SetState(nux.Attr{"state": "normal"})
+			changed = true
+		}
+		if me.Foreground() != nil {
+			me.Foreground().SetState(nux.Attr{"state": "normal"})
+			changed = true
+		}
+	}
+	if changed {
+		nux.RequestRedraw(me)
+	}
 }
 
 func (me *text) onSizeChanged() {
@@ -221,6 +236,7 @@ func (me *text) Measure(width, height int32) {
 
 func (me *text) Draw(canvas nux.Canvas) {
 	if me.Background() != nil {
+		log.V("nuxui", "text color drawable")
 		me.Background().Draw(canvas)
 	}
 

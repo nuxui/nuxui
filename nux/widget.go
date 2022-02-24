@@ -23,6 +23,7 @@ type Widget interface {
 // type State int
 
 type WidgetInfo struct {
+	Self    Widget
 	ID      string
 	Parent  Parent
 	Mounted bool
