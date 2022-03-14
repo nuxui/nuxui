@@ -8,17 +8,14 @@ import (
 	"github.com/nuxui/nuxui/nux"
 )
 
-type Button interface {
+type CheckBox interface {
 	Label
 }
 
-type button label
+type checkbox label
 
-func NewButton(attrs ...nux.Attr) Button {
-	attr := nux.Attr{
-		"selectable": false,
-	}
-	a := nux.MergeAttrs(attr, nux.MergeAttrs(attrs...))
+func NewCheckBox(attrs ...nux.Attr) CheckBox {
+	a := nux.MergeAttrs(attrs...)
 	me := NewLabel(a)
-	return Button(me)
+	return CheckBox(me)
 }

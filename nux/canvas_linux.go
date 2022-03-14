@@ -312,6 +312,10 @@ func (me *canvas) Destroy() {
 var canvas4measure *C.cairo_t = C.cairo_create(nil)
 
 func (me *paint) MeasureText(text string, width, height float32) (outWidth float32, outHeight float32) {
+	if text == "" {
+		return 0, 0
+	}
+	
 	cfamily := C.CString("")
 	ctext := C.CString(text)
 	var w, h C.int

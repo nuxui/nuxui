@@ -94,7 +94,7 @@ func InflateDrawable(drawable any) Drawable {
 	switch t := drawable.(type) {
 	case string:
 		if strings.HasPrefix(t, "#") {
-			return InflateDrawable(Attr{"drawable": "github.com/nuxui/nuxui/ui.ColorDrawable", "normal": t})
+			return InflateDrawable(Attr{"drawable": "github.com/nuxui/nuxui/ui.ColorDrawable", "color": t})
 		} else if strings.HasPrefix(t, "assets/") {
 			return InflateDrawable(Attr{"drawable": "github.com/nuxui/nuxui/ui.ImageDrawable", "src": t})
 		} else if strings.HasPrefix(t, "http://") {

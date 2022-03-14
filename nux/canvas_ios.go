@@ -235,6 +235,10 @@ func (me *canvas) Destroy() {
 }
 
 func (me *paint) MeasureText(text string, width, height float32) (outWidth float32, outHeight float32) {
+	if text == "" {
+		return 0, 0
+	}
+	
 	var w, h C.CGFloat
 	ctext := C.CString(text)
 	defer C.free(unsafe.Pointer(ctext))

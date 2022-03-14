@@ -12,9 +12,11 @@ func init() {
 	nux.RegisterWidget((*Layer)(nil), func(attrs ...nux.Attr) nux.Widget { return NewLayer(attrs...) })
 	nux.RegisterWidget((*Scroll)(nil), func(attrs ...nux.Attr) nux.Widget { return NewScroll(attrs...) })
 	nux.RegisterWidget((*Text)(nil), func(attrs ...nux.Attr) nux.Widget { return NewText(attrs...) })
+	nux.RegisterWidget((*Label)(nil), func(attrs ...nux.Attr) nux.Widget { return NewLabel(attrs...) })
 	nux.RegisterWidget((*Button)(nil), func(attrs ...nux.Attr) nux.Widget { return NewButton(attrs...) })
 	nux.RegisterWidget((*Image)(nil), func(attrs ...nux.Attr) nux.Widget { return NewImage(attrs...) })
 	nux.RegisterWidget((*Editor)(nil), func(attrs ...nux.Attr) nux.Widget { return NewEditor(attrs...) })
+	nux.RegisterWidget((*Check)(nil), func(attrs ...nux.Attr) nux.Widget { return NewEditor(attrs...) })
 
 	nux.RegisterDrawable((*ColorDrawable)(nil), func(attrs ...nux.Attr) nux.Drawable { return NewColorDrawable(attrs...) })
 	nux.RegisterDrawable((*ImageDrawable)(nil), func(attrs ...nux.Attr) nux.Drawable { return NewImageDrawable(attrs...) })

@@ -23,15 +23,17 @@ type Shape struct {
 
 type ShapeDrawable interface {
 	nux.Drawable
+	SetShape(shape Shape)
+	Shape() Shape
 }
 
 func NewShapeDrawable(attrs ...nux.Attr) ShapeDrawable {
 	attr := nux.MergeAttrs(attrs...)
 	me := &shapeDrawable{
-
 		drawables: attr,
 		paint:     nux.NewPaint(),
 	}
+	me.getShapeAndSet()
 	return me
 }
 
@@ -42,10 +44,41 @@ type shapeDrawable struct {
 	height    int32
 	paint     nux.Paint
 	drawables nux.Attr
+	shape     *Shape
+}
+
+func (me *shapeDrawable) getShapeAndSet() {
+	if state := me.drawables.GetString("state", "normal"); me.drawables.Has(state) {
+		d := me.drawables.Get(state, nil)
+		if d != nil {
+			switch t := d.(type) {
+			case *Shape:
+				me.shape = t
+			case nux.Attr:
+				shadow := t.GetAttr("shadow", nux.Attr{})
+				shape := &Shape{
+					Name:         t.GetString("name", "rect"),
+					Solid:        t.GetColor("solid", 0),
+					Stroke:       t.GetColor("stroke", 0),
+					StrokeWidth:  t.GetDimen("strokeWidth", "1px").Value(),
+					CornerRadius: t.GetDimen("cornerRadius", "0").Value(),
+					ShadowColor:  shadow.GetColor("color", 0),
+					ShadowX:      shadow.GetDimen("x", "0").Value(),
+					ShadowY:      shadow.GetDimen("y", "0").Value(),
+					ShadowBlur:   shadow.GetDimen("blur", "0").Value(),
+				}
+				me.drawables[state] = shape
+				me.shape = shape
+			default:
+				log.Fatal("nuxui", "unknow shape of %T", d)
+			}
+		}
+	}
 }
 
 func (me *shapeDrawable) SetState(state nux.Attr) {
-	nux.MergeAttrs(me.drawables, state)
+	me.drawables = nux.MergeAttrs(me.drawables, state)
+	me.getShapeAndSet()
 }
 
 func (me *shapeDrawable) State() nux.Attr {
@@ -63,67 +96,42 @@ func (me *shapeDrawable) SetBounds(x, y, width, height int32) {
 	me.height = height
 }
 
-func (me *shapeDrawable) SetShape(shape *Shape) {
-	me.drawables["normal"] = shape
+func (me *shapeDrawable) SetShape(shape Shape) {
+	me.shape = &shape
 }
 
-func (me *shapeDrawable) Shape() *Shape {
-	state := me.drawables.GetString("state", "normal")
-	d := me.drawables.Get(state, nil)
-	if d == nil {
-		return &Shape{}
+func (me *shapeDrawable) Shape() Shape {
+	if me.shape == nil {
+		return Shape{}
 	}
-	if s, ok := d.(*Shape); ok {
-		return s
-	}
-	// if attr, ok := d.(nux.Attr);
-	switch t := d.(type) {
-	case *Shape:
-		return t
-	case nux.Attr:
-		shadow := t.GetAttr("shadow", nux.Attr{})
-		shape := &Shape{
-			Name:         t.GetString("name", "rect"),
-			Solid:        t.GetColor("solid", 0),
-			Stroke:       t.GetColor("stroke", 0),
-			StrokeWidth:  t.GetDimen("strokeWidth", "1px").Value(),
-			CornerRadius: t.GetDimen("cornerRadius", "0").Value(),
-			ShadowColor:  shadow.GetColor("color", 0),
-			ShadowX:      shadow.GetDimen("x", "0").Value(),
-			ShadowY:      shadow.GetDimen("y", "0").Value(),
-			ShadowBlur:   shadow.GetDimen("blur", "0").Value(),
-		}
-		me.drawables[state] = shape
-		return shape
-	default:
-		log.Fatal("nuxui", "unknow shape of %T", d)
-	}
-	return nil
+	return *me.shape
 }
 
 func (me *shapeDrawable) Draw(canvas nux.Canvas) {
-	shape := me.Shape()
-
-	if shape.ShadowColor != 0 {
-		me.paint.SetShadow(shape.ShadowColor, shape.ShadowX, shape.ShadowY, shape.ShadowBlur)
+	if me.shape == nil {
+		return
 	}
 
-	if shape.Solid != 0 {
-		me.paint.SetColor(shape.Solid)
+	if me.shape.ShadowColor != 0 {
+		me.paint.SetShadow(me.shape.ShadowColor, me.shape.ShadowX, me.shape.ShadowY, me.shape.ShadowBlur)
+	}
+
+	if me.shape.Solid != 0 {
+		me.paint.SetColor(me.shape.Solid)
 		me.paint.SetStyle(nux.PaintStyle_Fill)
-		if shape.CornerRadius > 0 {
-			canvas.DrawRoundRect(float32(me.x), float32(me.y), float32(me.width), float32(me.height), shape.CornerRadius, me.paint)
+		if me.shape.CornerRadius > 0 {
+			canvas.DrawRoundRect(float32(me.x), float32(me.y), float32(me.width), float32(me.height), me.shape.CornerRadius, me.paint)
 		} else {
 			canvas.DrawRect(float32(me.x), float32(me.y), float32(me.width), float32(me.height), me.paint)
 		}
 	}
 
-	if shape.Stroke != 0 {
-		me.paint.SetColor(shape.Stroke)
+	if me.shape.Stroke != 0 {
+		me.paint.SetColor(me.shape.Stroke)
 		me.paint.SetStyle(nux.PaintStyle_Stroke)
-		me.paint.SetWidth(shape.StrokeWidth)
-		if shape.CornerRadius > 0 {
-			canvas.DrawRoundRect(float32(me.x), float32(me.y), float32(me.width), float32(me.height), shape.CornerRadius, me.paint)
+		me.paint.SetWidth(me.shape.StrokeWidth)
+		if me.shape.CornerRadius > 0 {
+			canvas.DrawRoundRect(float32(me.x), float32(me.y), float32(me.width), float32(me.height), me.shape.CornerRadius, me.paint)
 		} else {
 			canvas.DrawRect(float32(me.x), float32(me.y), float32(me.width), float32(me.height), me.paint)
 		}

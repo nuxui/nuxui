@@ -48,16 +48,14 @@ func NewImage(attrs ...nux.Attr) Image {
 		scaleY:    1.0,
 		offsetX:   0,
 		offsetY:   0,
-		scaleType: convertScaleTypeFromString(attr.GetString("scaleType", "matrix")),
-		src:       attr.GetString("src", ""),
+		scaleType: convertScaleTypeFromString(attr.GetString("scaleType", "fitCenter")),
+		// src:       attr.GetString("src", ""),
 	}
 	me.WidgetBase = nux.NewWidgetBase(attrs...)
 	me.WidgetSize = nux.NewWidgetSize(attrs...)
 	me.WidgetVisual = NewWidgetVisual(me, attrs...)
+	me.srcDrawable = nux.InflateDrawable(attr.Get("src", nil))
 	me.WidgetSize.AddSizeObserver(me.onSizeChanged)
-	if me.src != "" {
-		me.srcDrawable = NewImageDrawableWithResource(me.src)
-	}
 	return me
 }
 
@@ -66,8 +64,8 @@ type image struct {
 	*nux.WidgetSize
 	*WidgetVisual
 
-	scaleType   ScaleType
-	src         string
+	scaleType ScaleType
+	// src         string
 	srcDrawable ImageDrawable
 	scaleX      float32
 	scaleY      float32
@@ -100,13 +98,64 @@ func convertScaleTypeFromString(scaleType string) ScaleType {
 }
 
 func (me *image) Mount() {
-	if me.src != "" {
-		me.srcDrawable = NewImageDrawableWithResource(me.src)
-	}
 }
 
-// TODO if not have Layout, then use default layout to set frame
+func (me *image) Measure(width, height int32) {
+	frame := me.Frame()
+
+	if me.Padding() != nil {
+		p := me.Padding()
+		switch p.Left.Mode() {
+		case nux.Pixel:
+			frame.Padding.Left = util.Roundi32(p.Left.Value())
+		}
+
+		switch p.Top.Mode() {
+		case nux.Pixel:
+			frame.Padding.Top = util.Roundi32(p.Top.Value())
+		}
+
+		switch p.Right.Mode() {
+		case nux.Pixel:
+			frame.Padding.Right = util.Roundi32(p.Right.Value())
+		}
+
+		switch p.Bottom.Mode() {
+		case nux.Pixel:
+			frame.Padding.Bottom = util.Roundi32(p.Bottom.Value())
+		}
+	}
+
+	if nux.MeasureSpecMode(width) == nux.Auto || nux.MeasureSpecMode(height) == nux.Auto {
+		var dw, dh int32
+		if me.srcDrawable != nil {
+			dw, dh = me.srcDrawable.Size()
+		}
+		if nux.MeasureSpecMode(width) == nux.Auto {
+			frame.Width = dw
+		} else {
+			frame.Width = nux.MeasureSpecValue(width)
+		}
+		if nux.MeasureSpecMode(height) == nux.Auto {
+			frame.Height = dh
+		} else {
+			frame.Height = nux.MeasureSpecValue(height)
+		}
+	}
+
+	frame.Width += frame.Padding.Left + frame.Padding.Right
+	frame.Height += frame.Padding.Top + frame.Padding.Bottom
+}
+
 func (me *image) Layout(x, y, width, height int32) {
+	if me.Background() != nil {
+		me.Background().SetBounds(x, y, width, height)
+	}
+
+	if me.Foreground() != nil {
+		me.Foreground().SetBounds(x, y, width, height)
+	}
+
 	frame := me.Frame()
 
 	var imgW, imgH float32
@@ -219,47 +268,9 @@ func (me *image) Layout(x, y, width, height int32) {
 			}
 		}
 	}
-}
 
-func (me *image) Measure(width, height int32) {
-	if nux.MeasureSpecMode(width) == nux.Auto || nux.MeasureSpecMode(height) == nux.Auto {
-		frame := me.Frame()
-		dw, dh := me.srcDrawable.Size()
-		if nux.MeasureSpecMode(width) == nux.Auto && me.srcDrawable != nil {
-			frame.Width = nux.MeasureSpec(dw+frame.Padding.Left+frame.Padding.Right, nux.Pixel)
-		} else {
-			frame.Width = width
-		}
-
-		if nux.MeasureSpecMode(height) == nux.Auto && me.srcDrawable != nil {
-			frame.Height = nux.MeasureSpec(dh+frame.Padding.Top+frame.Padding.Bottom, nux.Pixel)
-		} else {
-			frame.Height = height
-		}
-	}
-
-	if me.Padding() != nil {
-		frame := me.Frame()
-
-		switch me.Padding().Left.Mode() {
-		case nux.Pixel:
-			frame.Padding.Left = util.Roundi32(me.Padding().Left.Value())
-		}
-
-		switch me.Padding().Top.Mode() {
-		case nux.Pixel:
-			frame.Padding.Top = util.Roundi32(me.Padding().Top.Value())
-		}
-
-		switch me.Padding().Right.Mode() {
-		case nux.Pixel:
-			frame.Padding.Right = util.Roundi32(me.Padding().Right.Value())
-		}
-
-		switch me.Padding().Bottom.Mode() {
-		case nux.Pixel:
-			frame.Padding.Bottom = util.Roundi32(me.Padding().Bottom.Value())
-		}
+	if me.srcDrawable != nil {
+		me.srcDrawable.SetBounds(frame.X+frame.Padding.Left+util.Roundi32(me.offsetX), frame.Y+frame.Padding.Top+util.Roundi32(me.offsetY), util.Roundi32(imgW*me.scaleX), util.Roundi32(imgH*me.scaleY))
 	}
 }
 
@@ -272,17 +283,9 @@ func (me *image) Draw(canvas nux.Canvas) {
 		me.Background().Draw(canvas)
 	}
 
-	frame := me.Frame()
-	canvas.Save()
-	canvas.Translate(float32(frame.X), float32(frame.Y))
-	canvas.Translate(float32(frame.Padding.Left), float32(frame.Padding.Top))
-
 	if me.srcDrawable != nil {
-		canvas.Translate(me.offsetX, me.offsetY)
-		canvas.Scale(me.scaleX, me.scaleY)
 		me.srcDrawable.Draw(canvas)
 	}
-	canvas.Restore()
 
 	if me.Foreground() != nil {
 		me.Foreground().Draw(canvas)
@@ -290,22 +293,23 @@ func (me *image) Draw(canvas nux.Canvas) {
 }
 
 func (me *image) Src() string {
-	return me.src
+	// return me.srcDrawable.Src()
+	return ""
 }
 
 func (me *image) SetSrc(src string) {
-	if me.src == src {
-		return
-	}
+	// if me.src == src {
+	// 	return
+	// }
 
-	me.src = src
+	// me.src = src
 
-	if me.src != "" {
-		me.srcDrawable = NewImageDrawableWithResource(me.src)
-	}
+	// if me.src != "" {
+	// 	me.srcDrawable = NewImageDrawableWithResource(me.src)
+	// }
 
-	nux.RequestLayout(me)
-	nux.RequestRedraw(me)
+	// nux.RequestLayout(me)
+	// nux.RequestRedraw(me)
 }
 
 func (me *image) ScaleType() ScaleType {

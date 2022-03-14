@@ -43,7 +43,6 @@ type Logger interface {
 	SetPrefix(prefix string)
 	Level() Level
 	SetLevel(level Level)
-	Close() // defer call at main function, cause panic will drop logs
 }
 
 const lBufferSize = 5000000
@@ -156,12 +155,6 @@ func (me *logger) SetLevel(level Level) {
 	me.level = level
 }
 
-func (me *logger) Close() {
-	for len(me.logs) > 0 {
-		time.Sleep(100 * time.Millisecond)
-	}
-}
-
 var std = new(os.Stdout, "", LstdFlags, 2)
 
 func V(tag string, format string, msg ...any) {
@@ -226,8 +219,4 @@ func LogLevel() Level {
 
 func SetLevel(level Level) {
 	std.SetLevel(level)
-}
-
-func Close() {
-	std.Close()
 }

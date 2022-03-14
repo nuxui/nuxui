@@ -25,12 +25,6 @@ func new(out io.Writer, prefix string, flags int, depth int) Logger {
 		timer:  map[uint32]time.Time{},
 	}
 
-	go func() {
-		for {
-			me.out.Write([]byte(<-me.logs))
-		}
-	}()
-
 	return me
 }
 
@@ -108,8 +102,8 @@ func (me *logger) output(depth int, color string, level Level, levelTag string, 
 			log = fmt.Sprintf("%s %s%s %s %s\n", now.Format(dformat), levelTag, prefix, tag, fmt.Sprintf(format, msg...))
 		}
 	}
-	me.logs <- log
 
+	me.out.Write([]byte(log))
 }
 
 func getFrameName(skipFrames int) string {

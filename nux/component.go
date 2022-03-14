@@ -11,10 +11,8 @@ type Component interface {
 }
 
 func NewComponentBase(owner Widget, attrs ...Attr) *ComponentBase {
-	attr := Attr{}
-	if len(attrs) > 0 {
-		attr = attrs[0]
-	}
+	attr := MergeAttrs(attrs...)
+
 	return &ComponentBase{
 		info: &WidgetInfo{
 			ID: attr.GetString("id", ""),

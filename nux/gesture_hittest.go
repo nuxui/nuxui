@@ -141,14 +141,14 @@ func (me *hitTestResultManager) hitTest(widget Widget, offsetX, offsetY int32, h
 			}
 		}
 
-		log.V("nuxui", "hitTest %T, '%s', ex=%f,ey=%f, x=%d, y=%d, r=%d, b=%d", widget, widget.Info().ID, event.X(), event.Y(),
-			frame.X, frame.Y, frame.X+frame.Width, frame.Y+frame.Height)
+		// log.V("nuxui", "hitTest %T, '%s', ex=%f,ey=%f, x=%d, y=%d, r=%d, b=%d", widget, widget.Info().ID, event.X(), event.Y(),
+		// frame.X, frame.Y, frame.X+frame.Width, frame.Y+frame.Height)
 		// is event in widget
 		if event.X() >= float32(frame.X) && event.X() <= float32(frame.X+frame.Width) &&
 			event.Y() >= float32(frame.Y) && event.Y() <= float32(frame.Y+frame.Height) {
-			log.V("nuxui", "event in %T, '%s'", widget, widget.Info().ID)
+			// log.V("nuxui", "event in %T, '%s'", widget, widget.Info().ID)
 			if rs := GestureManager().getGestureRecognizers(widget); rs != nil {
-				log.V("nuxui", "hitTestResult.Add %T, '%s'", widget, widget.Info().ID)
+				// log.V("nuxui", "hitTestResult.Add %T, '%s'", widget, widget.Info().ID)
 				hitTestResult.Add(widget)
 			}
 		}

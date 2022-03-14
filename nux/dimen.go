@@ -24,12 +24,13 @@ type Mode byte
 const (
 	Pixel   Mode = iota // 1 means 1px
 	Auto                // wrap content
-	Unlimit             // MeasuredDimen used Pixel, Auto, Unlimit
+	Ems                 // 1em = 1 x font-size
 	Weight              // 1wt >= 0
 	Ratio               // 16:9, no zero, no negative
 	Percent             // 50% means (parent.size - parent.padding)*0.5
 	spare               // default nux unit
 	pixel               // negative pixel 111
+	Unlimit = 2         // MeasuredDimen used Pixel, Auto, Unlimit
 )
 
 const (
@@ -83,10 +84,6 @@ func (me Dimen) Mode() Mode {
 	return Mode(dimenMMask & uint32(me) >> 28)
 }
 
-func (me Dimen) Mode2() Mode {
-	return Pixel
-}
-
 func (me Dimen) Value() float32 {
 	switch me.Mode() {
 	case Percent, Ratio:
@@ -106,14 +103,14 @@ func (me Mode) String() string {
 		return "Pixel"
 	case Auto:
 		return "Auto"
+	case Ems:
+		return "Ems"
 	case Weight:
 		return "Weight"
 	case Ratio:
 		return "Ratio"
 	case Percent:
 		return "Percent"
-	case Unlimit:
-		return "Unlimit"
 	case spare:
 		return "spare"
 	}
@@ -129,12 +126,12 @@ func (me Dimen) String() string {
 		return "auto"
 	case Weight:
 		return fmt.Sprintf(`%dwt`, int32(me.Value()))
+	case Ems:
+		return fmt.Sprintf(`%dem`, int32(me.Value()))
 	case Ratio:
 		return fmt.Sprintf(`%.2f`, me.Value())
 	case Percent:
 		return fmt.Sprintf(`%.2f%%`, me.Value())
-	case Unlimit:
-		return "Unlimit"
 	case spare:
 		return "spare"
 	}
@@ -169,6 +166,12 @@ func ParseDimen(s string) (Dimen, error) {
 			return 0, fmt.Errorf(`invalid Pixel dimension format: "%s"`, s)
 		}
 		return ADimen(float32(v), Pixel), nil
+	} else if strings.HasSuffix(s, "em") {
+		v, e := strconv.ParseFloat(string(s[0:strlen(s)-2]), 32)
+		if e != nil {
+			return 0, fmt.Errorf(`invalid Ems dimension format: "%s"`, s)
+		}
+		return ADimen(float32(v), Ems), nil
 	} else if strings.HasSuffix(s, "wt") {
 		v, e := strconv.ParseFloat(string(s[0:strlen(s)-2]), 32)
 		if e != nil {

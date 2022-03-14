@@ -46,7 +46,7 @@ func (me *Frame) String() string {
 		MeasureSpecString(me.Height), me.Padding.Left, me.Padding.Top, me.Padding.Right, me.Padding.Bottom, me.Margin.Left, me.Margin.Top, me.Margin.Right, me.Margin.Bottom)
 }
 
-// padding: !auto 10px 10dp 5% !wt !ratio !unlimit
+// padding: !auto 10px 10dp 1em 5% !wt !ratio
 type Padding struct {
 	Left   Dimen
 	Top    Dimen
@@ -87,7 +87,7 @@ func (me *Padding) Equal(value *Padding) bool {
 	return false
 }
 
-// margin: !auto 10px 10dp 1wt 5% !ratio !unlimit
+// margin: !auto 10px 10dp 1em 1wt 5% !ratio !unlimit
 type Margin struct {
 	Left   Dimen
 	Top    Dimen
@@ -145,10 +145,7 @@ func NewWidgetSize(attrs ...Attr) *WidgetSize {
 		sizeObservers: []func(){},
 	}
 
-	attr := Attr{}
-	if len(attrs) > 0 {
-		attr = attrs[0]
-	}
+	attr := MergeAttrs(attrs...)
 
 	me.width = attr.GetDimen("width", "auto")
 	me.height = attr.GetDimen("height", "auto")

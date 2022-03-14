@@ -173,6 +173,9 @@ func (me *canvas) Destroy() {
 }
 
 func (me *paint) MeasureText(text string, width, height float32) (outWidth float32, outHeight float32) {
+	if text == "" {
+		return 0, 0
+	}
 	// hwnd := theApp.window.hwnd
 	// font := &win32.GpFont{}
 	// family := &win32.GpFontFamily{}
