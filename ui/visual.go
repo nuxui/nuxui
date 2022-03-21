@@ -35,9 +35,7 @@ type WidgetVisual struct {
 	translucent bool
 }
 
-func NewWidgetVisual(owner nux.Widget, attrs ...nux.Attr) *WidgetVisual {
-	attr := nux.MergeAttrs(attrs...)
-
+func NewWidgetVisual(owner nux.Widget, attr nux.Attr) *WidgetVisual {
 	me := &WidgetVisual{
 		owner:       owner,
 		visible:     visibleFromString(attr.GetString("visible", "show")),

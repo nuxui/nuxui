@@ -10,9 +10,7 @@ type Component interface {
 	Content() Widget
 }
 
-func NewComponentBase(owner Widget, attrs ...Attr) *ComponentBase {
-	attr := MergeAttrs(attrs...)
-
+func NewComponentBase(owner Widget, attr Attr) *ComponentBase {
 	return &ComponentBase{
 		info: &WidgetInfo{
 			ID: attr.GetString("id", ""),

@@ -6,21 +6,11 @@ package nux
 
 import "github.com/nuxui/nuxui/log"
 
-type WidgetCreator func(...Attr) Widget
+type WidgetCreator func(Attr) Widget
 
 type Widget interface {
-	// ID() string
-	// SetID(string)
-	// Parent() Parent
-	// AssignParent(parent Parent)
-	// IsMounted() bool
 	Info() *WidgetInfo
 }
-
-// type WidgetInfo interface {
-// }
-
-// type State int
 
 type WidgetInfo struct {
 	Self    Widget
@@ -34,8 +24,7 @@ type WidgetBase struct {
 	info *WidgetInfo
 }
 
-func NewWidgetBase(attrs ...Attr) *WidgetBase {
-	attr := MergeAttrs(attrs...)
+func NewWidgetBase(attr Attr) *WidgetBase {
 	return &WidgetBase{
 		info: &WidgetInfo{
 			ID:      attr.GetString("id", ""),

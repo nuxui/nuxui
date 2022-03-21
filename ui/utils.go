@@ -5,6 +5,8 @@
 package ui
 
 import (
+	"strings"
+
 	"github.com/nuxui/nuxui/nux"
 	"github.com/nuxui/nuxui/util"
 )
@@ -58,4 +60,12 @@ func setNewHeight(frame *nux.Frame, originHeight, newHeight int32) {
 			frame.Height = newHeight
 		}
 	}
+}
+
+func mergedStateFromString(statestr string) (state uint32) {
+	names := strings.Split(strings.TrimSpace(statestr), "|")
+	for _, name := range names {
+		state |= nux.StateFromString(name)
+	}
+	return
 }

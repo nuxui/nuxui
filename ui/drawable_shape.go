@@ -21,68 +21,92 @@ type Shape struct {
 	ShadowBlur   float32
 }
 
+func NewShape(attr nux.Attr) *Shape {
+	shadow := attr.GetAttr("shadow", nux.Attr{})
+	return &Shape{
+		Name:         attr.GetString("name", "rect"),
+		Solid:        attr.GetColor("solid", 0),
+		Stroke:       attr.GetColor("stroke", 0),
+		StrokeWidth:  attr.GetDimen("strokeWidth", "1px").Value(),
+		CornerRadius: attr.GetDimen("cornerRadius", "0").Value(),
+		ShadowColor:  shadow.GetColor("color", 0),
+		ShadowX:      shadow.GetDimen("x", "0").Value(),
+		ShadowY:      shadow.GetDimen("y", "0").Value(),
+		ShadowBlur:   shadow.GetDimen("blur", "0").Value(),
+	}
+}
+
 type ShapeDrawable interface {
 	nux.Drawable
 	SetShape(shape Shape)
 	Shape() Shape
 }
 
-func NewShapeDrawable(attrs ...nux.Attr) ShapeDrawable {
-	attr := nux.MergeAttrs(attrs...)
+func NewShapeDrawable(attr nux.Attr) ShapeDrawable {
 	me := &shapeDrawable{
-		drawables: attr,
-		paint:     nux.NewPaint(),
+		state: nux.State_Default,
+		paint: nux.NewPaint(),
 	}
-	me.getShapeAndSet()
+
+	if states := attr.GetAttrArray("states", nil); states != nil {
+		me.states = map[uint32]*Shape{}
+
+		for _, state := range states {
+			if s := state.GetString("state", ""); s != "" {
+				if state.Has("shape") {
+					me.states[mergedStateFromString(s)] = NewShape(state.GetAttr("shape", nil))
+				} else {
+					log.E("nuxui", "the state need a shape field")
+				}
+			} else {
+				log.E("nuxui", "the state need a state field")
+			}
+		}
+	} else {
+		if shape := attr.GetAttr("shape", nil); shape != nil {
+			me.shape = NewShape(shape)
+		}
+	}
+
+	me.applyState()
 	return me
 }
 
 type shapeDrawable struct {
-	x         int32
-	y         int32
-	width     int32
-	height    int32
-	paint     nux.Paint
-	drawables nux.Attr
-	shape     *Shape
+	x      int32
+	y      int32
+	width  int32
+	height int32
+	paint  nux.Paint
+	shape  *Shape
+	state  uint32
+	states map[uint32]*Shape
 }
 
-func (me *shapeDrawable) getShapeAndSet() {
-	if state := me.drawables.GetString("state", "normal"); me.drawables.Has(state) {
-		d := me.drawables.Get(state, nil)
-		if d != nil {
-			switch t := d.(type) {
-			case *Shape:
-				me.shape = t
-			case nux.Attr:
-				shadow := t.GetAttr("shadow", nux.Attr{})
-				shape := &Shape{
-					Name:         t.GetString("name", "rect"),
-					Solid:        t.GetColor("solid", 0),
-					Stroke:       t.GetColor("stroke", 0),
-					StrokeWidth:  t.GetDimen("strokeWidth", "1px").Value(),
-					CornerRadius: t.GetDimen("cornerRadius", "0").Value(),
-					ShadowColor:  shadow.GetColor("color", 0),
-					ShadowX:      shadow.GetDimen("x", "0").Value(),
-					ShadowY:      shadow.GetDimen("y", "0").Value(),
-					ShadowBlur:   shadow.GetDimen("blur", "0").Value(),
-				}
-				me.drawables[state] = shape
-				me.shape = shape
-			default:
-				log.Fatal("nuxui", "unknow shape of %T", d)
-			}
+func (me *shapeDrawable) applyState() {
+	if me.states != nil {
+		if s, ok := me.states[me.state]; ok {
+			me.shape = s
 		}
 	}
 }
 
-func (me *shapeDrawable) SetState(state nux.Attr) {
-	me.drawables = nux.MergeAttrs(me.drawables, state)
-	me.getShapeAndSet()
+func (me *shapeDrawable) AddState(state uint32) {
+	s := me.state
+	s |= state
+	me.state = s
+	me.applyState()
 }
 
-func (me *shapeDrawable) State() nux.Attr {
-	return me.drawables
+func (me *shapeDrawable) DelState(state uint32) {
+	s := me.state
+	s &= ^state
+	me.state = s
+	me.applyState()
+}
+
+func (me *shapeDrawable) State() uint32 {
+	return me.state
 }
 
 func (me *shapeDrawable) Size() (width, height int32) {

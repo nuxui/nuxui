@@ -18,9 +18,10 @@ import (
 type Label interface {
 	nux.Widget
 	nux.Size
+	nux.Stateable
 	Visual
 
-	Label() string
+	Text() string
 	SetText(text string)
 }
 
@@ -46,10 +47,11 @@ type label struct {
 	textOffsetY int32
 	textWidth   int32
 	textHeight  int32
+
+	state uint32
 }
 
-func NewLabel(attrs ...nux.Attr) Label {
-	attr := nux.MergeAttrs(attrs...)
+func NewLabel(attr nux.Attr) Label {
 	me := &label{
 		text:               attr.GetString("text", ""),
 		textSize:           attr.GetFloat32("textSize", 12),
@@ -74,9 +76,9 @@ func NewLabel(attrs ...nux.Attr) Label {
 		}
 	}
 
-	me.WidgetBase = nux.NewWidgetBase(attrs...)
-	me.WidgetSize = nux.NewWidgetSize(attrs...)
-	me.WidgetVisual = NewWidgetVisual(me, attrs...)
+	me.WidgetBase = nux.NewWidgetBase(attr)
+	me.WidgetSize = nux.NewWidgetSize(attr)
+	me.WidgetVisual = NewWidgetVisual(me, attr)
 	me.WidgetSize.AddSizeObserver(me.onSizeChanged)
 
 	return me
@@ -84,10 +86,10 @@ func NewLabel(attrs ...nux.Attr) Label {
 
 func (me *label) Mount() {
 	log.I("nuxui", "label Mount")
-	nux.OnTapDown(me, me.onTapDown)
-	nux.OnTapUp(me, me.onTapUp)
-	nux.OnTapCancel(me, me.onTapUp)
-	nux.OnTap(me, me.onTap)
+	nux.OnTapDown(me.Info().Self, me.onTapDown)
+	nux.OnTapUp(me.Info().Self, me.onTapUp)
+	nux.OnTapCancel(me.Info().Self, me.onTapUp)
+	nux.OnTap(me.Info().Self, me.onTap)
 }
 
 func (me *label) Eject() {
@@ -99,16 +101,18 @@ func (me *label) onTapDown(detail nux.GestureDetail) {
 	changed := false
 	if !me.Disable() {
 		if me.Background() != nil {
-			me.Background().SetState(nux.Attr{"state": "pressed"})
+			me.Background().AddState(nux.State_Pressed)
 			changed = true
 		}
 		if me.Foreground() != nil {
-			me.Foreground().SetState(nux.Attr{"state": "pressed"})
+			me.Foreground().AddState(nux.State_Pressed)
 			changed = true
 		}
 		if me.iconLeft != nil {
-			// me.iconLeft.SetState(nux.Attr{"state": "pressed"})
-			changed = true
+			if s, ok := me.iconLeft.(nux.Stateable); ok {
+				s.AddState(nux.State_Pressed)
+				changed = true
+			}
 		}
 	}
 	if changed {
@@ -121,12 +125,18 @@ func (me *label) onTapUp(detail nux.GestureDetail) {
 	changed := false
 	if !me.Disable() {
 		if me.Background() != nil {
-			me.Background().SetState(nux.Attr{"state": "normal"})
+			me.Background().DelState(nux.State_Pressed)
 			changed = true
 		}
 		if me.Foreground() != nil {
-			me.Foreground().SetState(nux.Attr{"state": "normal"})
+			me.Foreground().DelState(nux.State_Pressed)
 			changed = true
+		}
+		if me.iconLeft != nil {
+			if s, ok := me.iconLeft.(nux.Stateable); ok {
+				s.DelState(nux.State_Pressed)
+				changed = true
+			}
 		}
 	}
 	if changed {
@@ -135,14 +145,32 @@ func (me *label) onTapUp(detail nux.GestureDetail) {
 }
 
 func (me *label) onTap(detail nux.GestureDetail) {
+	log.V("nuxui", "label onTap")
+}
 
+func (me *label) AddState(state uint32) {
+	s := me.state
+	s |= state
+	me.state = s
+	// me.applyState()
+}
+
+func (me *label) DelState(state uint32) {
+	s := me.state
+	s &= ^state
+	me.state = s
+	// me.applyState()
+}
+
+func (me *label) State() uint32 {
+	return me.state
 }
 
 func (me *label) onSizeChanged() {
 	nux.RequestLayout(me)
 }
 
-func (me *label) Label() string {
+func (me *label) Text() string {
 	return me.text
 }
 
@@ -753,7 +781,6 @@ func (me *label) Layout(x, y, width, height int32) {
 
 func (me *label) Draw(canvas nux.Canvas) {
 	if me.Background() != nil {
-		log.V("nuxui", "text color drawable")
 		me.Background().Draw(canvas)
 	}
 

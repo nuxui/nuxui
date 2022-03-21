@@ -4,26 +4,50 @@
 
 package ui
 
-import "github.com/nuxui/nuxui/nux"
+import (
+	"github.com/nuxui/nuxui/log"
+	"github.com/nuxui/nuxui/nux"
+)
 
 type ImageDrawable interface {
 	nux.Drawable
 }
 
 // TODO:: if src exised, duplicate image
-func NewImageDrawable(attrs ...nux.Attr) ImageDrawable {
-	attr := nux.MergeAttrs(attrs...)
+func NewImageDrawable(attr nux.Attr) ImageDrawable {
 	me := &imageDrawable{
-		state: attr,
-		image: map[string]nux.Image{},
+		state: nux.State_Default,
+		image: nil,
 	}
-	me.createImagesIfNeed()
+
+	if states := attr.GetAttrArray("states", nil); states != nil {
+		me.states = map[uint32]any{}
+
+		for _, state := range states {
+			if s := state.GetString("state", ""); s != "" {
+				if state.Has("src") {
+					me.states[mergedStateFromString(s)] = state.GetString("src", "")
+				} else {
+					log.E("nuxui", "the state need a src field")
+				}
+			} else {
+				log.E("nuxui", "the state need a state field")
+			}
+		}
+	} else {
+		if src := attr.GetString("src", ""); src != "" {
+			me.image = nux.CreateImage(src)
+		}
+	}
+
+	me.applyState()
+
 	return me
 }
 
 func NewImageDrawableWithResource(src string) ImageDrawable {
 	return NewImageDrawable(nux.Attr{
-		"default": src,
+		"src": src,
 	})
 }
 
@@ -32,41 +56,50 @@ type imageDrawable struct {
 	y      int32
 	width  int32
 	height int32
-	image  map[string]nux.Image
-	state  nux.Attr
+	image  nux.Image
+	states map[uint32]any
+	state  uint32
 	scaleX float32
 	scaleY float32
 }
 
-func (me *imageDrawable) createImagesIfNeed() {
-	if state := me.state.GetString("state", "default"); me.state.Has(state) {
-		if _, ok := me.image[state]; !ok {
-			if src := me.state.GetString(state, ""); src != "" {
-				me.image[state] = nux.CreateImage(src)
-			}
-		}
-	} else {
-		if _, ok := me.image["default"]; !ok {
-			if src := me.state.GetString("src", ""); src != "" {
-				me.image[state] = nux.CreateImage(src)
+func (me *imageDrawable) applyState() {
+	if me.states != nil {
+		if i, ok := me.states[me.state]; ok {
+			switch t := i.(type) {
+			case nux.Image:
+				me.image = t
+			case string:
+				me.image = nux.CreateImage(t)
+				me.states[me.state] = me.image
+			default:
+				log.Fatal("nuxui", "unknow image of %T:%s", t, t)
 			}
 		}
 	}
 }
 
-func (me *imageDrawable) SetState(state nux.Attr) {
-	nux.MergeAttrs(me.state, state)
-	me.createImagesIfNeed()
+func (me *imageDrawable) AddState(state uint32) {
+	s := me.state
+	s |= state
+	me.state = s
+	me.applyState()
 }
 
-func (me *imageDrawable) State() nux.Attr {
+func (me *imageDrawable) DelState(state uint32) {
+	s := me.state
+	s &= ^state
+	me.state = s
+	me.applyState()
+}
+
+func (me *imageDrawable) State() uint32 {
 	return me.state
 }
 
 func (me *imageDrawable) Size() (width, height int32) {
-	state := me.state.GetString("state", "default")
-	if i, ok := me.image[state]; ok {
-		return i.Size()
+	if me.image != nil {
+		return me.image.Size()
 	}
 	return 0, 0
 }
@@ -82,12 +115,11 @@ func (me *imageDrawable) SetBounds(x, y, width, height int32) {
 }
 
 func (me *imageDrawable) Draw(canvas nux.Canvas) {
-	state := me.state.GetString("state", "default")
-	if img, ok := me.image[state]; ok {
+	if me.image != nil {
 		canvas.Save()
 		canvas.Translate(float32(me.x), float32(me.y))
 		canvas.Scale(me.scaleX, me.scaleY)
-		canvas.DrawImage(img)
+		canvas.DrawImage(me.image)
 		canvas.Restore()
 	}
 }

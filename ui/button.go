@@ -14,11 +14,12 @@ type Button interface {
 
 type button label
 
-func NewButton(attrs ...nux.Attr) Button {
-	attr := nux.Attr{
+func NewButton(attr nux.Attr) Button {
+	btnattr := nux.Attr{
 		"selectable": false,
+		"clickable":  true,
 	}
-	a := nux.MergeAttrs(attr, nux.MergeAttrs(attrs...))
-	me := NewLabel(a)
+	nux.MergeAttrs(btnattr, attr)
+	me := NewLabel(btnattr)
 	return Button(me)
 }

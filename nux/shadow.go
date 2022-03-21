@@ -23,8 +23,7 @@ func ceil2i32(v float32) int32 {
 	return int32(math.Ceil(float64(v)))
 }
 
-func NewWidgetOutsideShadow(dataChanged func(), attrs ...Attr) *WidgetOutsideShadow {
-	attr := MergeAttrs(attrs...)
+func NewWidgetOutsideShadow(dataChanged func(), attr Attr) *WidgetOutsideShadow {
 	me := &WidgetOutsideShadow{
 		offsetX:     ceil2i32(attr.GetDimen("offsetX", "0").Value()),
 		offsetY:     ceil2i32(attr.GetDimen("offsetY", "0").Value()),

@@ -56,7 +56,7 @@ func inflateLayoutAttr(parent Widget, attr Attr) Widget {
 			theme.GetString("name", ""),
 			theme.GetString("kind", ""),
 			theme.GetString("style", "")); themeAttr != nil {
-			widget = widgetCreator(themeAttr, attr)
+			widget = widgetCreator(MergeAttrs(themeAttr, attr))
 		}
 	}
 

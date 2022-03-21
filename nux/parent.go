@@ -32,10 +32,10 @@ type WidgetParent struct {
 	children []Widget
 }
 
-func NewWidgetParent(owner Parent, attrs ...Attr) *WidgetParent {
+func NewWidgetParent(owner Parent, attr Attr) *WidgetParent {
 	me := &WidgetParent{
 		owner:      owner,
-		WidgetBase: NewWidgetBase(attrs...),
+		WidgetBase: NewWidgetBase(attr),
 		children:   []Widget{},
 	}
 

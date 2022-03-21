@@ -7,18 +7,20 @@ package ui
 import "github.com/nuxui/nuxui/nux"
 
 func init() {
-	nux.RegisterWidget((*Row)(nil), func(attrs ...nux.Attr) nux.Widget { return NewRow(attrs...) })
-	nux.RegisterWidget((*Column)(nil), func(attrs ...nux.Attr) nux.Widget { return NewColumn(attrs...) })
-	nux.RegisterWidget((*Layer)(nil), func(attrs ...nux.Attr) nux.Widget { return NewLayer(attrs...) })
-	nux.RegisterWidget((*Scroll)(nil), func(attrs ...nux.Attr) nux.Widget { return NewScroll(attrs...) })
-	nux.RegisterWidget((*Text)(nil), func(attrs ...nux.Attr) nux.Widget { return NewText(attrs...) })
-	nux.RegisterWidget((*Label)(nil), func(attrs ...nux.Attr) nux.Widget { return NewLabel(attrs...) })
-	nux.RegisterWidget((*Button)(nil), func(attrs ...nux.Attr) nux.Widget { return NewButton(attrs...) })
-	nux.RegisterWidget((*Image)(nil), func(attrs ...nux.Attr) nux.Widget { return NewImage(attrs...) })
-	nux.RegisterWidget((*Editor)(nil), func(attrs ...nux.Attr) nux.Widget { return NewEditor(attrs...) })
-	nux.RegisterWidget((*Check)(nil), func(attrs ...nux.Attr) nux.Widget { return NewEditor(attrs...) })
+	nux.RegisterWidget((*Row)(nil), func(attr nux.Attr) nux.Widget { return NewRow(attr) })
+	nux.RegisterWidget((*Column)(nil), func(attr nux.Attr) nux.Widget { return NewColumn(attr) })
+	nux.RegisterWidget((*Layer)(nil), func(attr nux.Attr) nux.Widget { return NewLayer(attr) })
+	nux.RegisterWidget((*Scroll)(nil), func(attr nux.Attr) nux.Widget { return NewScroll(attr) })
+	nux.RegisterWidget((*Text)(nil), func(attr nux.Attr) nux.Widget { return NewText(attr) })
+	nux.RegisterWidget((*Label)(nil), func(attr nux.Attr) nux.Widget { return NewLabel(attr) })
+	nux.RegisterWidget((*Button)(nil), func(attr nux.Attr) nux.Widget { return NewButton(attr) })
+	nux.RegisterWidget((*Image)(nil), func(attr nux.Attr) nux.Widget { return NewImage(attr) })
+	nux.RegisterWidget((*Editor)(nil), func(attr nux.Attr) nux.Widget { return NewEditor(attr) })
+	nux.RegisterWidget((*Opt)(nil), func(attr nux.Attr) nux.Widget { return NewOpt(attr) })
+	nux.RegisterWidget((*Radio)(nil), func(attr nux.Attr) nux.Widget { return NewRadio(attr) })
+	nux.RegisterWidget((*Options)(nil), func(attr nux.Attr) nux.Widget { return NewOptions(attr) })
 
-	nux.RegisterDrawable((*ColorDrawable)(nil), func(attrs ...nux.Attr) nux.Drawable { return NewColorDrawable(attrs...) })
-	nux.RegisterDrawable((*ImageDrawable)(nil), func(attrs ...nux.Attr) nux.Drawable { return NewImageDrawable(attrs...) })
-	nux.RegisterDrawable((*ShapeDrawable)(nil), func(attrs ...nux.Attr) nux.Drawable { return NewShapeDrawable(attrs...) })
+	nux.RegisterDrawable((*ColorDrawable)(nil), func(attr nux.Attr) nux.Drawable { return NewColorDrawable(attr) })
+	nux.RegisterDrawable((*ImageDrawable)(nil), func(attr nux.Attr) nux.Drawable { return NewImageDrawable(attr) })
+	nux.RegisterDrawable((*ShapeDrawable)(nil), func(attr nux.Attr) nux.Drawable { return NewShapeDrawable(attr) })
 }

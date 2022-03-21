@@ -16,6 +16,7 @@ import (
 
 type Attr map[string]any
 
+// TODO:: use new attr or attrs[0]?
 func MergeAttrs(attrs ...Attr) Attr {
 	l := len(attrs)
 	if l == 0 {
@@ -24,7 +25,6 @@ func MergeAttrs(attrs ...Attr) Attr {
 	if l == 1 {
 		return attrs[0]
 	}
-	// TODO:: use new attr or attrs[0]?
 	attr := attrs[0]
 	i := 0
 	for _, atr := range attrs {
@@ -347,6 +347,29 @@ func (me Attr) GetArray(key string, defaultValue []any) []any {
 			return t
 		default:
 			log.E("nuxui", "Error: unsupport convert %s %T:%s to array, use default value instead", key, t, t)
+		}
+	}
+	return defaultValue
+}
+
+func (me Attr) GetAttrArray(key string, defaultValue []Attr) []Attr {
+	if attr, ok := me[key]; ok {
+		switch t := attr.(type) {
+		case []Attr:
+			return t
+		case []any:
+			ret := make([]Attr, len(t))
+			for i, any := range t {
+				if atr, ok := any.(Attr); ok {
+					ret[i] = atr
+				} else {
+					log.E("nuxui", "Error: unsupport convert %s %T:%s to []Attr, use default value instead", key, t, t)
+					return defaultValue
+				}
+			}
+			return ret
+		default:
+			log.E("nuxui", "Error: unsupport convert %s %T:%s to Attr array, use default value instead", key, t, t)
 		}
 	}
 	return defaultValue

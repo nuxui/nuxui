@@ -34,26 +34,23 @@ type text struct {
 	textColor          nux.Color
 	textHighlightColor nux.Color
 	paint              nux.Paint
-	ellipsize          int
+	ellipsize          int //TODO
 
 	downTime time.Time
 }
 
-func NewText(attrs ...nux.Attr) Text {
-	attr := nux.MergeAttrs(attrs...)
+func NewText(attr nux.Attr) Text {
 	me := &text{
 		text:               attr.GetString("text", ""),
 		textSize:           attr.GetFloat32("textSize", 12),
 		textColor:          attr.GetColor("textColor", nux.White),
 		textHighlightColor: attr.GetColor("textHighlightColor", nux.Transparent),
 		paint:              nux.NewPaint(),
-		// paint:              nux.NewPaint(attr.GetAttr("font", nux.Attr{})),
-		// ellipsize: ellipsizeFromName(attr.GetString("ellipsize", "none")),
 	}
 
-	me.WidgetBase = nux.NewWidgetBase(attrs...)
-	me.WidgetSize = nux.NewWidgetSize(attrs...)
-	me.WidgetVisual = NewWidgetVisual(me, attrs...)
+	me.WidgetBase = nux.NewWidgetBase(attr)
+	me.WidgetSize = nux.NewWidgetSize(attr)
+	me.WidgetVisual = NewWidgetVisual(me, attr)
 	me.WidgetSize.AddSizeObserver(me.onSizeChanged)
 
 	return me
@@ -75,11 +72,11 @@ func (me *text) onTapDown(detail nux.GestureDetail) {
 	changed := false
 	if !me.Disable() {
 		if me.Background() != nil {
-			me.Background().SetState(nux.Attr{"state": "pressed"})
+			me.Background().AddState(nux.State_Pressed)
 			changed = true
 		}
 		if me.Foreground() != nil {
-			me.Foreground().SetState(nux.Attr{"state": "pressed"})
+			me.Foreground().AddState(nux.State_Pressed)
 			changed = true
 		}
 	}
@@ -93,11 +90,11 @@ func (me *text) onTapUp(detail nux.GestureDetail) {
 	changed := false
 	if !me.Disable() {
 		if me.Background() != nil {
-			me.Background().SetState(nux.Attr{"state": "normal"})
+			me.Background().DelState(nux.State_Pressed)
 			changed = true
 		}
 		if me.Foreground() != nil {
-			me.Foreground().SetState(nux.Attr{"state": "normal"})
+			me.Foreground().DelState(nux.State_Pressed)
 			changed = true
 		}
 	}
@@ -236,7 +233,6 @@ func (me *text) Measure(width, height int32) {
 
 func (me *text) Draw(canvas nux.Canvas) {
 	if me.Background() != nil {
-		log.V("nuxui", "text color drawable")
 		me.Background().Draw(canvas)
 	}
 

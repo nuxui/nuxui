@@ -14,8 +14,8 @@ import (
 )
 
 /*
- var a dimen = 10 // 10px
- var a dimen = -10 // -10px
+ var a Dimen = 10 // 10px
+ var a Dimen = -10 // -10px
 */
 
 type Dimen int32
@@ -24,13 +24,12 @@ type Mode byte
 const (
 	Pixel   Mode = iota // 1 means 1px
 	Auto                // wrap content
-	Ems                 // 1em = 1 x font-size
+	Unlimit             // MeasuredDimen used Pixel, Auto, Unlimit
 	Weight              // 1wt >= 0
 	Ratio               // 16:9, no zero, no negative
 	Percent             // 50% means (parent.size - parent.padding)*0.5
-	spare               // default nux unit
+	Ems                 // 1em = 1 x font-size
 	pixel               // negative pixel 111
-	Unlimit = 2         // MeasuredDimen used Pixel, Auto, Unlimit
 )
 
 const (
@@ -103,16 +102,16 @@ func (me Mode) String() string {
 		return "Pixel"
 	case Auto:
 		return "Auto"
-	case Ems:
-		return "Ems"
+	case Unlimit:
+		return "Unlimit"
 	case Weight:
 		return "Weight"
 	case Ratio:
 		return "Ratio"
 	case Percent:
 		return "Percent"
-	case spare:
-		return "spare"
+	case Ems:
+		return "Ems"
 	}
 	log.Fatal("nuxui", "can not run here.")
 	return ""
@@ -124,16 +123,16 @@ func (me Dimen) String() string {
 		return fmt.Sprintf(`%dpx`, int32(me.Value()))
 	case Auto:
 		return "auto"
+	case Unlimit:
+		return "unlimit"
 	case Weight:
 		return fmt.Sprintf(`%dwt`, int32(me.Value()))
-	case Ems:
-		return fmt.Sprintf(`%dem`, int32(me.Value()))
 	case Ratio:
 		return fmt.Sprintf(`%.2f`, me.Value())
 	case Percent:
 		return fmt.Sprintf(`%.2f%%`, me.Value())
-	case spare:
-		return "spare"
+	case Ems:
+		return fmt.Sprintf(`%dem`, int32(me.Value()))
 	}
 	log.Fatal("nuxui", "can not run here.")
 	return ""

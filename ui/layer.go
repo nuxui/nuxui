@@ -22,11 +22,11 @@ type layer struct {
 	*WidgetVisual
 }
 
-func NewLayer(attrs ...nux.Attr) Layer {
+func NewLayer(attr nux.Attr) Layer {
 	me := &layer{}
-	me.WidgetParent = nux.NewWidgetParent(me, attrs...)
-	me.WidgetSize = nux.NewWidgetSize(attrs...)
-	me.WidgetVisual = NewWidgetVisual(me, attrs...)
+	me.WidgetParent = nux.NewWidgetParent(me, attr)
+	me.WidgetSize = nux.NewWidgetSize(attr)
+	me.WidgetVisual = NewWidgetVisual(me, attr)
 	me.WidgetSize.AddSizeObserver(me.onSizeChanged)
 	return me
 }

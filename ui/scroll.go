@@ -24,11 +24,11 @@ type scroll struct {
 	nux.WidgetBase
 }
 
-func NewScroll(attrs ...nux.Attr) Scroll {
+func NewScroll(attr nux.Attr) Scroll {
 	me := &scroll{}
-	me.WidgetParent = nux.NewWidgetParent(me, attrs...)
-	me.WidgetSize = nux.NewWidgetSize(attrs...)
-	me.WidgetVisual = NewWidgetVisual(me, attrs...)
+	me.WidgetParent = nux.NewWidgetParent(me, attr)
+	me.WidgetSize = nux.NewWidgetSize(attr)
+	me.WidgetVisual = NewWidgetVisual(me, attr)
 	me.WidgetSize.AddSizeObserver(me.onSizeChanged)
 	return me
 }

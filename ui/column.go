@@ -28,14 +28,13 @@ type column struct {
 	childrenHeight float32
 }
 
-func NewColumn(attrs ...nux.Attr) Column {
-	attr := nux.MergeAttrs(attrs...)
+func NewColumn(attr nux.Attr) Column {
 	me := &column{
 		align: NewAlign(attr.GetAttr("align", nux.Attr{})),
 	}
-	me.WidgetSize = nux.NewWidgetSize(attrs...)
-	me.WidgetParent = nux.NewWidgetParent(me, attrs...)
-	me.WidgetVisual = NewWidgetVisual(me, attrs...)
+	me.WidgetSize = nux.NewWidgetSize(attr)
+	me.WidgetParent = nux.NewWidgetParent(me, attr)
+	me.WidgetVisual = NewWidgetVisual(me, attr)
 	me.WidgetSize.AddSizeObserver(me.onSizeChanged)
 	return me
 }

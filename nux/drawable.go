@@ -4,13 +4,12 @@
 
 package nux
 
-type DrawableCreator func(...Attr) Drawable
+type DrawableCreator func(Attr) Drawable
 
 type Drawable interface {
+	Stateable
 	Size() (width, height int32)
 	SetBounds(x, y, width, height int32)
 	Draw(canvas Canvas)
 	Equal(Drawable) bool
-	SetState(data Attr)
-	State() Attr
 }

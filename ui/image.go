@@ -18,6 +18,7 @@ type Image interface {
 	nux.Layout
 	nux.Measure
 	nux.Draw
+	nux.Stateable
 	Visual
 
 	Src() string
@@ -41,19 +42,18 @@ const (
 
 type Repeat int32
 
-func NewImage(attrs ...nux.Attr) Image {
-	attr := nux.MergeAttrs(attrs...)
+func NewImage(attr nux.Attr) Image {
 	me := &image{
 		scaleX:    1.0,
 		scaleY:    1.0,
 		offsetX:   0,
 		offsetY:   0,
 		scaleType: convertScaleTypeFromString(attr.GetString("scaleType", "fitCenter")),
-		// src:       attr.GetString("src", ""),
+		state:     nux.State_Default,
 	}
-	me.WidgetBase = nux.NewWidgetBase(attrs...)
-	me.WidgetSize = nux.NewWidgetSize(attrs...)
-	me.WidgetVisual = NewWidgetVisual(me, attrs...)
+	me.WidgetBase = nux.NewWidgetBase(attr)
+	me.WidgetSize = nux.NewWidgetSize(attr)
+	me.WidgetVisual = NewWidgetVisual(me, attr)
 	me.srcDrawable = nux.InflateDrawable(attr.Get("src", nil))
 	me.WidgetSize.AddSizeObserver(me.onSizeChanged)
 	return me
@@ -64,8 +64,8 @@ type image struct {
 	*nux.WidgetSize
 	*WidgetVisual
 
-	scaleType ScaleType
-	// src         string
+	state       uint32
+	scaleType   ScaleType
 	srcDrawable ImageDrawable
 	scaleX      float32
 	scaleY      float32
@@ -97,6 +97,46 @@ func convertScaleTypeFromString(scaleType string) ScaleType {
 	return ScaleType_Center
 }
 
+func (me *image) AddState(state uint32) {
+	s := me.state
+	s |= state
+	me.state = s
+
+	if me.background != nil {
+		me.background.AddState(state)
+	}
+
+	if me.srcDrawable != nil {
+		me.srcDrawable.AddState(state)
+	}
+
+	if me.foreground != nil {
+		me.background.AddState(state)
+	}
+}
+
+func (me *image) DelState(state uint32) {
+	s := me.state
+	s &= ^state
+	me.state = s
+
+	if me.background != nil {
+		me.background.DelState(state)
+	}
+
+	if me.srcDrawable != nil {
+		me.srcDrawable.DelState(state)
+	}
+
+	if me.foreground != nil {
+		me.background.DelState(state)
+	}
+}
+
+func (me *image) State() uint32 {
+	return me.state
+}
+
 func (me *image) Mount() {
 }
 
@@ -108,21 +148,45 @@ func (me *image) Measure(width, height int32) {
 		switch p.Left.Mode() {
 		case nux.Pixel:
 			frame.Padding.Left = util.Roundi32(p.Left.Value())
+		case nux.Percent:
+			if nux.MeasureSpecMode(width) == nux.Pixel {
+				// frame.Padding.Left = util.Roundi32(p.Left.Value() * float32(nux.MeasureSpecValue(width)))
+			} else {
+				// TODO::
+			}
 		}
 
 		switch p.Top.Mode() {
 		case nux.Pixel:
 			frame.Padding.Top = util.Roundi32(p.Top.Value())
+		case nux.Percent:
+			if nux.MeasureSpecMode(height) == nux.Pixel {
+				// frame.Padding.Top = util.Roundi32(p.Top.Value() * float32(nux.MeasureSpecValue(height)))
+			} else {
+				// TODO::
+			}
 		}
 
 		switch p.Right.Mode() {
 		case nux.Pixel:
 			frame.Padding.Right = util.Roundi32(p.Right.Value())
+		case nux.Percent:
+			if nux.MeasureSpecMode(width) == nux.Pixel {
+				// frame.Padding.Right = util.Roundi32(p.Right.Value() * float32(nux.MeasureSpecValue(width)))
+			} else {
+				// TODO::
+			}
 		}
 
 		switch p.Bottom.Mode() {
 		case nux.Pixel:
 			frame.Padding.Bottom = util.Roundi32(p.Bottom.Value())
+		case nux.Percent:
+			if nux.MeasureSpecMode(height) == nux.Pixel {
+				// frame.Padding.Bottom = util.Roundi32(p.Bottom.Value() * float32(nux.MeasureSpecValue(height)))
+			} else {
+				// TODO::
+			}
 		}
 	}
 

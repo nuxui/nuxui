@@ -5,8 +5,7 @@
 package ui
 
 import (
-	"reflect"
-
+	"github.com/nuxui/nuxui/log"
 	"github.com/nuxui/nuxui/nux"
 )
 
@@ -16,49 +15,72 @@ type ColorDrawable interface {
 	SetColor(nux.Color)
 }
 
-func NewColorDrawable(attrs ...nux.Attr) ColorDrawable {
-	attr := nux.MergeAttrs(attrs...)
+func NewColorDrawable(attr nux.Attr) ColorDrawable {
 	me := &colorDrawable{
-		paint:     nux.NewPaint(),
-		drawables: attr,
+		paint: nux.NewPaint(),
+		state: nux.State_Default,
 	}
-	me.getColorAndSet()
+
+	if states := attr.GetAttrArray("states", nil); states != nil {
+		me.states = map[uint32]nux.Color{}
+
+		for _, state := range states {
+			if s := state.GetString("state", ""); s != "" {
+				if state.Has("color") {
+					me.states[mergedStateFromString(s)] = state.GetColor("color", nux.Transparent)
+				} else {
+					log.E("nuxui", "the state need a color field")
+				}
+			} else {
+				log.E("nuxui", "the state need a state field")
+			}
+		}
+	} else {
+		me.paint.SetColor(attr.GetColor("color", nux.Transparent))
+	}
+
+	me.applyState()
 	return me
 }
 
 func NewColorDrawableWithColor(color nux.Color) ColorDrawable {
-	me := &colorDrawable{
-		paint:     nux.NewPaint(),
-		drawables: nux.Attr{},
-	}
-	me.paint.SetColor(color)
-	return me
+	return NewColorDrawable(nux.Attr{"color": color})
 }
 
 type colorDrawable struct {
-	x         int32
-	y         int32
-	width     int32
-	height    int32
-	paint     nux.Paint
-	drawables nux.Attr
+	x      int32
+	y      int32
+	width  int32
+	height int32
+	paint  nux.Paint
+	states map[uint32]nux.Color
+	state  uint32
 }
 
-func (me *colorDrawable) getColorAndSet() {
-	if state := me.drawables.GetString("state", "default"); me.drawables.Has(state) {
-		me.paint.SetColor(me.drawables.GetColor(state, 0))
-	} else {
-		me.paint.SetColor(me.drawables.GetColor("color", 0))
+func (me *colorDrawable) applyState() {
+	if me.states != nil {
+		if color, ok := me.states[me.state]; ok {
+			me.paint.SetColor(color)
+		}
 	}
 }
 
-func (me *colorDrawable) SetState(state nux.Attr) {
-	me.drawables = nux.MergeAttrs(me.drawables, state)
-	me.getColorAndSet()
+func (me *colorDrawable) AddState(state uint32) {
+	s := me.state
+	s |= state
+	me.state = s
+	me.applyState()
 }
 
-func (me *colorDrawable) State() nux.Attr {
-	return me.drawables
+func (me *colorDrawable) DelState(state uint32) {
+	s := me.state
+	s &= ^state
+	me.state = s
+	me.applyState()
+}
+
+func (me *colorDrawable) State() uint32 {
+	return me.state
 }
 
 func (me *colorDrawable) Size() (width, height int32) {
@@ -87,15 +109,14 @@ func (me *colorDrawable) Draw(canvas nux.Canvas) {
 }
 
 func (me *colorDrawable) Equal(drawable nux.Drawable) bool {
-	return reflect.DeepEqual(me, drawable)
-	// if c, ok := drawable.(*colorDrawable); ok {
-	// 	if me.paint.Color().Equal(c.paint.Color()) &&
-	// 		me.left == c.left &&
-	// 		me.top == c.top &&
-	// 		me.right == c.right &&
-	// 		me.bottom == c.bottom {
-	// 		return true
-	// 	}
-	// }
-	// return false
+	if c, ok := drawable.(*colorDrawable); ok {
+		if me.paint.Color().Equal(c.paint.Color()) &&
+			me.x == c.x &&
+			me.y == c.y &&
+			me.width == c.width &&
+			me.height == c.height {
+			return true
+		}
+	}
+	return false
 }

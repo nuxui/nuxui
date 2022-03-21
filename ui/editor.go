@@ -23,8 +23,7 @@ type Editor interface {
 	SetText(text string)
 }
 
-func NewEditor(attrs ...nux.Attr) Editor {
-	attr := nux.MergeAttrs(attrs...)
+func NewEditor(attr nux.Attr) Editor {
 	me := &editor{
 		cursorPosition:     0,
 		flicker:            false,
@@ -38,9 +37,9 @@ func NewEditor(attrs ...nux.Attr) Editor {
 		// ellipsize: ellipsizeFromName(attr.GetString("ellipsize", "none")),
 	}
 
-	me.WidgetBase = nux.NewWidgetBase(attrs...)
-	me.WidgetSize = nux.NewWidgetSize(attrs...)
-	me.WidgetVisual = NewWidgetVisual(me, attrs...)
+	me.WidgetBase = nux.NewWidgetBase(attr)
+	me.WidgetSize = nux.NewWidgetSize(attr)
+	me.WidgetVisual = NewWidgetVisual(me, attr)
 	me.WidgetSize.AddSizeObserver(me.onSizeChanged)
 
 	nux.OnTapDown(me, me.onTapDown)
