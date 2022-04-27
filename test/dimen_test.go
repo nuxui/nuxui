@@ -12,7 +12,6 @@ import (
 )
 
 func TestDimen(t *testing.T) {
-	defer log.Close()
 	log.V("test", "%s, %s, %s", nux.SDimen("10.02px"), nux.ADimen(10.02, nux.Pixel), nux.Dimen(10))
 	log.V("test", "%s, %s, %s", nux.SDimen("-10.02px"), nux.ADimen(-10.02, nux.Pixel), nux.Dimen(-10))
 	log.V("test", "%s, %s", nux.SDimen("10.02%"), nux.ADimen(10.02, nux.Percent))

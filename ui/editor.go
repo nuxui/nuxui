@@ -130,26 +130,35 @@ func (me *editor) SetText(text string) {
 	}
 }
 
-func (me *editor) Measure(width, height int32) {
-	if nux.MeasureSpecMode(width) == nux.Auto || nux.MeasureSpecMode(height) == nux.Auto {
+func (me *editor) Measure(width, height nux.MeasureDimen) {
+	frame := me.Frame()
 
-		w := width
-		h := height
+	me.paint.SetTextSize(me.textSize)
+	outW, outH := me.paint.MeasureText(me.text, float32(width.Value()), float32(height.Value()))
 
-		outW, outH := me.paint.MeasureText(me.text, float32(nux.MeasureSpecValue(w)), float32(nux.MeasureSpecValue(h)))
-		// log.V("nuxui", "Editor MeasureText %s %d %d", me.text, outW, outH)
-		frame := me.Frame()
-		if nux.MeasureSpecMode(width) == nux.Auto {
-			frame.Width = nux.MeasureSpec(int32(math.Ceil(float64(outW)))+frame.Padding.Left+frame.Padding.Right, nux.Pixel)
-		} else {
-			frame.Width = width
-		}
+	hPPx, hPPt, vPPx, vPPt, paddingMeasuredFlag := measurePadding(width, height, me.Padding(), frame, outH, 0)
+	if hPPt >= 100.0 || vPPt >= 100.0 {
+		log.Fatal("nuxui", "padding percent size should at 0% ~ 100%")
+	}
 
-		if nux.MeasureSpecMode(height) == nux.Auto {
-			frame.Height = nux.MeasureSpec(int32(math.Ceil(float64(outH)))+frame.Padding.Top+frame.Padding.Bottom, nux.Pixel)
-		} else {
-			frame.Height = height
-		}
+	if width.Mode() == nux.Pixel {
+		frame.Width = width.Value()
+	} else {
+		w := (float32(outW) + hPPx) / (1.0 - hPPt/100.0)
+		frame.Width = int32(math.Ceil(float64(w)))
+		width = nux.MeasureSpec(frame.Width, nux.Pixel)
+	}
+
+	if height.Mode() == nux.Pixel {
+		frame.Height = height.Value()
+	} else {
+		h := (float32(outH) + vPPx) / (1.0 - vPPt/100.0)
+		frame.Height = int32(math.Ceil(float64(h)))
+		height = nux.MeasureSpec(frame.Height, nux.Pixel)
+	}
+
+	if paddingMeasuredFlag&flagMeasuredPaddingComplete != flagMeasuredPaddingComplete {
+		measurePadding(width, height, me.Padding(), frame, outH, paddingMeasuredFlag)
 	}
 }
 

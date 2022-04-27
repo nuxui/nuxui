@@ -19,13 +19,23 @@ const (
 )
 
 const (
-	hMeasuredWidth byte = 1 << iota
-	hMeasuredHeight
-	hMeasuredMarginLeft
-	hMeasuredMarginRight
-	hMeasuredMarginTop
-	hMeasuredMarginBottom
-	hMeasuredWidthComplete  = hMeasuredWidth | hMeasuredMarginLeft | hMeasuredMarginRight
-	hMeasuredHeightComplete = hMeasuredHeight | hMeasuredMarginTop | hMeasuredMarginBottom
-	hMeasuredComplete       = hMeasuredWidth | hMeasuredHeight | hMeasuredMarginLeft | hMeasuredMarginRight | hMeasuredMarginTop | hMeasuredMarginBottom
+	flagMeasured uint8 = 1 << iota // call Measure func
+	flagMeasuredWidth
+	flagMeasuredHeight
+	flagMeasuredMarginLeft
+	flagMeasuredMarginRight
+	flagMeasuredMarginTop
+	flagMeasuredMarginBottom
+	flagMeasuredMarginComplete     = flagMeasuredMarginLeft | flagMeasuredMarginRight | flagMeasuredMarginTop | flagMeasuredMarginBottom
+	flagMeasuredHorizontalComplete = flagMeasuredWidth | flagMeasuredMarginLeft | flagMeasuredMarginRight
+	flagMeasuredVerticalComplete   = flagMeasuredHeight | flagMeasuredMarginTop | flagMeasuredMarginBottom
+	flagMeasuredComplete           = flagMeasured | flagMeasuredWidth | flagMeasuredHeight | flagMeasuredMarginComplete
+)
+
+const (
+	flagMeasuredPaddingLeft uint8 = 1 << iota
+	flagMeasuredPaddingTop
+	flagMeasuredPaddingRight
+	flagMeasuredPaddingBottom
+	flagMeasuredPaddingComplete = flagMeasuredPaddingLeft | flagMeasuredPaddingTop | flagMeasuredPaddingRight | flagMeasuredPaddingBottom
 )

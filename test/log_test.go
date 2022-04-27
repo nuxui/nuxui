@@ -11,7 +11,6 @@ import (
 )
 
 func TestLog(t *testing.T) {
-	defer log.Close()
 	log.V("log", "TestLog")
 	log.V("log", "TestLog %d", 1)
 	log.V("log", "TestLog %d %s", 1, "hello")

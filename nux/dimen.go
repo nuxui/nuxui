@@ -24,8 +24,8 @@ type Mode byte
 const (
 	Pixel   Mode = iota // 1 means 1px
 	Auto                // wrap content
-	Unlimit             // MeasuredDimen used Pixel, Auto, Unlimit
-	Weight              // 1wt >= 0
+	Unlimit             // MeasureDimen used Pixel, Auto, Unlimit
+	Weight              // 1wt, no negative
 	Ratio               // 16:9, no zero, no negative
 	Percent             // 50% means (parent.size - parent.padding)*0.5
 	Ems                 // 1em = 1 x font-size
@@ -195,36 +195,38 @@ func ParseDimen(s string) (Dimen, error) {
 	return 0, fmt.Errorf(`invalid dimension format: "%s"`, s)
 }
 
-//------------------  MeasuredDimen ------------------------------------
+//------------------  MeasureDimen ------------------------------------
 
 // Non-negative and only support Pixel, Auto, Unlimit
-type MeasuredDimen int32
+type MeasureDimen int32
 
-const MaxMeasuredDimen int32 = 0x3FFFFFFF
-const measuredDimenModeMask int32 = -1073741824 //0xC0000000
-const measuredDimenValueMask int32 = 0x3FFFFFFF
+const (
+	MaxMeasuredDimen       int32 = 0x3FFFFFFF
+	measuredDimenModeMask  int32 = -1073741824 //0xC0000000
+	measuredDimenValueMask int32 = 0x3FFFFFFF
+)
 
-func MeasureSpec(value int32, mode Mode) int32 {
+// TODO:: rename to AMeasureDimen ?
+func MeasureSpec(value int32, mode Mode) MeasureDimen {
 	if !(mode == Pixel || mode == Auto || mode == Unlimit) {
 		log.Fatal("nuxui", "error for MeasureSpec mdoe, only support Pixel, Auto, Unlimit")
 	}
 	if value > MaxMeasuredDimen {
 		log.Fatal("nuxui", "error for MeasureSpec value, out of range")
 	} else if value < 0 {
-		// log.Fatal("nuxui", "error for MeasureSpec value, cannot be negative")
+		log.Fatal("nuxui", "error for MeasureSpec value, cannot be negative")
 		value = 0
 	}
-	return int32(mode)<<30 | value
+	return MeasureDimen(int32(mode)<<30 | value)
 }
 
-func MeasureSpecMode(size int32) Mode {
-	return Mode((size & measuredDimenModeMask) >> 30 & 3)
+func (me MeasureDimen) Mode() Mode {
+	return Mode((int32(me) & measuredDimenModeMask) >> 30 & 3)
+}
+func (me MeasureDimen) Value() int32 {
+	return int32(me) & measuredDimenValueMask
 }
 
-func MeasureSpecValue(size int32) int32 {
-	return size & measuredDimenValueMask
-}
-
-func MeasureSpecString(size int32) string {
-	return fmt.Sprintf(`%d %s`, MeasureSpecValue(size), MeasureSpecMode(size))
+func (me MeasureDimen) String() string {
+	return fmt.Sprintf(`%d %s`, me.Value(), me.Mode().String())
 }

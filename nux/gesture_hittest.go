@@ -84,7 +84,7 @@ func (me *hitTestResultManager) handlePointerEvent(widget Widget, event PointerE
 		}
 
 		hitTestResult = NewHitTestResult()
-		me.hitTest(widget, 0, 0, hitTestResult, event)
+		me.hitTest(widget, hitTestResult, event)
 		me.hitTestResults[event.Pointer()] = hitTestResult
 		log.V("hitTest", "len = %d", len(me.hitTestResults[event.Pointer()].Results()))
 	case Action_Up:
@@ -127,32 +127,39 @@ func (me *hitTestResultManager) dispatchEvent(event PointerEvent, hitTestResult 
 	}
 }
 
-func (me *hitTestResultManager) hitTest(widget Widget, offsetX, offsetY int32, hitTestResult HitTestResult, event PointerEvent) {
-	if s, ok := widget.(Size); ok {
-		frame := s.Frame()
+type HitTestable interface {
+	HitTest(widget Widget, hitTestResult HitTestResult, event PointerEvent)
+}
 
+func (me *hitTestResultManager) hitTest(widget Widget, hitTestResult HitTestResult, event PointerEvent) {
+	if hit, ok := widget.(HitTestable); ok {
+		hit.HitTest(widget, hitTestResult, event)
+	} else {
 		if p, ok := widget.(Parent); ok {
-			for _, child := range p.Children() {
-				if compt, ok := child.(Component); ok {
-					child = compt.Content()
+			if s, ok := widget.(Size); ok {
+				frame := s.Frame()
+				if event.X() >= float32(frame.X) && event.X() <= float32(frame.X+frame.Width) &&
+					event.Y() >= float32(frame.Y) && event.Y() <= float32(frame.Y+frame.Height) {
+					for _, child := range p.Children() {
+						me.hitTest(child, hitTestResult, event)
+					}
 				}
-
-				me.hitTest(child, offsetX+s.ScrollX(), offsetY+s.ScrollY(), hitTestResult, event)
 			}
 		}
 
-		// log.V("nuxui", "hitTest %T, '%s', ex=%f,ey=%f, x=%d, y=%d, r=%d, b=%d", widget, widget.Info().ID, event.X(), event.Y(),
-		// frame.X, frame.Y, frame.X+frame.Width, frame.Y+frame.Height)
-		// is event in widget
-		if event.X() >= float32(frame.X) && event.X() <= float32(frame.X+frame.Width) &&
-			event.Y() >= float32(frame.Y) && event.Y() <= float32(frame.Y+frame.Height) {
-			// log.V("nuxui", "event in %T, '%s'", widget, widget.Info().ID)
-			if rs := GestureManager().getGestureRecognizers(widget); rs != nil {
-				// log.V("nuxui", "hitTestResult.Add %T, '%s'", widget, widget.Info().ID)
-				hitTestResult.Add(widget)
+		if c, ok := widget.(Component); ok {
+			me.hitTest(c.Content(), hitTestResult, event)
+		}
+
+		if s, ok := widget.(Size); ok {
+			frame := s.Frame()
+			if event.X() >= float32(frame.X) && event.X() <= float32(frame.X+frame.Width) &&
+				event.Y() >= float32(frame.Y) && event.Y() <= float32(frame.Y+frame.Height) {
+
+				if rs := GestureManager().getGestureRecognizers(widget); rs != nil {
+					hitTestResult.Add(widget)
+				}
 			}
 		}
-	} else if c, ok := widget.(Component); ok {
-		me.hitTest(c.Content(), offsetX, offsetY, hitTestResult, event)
 	}
 }

@@ -34,6 +34,7 @@ func NewOpt(attr nux.Attr) Opt {
 	myattr := nux.Attr{
 		"selectable": true,
 		"clickable":  true,
+		"optable":    true,
 	}
 	nux.MergeAttrs(myattr, attr)
 	me := &opt{
@@ -77,17 +78,10 @@ func (me *opt) doOptedChanged(fromUser bool) {
 		}
 		changed = true
 	}
-	if me.iconLeft != nil {
-		if s, ok := me.iconLeft.(nux.Stateable); ok {
-			s.DelState(nux.State_Pressed)
-			if me.opted {
-				s.AddState(nux.State_Opted)
-			} else {
-				s.DelState(nux.State_Opted)
-			}
-			changed = true
-		}
+	if me.updateIconState(me.iconLeft, me.iconTop, me.iconRight, me.iconBottom) {
+		changed = true
 	}
+
 	if changed {
 		nux.RequestRedraw(me)
 	}
@@ -95,6 +89,22 @@ func (me *opt) doOptedChanged(fromUser bool) {
 	if me.listener != nil {
 		me.listener(me, me.opted, fromUser)
 	}
+}
+
+func (me *opt) updateIconState(icons ...nux.Widget) (changed bool) {
+	for _, icon := range icons {
+		if icon != nil {
+			if s, ok := icon.(nux.Stateable); ok {
+				if me.opted {
+					s.AddState(nux.State_Opted)
+				} else {
+					s.DelState(nux.State_Opted)
+				}
+				changed = true
+			}
+		}
+	}
+	return
 }
 
 func (me *opt) SetOpted(opted bool, fromUser bool) {

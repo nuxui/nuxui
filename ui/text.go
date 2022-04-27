@@ -12,7 +12,6 @@ import (
 
 	"github.com/nuxui/nuxui/log"
 	"github.com/nuxui/nuxui/nux"
-	"github.com/nuxui/nuxui/util"
 )
 
 type Text interface {
@@ -118,6 +117,38 @@ func (me *text) SetText(text string) {
 	}
 }
 
+func (me *text) Measure(width, height nux.MeasureDimen) {
+	frame := me.Frame()
+
+	me.paint.SetTextSize(me.textSize)
+	outW, outH := me.paint.MeasureText(me.text, float32(width.Value()), float32(height.Value()))
+
+	hPPx, hPPt, vPPx, vPPt, paddingMeasuredFlag := measurePadding(width, height, me.Padding(), frame, outH, 0)
+	if hPPt >= 100.0 || vPPt >= 100.0 {
+		log.Fatal("nuxui", "padding percent size should at 0% ~ 100%")
+	}
+
+	if width.Mode() == nux.Pixel {
+		frame.Width = width.Value()
+	} else {
+		w := (float32(outW) + hPPx) / (1.0 - hPPt/100.0)
+		frame.Width = int32(math.Ceil(float64(w)))
+		width = nux.MeasureSpec(frame.Width, nux.Pixel)
+	}
+
+	if height.Mode() == nux.Pixel {
+		frame.Height = height.Value()
+	} else {
+		h := (float32(outH) + vPPx) / (1.0 - vPPt/100.0)
+		frame.Height = int32(math.Ceil(float64(h)))
+		height = nux.MeasureSpec(frame.Height, nux.Pixel)
+	}
+
+	if paddingMeasuredFlag&flagMeasuredPaddingComplete != flagMeasuredPaddingComplete {
+		measurePadding(width, height, me.Padding(), frame, outH, paddingMeasuredFlag)
+	}
+}
+
 // Responsible for determining the position of the widget align, margin...
 func (me *text) Layout(x, y, width, height int32) {
 	if me.Background() != nil {
@@ -126,108 +157,6 @@ func (me *text) Layout(x, y, width, height int32) {
 
 	if me.Foreground() != nil {
 		me.Foreground().SetBounds(x, y, width, height)
-	}
-}
-
-func (me *text) Measure(width, height int32) {
-	// measuredDuration := log.Time()
-	// defer log.TimeEnd(measuredDuration, "nuxui", "ui.Text Measure ")
-
-	var vPPt float32 // horizontal padding percent
-	var vPPx float32 // horizontal padding pixel
-	var hPPt float32
-	var hPPx float32
-
-	frame := me.Frame()
-
-	// 1. Calculate its own padding size
-	if me.Padding() != nil {
-		switch me.Padding().Left.Mode() {
-		case nux.Pixel:
-			l := me.Padding().Left.Value()
-			frame.Padding.Left = util.Roundi32(l)
-			hPPx += l
-		case nux.Percent:
-			switch nux.MeasureSpecMode(width) {
-			case nux.Pixel:
-				l := me.Padding().Left.Value() / 100 * float32(nux.MeasureSpecValue(width))
-				frame.Padding.Left = util.Roundi32(l)
-				hPPx += l
-			case nux.Auto:
-				hPPt += me.Padding().Left.Value()
-			}
-		}
-
-		switch me.Padding().Right.Mode() {
-		case nux.Pixel:
-			r := me.Padding().Right.Value()
-			frame.Padding.Right = util.Roundi32(r)
-			hPPx += r
-		case nux.Percent:
-			switch nux.MeasureSpecMode(width) {
-			case nux.Pixel:
-				r := me.Padding().Right.Value() / 100 * float32(nux.MeasureSpecValue(width))
-				frame.Padding.Right = util.Roundi32(r)
-				hPPx += r
-			case nux.Auto:
-				hPPt += me.Padding().Right.Value()
-			}
-		}
-
-		switch me.Padding().Top.Mode() {
-		case nux.Pixel:
-			t := me.Padding().Top.Value()
-			frame.Padding.Top = util.Roundi32(t)
-			vPPx += t
-		case nux.Percent:
-			switch nux.MeasureSpecMode(height) {
-			case nux.Pixel:
-				t := me.Padding().Top.Value() / 100 * float32(nux.MeasureSpecValue(height))
-				frame.Padding.Top = util.Roundi32(t)
-				vPPx += t
-			case nux.Auto:
-				vPPt += me.Padding().Top.Value()
-			}
-		}
-
-		switch me.Padding().Bottom.Mode() {
-		case nux.Pixel:
-			b := me.Padding().Bottom.Value()
-			frame.Padding.Bottom = util.Roundi32(b)
-			vPPx += b
-		case nux.Percent:
-			switch nux.MeasureSpecMode(height) {
-			case nux.Pixel:
-				b := me.Padding().Bottom.Value() / 100 * float32(nux.MeasureSpecValue(height))
-				frame.Padding.Bottom = util.Roundi32(b)
-				vPPx += b
-			case nux.Auto:
-				vPPt += me.Padding().Bottom.Value()
-			}
-		}
-	}
-
-	if nux.MeasureSpecMode(width) == nux.Auto || nux.MeasureSpecMode(height) == nux.Auto {
-		w := int32(width)
-		h := int32(height)
-
-		me.paint.SetTextSize(me.textSize)
-		outW, outH := me.paint.MeasureText(me.text, float32(nux.MeasureSpecValue(w)), float32(nux.MeasureSpecValue(h)))
-
-		frame := me.Frame()
-		if nux.MeasureSpecMode(width) == nux.Auto {
-			w := (float32(outW) + hPPx) / (1.0 - hPPt/100.0)
-			frame.Width = nux.MeasureSpec(int32(math.Ceil(float64(w))), nux.Pixel)
-		} else {
-			frame.Width = width
-		}
-
-		if nux.MeasureSpecMode(height) == nux.Auto {
-			h := (float32(outH) + vPPx) / (1.0 - vPPt/100.0)
-			frame.Height = nux.MeasureSpec(int32(math.Ceil(float64(h))), nux.Pixel)
-		} else {
-			frame.Height = height
-		}
 	}
 }
 
@@ -251,5 +180,4 @@ func (me *text) Draw(canvas nux.Canvas) {
 	if me.Foreground() != nil {
 		me.Foreground().Draw(canvas)
 	}
-
 }

@@ -43,14 +43,13 @@ type window struct {
 	initEvent PointerEvent
 	timer     Timer
 
-	width   int32
-	height  int32
-	title   string
+	width  int32
+	height int32
+	title  string
 }
 
 func newWindow(attr Attr) *window {
-	me := &window{
-	}
+	me := &window{}
 
 	me.CreateDecor(attr)
 	mountWidget(me.decor, nil)
@@ -116,7 +115,7 @@ func (me *window) CreateDecor(attr Attr) Widget {
 // 	return me.decor
 // }
 
-// func (me *window) Measure(width, height int32) {
+// func (me *window) Measure(width, height MeasureDimen) {
 // 	if me.decor == nil {
 // 		return
 // 	}

@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/nuxui/nuxui/log"
 	"github.com/nuxui/nuxui/nux"
 )
 
@@ -59,7 +58,6 @@ var template = `
   `
 
 func TestAttr(t *testing.T) {
-	defer log.Close()
 	// attr := nux.ParseAttr(template)
 	// log.V("test", "%s", attr)
 

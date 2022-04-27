@@ -51,7 +51,7 @@ func (me *application) handleEvent(event Event) {
 			w, h := event.Window().ContentSize()
 			log.V("nuxui", "Action_WindowMeasured width=%d, height=%d", w, h)
 			if f, ok := event.Window().(Measure); ok {
-				f.Measure(w, h)
+				f.Measure(MeasureSpec(w, Pixel), MeasureSpec(h, Pixel))
 			}
 
 			if f, ok := event.Window().(Layout); ok {

@@ -62,19 +62,19 @@ func (me *window) OnCreate() {
 
 }
 
-func (me *window) Measure(width, height int32) {
+func (me *window) Measure(width, height MeasureDimen) {
 	if me.decor == nil {
 		return
 	}
 
 	if s, ok := me.decor.(Size); ok {
 		f := s.Frame()
-		if f.Width == width && f.Height == height {
+		if f.Width == width.Value() && f.Height == height.Value() {
 			// return
 		}
 
-		f.Width = width
-		f.Height = height
+		f.Width = width.Value()
+		f.Height = height.Value()
 	}
 
 	if f, ok := me.decor.(Measure); ok {

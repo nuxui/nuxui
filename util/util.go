@@ -63,8 +63,33 @@ func Ref2Ptr(ptr any) uintptr {
 
 // SameFunc compare two func and return true if equal
 func SameFunc(a, b any) bool {
+	// TODO:: check a, b is func
 	if a == nil || b == nil {
 		return a == b
 	}
 	return reflect.ValueOf(a).Pointer() == reflect.ValueOf(b).Pointer()
+}
+
+func MaxF(values ...float32) (max float32) {
+	if len(values) > 0 {
+		max = values[0]
+	}
+	for _, v := range values {
+		if v > max {
+			max = v
+		}
+	}
+	return
+}
+
+func MinF(values ...float32) (min float32) {
+	if len(values) > 0 {
+		min = values[0]
+	}
+	for _, v := range values {
+		if v < min {
+			min = v
+		}
+	}
+	return
 }

@@ -140,75 +140,35 @@ func (me *image) State() uint32 {
 func (me *image) Mount() {
 }
 
-func (me *image) Measure(width, height int32) {
+func (me *image) Measure(width, height nux.MeasureDimen) {
 	frame := me.Frame()
 
-	if me.Padding() != nil {
-		p := me.Padding()
-		switch p.Left.Mode() {
-		case nux.Pixel:
-			frame.Padding.Left = util.Roundi32(p.Left.Value())
-		case nux.Percent:
-			if nux.MeasureSpecMode(width) == nux.Pixel {
-				// frame.Padding.Left = util.Roundi32(p.Left.Value() * float32(nux.MeasureSpecValue(width)))
-			} else {
-				// TODO::
-			}
-		}
-
-		switch p.Top.Mode() {
-		case nux.Pixel:
-			frame.Padding.Top = util.Roundi32(p.Top.Value())
-		case nux.Percent:
-			if nux.MeasureSpecMode(height) == nux.Pixel {
-				// frame.Padding.Top = util.Roundi32(p.Top.Value() * float32(nux.MeasureSpecValue(height)))
-			} else {
-				// TODO::
-			}
-		}
-
-		switch p.Right.Mode() {
-		case nux.Pixel:
-			frame.Padding.Right = util.Roundi32(p.Right.Value())
-		case nux.Percent:
-			if nux.MeasureSpecMode(width) == nux.Pixel {
-				// frame.Padding.Right = util.Roundi32(p.Right.Value() * float32(nux.MeasureSpecValue(width)))
-			} else {
-				// TODO::
-			}
-		}
-
-		switch p.Bottom.Mode() {
-		case nux.Pixel:
-			frame.Padding.Bottom = util.Roundi32(p.Bottom.Value())
-		case nux.Percent:
-			if nux.MeasureSpecMode(height) == nux.Pixel {
-				// frame.Padding.Bottom = util.Roundi32(p.Bottom.Value() * float32(nux.MeasureSpecValue(height)))
-			} else {
-				// TODO::
-			}
-		}
+	hPPx, hPPt, vPPx, vPPt, paddingMeasuredFlag := measurePadding(width, height, me.Padding(), frame, -1, 0)
+	if hPPt >= 100.0 || vPPt >= 100.0 {
+		log.Fatal("nuxui", "padding percent size should at 0% ~ 100%")
 	}
 
-	if nux.MeasureSpecMode(width) == nux.Auto || nux.MeasureSpecMode(height) == nux.Auto {
-		var dw, dh int32
-		if me.srcDrawable != nil {
-			dw, dh = me.srcDrawable.Size()
-		}
-		if nux.MeasureSpecMode(width) == nux.Auto {
-			frame.Width = dw
-		} else {
-			frame.Width = nux.MeasureSpecValue(width)
-		}
-		if nux.MeasureSpecMode(height) == nux.Auto {
-			frame.Height = dh
-		} else {
-			frame.Height = nux.MeasureSpecValue(height)
-		}
+	var dw, dh int32
+	if me.srcDrawable != nil {
+		dw, dh = me.srcDrawable.Size()
+	}
+	if width.Mode() == nux.Pixel {
+		frame.Width = width.Value()
+	} else {
+		frame.Width = util.Roundi32((float32(dw) + hPPx) / (1 - hPPt/100.0))
+		width = nux.MeasureSpec(frame.Width, nux.Pixel)
+	}
+	if height.Mode() == nux.Pixel {
+		frame.Height = height.Value()
+	} else {
+		frame.Height = util.Roundi32((float32(dh) + vPPx) / (1 - vPPt/100.0))
+		height = nux.MeasureSpec(frame.Height, nux.Pixel)
 	}
 
-	frame.Width += frame.Padding.Left + frame.Padding.Right
-	frame.Height += frame.Padding.Top + frame.Padding.Bottom
+	if paddingMeasuredFlag&flagMeasuredPaddingComplete != flagMeasuredPaddingComplete {
+		measurePadding(width, height, me.Padding(), frame, -1, paddingMeasuredFlag)
+	}
+	return
 }
 
 func (me *image) Layout(x, y, width, height int32) {

@@ -42,11 +42,27 @@ type Frame struct {
 }
 
 func (me *Frame) String() string {
-	return fmt.Sprintf("{width: %s, height: %s, padding:{left: %d, top: %d, right: %d, bottom: %d}, margin:{left: %d, top: %d, right: %d, bottom: %d}", MeasureSpecString(me.Width),
-		MeasureSpecString(me.Height), me.Padding.Left, me.Padding.Top, me.Padding.Right, me.Padding.Bottom, me.Margin.Left, me.Margin.Top, me.Margin.Right, me.Margin.Bottom)
+	return fmt.Sprintf("{width: %d, height: %d, padding:{left: %d, top: %d, right: %d, bottom: %d}, margin:{left: %d, top: %d, right: %d, bottom: %d}", me.Width,
+		me.Height, me.Padding.Left, me.Padding.Top, me.Padding.Right, me.Padding.Bottom, me.Margin.Left, me.Margin.Top, me.Margin.Right, me.Margin.Bottom)
 }
 
-// padding: !auto 10px 10dp 1em 5% !wt !ratio
+func (me *Frame) Clear() {
+	me.Width = 0
+	me.Height = 0
+	me.Margin.Left = 0
+	me.Margin.Top = 0
+	me.Margin.Right = 0
+	me.Margin.Bottom = 0
+	me.Padding.Left = 0
+	me.Padding.Top = 0
+	me.Padding.Right = 0
+	me.Padding.Bottom = 0
+}
+
+/* padding:  only supported definite size and Percent size
+10px 10dp 1em 5% !auto !wt !ratio !unlimit
+padding Percent size is associate with parent size, eg: 5% = 0.05*parent.Width
+*/
 type Padding struct {
 	Left   Dimen
 	Top    Dimen
@@ -70,7 +86,7 @@ func getPadding(attr Attr, key string, defaultValue string) Dimen {
 	d := attr.GetDimen(key, defaultValue)
 	switch d.Mode() {
 	case Auto, Weight, Unlimit, Ratio:
-		log.Fatal("nuxui", "Unsupported padding dimension mode %s at %s: %s, only supported Pixel, dp, Percent.", d.Mode(), key, d)
+		log.Fatal("nuxui", "Unsupported padding dimension mode %s at %s: %s, only supported definite size and Percent size", d.Mode(), key, d)
 	default:
 		return d
 	}

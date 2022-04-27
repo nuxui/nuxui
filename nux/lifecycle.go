@@ -31,7 +31,7 @@ type Eject interface {
 // }
 
 type Measure interface {
-	Measure(width, height int32)
+	Measure(width, height MeasureDimen)
 }
 
 type Layout interface {
