@@ -35,8 +35,6 @@ func newWindow(attr Attr) *window {
 	}
 
 	me.CreateDecor(attr)
-	GestureManager().AddGestureHandler(me.decor, &decorGestureHandler{})
-	mountWidget(me.decor, nil)
 	return me
 }
 
@@ -171,11 +169,11 @@ func (me *window) handlePointerEvent(e PointerEvent) {
 		}
 	}
 
-	gestureManagerInstance.handlePointerEvent(me.Decor(), e)
+	hitTestResultManagerInstance.handlePointerEvent(me.Decor(), e)
 }
 
 func (me *window) handleScrollEvent(e ScrollEvent) {
-	gestureManagerInstance.handleScrollEvent(me.Decor(), e)
+	hitTestResultManagerInstance.handleScrollEvent(me.Decor(), e)
 }
 
 func (me *window) handleKeyEvent(e KeyEvent) {

@@ -52,7 +52,6 @@ func newWindow(attr Attr) *window {
 	me := &window{}
 
 	me.CreateDecor(attr)
-	mountWidget(me.decor, nil)
 	return me
 }
 

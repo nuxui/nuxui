@@ -4,8 +4,6 @@
 
 package win32
 
-import "github.com/go-ole/go-ole"
-
 type GpState int32
 type GpStatus int32
 type GpGraphics struct{}
@@ -87,17 +85,17 @@ type Point struct {
 	Y int32
 }
 
-type EncoderParameter struct {
-	Guid           ole.GUID
-	NumberOfValues uint32
-	TypeAPI        uint32
-	Value          uintptr
-}
+// type EncoderParameter struct {
+// 	Guid           ole.GUID
+// 	NumberOfValues uint32
+// 	TypeAPI        uint32
+// 	Value          uintptr
+// }
 
-type EncoderParameters struct {
-	Count     uint32
-	Parameter [1]EncoderParameter
-}
+// type EncoderParameters struct {
+// 	Count     uint32
+// 	Parameter [1]EncoderParameter
+// }
 
 // In-memory pixel data formats:
 // bits 0-7 = format index

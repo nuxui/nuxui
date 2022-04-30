@@ -47,9 +47,6 @@ func newWindow(attr Attr) *window {
 	me := &window{}
 
 	me.CreateDecor(attr)
-	log.I("nuxui", "====== mount decor")
-	// mountWidget(me.decor, nil)
-	log.I("nuxui", "====== mount decor end ")
 	return me
 }
 

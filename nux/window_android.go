@@ -41,10 +41,6 @@ func newWindow(attr Attr) *window {
 	me := &window{}
 
 	me.CreateDecor(me.attr)
-	GestureManager().AddGestureHandler(me.decor, &decorGestureHandler{})
-	log.I("nuxui", "====== mount decor")
-	mountWidget(me.decor, nil)
-	log.I("nuxui", "====== mount decor end ")
 	return me
 }
 
@@ -136,11 +132,11 @@ func (me *window) handlePointerEvent(e PointerEvent) {
 		}
 	}
 
-	gestureManagerInstance.handlePointerEvent(me.Decor(), e)
+	hitTestResultManagerInstance.handlePointerEvent(me.Decor(), e)
 }
 
 func (me *window) handleScrollEvent(e ScrollEvent) {
-	gestureManagerInstance.handleScrollEvent(me.Decor(), e)
+	hitTestResultManagerInstance.handleScrollEvent(me.Decor(), e)
 }
 
 func (me *window) handleKeyEvent(e KeyEvent) {

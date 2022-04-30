@@ -86,6 +86,10 @@ func (me *canvas) ClipRect(left, top, right, bottom float32) {
 	me.clip.Bottom = bottom
 }
 
+func (me *canvas) ClipRoundRect(x, y, width, height, radius float32) {
+	//TODO::
+}
+
 func (me *canvas) ClipPath(path Path) {
 	// TODO::
 }

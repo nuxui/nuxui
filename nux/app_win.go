@@ -126,7 +126,7 @@ var (
 
 func run() {
 	defer runtime.UnlockOSThread()
-
+	mainThreadId = win32.GetCurrentThreadId()
 	var in win32.GdiplusStartupInput
 	var out win32.GdiplusStartupOutput
 	fmt.Printf("GdiplusStartupInput size = %d\n", unsafe.Sizeof(in))
@@ -540,4 +540,10 @@ func convertModifierFlags(flags uint32) uint32 {
 
 func convertVirtualKeyCode(vkcode uint16) KeyCode {
 	return 0
+}
+
+var mainThreadId uint32
+
+func isMainThread() bool {
+	return mainThreadId == win32.GetCurrentThreadId()
 }
