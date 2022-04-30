@@ -19,7 +19,7 @@ func init() {
 	nux.RegisterWidget((*Opt)(nil), func(attr nux.Attr) nux.Widget { return NewOpt(attr) })
 	nux.RegisterWidget((*Radio)(nil), func(attr nux.Attr) nux.Widget { return NewRadio(attr) })
 	nux.RegisterWidget((*Options)(nil), func(attr nux.Attr) nux.Widget { return NewOptions(attr) })
-	nux.RegisterWidget((*SeekBar)(nil), func(attr nux.Attr) nux.Widget { return NewSeekBar(attr) })
+	// nux.RegisterWidget((*SeekBar)(nil), func(attr nux.Attr) nux.Widget { return NewSeekBar(attr) })
 	nux.RegisterWidget((*Switch)(nil), func(attr nux.Attr) nux.Widget { return NewSwitch(attr) })
 
 	nux.RegisterDrawable((*ColorDrawable)(nil), func(attr nux.Attr) nux.Drawable { return NewColorDrawable(attr) })
