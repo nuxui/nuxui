@@ -17,7 +17,7 @@ func newCanvas(hdcBuffer uintptr) *canvas {
 		pen:    &win32.GpPen{},
 		brush:  &win32.GpBrush{},
 		states: []win32.GpState{},
-		clip:   &RectF{0, 0, 99999, 99999},
+		clip:   &win32.RectF{0, 0, 99999, 99999},
 	}
 	win32.GdipCreateFromHDC(hdcBuffer, &me.ptr)
 	win32.GdipCreatePen1(0, 1, win32.UnitWorld, &me.pen)
@@ -31,7 +31,7 @@ type canvas struct {
 	pen    *win32.GpPen
 	brush  *win32.GpBrush
 	states []win32.GpState
-	clip   *RectF
+	clip   *win32.RectF
 }
 
 func (me *canvas) ResetClip() {
@@ -78,16 +78,22 @@ func (me *canvas) GetMatrix() Matrix {
 	return Matrix{}
 }
 
-func (me *canvas) ClipRect(left, top, right, bottom float32) {
-	win32.GdipSetClipRect(me.ptr, left, top, right-left, bottom-top, win32.CombineModeReplace)
-	me.clip.Left = left
-	me.clip.Top = top
-	me.clip.Right = right
-	me.clip.Bottom = bottom
+func (me *canvas) ClipRect(x, y, width, height float32) {
+	win32.GdipSetClipRect(me.ptr, x, y, width, height, win32.CombineModeReplace)
+	me.clip.X = x
+	me.clip.Y = y
+	me.clip.Width = width
+	me.clip.Height = height
 }
 
 func (me *canvas) ClipRoundRect(x, y, width, height, radius float32) {
-	//TODO::
+	// TODO::
+
+	win32.GdipSetClipRect(me.ptr, x, y, width, height, win32.CombineModeReplace)
+	me.clip.X = x
+	me.clip.Y = y
+	me.clip.Width = width
+	me.clip.Height = height
 }
 
 func (me *canvas) ClipPath(path Path) {
@@ -96,52 +102,45 @@ func (me *canvas) ClipPath(path Path) {
 func (me *canvas) SetAlpha(alpha float32) {
 }
 
-func (me *canvas) DrawRect(left, top, right, bottom float32, paint Paint) {
+func (me *canvas) DrawRect(x, y, width, height float32, paint Paint) {
 	switch paint.Style() {
 	case PaintStyle_Stroke:
 		{
 			win32.GdipSetPenColor(me.pen, win32.ARGB(paint.Color()))
 			win32.GdipSetPenWidth(me.pen, paint.Width())
-			win32.GdipDrawRectangle(me.ptr, me.pen, left, top, right, bottom)
+			win32.GdipDrawRectangle(me.ptr, me.pen, x, y, width, height)
 		}
 	case PaintStyle_Fill:
 		{
 			win32.GdipSetSolidFillColor(me.brush, win32.ARGB(paint.Color()))
-			win32.GdipFillRectangle(me.ptr, me.brush, left, top, right, bottom)
+			win32.GdipFillRectangle(me.ptr, me.brush, x, y, width, height)
 		}
 	case PaintStyle_Both:
 		{
 			win32.GdipSetPenColor(me.pen, win32.ARGB(paint.Color()))
 			win32.GdipSetPenWidth(me.pen, paint.Width())
-			win32.GdipDrawRectangle(me.ptr, me.pen, left, top, right, bottom)
+			win32.GdipDrawRectangle(me.ptr, me.pen, x, y, width, height)
 
 			win32.GdipSetSolidFillColor(me.brush, win32.ARGB(paint.Color()))
-			win32.GdipFillRectangle(me.ptr, me.brush, left, top, right, bottom)
+			win32.GdipFillRectangle(me.ptr, me.brush, x, y, width, height)
 		}
 	}
 }
 
-func (me *canvas) DrawRoundRect(left, top, right, bottom float32, radius float32, paint Paint) {
+func (me *canvas) DrawRoundRect(x, y, width, height float32, radius float32, paint Paint) {
 	// TODO::
+	me.DrawRect(x, y, width, height, paint)
 }
 
 func (me *canvas) DrawArc(x, y, radius, startAngle, endAngle float32, useCenter bool, paint Paint) {
 	// TODO:: useCenter
 }
 
-func (me *canvas) DrawOval(left, top, right, bottom float32, paint Paint) {
+func (me *canvas) DrawOval(x, y, width, height float32, paint Paint) {
 }
 
 func (me *canvas) DrawPath(path Path) {
 	// TODO::
-}
-func (me *canvas) DrawColor(color Color) {
-	if (color>>24)&0xff == 255 {
-		win32.GdipGraphicsClear(me.ptr, win32.ARGB(color))
-	} else {
-		win32.GdipSetSolidFillColor(me.brush, win32.ARGB(color))
-		win32.GdipFillRectangle(me.ptr, me.brush, me.clip.Left, me.clip.Top, me.clip.Right, me.clip.Bottom)
-	}
 }
 
 func (me *canvas) DrawImage(img Image) {
@@ -170,6 +169,7 @@ func (me *canvas) DrawText(text string, width, height float32, paint Paint) {
 func (me *canvas) Flush() {
 	win32.GdipFlush(me.ptr, win32.FlushIntentionFlush)
 }
+
 func (me *canvas) Destroy() {
 	win32.GdipDeletePen(me.pen)
 	win32.GdipDeleteBrush(me.brush)
@@ -180,21 +180,21 @@ func (me *paint) MeasureText(text string, width, height float32) (outWidth float
 	if text == "" {
 		return 0, 0
 	}
-	// hwnd := theApp.window.hwnd
-	// font := &win32.GpFont{}
-	// family := &win32.GpFontFamily{}
-	// win32.GdipGetGenericFontFamilyMonospace(&family)
-	// win32.GdipCreateFont(family, me.textSize, 0, 0, &font)
 
-	// str, _ := syscall.UTF16FromString(text)
-	// layout := &win32.RectF{0, 0, width, height}
-	// size := &win32.RectF{}
-	// g := &win32.GpGraphics{}
-	// win32.GdipCreateFromHWND(hwnd, &g)
-	// win32.GdipMeasureString(g, &str[0], int32(len(str)), font, layout, nil, size, nil, nil)
-	// win32.GdipDeleteGraphics(g)
-	// return size.Width, size.Height
-	return 500, 100
+	hwnd := theApp.window.hwnd
+	font := &win32.GpFont{}
+	family := &win32.GpFontFamily{}
+	win32.GdipGetGenericFontFamilyMonospace(&family)
+	win32.GdipCreateFont(family, me.textSize, 0, 0, &font)
+
+	str, _ := syscall.UTF16FromString(text)
+	layout := &win32.RectF{0, 0, width, height}
+	size := &win32.RectF{}
+	g := &win32.GpGraphics{}
+	win32.GdipCreateFromHWND(hwnd, &g)
+	win32.GdipMeasureString(g, &str[0], int32(len(str)), font, layout, nil, size, nil, nil)
+	win32.GdipDeleteGraphics(g)
+	return size.Width, size.Height
 }
 
 func (me *paint) CharacterIndexForPoint(text string, width, height float32, x, y float32) uint32 {

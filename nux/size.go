@@ -32,13 +32,20 @@ type Size interface {
 	RemoveSizeObserver(observer func())
 }
 
+type Side struct {
+	Left   int32
+	Top    int32
+	Right  int32
+	Bottom int32
+}
+
 type Frame struct {
 	X       int32
 	Y       int32
 	Width   int32
 	Height  int32
-	Padding Rect
-	Margin  Rect
+	Padding Side
+	Margin  Side
 }
 
 func (me *Frame) String() string {

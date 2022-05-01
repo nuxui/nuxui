@@ -159,12 +159,16 @@ func (me *canvas) GetMatrix() Matrix {
 	return Matrix{}
 }
 
-func (me *canvas) ClipRect(left, top, right, bottom float32) {
-	if right < left || bottom < top {
+func (me *canvas) ClipRect(x, y, width, height float32) {
+	if width < 0 || height < 0 {
 		log.Fatal("nuxui", "invalid rect for clip")
 	}
-	C.cairo_rectangle(me.ptr, C.double(left), C.double(top), C.double(right-left), C.double(bottom-top))
+	C.cairo_rectangle(me.ptr, C.double(x), C.double(y), C.double(width), C.double(height))
 	C.cairo_clip(me.ptr)
+}
+
+func (me *canvas) ClipRoundRect(x, y, width, height, radius float32) {
+	// TODO::
 }
 
 func (me *canvas) ClipPath(path Path) {
@@ -173,8 +177,8 @@ func (me *canvas) ClipPath(path Path) {
 func (me *canvas) SetAlpha(alpha float32) {
 }
 
-func (me *canvas) DrawRect(left, top, right, bottom float32, paint Paint) {
-	if right <= left || bottom <= top {
+func (me *canvas) DrawRect(x, y, width, height float32, paint Paint) {
+	if width < 0 || height < 0 {
 		return
 	}
 
@@ -186,7 +190,7 @@ func (me *canvas) DrawRect(left, top, right, bottom float32, paint Paint) {
 
 	}
 
-	C.cairo_rectangle(me.ptr, C.double(left), C.double(top), C.double(right-left), C.double(bottom-top))
+	C.cairo_rectangle(me.ptr, C.double(x), C.double(y), C.double(width), C.double(height))
 	me.drawPaint(paint)
 
 	if fix {
@@ -194,8 +198,8 @@ func (me *canvas) DrawRect(left, top, right, bottom float32, paint Paint) {
 	}
 }
 
-func (me *canvas) DrawRoundRect(left, top, right, bottom float32, radius float32, paint Paint) {
-	if right <= left || bottom <= top {
+func (me *canvas) DrawRoundRect(x, y, width, height float32, radius float32, paint Paint) {
+	if width < 0 || height < 0 {
 		return
 	}
 
@@ -208,10 +212,10 @@ func (me *canvas) DrawRoundRect(left, top, right, bottom float32, radius float32
 	}
 
 	C.cairo_new_sub_path(me.ptr)
-	C.cairo_arc(me.ptr, C.double(right-radius), C.double(top+radius), C.double(radius), -90*DEGREE, 0)
-	C.cairo_arc(me.ptr, C.double(right-radius), C.double(bottom-radius), C.double(radius), 0, 90*DEGREE)
-	C.cairo_arc(me.ptr, C.double(left+radius), C.double(bottom-radius), C.double(radius), 90*DEGREE, 180*DEGREE)
-	C.cairo_arc(me.ptr, C.double(left+radius), C.double(top+radius), C.double(radius), 180*DEGREE, 270*DEGREE)
+	C.cairo_arc(me.ptr, C.double(x+width-radius), C.double(y+radius), C.double(radius), -90*DEGREE, 0)
+	C.cairo_arc(me.ptr, C.double(x+width-radius), C.double(y+height-radius), C.double(radius), 0, 90*DEGREE)
+	C.cairo_arc(me.ptr, C.double(x+radius), C.double(y+height-radius), C.double(radius), 90*DEGREE, 180*DEGREE)
+	C.cairo_arc(me.ptr, C.double(x+radius), C.double(y+radius), C.double(radius), 180*DEGREE, 270*DEGREE)
 	C.cairo_close_path(me.ptr)
 	me.drawPaint(paint)
 
@@ -231,24 +235,18 @@ func (me *canvas) DrawArc(x, y, radius, startAngle, endAngle float32, useCenter 
 	}
 }
 
-func (me *canvas) DrawOval(left, top, right, bottom float32, paint Paint) {
-	if left > right || top > bottom {
-		return
-	}
-
+func (me *canvas) DrawOval(x, y, width, height float32, paint Paint) {
 	me.Save()
-	width := right - left
-	height := bottom - top
 	var centerX, centerY, scaleX, scaleY, radius float32
 	if width > height {
-		centerX = left + width/2.0
-		centerY = top + width/2.0
+		centerX = x + width/2.0
+		centerY = y + width/2.0
 		scaleX = 1.0
 		scaleY = height / width
 		radius = width / 2.0
 	} else {
-		centerX = left + height/2.0
-		centerY = top + height/2.0
+		centerX = x + height/2.0
+		centerY = y + height/2.0
 		scaleX = width / height
 		scaleY = 1.0
 		radius = height / 2.0
@@ -315,7 +313,7 @@ func (me *paint) MeasureText(text string, width, height float32) (outWidth float
 	if text == "" {
 		return 0, 0
 	}
-	
+
 	cfamily := C.CString("")
 	ctext := C.CString(text)
 	var w, h C.int
