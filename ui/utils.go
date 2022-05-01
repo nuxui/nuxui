@@ -7,8 +7,8 @@ package ui
 import (
 	"strings"
 
-	"github.com/nuxui/nuxui/nux"
-	"github.com/nuxui/nuxui/util"
+	"nuxui.org/nuxui/nux"
+	"nuxui.org/nuxui/util"
 )
 
 func setRatioHeightIfNeed(cs nux.Size, cms *nux.Frame, width float32, mode nux.Mode) {

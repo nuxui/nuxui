@@ -5,7 +5,7 @@
 package theme
 
 import (
-	"github.com/nuxui/nuxui/nux"
+	"nuxui.org/nuxui/nux"
 )
 
 type Material struct {
@@ -23,7 +23,7 @@ func (me *Material) GetAttr(widgetName, themeName, themeKind, styleName string) 
 			"textShadow": nux.Attr{"color": 0x88000000, "x": 0, "y": 2, "blur": 3},
 			"padding":    nux.Attr{"left": 16, "top": 8, "right": 16, "bottom": 8},
 			"background": nux.Attr{
-				"drawable": "github.com/nuxui/nuxui/ui.ShapeDrawable",
+				"drawable": "nuxui.org/nuxui/ui.ShapeDrawable",
 				"states": []nux.Attr{
 					{
 						"state": "default",

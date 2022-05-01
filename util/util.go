@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/nuxui/nuxui/log"
+	"nuxui.org/nuxui/log"
 )
 
 func TypeName(a any) string {

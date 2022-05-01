@@ -7,8 +7,8 @@
 package nux
 
 import (
-	"github.com/nuxui/nuxui/log"
-	"github.com/nuxui/nuxui/nux/internal/win32"
+	"nuxui.org/nuxui/log"
+	"nuxui.org/nuxui/nux/internal/win32"
 )
 
 type window struct {
@@ -39,7 +39,7 @@ func newWindow(attr Attr) *window {
 }
 
 func (me *window) CreateDecor(attr Attr) Widget {
-	creator := FindRegistedWidgetCreator("github.com/nuxui/nuxui/ui.Layer")
+	creator := FindRegistedWidgetCreator("nuxui.org/nuxui/ui.Layer")
 	w := creator(attr)
 	if p, ok := w.(Parent); ok {
 		me.decor = p

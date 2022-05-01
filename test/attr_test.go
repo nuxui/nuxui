@@ -8,13 +8,13 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/nuxui/nuxui/nux"
+	"nuxui.org/nuxui/nux"
 )
 
 var template = `
 {
   import: {
-    ui: github.com/nuxui/nuxui/ui,
+    ui: nuxui.org/nuxui/ui,
   },
 
   layout: {

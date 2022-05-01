@@ -24,7 +24,7 @@ import "C"
 import (
 	"unsafe"
 
-	"github.com/nuxui/nuxui/log"
+	"nuxui.org/nuxui/log"
 )
 
 type window struct {
@@ -56,7 +56,7 @@ func newWindow(attr Attr) *window {
 }
 
 func (me *window) CreateDecor(attr Attr) Widget {
-	creator := FindRegistedWidgetCreator("github.com/nuxui/nuxui/ui.Layer")
+	creator := FindRegistedWidgetCreator("nuxui.org/nuxui/ui.Layer")
 	w := creator(attr)
 	if p, ok := w.(Parent); ok {
 		me.decor = p
@@ -101,7 +101,7 @@ func (me *window) CreateDecor(attr Attr) Widget {
 // }
 
 // func (me *window) CreateDecor(attr Attr) Widget {
-// 	creator := FindRegistedWidgetCreator("github.com/nuxui/nuxui/ui.Layer")
+// 	creator := FindRegistedWidgetCreator("nuxui.org/nuxui/ui.Layer")
 // 	w := creator(ctx, attr)
 // 	if p, ok := w.(Parent); ok {
 // 		me.decor = p

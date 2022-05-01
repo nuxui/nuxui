@@ -27,7 +27,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/nuxui/nuxui/log"
+	"nuxui.org/nuxui/log"
 )
 
 var theApp = &application{

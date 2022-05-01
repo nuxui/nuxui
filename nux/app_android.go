@@ -23,8 +23,8 @@ import (
 	"time"
 	// "unsafe"
 
-	"github.com/nuxui/nuxui/log"
-	"github.com/nuxui/nuxui/nux/internal/callfn"
+	"nuxui.org/nuxui/log"
+	"nuxui.org/nuxui/nux/internal/callfn"
 )
 
 var theApp = &application{

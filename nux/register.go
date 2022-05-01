@@ -9,7 +9,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/nuxui/nuxui/log"
+	"nuxui.org/nuxui/log"
 )
 
 var _widgetList = make(map[string]WidgetCreator)

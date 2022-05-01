@@ -7,7 +7,7 @@
 package nux
 
 import (
-	"github.com/nuxui/nuxui/nux/internal/win32"
+	"nuxui.org/nuxui/nux/internal/win32"
 	"syscall"
 )
 
@@ -55,7 +55,7 @@ func (me *canvas) Translate(x, y float32) {
 }
 
 func (me *canvas) Scale(x, y float32) {
-	win32.GdipScaleWorldTransform(me.ptr, x, y, win32.MatrixOrderAppend)
+	// win32.GdipScaleWorldTransform(me.ptr, x, y, win32.MatrixOrderAppend)
 }
 
 func (me *canvas) Rotate(angle float32) {
@@ -181,6 +181,7 @@ func (me *paint) MeasureText(text string, width, height float32) (outWidth float
 		return 0, 0
 	}
 
+	// TODO:: use hdc as args for newCanvas
 	hwnd := theApp.window.hwnd
 	font := &win32.GpFont{}
 	family := &win32.GpFontFamily{}

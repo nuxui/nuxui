@@ -4,7 +4,7 @@
 
 package ui
 
-import "github.com/nuxui/nuxui/nux"
+import "nuxui.org/nuxui/nux"
 
 type Switch Opt
 

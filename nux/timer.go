@@ -7,7 +7,7 @@ package nux
 import (
 	"time"
 
-	"github.com/nuxui/nuxui/log"
+	"nuxui.org/nuxui/log"
 )
 
 type timerLoop struct {

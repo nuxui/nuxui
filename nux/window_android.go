@@ -20,7 +20,7 @@ void surfaceHolder_unlockCanvas(jobject surfaceHolder, jobject canvas);
 */
 import "C"
 import (
-	"github.com/nuxui/nuxui/log"
+	"nuxui.org/nuxui/log"
 )
 
 type window struct {
@@ -45,7 +45,7 @@ func newWindow(attr Attr) *window {
 }
 
 func (me *window) CreateDecor(attr Attr) Widget {
-	creator := FindRegistedWidgetCreator("github.com/nuxui/nuxui/ui.Layer")
+	creator := FindRegistedWidgetCreator("nuxui.org/nuxui/ui.Layer")
 	attr.Set("padding", Attr{"top": "75px"})
 	w := creator(attr)
 	if p, ok := w.(Parent); ok {

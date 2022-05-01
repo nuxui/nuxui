@@ -30,7 +30,7 @@ void paint_measureText(jobject paint, char* text, jint width, jint *outWidth, ji
 */
 import "C"
 import (
-// "github.com/nuxui/nuxui/log"
+// "nuxui.org/nuxui/log"
 // "unicode/utf16"
 )
 

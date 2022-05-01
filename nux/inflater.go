@@ -7,7 +7,7 @@ package nux
 import (
 	"strings"
 
-	"github.com/nuxui/nuxui/log"
+	"nuxui.org/nuxui/log"
 )
 
 func InflateLayout(parent Widget, layout string) Widget {
@@ -94,11 +94,11 @@ func InflateDrawable(drawable any) Drawable {
 	switch t := drawable.(type) {
 	case string:
 		if strings.HasPrefix(t, "#") {
-			return InflateDrawable(Attr{"drawable": "github.com/nuxui/nuxui/ui.ColorDrawable", "color": t})
+			return InflateDrawable(Attr{"drawable": "nuxui.org/nuxui/ui.ColorDrawable", "color": t})
 		} else if strings.HasPrefix(t, "assets/") {
-			return InflateDrawable(Attr{"drawable": "github.com/nuxui/nuxui/ui.ImageDrawable", "src": t})
+			return InflateDrawable(Attr{"drawable": "nuxui.org/nuxui/ui.ImageDrawable", "src": t})
 		} else if strings.HasPrefix(t, "http://") {
-			return InflateDrawable(Attr{"drawable": "github.com/nuxui/nuxui/ui.ImageDrawable", "src": t})
+			return InflateDrawable(Attr{"drawable": "nuxui.org/nuxui/ui.ImageDrawable", "src": t})
 		}
 	case Attr:
 		return InflateDrawableAttr(t)

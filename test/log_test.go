@@ -7,7 +7,7 @@ package test
 import (
 	"testing"
 
-	"github.com/nuxui/nuxui/log"
+	"nuxui.org/nuxui/log"
 )
 
 func TestLog(t *testing.T) {

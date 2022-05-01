@@ -10,7 +10,7 @@ import (
 	"runtime"
 	"syscall"
 
-	"github.com/nuxui/nuxui/nux/internal/win32"
+	"nuxui.org/nuxui/nux/internal/win32"
 )
 
 func CreateImage(path string) Image {

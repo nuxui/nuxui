@@ -4,7 +4,7 @@
 
 package nux
 
-import "github.com/nuxui/nuxui/log"
+import "nuxui.org/nuxui/log"
 
 type EventAction int
 type EventType int

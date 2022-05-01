@@ -5,7 +5,7 @@
 package nux
 
 import (
-	"github.com/nuxui/nuxui/log"
+	"nuxui.org/nuxui/log"
 )
 
 // TODO

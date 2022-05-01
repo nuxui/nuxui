@@ -13,8 +13,8 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/nuxui/nuxui/log"
-	"github.com/nuxui/nuxui/nux/internal/win32"
+	"nuxui.org/nuxui/log"
+	"nuxui.org/nuxui/nux/internal/win32"
 )
 
 var theApp = &application{

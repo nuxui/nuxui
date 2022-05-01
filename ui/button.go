@@ -5,7 +5,7 @@
 package ui
 
 import (
-	"github.com/nuxui/nuxui/nux"
+	"nuxui.org/nuxui/nux"
 )
 
 type Button interface {

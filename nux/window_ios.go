@@ -21,7 +21,7 @@ CGContextRef window_getCGContext(uintptr_t window);
 import "C"
 
 import (
-	"github.com/nuxui/nuxui/log"
+	"nuxui.org/nuxui/log"
 	"unsafe"
 )
 
@@ -48,7 +48,7 @@ func newWindow(attr Attr) *window {
 }
 
 func (me *window) CreateDecor(attr Attr) Widget {
-	creator := FindRegistedWidgetCreator("github.com/nuxui/nuxui/ui.Layer")
+	creator := FindRegistedWidgetCreator("nuxui.org/nuxui/ui.Layer")
 	w := creator(ctx, attr)
 	if p, ok := w.(Parent); ok {
 		me.decor = p

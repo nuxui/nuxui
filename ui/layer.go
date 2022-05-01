@@ -5,9 +5,9 @@
 package ui
 
 import (
-	"github.com/nuxui/nuxui/log"
-	"github.com/nuxui/nuxui/nux"
-	"github.com/nuxui/nuxui/util"
+	"nuxui.org/nuxui/log"
+	"nuxui.org/nuxui/nux"
+	"nuxui.org/nuxui/util"
 )
 
 type Layer interface {

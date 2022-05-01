@@ -7,8 +7,8 @@ package nux
 import (
 	"fmt"
 
-	"github.com/nuxui/nuxui/log"
-	"github.com/nuxui/nuxui/util"
+	"nuxui.org/nuxui/log"
+	"nuxui.org/nuxui/util"
 )
 
 type Size interface {

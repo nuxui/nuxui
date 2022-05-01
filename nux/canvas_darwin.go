@@ -297,6 +297,9 @@ func (me *canvas) Destroy() {
 }
 
 func (me *paint) MeasureText(text string, width, height float32) (outWidth float32, outHeight float32) {
+	// measureDuration := log.Time()
+	// defer log.TimeEnd(measureDuration, "nuxui", "nux.Paint '%s' Measure", text)
+
 	if text == "" {
 		return 0, 0
 	}

@@ -4,7 +4,7 @@
 
 package ui
 
-import "github.com/nuxui/nuxui/nux"
+import "nuxui.org/nuxui/nux"
 
 func init() {
 	nux.RegisterWidget((*Row)(nil), func(attr nux.Attr) nux.Widget { return NewRow(attr) })

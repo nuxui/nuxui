@@ -99,7 +99,7 @@ void drawText(cairo_t* cr, char* fontFamily, int fontWeight, int fontSize,
 */
 import "C"
 import (
-	"github.com/nuxui/nuxui/log"
+	"nuxui.org/nuxui/log"
 	"unsafe"
 )
 

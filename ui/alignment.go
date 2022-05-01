@@ -5,8 +5,8 @@
 package ui
 
 import (
-	"github.com/nuxui/nuxui/log"
-	"github.com/nuxui/nuxui/nux"
+	"nuxui.org/nuxui/log"
+	"nuxui.org/nuxui/nux"
 )
 
 type Align struct {
@@ -14,6 +14,7 @@ type Align struct {
 	Horizontal int
 }
 
+// TODO:: center|left
 func NewAlign(attr nux.Attr) *Align {
 	me := &Align{}
 	vertical := attr.GetString("vertical", "top")

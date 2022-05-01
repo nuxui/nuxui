@@ -5,7 +5,7 @@
 package nux
 
 import (
-	"github.com/nuxui/nuxui/log"
+	"nuxui.org/nuxui/log"
 )
 
 // Application app
@@ -135,7 +135,7 @@ func GetWidgetWindow(widget Widget) Window {
 }
 
 // if widget.Parent() == nil {
-// 	if util.TypeName(widget) == "github.com/nuxui/nuxui/ui.layer" {
+// 	if util.TypeName(widget) == "nuxui.org/nuxui/ui.layer" {
 // 		if w, ok := decorWindowList[widget]; ok {
 // 			return w
 // 		}

@@ -10,8 +10,8 @@ import (
 	"math"
 	"time"
 
-	"github.com/nuxui/nuxui/log"
-	"github.com/nuxui/nuxui/nux"
+	"nuxui.org/nuxui/log"
+	"nuxui.org/nuxui/nux"
 )
 
 type Text interface {
