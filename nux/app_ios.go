@@ -16,7 +16,7 @@ package nux
 
 void runApp();
 uint64_t threadID();
-
+int isMainThread();
 */
 import "C"
 import (
@@ -386,4 +386,8 @@ func convertModifierFlags(flags uint) uint32 {
 	// }
 
 	return mods
+}
+
+func isMainThread() bool {
+	return C.isMainThread() > 0
 }

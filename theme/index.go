@@ -19,8 +19,8 @@ func (me *Material) GetAttr(widgetName, themeName, themeKind, styleName string) 
 			"width":      nux.ADimen(0, nux.Auto),
 			"height":     nux.ADimen(0, nux.Auto),
 			"textSize":   14,
-			"textColor":  0xde000000,
-			"textShadow": nux.Attr{"color": 0x88000000, "x": 0, "y": 2, "blur": 3},
+			"textColor":  "#de000000",
+			"textShadow": nux.Attr{"color": "#88000000", "x": 0, "y": 2, "blur": 3},
 			"padding":    nux.Attr{"left": 16, "top": 8, "right": 16, "bottom": 8},
 			"background": nux.Attr{
 				"drawable": "nuxui.org/nuxui/ui.ShapeDrawable",
@@ -29,18 +29,18 @@ func (me *Material) GetAttr(widgetName, themeName, themeKind, styleName string) 
 						"state": "default",
 						"shape": nux.Attr{
 							"shape":        "rect",
-							"solid":        0xffe0e0e0,
+							"solid": "#ffe0e0e0",
 							"cornerRadius": 4,
-							"shadow":       nux.Attr{"color": 0x88000000, "x": 0, "y": 1, "blur": 3},
+							"shadow":       nux.Attr{"color": "#88000000", "x": 0, "y": 1, "blur": 3},
 						},
 					},
 					{
 						"state": "pressed",
 						"shape": nux.Attr{
 							"shape":        "rect",
-							"solid":        0xff9e9e9e,
+							"solid":        "#ff9e9e9e",
 							"cornerRadius": 4,
-							"shadow":       nux.Attr{"color": 0x88000000, "x": 0, "y": 1, "blur": 3},
+							"shadow":       nux.Attr{"color": "#88000000", "x": 0, "y": 1, "blur": 3},
 						},
 					},
 				},

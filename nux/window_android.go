@@ -40,7 +40,7 @@ type window struct {
 func newWindow(attr Attr) *window {
 	me := &window{}
 
-	me.CreateDecor(me.attr)
+	me.CreateDecor(attr)
 	return me
 }
 

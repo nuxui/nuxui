@@ -38,6 +38,7 @@ type window struct {
 	timer     Timer
 
 	cgContext uintptr
+	canvas Canvas
 }
 
 func newWindow(attr Attr) *window {
@@ -49,7 +50,7 @@ func newWindow(attr Attr) *window {
 
 func (me *window) CreateDecor(attr Attr) Widget {
 	creator := FindRegistedWidgetCreator("nuxui.org/nuxui/ui.Layer")
-	w := creator(ctx, attr)
+	w := creator(attr)
 	if p, ok := w.(Parent); ok {
 		me.decor = p
 	} else {
@@ -95,7 +96,8 @@ func (me *window) ContentSize() (width, height int32) {
 }
 
 func (me *window) LockCanvas() Canvas {
-	return newCanvas(C.window_getCGContext(me.windptr))
+	me.canvas = newCanvas(C.window_getCGContext(me.windptr))
+	return me.canvas
 }
 
 func (me *window) UnlockCanvas(c Canvas) {
@@ -262,9 +264,9 @@ func (me *window) switchFocusIfPossible(event PointerEvent) {
 func (me *window) switchFocusAtPoint(x, y float32) {
 	if me.focusWidget != nil {
 		if s, ok := me.focusWidget.(Size); ok {
-			frame := s.Frame()
-			if x >= float32(frame.X) && x <= float32(frame.X+frame.Width) &&
-				y >= float32(frame.Position.Y) && y <= float32(frame.Position.Y+frame.Height) {
+			f := s.Frame()
+			if x >= float32(f.X) && x <= float32(f.X+f.Width) &&
+				y >= float32(f.Y) && y <= float32(f.Y+f.Height) {
 				// point is in current focus widget, do not need change focus
 				return
 			}

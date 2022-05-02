@@ -81,8 +81,13 @@ func (me *canvas) GetMatrix() Matrix {
 	return Matrix{}
 }
 
-func (me *canvas) ClipRect(left, top, right, bottom float32) {
-	C.canvas_clipRect(me.ptr, C.jfloat(left), C.jfloat(top), C.jfloat(right), C.jfloat(bottom))
+func (me *canvas) ClipRect(x, y, width, height float32) {
+	C.canvas_clipRect(me.ptr, C.jfloat(x), C.jfloat(y), C.jfloat(x+width), C.jfloat(y+height))
+}
+
+func (me *canvas) ClipRoundRect(x, y, width, height, radius float32) {
+	// TODO::
+	me.ClipRect(x, y, width, height)
 }
 
 func (me *canvas) ClipPath(path Path) {
@@ -91,18 +96,18 @@ func (me *canvas) ClipPath(path Path) {
 func (me *canvas) SetAlpha(alpha float32) {
 }
 
-func (me *canvas) DrawRect(left, top, right, bottom float32, paint Paint) {
+func (me *canvas) DrawRect(x, y, width, height float32, paint Paint) {
 
 }
 
-func (me *canvas) DrawRoundRect(left, top, right, bottom float32, radius float32, paint Paint) {
+func (me *canvas) DrawRoundRect(x, y, width, height float32, radius float32, paint Paint) {
 }
 
 func (me *canvas) DrawArc(x, y, radius, startAngle, endAngle float32, useCenter bool, paint Paint) {
 
 }
 
-func (me *canvas) DrawOval(left, top, right, bottom float32, paint Paint) {
+func (me *canvas) DrawOval(x, y, width, height float32, paint Paint) {
 }
 
 func (me *canvas) DrawPath(path Path) {

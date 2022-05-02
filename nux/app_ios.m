@@ -9,6 +9,20 @@
 #import <GLKit/GLKit.h>
 #import <CoreText/CoreText.h>
 
+static uint64_t mainThreadId;
+
+uint64_t threadID() {
+	uint64_t id;
+	if (pthread_threadid_np(pthread_self(), &id)) {
+		abort();
+	}
+	return id;
+}
+
+int isMainThread(){
+    return mainThreadId == threadID();
+}
+
 @interface NuxWindow : UIWindow
 @end
 
@@ -78,14 +92,6 @@ void runApp(void)
 	@autoreleasepool {
 		UIApplicationMain(0, nil, nil, NSStringFromClass([MyDelegate class]));
 	}
-}
-
-uint64_t threadID() {
-	uint64_t id;
-	if (pthread_threadid_np(pthread_self(), &id)) {
-		abort();
-	}
-	return id;
 }
 
 void window_getSize(uintptr_t window, int32_t *width, int32_t *height){
