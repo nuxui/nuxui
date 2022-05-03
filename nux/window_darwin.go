@@ -67,22 +67,19 @@ func (me *window) CreateDecor(attr Attr) Widget {
 var TestDraw func(Canvas)
 
 func (me *window) Draw(canvas Canvas) {
-	// log.V("nuxui", "window Draw start")
-
 	if me.decor != nil {
 		if f, ok := me.decor.(Draw); ok {
 			_, h := me.ContentSize()
 			canvas.Save()
 			canvas.Translate(0, float32(h))
 			canvas.Scale(1, -1)
-			f.Draw(canvas)
+			if TestDraw != nil {
+				TestDraw(canvas)
+			} else {
+				f.Draw(canvas)
+			}
 			canvas.Restore()
 		}
-	}
-
-	if TestDraw != nil {
-		TestDraw(canvas)
-		return
 	}
 }
 

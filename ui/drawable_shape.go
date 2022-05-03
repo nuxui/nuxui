@@ -144,7 +144,7 @@ func (me *shapeDrawable) Draw(canvas nux.Canvas) {
 		me.paint.SetColor(me.shape.Solid)
 		me.paint.SetStyle(nux.PaintStyle_Fill)
 		if me.shape.CornerRadius > 0 {
-			canvas.DrawRoundRect(float32(me.x), float32(me.y), float32(me.width), float32(me.height), me.shape.CornerRadius, me.paint)
+			canvas.DrawRoundRect(float32(me.x), float32(me.y), float32(me.width), float32(me.height), me.shape.CornerRadius, me.shape.CornerRadius, me.shape.CornerRadius, me.shape.CornerRadius, me.paint)
 		} else {
 			canvas.DrawRect(float32(me.x), float32(me.y), float32(me.width), float32(me.height), me.paint)
 		}
@@ -155,7 +155,7 @@ func (me *shapeDrawable) Draw(canvas nux.Canvas) {
 		me.paint.SetStyle(nux.PaintStyle_Stroke)
 		me.paint.SetWidth(me.shape.StrokeWidth)
 		if me.shape.CornerRadius > 0 {
-			canvas.DrawRoundRect(float32(me.x), float32(me.y), float32(me.width), float32(me.height), me.shape.CornerRadius, me.paint)
+			canvas.DrawRoundRect(float32(me.x), float32(me.y), float32(me.width), float32(me.height), me.shape.CornerRadius, me.shape.CornerRadius, me.shape.CornerRadius, me.shape.CornerRadius, me.paint)
 		} else {
 			canvas.DrawRect(float32(me.x), float32(me.y), float32(me.width), float32(me.height), me.paint)
 		}

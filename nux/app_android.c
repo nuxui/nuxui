@@ -113,7 +113,9 @@ struct {
     jmethodID scale;
     jmethodID rotate;
     jmethodID clipRect;
-    jmethodID drawColor;
+    // jmethodID drawColor;
+    jmethodID drawRect;
+    jmethodID drawRoundRect;
     jmethodID drawBitmap;
 } Canvas;
 
@@ -179,7 +181,9 @@ void initClasses(JNIEnv *env, jobject activity){
     Canvas.scale = find_method(env, Canvas.clazz, "scale", "(FF)V");
     Canvas.rotate = find_method(env, Canvas.clazz, "rotate", "(F)V");
     Canvas.clipRect = find_method(env, Canvas.clazz, "clipRect", "(FFFF)Z");
-    Canvas.drawColor = find_method(env, Canvas.clazz, "drawColor", "(I)V");
+    // Canvas.drawColor = find_method(env, Canvas.clazz, "drawColor", "(I)V");
+    Canvas.drawRect = find_method(env, Canvas.clazz, "drawRect", "(FFFFLandroid/graphics/Paint;)V");
+    Canvas.drawRoundRect = find_method(env, Canvas.clazz, "drawRoundRect", "(FFFFFFLandroid/graphics/Paint;)V");
     Canvas.drawBitmap = find_method(env, Canvas.clazz, "drawBitmap", "(Landroid/graphics/Bitmap;Landroid/graphics/Rect;Landroid/graphics/RectF;Landroid/graphics/Paint;)V");
 
     jclass clsStaticLayout = find_class(env, "android/text/StaticLayout");
@@ -259,15 +263,23 @@ void canvas_clipRect(jobject canvas, jfloat left, jfloat top, jfloat right, jflo
     jboolean ret = (*jnienv)->CallBooleanMethod(jnienv, canvas, Canvas.clipRect, left, top, right, bottom);
 }
 
-void canvas_drawColor(jobject canvas, uint32_t color){
-    (*jnienv)->CallVoidMethod(jnienv, canvas, Canvas.drawColor, color);
+// void canvas_drawColor(jobject canvas, uint32_t color){
+//     (*jnienv)->CallVoidMethod(jnienv, canvas, Canvas.drawColor, color);
+// }
+
+void canvas_drawRect(jobject canvas, jfloat left, jfloat top, jfloat right, jfloat bottom, jobject paint){
+    (*jnienv)->CallVoidMethod(jnienv, canvas, Canvas.drawRect, left, top, right, bottom, paint);
+}
+
+void canvas_drawRoundRect(jobject canvas, jfloat left, jfloat top, jfloat right, jfloat bottom, jfloat rx, jfloat ry, jobject paint){
+    (*jnienv)->CallVoidMethod(jnienv, canvas, Canvas.drawRoundRect, left, top, right, bottom, rx, ry, paint);
 }
 
 void canvas_drawBitmap(jobject canvas, jobject bitmap, jfloat left, jfloat top, jfloat right, jfloat bottom, jobject paint){
-    jobject rect = new_Rect(0,0,0,0);
+    // jobject rect = new_Rect(0,0,0,0);
     jobject rectf = new_RectF(left, top, right, bottom);
     (*jnienv)->CallVoidMethod(jnienv, canvas, Canvas.drawBitmap, bitmap, NULL, rectf, paint);
-    (*jnienv)->DeleteLocalRef(jnienv, rect);
+    // (*jnienv)->DeleteLocalRef(jnienv, rect);
     (*jnienv)->DeleteLocalRef(jnienv, rectf);
 }
 

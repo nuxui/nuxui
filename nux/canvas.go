@@ -28,13 +28,13 @@ type Canvas interface {
 	GetMatrix() Matrix                  // https://cairographics.org/manual/cairo-Transformations.html#cairo-get-matrix
 
 	ClipRect(x, y, width, height float32)
-	ClipRoundRect(x, y, width, height, radius float32)
+	ClipRoundRect(x, y, width, height, cornerX, cornerY float32)
 	ClipPath(path Path)
 
 	///////////// draw
 	SetAlpha(alpha float32)
 	DrawRect(x, y, width, height float32, paint Paint)
-	DrawRoundRect(x, y, width, height float32, radius float32, paint Paint)
+	DrawRoundRect(x, y, width, height float32, rLT, rRT, rRB, rLB float32, paint Paint)
 	DrawArc(x, y, radius, startAngle, endAngle float32, useCenter bool, paint Paint)
 	DrawOval(x, y, width, height float32, paint Paint)
 	DrawPath(path Path)
@@ -51,9 +51,9 @@ type Canvas interface {
 type PaintStyle int
 
 const (
-	PaintStyle_Fill   PaintStyle = 0
-	PaintStyle_Stroke PaintStyle = 1
-	PaintStyle_Both   PaintStyle = 2
+	PaintStyle_Fill   PaintStyle = 1
+	PaintStyle_Stroke PaintStyle = 2
+	PaintStyle_Both   PaintStyle = 1 | 2
 )
 
 type Paint interface {
@@ -93,6 +93,7 @@ type Paint interface {
 func NewPaint() Paint {
 
 	me := &paint{
+		width:      1.0,
 		style:      PaintStyle_Fill,
 		textSize:   14,
 		color:      0xff000000,

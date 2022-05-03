@@ -38,7 +38,7 @@ type window struct {
 	timer     Timer
 
 	cgContext uintptr
-	canvas Canvas
+	canvas    Canvas
 }
 
 func newWindow(attr Attr) *window {
@@ -62,21 +62,20 @@ func (me *window) CreateDecor(attr Attr) Widget {
 	return me.decor
 }
 
+var TestDraw func(Canvas)
+
 func (me *window) Draw(canvas Canvas) {
-	log.V("nuxui", "window Draw start")
 	if me.decor != nil {
 		if f, ok := me.decor.(Draw); ok {
-			log.V("nuxui", "window Draw canvas save")
 			canvas.Save()
-			// TODO:: canvas clip
-			// canvas.Translate(0, me.ContentHeight())
-			// canvas.Scale(1, -1)
-			log.V("nuxui", "window Draw canvas scale then draw")
-			f.Draw(canvas)
+			if TestDraw != nil {
+				TestDraw(canvas)
+			} else {
+				f.Draw(canvas)
+			}
 			canvas.Restore()
 		}
 	}
-	log.V("nuxui", "window Draw end")
 }
 
 func (me *window) ID() uint64 {

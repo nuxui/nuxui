@@ -11,13 +11,18 @@ import (
 	"syscall"
 )
 
+const (
+	_PI     = 3.1415926535897932384626433832795028841971
+	_PI2    = _PI * 2
+	_DEGREE = _PI / 180.0
+)
+
 func newCanvas(hdcBuffer uintptr) *canvas {
 	me := &canvas{
 		ptr:    &win32.GpGraphics{},
 		pen:    &win32.GpPen{},
 		brush:  &win32.GpBrush{},
 		states: []win32.GpState{},
-		clip:   &win32.RectF{0, 0, 99999, 99999},
 	}
 	win32.GdipCreateFromHDC(hdcBuffer, &me.ptr)
 	win32.GdipCreatePen1(0, 1, win32.UnitWorld, &me.pen)
@@ -31,7 +36,6 @@ type canvas struct {
 	pen    *win32.GpPen
 	brush  *win32.GpBrush
 	states []win32.GpState
-	clip   *win32.RectF
 }
 
 func (me *canvas) ResetClip() {
@@ -51,14 +55,15 @@ func (me *canvas) Restore() {
 }
 
 func (me *canvas) Translate(x, y float32) {
-	win32.GdipTranslateWorldTransform(me.ptr, x, y, win32.MatrixOrderAppend)
+	win32.GdipTranslateWorldTransform(me.ptr, x, y, win32.MatrixOrderPrepend)
 }
 
 func (me *canvas) Scale(x, y float32) {
-	// win32.GdipScaleWorldTransform(me.ptr, x, y, win32.MatrixOrderAppend)
+	win32.GdipScaleWorldTransform(me.ptr, x, y, win32.MatrixOrderPrepend)
 }
 
 func (me *canvas) Rotate(angle float32) {
+	win32.GdipRotateWorldTransform(me.ptr, angle, win32.MatrixOrderPrepend)
 }
 
 func (me *canvas) Skew(x, y float32) {
@@ -80,20 +85,12 @@ func (me *canvas) GetMatrix() Matrix {
 
 func (me *canvas) ClipRect(x, y, width, height float32) {
 	win32.GdipSetClipRect(me.ptr, x, y, width, height, win32.CombineModeReplace)
-	me.clip.X = x
-	me.clip.Y = y
-	me.clip.Width = width
-	me.clip.Height = height
 }
 
-func (me *canvas) ClipRoundRect(x, y, width, height, radius float32) {
+func (me *canvas) ClipRoundRect(x, y, width, height, cornerX, cornerY float32) {
 	// TODO::
 
 	win32.GdipSetClipRect(me.ptr, x, y, width, height, win32.CombineModeReplace)
-	me.clip.X = x
-	me.clip.Y = y
-	me.clip.Width = width
-	me.clip.Height = height
 }
 
 func (me *canvas) ClipPath(path Path) {
@@ -103,33 +100,65 @@ func (me *canvas) SetAlpha(alpha float32) {
 }
 
 func (me *canvas) DrawRect(x, y, width, height float32, paint Paint) {
-	switch paint.Style() {
-	case PaintStyle_Stroke:
-		{
-			win32.GdipSetPenColor(me.pen, win32.ARGB(paint.Color()))
-			win32.GdipSetPenWidth(me.pen, paint.Width())
-			win32.GdipDrawRectangle(me.ptr, me.pen, x, y, width, height)
-		}
-	case PaintStyle_Fill:
-		{
-			win32.GdipSetSolidFillColor(me.brush, win32.ARGB(paint.Color()))
-			win32.GdipFillRectangle(me.ptr, me.brush, x, y, width, height)
-		}
-	case PaintStyle_Both:
-		{
-			win32.GdipSetPenColor(me.pen, win32.ARGB(paint.Color()))
-			win32.GdipSetPenWidth(me.pen, paint.Width())
-			win32.GdipDrawRectangle(me.ptr, me.pen, x, y, width, height)
-
-			win32.GdipSetSolidFillColor(me.brush, win32.ARGB(paint.Color()))
-			win32.GdipFillRectangle(me.ptr, me.brush, x, y, width, height)
-		}
+	if paint.Style()&PaintStyle_Stroke == PaintStyle_Stroke {
+		win32.GdipSetPenColor(me.pen, win32.ARGB(paint.Color()))
+		win32.GdipSetPenWidth(me.pen, paint.Width())
+		win32.GdipDrawRectangle(me.ptr, me.pen, x, y, width, height)
+	}
+	if paint.Style()&PaintStyle_Fill == PaintStyle_Fill {
+		win32.GdipSetSolidFillColor(me.brush, win32.ARGB(paint.Color()))
+		win32.GdipFillRectangle(me.ptr, me.brush, x, y, width, height)
 	}
 }
 
-func (me *canvas) DrawRoundRect(x, y, width, height float32, radius float32, paint Paint) {
-	// TODO::
-	me.DrawRect(x, y, width, height, paint)
+// typedef enum SmoothingMode {
+// 	SmoothingModeInvalid,
+// 	SmoothingModeDefault,
+// 	SmoothingModeHighSpeed,
+// 	SmoothingModeHighQuality,
+// 	SmoothingModeNone,
+// 	SmoothingModeAntiAlias,
+// 	SmoothingModeAntiAlias8x4,
+// 	SmoothingModeAntiAlias8x8
+//   } ;
+
+func (me *canvas) DrawRoundRect(x, y, width, height float32, rLT, rRT, rRB, rLB float32, paint Paint) {
+	// if zero, path can not close
+	if rLT <= 0 {
+		rLT = 1
+	}
+	if rRT <= 0 {
+		rRT = 1
+	}
+	if rRB <= 0 {
+		rRB = 1
+	}
+	if rLB <= 0 {
+		rLB = 1
+	}
+
+	var path *win32.GpPath
+	win32.GdipSetSmoothingMode(me.ptr, win32.SmoothingModeAntiAlias)
+
+	win32.GdipCreatePath(win32.FillModeAlternate, &path)
+	win32.GdipAddPathArc(path, x+width-rRT-rRT, y, rRT+rRT, rRT+rRT, -90, 90)
+	win32.GdipAddPathArc(path, x+width-rRB-rRB, y+height-rRB-rRB, rRB+rRB, rRB+rRB, 0, 90)
+	win32.GdipAddPathArc(path, x, y+height-rLB-rLB, rLB+rLB, rLB+rLB, 90, 90)
+	win32.GdipAddPathArc(path, x, y, rLT+rLT, rLT+rLT, 180, 90)
+	win32.GdipClosePathFigure(path)
+	win32.GdipSetSmoothingMode(me.ptr, win32.SmoothingModeNone)
+
+	if paint.Style()&PaintStyle_Stroke == PaintStyle_Stroke {
+		win32.GdipSetPenColor(me.pen, win32.ARGB(paint.Color()))
+		win32.GdipSetPenWidth(me.pen, paint.Width())
+		win32.GdipDrawPath(me.ptr, me.pen, path)
+	}
+	if paint.Style()&PaintStyle_Fill == PaintStyle_Fill {
+		win32.GdipSetSolidFillColor(me.brush, win32.ARGB(paint.Color()))
+		win32.GdipFillPath(me.ptr, me.brush, path)
+	}
+
+	win32.GdipDeletePath(path)
 }
 
 func (me *canvas) DrawArc(x, y, radius, startAngle, endAngle float32, useCenter bool, paint Paint) {

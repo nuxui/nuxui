@@ -52,6 +52,8 @@ func (me *window) CreateDecor(attr Attr) Widget {
 	return me.decor
 }
 
+var TestDraw func(Canvas)
+
 func (me *window) Draw(canvas Canvas) {
 	if me.decor != nil {
 		if f, ok := me.decor.(Draw); ok {
@@ -62,7 +64,11 @@ func (me *window) Draw(canvas Canvas) {
 
 			canvas.Save()
 			canvas.ClipRect(0, 0, float32(rectClient.Right-rectClient.Left), float32(rectClient.Bottom-rectClient.Top))
-			f.Draw(canvas)
+			if TestDraw != nil {
+				TestDraw(canvas)
+			} else {
+				f.Draw(canvas)
+			}
 			canvas.Restore()
 			canvas.Flush()
 

@@ -59,11 +59,17 @@ func (me *window) CreateDecor(attr Attr) Widget {
 	return me.decor
 }
 
+var TestDraw func(Canvas)
+
 func (me *window) Draw(canvas Canvas) {
 	if me.decor != nil {
 		if f, ok := me.decor.(Draw); ok {
 			canvas.Save()
-			f.Draw(canvas)
+			if TestDraw != nil {
+				TestDraw(canvas)
+			} else {
+				f.Draw(canvas)
+			}
 			canvas.Restore()
 		}
 	}

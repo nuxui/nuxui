@@ -104,9 +104,9 @@ import (
 )
 
 const (
-	PI     = 3.1415926535897932384626433832795028841971
-	PI2    = PI * 2
-	DEGREE = PI / 180.0
+	_PI     = 3.1415926535897932384626433832795028841971
+	_PI2    = _PI * 2
+	_DEGREE = _PI / 180.0
 )
 
 type canvas struct {
@@ -139,7 +139,7 @@ func (me *canvas) Scale(x, y float32) {
 }
 
 func (me *canvas) Rotate(angle float32) {
-	C.cairo_rotate(me.ptr, C.double(angle))
+	C.cairo_rotate(me.ptr, C.double(_DEGREE*angle))
 }
 
 func (me *canvas) Skew(x, y float32) {
@@ -167,7 +167,7 @@ func (me *canvas) ClipRect(x, y, width, height float32) {
 	C.cairo_clip(me.ptr)
 }
 
-func (me *canvas) ClipRoundRect(x, y, width, height, radius float32) {
+func (me *canvas) ClipRoundRect(x, y, width, height, cornerX, cornerY float32) {
 	// TODO::
 }
 
@@ -198,7 +198,7 @@ func (me *canvas) DrawRect(x, y, width, height float32, paint Paint) {
 	}
 }
 
-func (me *canvas) DrawRoundRect(x, y, width, height float32, radius float32, paint Paint) {
+func (me *canvas) DrawRoundRect(x, y, width, height float32, rLT, rRT, rRB, rLB float32, paint Paint) {
 	if width < 0 || height < 0 {
 		return
 	}
@@ -208,14 +208,13 @@ func (me *canvas) DrawRoundRect(x, y, width, height float32, radius float32, pai
 		// C.cairo_identity_matrix(me.ptr)
 		me.Save()
 		me.Translate(0.5, 0.5)
-
 	}
 
 	C.cairo_new_sub_path(me.ptr)
-	C.cairo_arc(me.ptr, C.double(x+width-radius), C.double(y+radius), C.double(radius), -90*DEGREE, 0)
-	C.cairo_arc(me.ptr, C.double(x+width-radius), C.double(y+height-radius), C.double(radius), 0, 90*DEGREE)
-	C.cairo_arc(me.ptr, C.double(x+radius), C.double(y+height-radius), C.double(radius), 90*DEGREE, 180*DEGREE)
-	C.cairo_arc(me.ptr, C.double(x+radius), C.double(y+radius), C.double(radius), 180*DEGREE, 270*DEGREE)
+	C.cairo_arc(me.ptr, C.double(x+width-rRT), C.double(y+rRT), C.double(rRT), -90*_DEGREE, 0)
+	C.cairo_arc(me.ptr, C.double(x+width-rRB), C.double(y+height-rRB), C.double(rRB), 0, 90*_DEGREE)
+	C.cairo_arc(me.ptr, C.double(x+rLB), C.double(y+height-rLB), C.double(rLB), 90*_DEGREE, 180*_DEGREE)
+	C.cairo_arc(me.ptr, C.double(x+rLT), C.double(y+rLT), C.double(rLT), 180*_DEGREE, 270*_DEGREE)
 	C.cairo_close_path(me.ptr)
 	me.drawPaint(paint)
 
@@ -227,10 +226,10 @@ func (me *canvas) DrawRoundRect(x, y, width, height float32, radius float32, pai
 func (me *canvas) DrawArc(x, y, radius, startAngle, endAngle float32, useCenter bool, paint Paint) {
 	if useCenter {
 		// TODO
-		C.cairo_arc(me.ptr, C.double(x), C.double(y), C.double(radius), C.double(startAngle*DEGREE), C.double(endAngle*DEGREE))
+		C.cairo_arc(me.ptr, C.double(x), C.double(y), C.double(radius), C.double(startAngle*_DEGREE), C.double(endAngle*_DEGREE))
 		me.drawPaint(paint)
 	} else {
-		C.cairo_arc(me.ptr, C.double(x), C.double(y), C.double(radius), C.double(startAngle*DEGREE), C.double(endAngle*DEGREE))
+		C.cairo_arc(me.ptr, C.double(x), C.double(y), C.double(radius), C.double(startAngle*_DEGREE), C.double(endAngle*_DEGREE))
 		me.drawPaint(paint)
 	}
 }
@@ -253,7 +252,7 @@ func (me *canvas) DrawOval(x, y, width, height float32, paint Paint) {
 	}
 
 	C.cairo_scale(me.ptr, C.double(scaleX), C.double(scaleY))
-	C.cairo_arc(me.ptr, C.double(centerX), C.double(centerY), C.double(radius), C.double(0), C.double(PI2))
+	C.cairo_arc(me.ptr, C.double(centerX), C.double(centerY), C.double(radius), C.double(0), C.double(_PI2))
 	me.drawPaint(paint)
 	me.Restore()
 }

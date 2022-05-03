@@ -29,7 +29,7 @@ func (me *Material) GetAttr(widgetName, themeName, themeKind, styleName string) 
 						"state": "default",
 						"shape": nux.Attr{
 							"shape":        "rect",
-							"solid": "#ffe0e0e0",
+							"solid":        "#ffe0e0e0",
 							"cornerRadius": 4,
 							"shadow":       nux.Attr{"color": "#88000000", "x": 0, "y": 1, "blur": 3},
 						},

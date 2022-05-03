@@ -17,7 +17,9 @@ void canvas_translate(jobject canvas, jfloat x, jfloat y);
 void canvas_scale(jobject canvas, jfloat x, jfloat y);
 void canvas_rotate(jobject canvas, jfloat degrees);
 void canvas_clipRect(jobject canvas, jfloat left, jfloat top, jfloat right, jfloat bottom);
-void canvas_drawColor(jobject canvas, uint32_t color);
+// void canvas_drawColor(jobject canvas, uint32_t color);
+void canvas_drawRect(jobject canvas, jfloat left, jfloat top, jfloat right, jfloat bottom, jobject paint);
+void canvas_drawRoundRect(jobject canvas, jfloat left, jfloat top, jfloat right, jfloat bottom, jfloat rx, jfloat ry, jobject paint);
 void canvas_drawText(jobject canvas, char* text, jint width, jobject paint);
 void canvas_drawBitmap(jobject canvas, jobject bitmap, jfloat left, jfloat top, jfloat right, jfloat bottom, jobject paint);
 
@@ -85,7 +87,7 @@ func (me *canvas) ClipRect(x, y, width, height float32) {
 	C.canvas_clipRect(me.ptr, C.jfloat(x), C.jfloat(y), C.jfloat(x+width), C.jfloat(y+height))
 }
 
-func (me *canvas) ClipRoundRect(x, y, width, height, radius float32) {
+func (me *canvas) ClipRoundRect(x, y, width, height, cornerX, cornerY float32) {
 	// TODO::
 	me.ClipRect(x, y, width, height)
 }
@@ -97,10 +99,24 @@ func (me *canvas) SetAlpha(alpha float32) {
 }
 
 func (me *canvas) DrawRect(x, y, width, height float32, paint Paint) {
-
+	p := C.new_Paint()
+	C.paint_setColor(p, C.uint32_t(paint.Color()))
+	C.paint_setTextSize(p, C.jfloat(paint.TextSize()))
+	C.paint_setStyle(p, C.jint(paint.Style()))
+	C.paint_setAntiAlias(p, C.jboolean(1))
+	C.canvas_drawRect(me.ptr, C.jfloat(x), C.jfloat(y), C.jfloat(x+width), C.jfloat(y+height), p)
+	C.deleteLocalRef(p)
 }
 
-func (me *canvas) DrawRoundRect(x, y, width, height float32, radius float32, paint Paint) {
+func (me *canvas) DrawRoundRect(x, y, width, height float32, rLT, rRT, rRB, rLB float32, paint Paint) {
+	p := C.new_Paint()
+	C.paint_setColor(p, C.uint32_t(paint.Color()))
+	C.paint_setTextSize(p, C.jfloat(paint.TextSize()))
+	C.paint_setStyle(p, C.jint(paint.Style())) // TODO:: the style is not same with android
+	C.paint_setAntiAlias(p, C.jboolean(1))
+	// TODO:: use arc
+	C.canvas_drawRoundRect(me.ptr, C.jfloat(x), C.jfloat(y), C.jfloat(x+width), C.jfloat(y+height), C.jfloat(rLT), C.jfloat(rLT), p)
+	C.deleteLocalRef(p)
 }
 
 func (me *canvas) DrawArc(x, y, radius, startAngle, endAngle float32, useCenter bool, paint Paint) {
@@ -113,9 +129,9 @@ func (me *canvas) DrawOval(x, y, width, height float32, paint Paint) {
 func (me *canvas) DrawPath(path Path) {
 }
 
-func (me *canvas) DrawColor(color Color) {
-	C.canvas_drawColor(me.ptr, C.uint32_t(color))
-}
+// func (me *canvas) DrawColor(color Color) {
+// 	C.canvas_drawColor(me.ptr, C.uint32_t(color))
+// }
 
 func (me *canvas) DrawImage(img Image) {
 	w, h := img.Size()

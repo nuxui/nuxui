@@ -4,7 +4,6 @@
 
 package nux
 
-
 type Menu interface {
 	ID() string
 	SetID(id string)

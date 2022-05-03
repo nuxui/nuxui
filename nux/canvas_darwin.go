@@ -96,10 +96,27 @@ void setShadow(CGContextRef ctx, CGFloat x, CGFloat y, CGFloat blur, CGFloat a, 
 	CGColorRef color = [[NSColor colorWithSRGBRed:r green:g blue:b alpha:a] CGColor];
 	CGContextSetShadowWithColor(ctx, CGSizeMake(x, -y), blur, color);
 }
+
+#define _DEGREE (3.1415926535897932384626433832795028841971/180.0)
+
+void addRoundRectPath(CGMutablePathRef path, CGFloat x, CGFloat y, CGFloat width, CGFloat height,
+	CGFloat rLT, CGFloat rRT, CGFloat rRB, CGFloat rLB){
+	//CGFloat	_DEGREE = 3.1415926535897932384626433832795028841971/180.0;
+	CGPathAddArc(path, nil, x+width-rRT, y+rRT, rRT, -90*_DEGREE, 0, false);
+	CGPathAddArc(path, nil, x+width-rRB, y+height-rRB, rRB, 0, 90*_DEGREE, false);
+	CGPathAddArc(path, nil, x+rLB, y+height-rLB, rLB, 90*_DEGREE, 180*_DEGREE, false);
+	CGPathAddArc(path, nil, x+rLT, y+rLT, rLT, 180*_DEGREE, 270*_DEGREE, false);
+}
 */
 import "C"
 import (
 	"unsafe"
+)
+
+const (
+	_PI     = 3.1415926535897932384626433832795028841971
+	_PI2    = _PI * 2
+	_DEGREE = _PI / 180.0
 )
 
 type canvas struct {
@@ -133,7 +150,7 @@ func (me *canvas) Scale(x, y float32) {
 }
 
 func (me *canvas) Rotate(angle float32) {
-	C.CGContextRotateCTM(me.ptr, C.CGFloat(angle))
+	C.CGContextRotateCTM(me.ptr, C.CGFloat(_DEGREE*angle))
 }
 
 func (me *canvas) Skew(x, y float32) {
@@ -157,9 +174,9 @@ func (me *canvas) ClipRect(x, y, width, height float32) {
 	C.CGContextClipToRect(me.ptr, C.CGRectMake(C.CGFloat(x), C.CGFloat(y), C.CGFloat(width), C.CGFloat(height)))
 }
 
-func (me *canvas) ClipRoundRect(x, y, width, height, radius float32) {
+func (me *canvas) ClipRoundRect(x, y, width, height, cornerX, cornerY float32) {
 	rect := C.CGRectMake(C.CGFloat(x), C.CGFloat(y), C.CGFloat(width), C.CGFloat(height))
-	path := C.CGPathCreateWithRoundedRect(rect, C.CGFloat(radius), C.CGFloat(radius), nil)
+	path := C.CGPathCreateWithRoundedRect(rect, C.CGFloat(cornerX), C.CGFloat(cornerY), nil)
 	C.CGContextAddPath(me.ptr, path)
 	C.CGContextClip(me.ptr)
 }
@@ -206,7 +223,11 @@ func (me *canvas) DrawRect(x, y, width, height float32, paint Paint) {
 	}
 }
 
-func (me *canvas) DrawRoundRect(x, y, width, height float32, radius float32, paint Paint) {
+func (me *canvas) DrawRoundRect(x, y, width, height float32, rLT, rRT, rRB, rLB float32, paint Paint) {
+	if width < 0 || height < 0 {
+		return
+	}
+
 	a, r, g, b := paint.Color().ARGBf()
 	fix := paint.Style() == PaintStyle_Stroke && int32(paint.Width())%2 != 0
 	if fix {
@@ -219,10 +240,12 @@ func (me *canvas) DrawRoundRect(x, y, width, height float32, radius float32, pai
 		me.Translate(-0.5, -0.5)
 	}
 
-	rect := C.CGRectMake(C.CGFloat(x), C.CGFloat(y), C.CGFloat(width), C.CGFloat(height))
+	C.CGContextSetLineWidth(me.ptr, C.CGFloat(paint.Width()))
 
-	path := C.CGPathCreateWithRoundedRect(rect, C.CGFloat(radius), C.CGFloat(radius), nil)
-	C.CGContextAddPath(me.ptr, path)
+	path := C.CGPathCreateMutable()
+	C.addRoundRectPath(path, C.CGFloat(x), C.CGFloat(y), C.CGFloat(width), C.CGFloat(height), C.CGFloat(rLT), C.CGFloat(rRT), C.CGFloat(rRB), C.CGFloat(rLB))
+	C.CGPathCloseSubpath(path)
+	C.CGContextAddPath(me.ptr, C.CGPathRef(path))
 	C.CGContextSetLineWidth(me.ptr, C.CGFloat(paint.Width()))
 
 	hasShadow := false
@@ -246,7 +269,7 @@ func (me *canvas) DrawRoundRect(x, y, width, height float32, radius float32, pai
 		C.CGContextSetRGBStrokeColor(me.ptr, C.CGFloat(r), C.CGFloat(g), C.CGFloat(b), C.CGFloat(a))
 		C.CGContextStrokePath(me.ptr)
 	}
-	C.CGPathRelease(path)
+	C.CGPathRelease(C.CGPathRef(path))
 
 	if hasShadow {
 		me.Restore()
