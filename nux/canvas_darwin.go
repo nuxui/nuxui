@@ -97,26 +97,19 @@ void setShadow(CGContextRef ctx, CGFloat x, CGFloat y, CGFloat blur, CGFloat a, 
 	CGContextSetShadowWithColor(ctx, CGSizeMake(x, -y), blur, color);
 }
 
-#define _DEGREE (3.1415926535897932384626433832795028841971/180.0)
+#define _RADIAN (3.1415926535897932384626433832795028841971/180.0)
 
 void addRoundRectPath(CGMutablePathRef path, CGFloat x, CGFloat y, CGFloat width, CGFloat height,
 	CGFloat rLT, CGFloat rRT, CGFloat rRB, CGFloat rLB){
-	//CGFloat	_DEGREE = 3.1415926535897932384626433832795028841971/180.0;
-	CGPathAddArc(path, nil, x+width-rRT, y+rRT, rRT, -90*_DEGREE, 0, false);
-	CGPathAddArc(path, nil, x+width-rRB, y+height-rRB, rRB, 0, 90*_DEGREE, false);
-	CGPathAddArc(path, nil, x+rLB, y+height-rLB, rLB, 90*_DEGREE, 180*_DEGREE, false);
-	CGPathAddArc(path, nil, x+rLT, y+rLT, rLT, 180*_DEGREE, 270*_DEGREE, false);
+	CGPathAddArc(path, nil, x+width-rRT, y+rRT, rRT, -90*_RADIAN, 0, false);
+	CGPathAddArc(path, nil, x+width-rRB, y+height-rRB, rRB, 0, 90*_RADIAN, false);
+	CGPathAddArc(path, nil, x+rLB, y+height-rLB, rLB, 90*_RADIAN, 180*_RADIAN, false);
+	CGPathAddArc(path, nil, x+rLT, y+rLT, rLT, 180*_RADIAN, 270*_RADIAN, false);
 }
 */
 import "C"
 import (
 	"unsafe"
-)
-
-const (
-	_PI     = 3.1415926535897932384626433832795028841971
-	_PI2    = _PI * 2
-	_DEGREE = _PI / 180.0
 )
 
 type canvas struct {
@@ -150,7 +143,7 @@ func (me *canvas) Scale(x, y float32) {
 }
 
 func (me *canvas) Rotate(angle float32) {
-	C.CGContextRotateCTM(me.ptr, C.CGFloat(_DEGREE*angle))
+	C.CGContextRotateCTM(me.ptr, C.CGFloat(_RADIAN*angle))
 }
 
 func (me *canvas) Skew(x, y float32) {

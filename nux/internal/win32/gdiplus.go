@@ -18,7 +18,6 @@ import (
 
 var (
 	modgdiplus = syscall.NewLazyDLL("gdiplus.dll")
-	// modgdiplus                            = windows.NewLazySystemDLL("gdiplus.dll")
 	gdiplusShutdown                       = modgdiplus.NewProc("GdiplusShutdown")
 	gdiplusStartup                        = modgdiplus.NewProc("GdiplusStartup")
 	gdipCreateFromHDC                     = modgdiplus.NewProc("GdipCreateFromHDC")

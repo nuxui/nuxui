@@ -5,7 +5,6 @@
 package ui
 
 import (
-	"nuxui.org/nuxui/log"
 	"nuxui.org/nuxui/nux"
 )
 
@@ -46,13 +45,11 @@ func NewOpt(attr nux.Attr) Opt {
 }
 
 func (me *opt) Mount() {
-	log.I("nuxui", "opt Mount")
 	me.label.Mount()
 	nux.OnTap(me.Info().Self, me.onTap)
 }
 
 func (me *opt) onTap(detail nux.GestureDetail) {
-	log.V("nuxui", "opt onTap")
 	if !me.Disable() {
 		me.opted = !me.opted
 		me.doOptedChanged(true)

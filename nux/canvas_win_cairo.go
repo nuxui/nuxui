@@ -2,23 +2,23 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build linux && !android
+//go:build windows && cairo
 
 package nux
 
 /*
+#cgo LDFLAGS: -limm32
 #cgo pkg-config: cairo
 #cgo pkg-config: pango
 #cgo pkg-config: pangocairo
 #cgo pkg-config: gobject-2.0
 #cgo pkg-config: libjpeg
-#cgo pkg-config: x11
 
 #include <cairo/cairo.h>
+#include <cairo/cairo-win32.h>
 #include <cairo/cairo-pdf.h>
 #include <cairo/cairo-ps.h>
 #include <cairo/cairo-svg.h>
-#include <cairo/cairo-xlib.h>
 #include <pango/pangocairo.h>
 
 #include <stdlib.h>
@@ -26,8 +26,8 @@ package nux
 #include <stdint.h>
 #include <stdio.h>
 
-#include <X11/Xlib.h>
-
+#include <windows.h>
+#include <windowsx.h>
 
 void measureText(cairo_t* cr, char* fontFamily, int fontWeight, int fontSize,
 	char* text, int width, int height, int* outWidth, int* outHeight){
@@ -96,21 +96,29 @@ void drawText(cairo_t* cr, char* fontFamily, int fontWeight, int fontSize,
 	g_object_unref (layout);
 }
 
+HDC toHDC(uintptr_t hdc){
+	return (HDC)hdc;
+}
+
 */
 import "C"
+
 import (
-	"nuxui.org/nuxui/log"
 	"unsafe"
+
+	"nuxui.org/nuxui/log"
 )
 
 type canvas struct {
-	ptr *C.cairo_t
+	surface *C.cairo_surface_t
+	ptr     *C.cairo_t
 }
 
-func newCanvas(surface *C.cairo_surface_t) *canvas {
-	return &canvas{
-		ptr: C.cairo_create(surface),
-	}
+func newCanvas(hdc uintptr) *canvas {
+	me := &canvas{}
+	me.surface = C.cairo_win32_surface_create(C.toHDC(C.uintptr_t(hdc)))
+	me.ptr = C.cairo_create(me.surface)
+	return me
 }
 
 func (me *canvas) ResetClip() {
@@ -294,6 +302,7 @@ func (me *canvas) DrawText(text string, width, height float32, paint Paint) {
 }
 
 func (me *canvas) Flush() {
+	C.cairo_surface_flush(me.surface)
 }
 
 func (me *canvas) Destroy() {

@@ -235,8 +235,6 @@ func (me *editor) stopTick() {
 }
 
 func (me *editor) OnTypeEvent(event nux.TypeEvent) bool {
-	log.V("nuxui", "Editor OnTypeEvent == %s", event.Text())
-
 	switch event.Action() {
 	case nux.Action_Preedit:
 		me.editingText = event.Text()
@@ -255,12 +253,10 @@ func (me *editor) OnTypeEvent(event nux.TypeEvent) bool {
 		me.SetText(ret)
 		me.startTick()
 	}
-	// log.V("nuxui", "OnTypeEvent editingText=%s text=%s", me.editingText, me.text)
 	return true
 }
 
 func (me *editor) OnKeyEvent(event nux.KeyEvent) bool {
-	log.V("nuxui", "Editor OnKeyEvent")
 	switch event.KeyCode() {
 	case nux.Key_BackSpace:
 		if event.Action() == nux.Action_Down {

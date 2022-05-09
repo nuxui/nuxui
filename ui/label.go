@@ -85,7 +85,6 @@ func NewLabel(attr nux.Attr) Label {
 }
 
 func (me *label) Mount() {
-	log.I("nuxui", "label Mount")
 	nux.OnTapDown(me.Info().Self, me.onTapDown)
 	nux.OnTapUp(me.Info().Self, me.onTapUp)
 	nux.OnTapCancel(me.Info().Self, me.onTapUp)
@@ -93,11 +92,9 @@ func (me *label) Mount() {
 }
 
 func (me *label) Eject() {
-	log.I("nuxui", "label Eject")
 }
 
 func (me *label) onTapDown(detail nux.GestureDetail) {
-	log.V("nuxui", "label onTapDown")
 	changed := false
 	if !me.Disable() {
 		if me.Background() != nil {
@@ -121,7 +118,6 @@ func (me *label) onTapDown(detail nux.GestureDetail) {
 }
 
 func (me *label) onTapUp(detail nux.GestureDetail) {
-	log.V("nuxui", "label onTapUp")
 	changed := false
 	if !me.Disable() {
 		if me.Background() != nil {
@@ -145,7 +141,6 @@ func (me *label) onTapUp(detail nux.GestureDetail) {
 }
 
 func (me *label) onTap(detail nux.GestureDetail) {
-	log.V("nuxui", "label onTap")
 }
 
 func (me *label) AddState(state uint32) {
@@ -183,10 +178,6 @@ func (me *label) SetText(text string) {
 
 // TODO:: if only text
 func (me *label) Measure(width, height nux.MeasureDimen) {
-	if me.Info().ID == "switch" {
-		log.I("nuxui", "ui.Label %s '%s' Measure width=%s, height=%s", me.Info().ID, me.Text(), width, height)
-	}
-
 	frame := me.Frame()
 
 	me.paint.SetTextSize(me.textSize)
@@ -306,7 +297,7 @@ func (me *label) Measure(width, height nux.MeasureDimen) {
 		measurePadding(width, height, me.Padding(), frame, txtH, paddingMeasuredFlag)
 	}
 
-	log.I("nuxui", "ui.Label %s '%s' Measure end width=%d, height=%d, txtW", me.Info().ID, me.Text(), frame.Width, frame.Height, txtW)
+	// log.I("nuxui", "ui.Label %s '%s' Measure end width=%d, height=%d, txtW", me.Info().ID, me.Text(), frame.Width, frame.Height, txtW)
 
 }
 

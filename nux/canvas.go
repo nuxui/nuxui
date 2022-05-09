@@ -183,6 +183,7 @@ func (me *paint) Width() float32 {
 func (me *paint) SetWidth(width float32) {
 	me.width = width
 }
+
 func (me *paint) Style() PaintStyle {
 	return me.style
 }

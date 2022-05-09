@@ -2,19 +2,13 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build windows
+//go:build windows && !cairo
 
 package nux
 
 import (
 	"nuxui.org/nuxui/nux/internal/win32"
 	"syscall"
-)
-
-const (
-	_PI     = 3.1415926535897932384626433832795028841971
-	_PI2    = _PI * 2
-	_DEGREE = _PI / 180.0
 )
 
 func newCanvas(hdcBuffer uintptr) *canvas {
@@ -138,6 +132,8 @@ func (me *canvas) DrawRoundRect(x, y, width, height float32, rLT, rRT, rRB, rLB 
 	}
 
 	var path *win32.GpPath
+	var lastSmoothingMode win32.GpSmoothingMode
+	win32.GdipGetSmoothingMode(me.ptr, &lastSmoothingMode)
 	win32.GdipSetSmoothingMode(me.ptr, win32.SmoothingModeAntiAlias)
 
 	win32.GdipCreatePath(win32.FillModeAlternate, &path)
@@ -146,7 +142,6 @@ func (me *canvas) DrawRoundRect(x, y, width, height float32, rLT, rRT, rRB, rLB 
 	win32.GdipAddPathArc(path, x, y+height-rLB-rLB, rLB+rLB, rLB+rLB, 90, 90)
 	win32.GdipAddPathArc(path, x, y, rLT+rLT, rLT+rLT, 180, 90)
 	win32.GdipClosePathFigure(path)
-	win32.GdipSetSmoothingMode(me.ptr, win32.SmoothingModeNone)
 
 	if paint.Style()&PaintStyle_Stroke == PaintStyle_Stroke {
 		win32.GdipSetPenColor(me.pen, win32.ARGB(paint.Color()))
@@ -159,6 +154,7 @@ func (me *canvas) DrawRoundRect(x, y, width, height float32, rLT, rRT, rRB, rLB 
 	}
 
 	win32.GdipDeletePath(path)
+	win32.GdipSetSmoothingMode(me.ptr, lastSmoothingMode)
 }
 
 func (me *canvas) DrawArc(x, y, radius, startAngle, endAngle float32, useCenter bool, paint Paint) {
@@ -188,11 +184,11 @@ func (me *canvas) DrawText(text string, width, height float32, paint Paint) {
 	brush := &win32.GpBrush{}
 	win32.GdipCreateSolidFill(win32.ARGB(paint.Color()), &brush)
 
-	var mode win32.GpSmoothingMode
-	win32.GdipGetSmoothingMode(me.ptr, &mode)
-	win32.GdipSetSmoothingMode(me.ptr, win32.SmoothingModeAntiAlias)
+	// var mode win32.GpSmoothingMode
+	// win32.GdipGetSmoothingMode(me.ptr, &mode)
+	// win32.GdipSetSmoothingMode(me.ptr, win32.SmoothingModeAntiAlias)
 	win32.GdipDrawString(me.ptr, &str[0], int32(len(str)), font, layout, nil, brush)
-	win32.GdipSetSmoothingMode(me.ptr, mode)
+	// win32.GdipSetSmoothingMode(me.ptr, mode)
 }
 
 func (me *canvas) Flush() {

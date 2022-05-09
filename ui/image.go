@@ -66,11 +66,12 @@ type image struct {
 
 	state       uint32
 	scaleType   ScaleType
-	srcDrawable ImageDrawable
 	scaleX      float32
 	scaleY      float32
 	offsetX     float32
 	offsetY     float32
+	src         string
+	srcDrawable ImageDrawable
 }
 
 func convertScaleTypeFromString(scaleType string) ScaleType {
@@ -322,18 +323,18 @@ func (me *image) Src() string {
 }
 
 func (me *image) SetSrc(src string) {
-	// if me.src == src {
-	// 	return
-	// }
+	if me.src == src {
+		return
+	}
 
-	// me.src = src
+	me.src = src
 
-	// if me.src != "" {
-	// 	me.srcDrawable = NewImageDrawableWithResource(me.src)
-	// }
+	if me.src != "" {
+		me.srcDrawable = NewImageDrawableWithResource(me.src)
+	}
 
-	// nux.RequestLayout(me)
-	// nux.RequestRedraw(me)
+	nux.RequestLayout(me)
+	nux.RequestRedraw(me)
 }
 
 func (me *image) ScaleType() ScaleType {

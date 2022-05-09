@@ -99,11 +99,13 @@ func (me *window) ContentSize() (width, height int32) {
 
 func (me *window) LockCanvas() Canvas {
 	hdc, _ := win32.BeginPaint(me.hwnd, &me.paintStruct)
+	// most time preHdc == hdc
 	if me.preHdc != hdc {
 		if me.preHdc != 0 {
 			me.canvas.Destroy()
 			win32.DeleteObject(me.hBitMap)
 			win32.DeleteDC(me.preHdc)
+			win32.DeleteDC(me.hdcBuffer)
 		}
 		me.preHdc = hdc
 		var rectClient win32.RECT

@@ -1,9 +1,3 @@
-// Copyright 2018 The NuxUI Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
-//go:build linux && !android
-
 /* Copyright 2018 Bernhard R. Fischer, 4096R/8E24F29D <bf@abenteuerland.at>
  *
  * This file is part of Cairo_JPG.
@@ -45,6 +39,8 @@
  * @license LGPL3.
  */
 
+//go:build (linux && !android) || (windows && cairo)
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -54,7 +50,7 @@
 #include <unistd.h>
 #include <jpeglib.h>
 
-#include "image_linux_jpg.h"
+#include "image_jpg_cairo.h"
 
 /*! Macro to activate main() function. This is only used for testing. Comment
  * it out (#undef) if you link this file to your own program.

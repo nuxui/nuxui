@@ -1,5 +1,3 @@
-//go:build linux && !android
-
 /* Copyright 2018 Bernhard R. Fischer, 4096R/8E24F29D <bf@abenteuerland.at>
  *
  * This file is part of Cairo_JPG.
@@ -17,6 +15,8 @@
  * You should have received a copy of the GNU General Public License
  * along with Cairo_JPG.  If not, see <https://www.gnu.org/licenses/>.
  */
+
+//go:build (linux && !android) || (windows && cairo)
 
 #ifndef CAIRO_JPEG_H
 #define CAIRO_JPEG_H

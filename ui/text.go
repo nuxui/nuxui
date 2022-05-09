@@ -56,18 +56,15 @@ func NewText(attr nux.Attr) Text {
 }
 
 func (me *text) Mount() {
-	log.I("nuxui", "text Mount")
 	nux.OnTapDown(me, me.onTapDown)
 	nux.OnTapUp(me, me.onTapUp)
 	nux.OnTapCancel(me, me.onTapUp)
 }
 
 func (me *text) Eject() {
-	log.I("nuxui", "text Eject")
 }
 
 func (me *text) onTapDown(detail nux.GestureDetail) {
-	log.V("nuxui", "text onTapDown")
 	changed := false
 	if !me.Disable() {
 		if me.Background() != nil {
@@ -85,7 +82,6 @@ func (me *text) onTapDown(detail nux.GestureDetail) {
 }
 
 func (me *text) onTapUp(detail nux.GestureDetail) {
-	log.V("nuxui", "text onTapUp")
 	changed := false
 	if !me.Disable() {
 		if me.Background() != nil {
