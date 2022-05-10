@@ -39,3 +39,9 @@ const (
 	flagMeasuredPaddingBottom
 	flagMeasuredPaddingComplete = flagMeasuredPaddingLeft | flagMeasuredPaddingTop | flagMeasuredPaddingRight | flagMeasuredPaddingBottom
 )
+
+const (
+	clipChildrenAuto = 0
+	clipChildrenYes  = 1
+	clipChildrenNo   = -1
+)

@@ -38,12 +38,12 @@ func NewRow(attr nux.Attr) Row {
 	if attr.Has("clipChildren") {
 		v := attr.GetBool("clipChildren", false)
 		if v {
-			me.clipChildren = 1
+			me.clipChildren = clipChildrenYes
 		} else {
-			me.clipChildren = -1
+			me.clipChildren = clipChildrenNo
 		}
 	} else {
-		me.clipChildren = 0
+		me.clipChildren = clipChildrenAuto
 	}
 
 	me.WidgetParent = nux.NewWidgetParent(me, attr)
@@ -852,6 +852,16 @@ func (me *row) Draw(canvas nux.Canvas) {
 		me.Background().Draw(canvas)
 	}
 
+	frame := me.Frame()
+	clip := me.clipChildren == clipChildrenYes
+	if me.clipChildren == clipChildrenAuto {
+		clip = me.childrenWidth > float32(frame.Width)
+	}
+	if clip {
+		canvas.Save()
+		canvas.ClipRect(float32(frame.X), float32(frame.Y), float32(frame.Width), float32(frame.Height))
+	}
+
 	for _, child := range me.Children() {
 		if compt, ok := child.(nux.Component); ok {
 			child = compt.Content()
@@ -860,6 +870,10 @@ func (me *row) Draw(canvas nux.Canvas) {
 		if draw, ok := child.(nux.Draw); ok {
 			draw.Draw(canvas)
 		}
+	}
+
+	if clip {
+		canvas.Restore()
 	}
 
 	if me.Foreground() != nil {

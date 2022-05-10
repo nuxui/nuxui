@@ -38,12 +38,12 @@ func NewColumn(attr nux.Attr) Column {
 	if attr.Has("clipChildren") {
 		v := attr.GetBool("clipChildren", false)
 		if v {
-			me.clipChildren = 1
+			me.clipChildren = clipChildrenYes
 		} else {
-			me.clipChildren = -1
+			me.clipChildren = clipChildrenNo
 		}
 	} else {
-		me.clipChildren = 0
+		me.clipChildren = clipChildrenAuto
 	}
 
 	me.WidgetParent = nux.NewWidgetParent(me, attr)
@@ -853,15 +853,15 @@ func (me *column) Draw(canvas nux.Canvas) {
 	}
 
 	frame := me.Frame()
-	clip := me.clipChildren == 1
-	if me.clipChildren == 0 {
+	clip := me.clipChildren == clipChildrenYes
+	if me.clipChildren == clipChildrenAuto {
 		clip = me.childrenHeight > float32(frame.Height)
 	}
-	// log.D("nuxiui", "column childrenHeight=%f", me.childrenHeight)
 	if clip {
 		canvas.Save()
 		canvas.ClipRect(float32(frame.X), float32(frame.Y), float32(frame.Width), float32(frame.Height))
 	}
+
 	for _, child := range me.Children() {
 		if compt, ok := child.(nux.Component); ok {
 			child = compt.Content()
