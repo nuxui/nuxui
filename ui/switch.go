@@ -6,11 +6,11 @@ package ui
 
 import "nuxui.org/nuxui/nux"
 
-type Switch Opt
+type Switch Check
 
 func NewSwitch(attr nux.Attr) Switch {
-	me := NewOpt(attr)
+	me := NewCheck(attr)
 	return Switch(me)
 }
 
-type switcher opt
+type switcher check

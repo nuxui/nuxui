@@ -17,7 +17,7 @@ const (
 	State_Pressed
 	State_Focused
 	State_Hovered
-	State_Opted
+	State_Checked
 	State_Visited        // state of visited links
 	State_Invalid        // invalid of input
 	State_Default uint32 = 0
@@ -33,8 +33,8 @@ func StateFromString(state string) uint32 {
 		return State_Focused
 	case "hovered":
 		return State_Hovered
-	case "opted":
-		return State_Opted
+	case "checked":
+		return State_Checked
 	case "visited":
 		return State_Visited
 	case "invalid":
@@ -56,8 +56,8 @@ func StateToString(state uint32) string {
 		return "Focused"
 	case State_Hovered:
 		return "Hovered"
-	case State_Opted:
-		return "Opted"
+	case State_Checked:
+		return "Checked"
 	case State_Visited:
 		return "Visited"
 	case State_Invalid:

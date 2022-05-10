@@ -33,20 +33,20 @@ func NewOptions(attr nux.Attr) Options {
 func (me *options) bindchild() {
 	if p, ok := me.Content().(nux.Parent); ok {
 		for _, child := range p.Children() {
-			if item, ok := child.(Optable); ok {
-				item.SetOptChangedCallback(me.onOptedChanged)
+			if item, ok := child.(Checkable); ok {
+				item.SetCheckChangedCallback(me.onCheckedChanged)
 			}
 		}
 	}
 }
 
-func (me *options) onOptedChanged(widget OptableWidget, isOpted bool, fromUser bool) {
+func (me *options) onCheckedChanged(widget CheckableWidget, checked bool, fromUser bool) {
 	if me.radio && fromUser {
 		if p, ok := me.Content().(nux.Parent); ok {
 			for _, child := range p.Children() {
-				if item, ok := child.(Optable); ok {
-					if item != widget && item.Opted() {
-						item.SetOpted(false, false)
+				if item, ok := child.(Checkable); ok {
+					if item != widget && item.Checked() {
+						item.SetChecked(false, false)
 					}
 				}
 			}
@@ -54,6 +54,6 @@ func (me *options) onOptedChanged(widget OptableWidget, isOpted bool, fromUser b
 	}
 }
 
-func (me *options) doOptedChanged() {
+func (me *options) doCheckedChanged() {
 
 }
