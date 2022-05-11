@@ -7,6 +7,7 @@
 package nux
 
 import (
+	"path/filepath"
 	"runtime"
 	"syscall"
 
@@ -14,6 +15,7 @@ import (
 )
 
 func CreateImage(path string) Image {
+	path, _ = filepath.Abs(path)
 	me := &nativeImage{}
 	str, _ := syscall.UTF16PtrFromString(path)
 	win32.GdipLoadImageFromFile(str, &me.ptr)

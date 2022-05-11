@@ -18,11 +18,13 @@ CGImageRef createImage(char* name){
 */
 import "C"
 import (
+	"path/filepath"
 	"runtime"
 	"unsafe"
 )
 
 func CreateImage(path string) Image {
+	path, _ = filepath.Abs(path)
 	cpath := C.CString(path)
 	defer C.free(unsafe.Pointer(cpath))
 

@@ -15,7 +15,6 @@ func (me *Material) GetAttr(widgetName, themeName, themeKind, styleName string) 
 	switch styleName {
 	case "button":
 		return nux.Attr{
-			// "widget":     ui.Column,
 			"width":      nux.ADimen(0, nux.Auto),
 			"height":     nux.ADimen(0, nux.Auto),
 			"textSize":   14,

@@ -52,9 +52,12 @@ type label struct {
 }
 
 func NewLabel(attr nux.Attr) Label {
+	themeAttr := text_theme(nux.ThemeLight)
+	attr = nux.MergeAttrs(themeAttr, attr)
+
 	me := &label{
 		text:               attr.GetString("text", ""),
-		textSize:           attr.GetFloat32("textSize", 12),
+		textSize:           attr.GetFloat32("textSize", 14),
 		textColor:          attr.GetColor("textColor", nux.White),
 		textHighlightColor: attr.GetColor("textHighlightColor", nux.Transparent),
 		align:              NewAlign(attr.GetAttr("align", nux.Attr{"horizontal": "center", "vertical": "center"})),

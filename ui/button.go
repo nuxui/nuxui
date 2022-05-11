@@ -15,11 +15,8 @@ type Button interface {
 type button label
 
 func NewButton(attr nux.Attr) Button {
-	btnattr := nux.Attr{
-		"selectable": false,
-		"clickable":  true,
-	}
-	nux.MergeAttrs(btnattr, attr)
-	me := NewLabel(btnattr)
+	themeAttr := button_theme(nux.ThemeLight)
+	nux.MergeAttrs(themeAttr, attr)
+	me := NewLabel(themeAttr)
 	return Button(me)
 }

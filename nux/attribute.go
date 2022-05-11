@@ -16,7 +16,8 @@ import (
 
 type Attr map[string]any
 
-// TODO:: use new attr or attrs[0]?
+// merge attrs to single one attr, the other attrs will overwrite attrs[0]
+// return attrs[0]
 func MergeAttrs(attrs ...Attr) Attr {
 	l := len(attrs)
 	if l == 0 {

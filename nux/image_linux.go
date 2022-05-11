@@ -28,9 +28,10 @@ import (
 	"unsafe"
 )
 
-func CreateImage(src string) Image {
-	ext := strings.ToLowerSpecial(unicode.TurkishCase, filepath.Ext(src))
-	csrc := C.CString(src)
+func CreateImage(path string) Image {
+	path, _ = filepath.Abs(path)
+	ext := strings.ToLowerSpecial(unicode.TurkishCase, filepath.Ext(path))
+	csrc := C.CString(path)
 	defer C.free(unsafe.Pointer(csrc))
 
 	var img *nativeImage

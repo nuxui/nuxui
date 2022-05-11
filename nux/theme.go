@@ -4,12 +4,19 @@
 
 package nux
 
+type ThemeKind int
+
+const (
+	ThemeLight ThemeKind = iota
+	ThemeDark
+)
+
 type Theme interface {
 	GetAttr(widgetName, themeName, themeKind, styleName string) Attr
 }
 
 var appTheme Theme
 
-func UseTheme(theme Theme) {
+func ApplyTheme(theme Theme) {
 	appTheme = theme
 }

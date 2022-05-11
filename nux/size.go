@@ -6,6 +6,7 @@ package nux
 
 import (
 	"fmt"
+	"strings"
 
 	"nuxui.org/nuxui/log"
 	"nuxui.org/nuxui/util"
@@ -77,16 +78,46 @@ type Padding struct {
 	Bottom Dimen
 }
 
-func NewPadding(attr Attr) *Padding {
+/*
+padding: {left: 10px, top: 10px, right: 10px, bottom: 10px}
+padding: 10px, 10px, 10px, 10px
+padding: 10px
+*/
+func NewPadding(attr any) *Padding {
 	if attr == nil {
 		return &Padding{}
 	}
-	return &Padding{
-		Left:   getPadding(attr, "left", "0"),
-		Top:    getPadding(attr, "top", "0"),
-		Right:  getPadding(attr, "right", "0"),
-		Bottom: getPadding(attr, "bottom", "0"),
+	switch t := attr.(type) {
+	case Attr:
+		return &Padding{
+			Left:   getPadding(t, "left", "0"),
+			Top:    getPadding(t, "top", "0"),
+			Right:  getPadding(t, "right", "0"),
+			Bottom: getPadding(t, "bottom", "0"),
+		}
+	case string:
+		dimens := strings.Split(strings.TrimSpace(t), ",")
+		if len(dimens) == 1 {
+			d := SDimen(dimens[0])
+			return &Padding{d, d, d, d}
+		} else {
+			p := &Padding{}
+			for i, d := range dimens {
+				switch i {
+				case 0:
+					p.Left = SDimen(d)
+				case 1:
+					p.Top = SDimen(d)
+				case 2:
+					p.Right = SDimen(d)
+				case 3:
+					p.Bottom = SDimen(d)
+				}
+			}
+			return p
+		}
 	}
+	return &Padding{}
 }
 
 func getPadding(attr Attr, key string, defaultValue string) Dimen {
@@ -110,7 +141,12 @@ func (me *Padding) Equal(value *Padding) bool {
 	return false
 }
 
-// margin: !auto 10px 10dp 1em 1wt 5% !ratio !unlimit
+/*
+margin: !auto 10px 10dp 1em 1wt 5% !ratio !unlimit
+margin: {left: 10px, top: 10px, right: 10px, bottom: 10px}
+margin: 10px, 10px, 10px, 10px
+margin: 10px
+*/
 type Margin struct {
 	Left   Dimen
 	Top    Dimen
@@ -118,17 +154,41 @@ type Margin struct {
 	Bottom Dimen
 }
 
-func NewMargin(attr Attr) *Margin {
+func NewMargin(attr any) *Margin {
 	if attr == nil {
 		return &Margin{}
 	}
-
-	return &Margin{
-		Left:   getMargin(attr, "left", "0"),
-		Top:    getMargin(attr, "top", "0"),
-		Right:  getMargin(attr, "right", "0"),
-		Bottom: getMargin(attr, "bottom", "0"),
+	switch t := attr.(type) {
+	case Attr:
+		return &Margin{
+			Left:   getMargin(t, "left", "0"),
+			Top:    getMargin(t, "top", "0"),
+			Right:  getMargin(t, "right", "0"),
+			Bottom: getMargin(t, "bottom", "0"),
+		}
+	case string:
+		dimens := strings.Split(strings.TrimSpace(t), ",")
+		if len(dimens) == 1 {
+			d := SDimen(dimens[0])
+			return &Margin{d, d, d, d}
+		} else {
+			m := &Margin{}
+			for i, d := range dimens {
+				switch i {
+				case 0:
+					m.Left = SDimen(d)
+				case 1:
+					m.Top = SDimen(d)
+				case 2:
+					m.Right = SDimen(d)
+				case 3:
+					m.Bottom = SDimen(d)
+				}
+			}
+			return m
+		}
 	}
+	return &Margin{}
 }
 
 func getMargin(attr Attr, key string, defaultValue string) Dimen {
@@ -173,11 +233,11 @@ func NewWidgetSize(attrs ...Attr) *WidgetSize {
 	me.width = attr.GetDimen("width", "auto")
 	me.height = attr.GetDimen("height", "auto")
 
-	if padding := attr.GetAttr("padding", nil); padding != nil {
+	if padding := attr.Get("padding", nil); padding != nil {
 		me.padding = NewPadding(padding)
 	}
 
-	if margin := attr.GetAttr("margin", nil); margin != nil {
+	if margin := attr.Get("margin", nil); margin != nil {
 		me.margin = NewMargin(margin)
 	}
 

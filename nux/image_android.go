@@ -15,11 +15,12 @@ void bitmap_recycle(jobject bitmap);
 */
 import "C"
 import (
+	"path/filepath"
 	"runtime"
-	// "unsafe"
 )
 
 func CreateImage(path string) Image {
+	path, _ = filepath.Abs(path)
 	chars := ([]byte)(path)
 
 	me := &nativeImage{

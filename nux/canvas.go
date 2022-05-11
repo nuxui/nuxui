@@ -95,7 +95,7 @@ func NewPaint() Paint {
 	me := &paint{
 		width:      1.0,
 		style:      PaintStyle_Fill,
-		textSize:   14,
+		textSize:   16,
 		color:      0xff000000,
 		antialias:  false,
 		fontFamily: "",
