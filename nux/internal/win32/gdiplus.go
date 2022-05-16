@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	modgdiplus = syscall.NewLazyDLL("gdiplus.dll")
+	modgdiplus                            = syscall.NewLazyDLL("gdiplus.dll")
 	gdiplusShutdown                       = modgdiplus.NewProc("GdiplusShutdown")
 	gdiplusStartup                        = modgdiplus.NewProc("GdiplusStartup")
 	gdipCreateFromHDC                     = modgdiplus.NewProc("GdipCreateFromHDC")
@@ -149,6 +149,8 @@ var (
 	gdipAddPathLineI                      = modgdiplus.NewProc("GdipAddPathLineI")
 	gdipClosePathFigure                   = modgdiplus.NewProc("GdipClosePathFigure")
 	gdipClosePathFigures                  = modgdiplus.NewProc("GdipClosePathFigures")
+	gdipGetGenericFontFamilySerif         = modgdiplus.NewProc("GdipGetGenericFontFamilySerif")
+	gdipGetGenericFontFamilySansSerif     = modgdiplus.NewProc("GdipGetGenericFontFamilySansSerif")
 	gdipGetGenericFontFamilyMonospace     = modgdiplus.NewProc("GdipGetGenericFontFamilyMonospace")
 	gdipFlush                             = modgdiplus.NewProc("GdipFlush")
 )
@@ -1264,6 +1266,18 @@ func GdipCreateBitmapFromScan0(width, height, stride int32, format PixelFormat, 
 		uintptr(format),
 		uintptr(unsafe.Pointer(scan0)),
 		uintptr(unsafe.Pointer(bitmap)))
+	return GpStatus(ret)
+}
+
+func GdipGetGenericFontFamilySerif(family **GpFontFamily) GpStatus {
+	ret, _, _ := gdipGetGenericFontFamilySerif.Call(
+		uintptr(unsafe.Pointer(family)))
+	return GpStatus(ret)
+}
+
+func GdipGetGenericFontFamilySansSerif(family **GpFontFamily) GpStatus {
+	ret, _, _ := gdipGetGenericFontFamilySansSerif.Call(
+		uintptr(unsafe.Pointer(family)))
 	return GpStatus(ret)
 }
 

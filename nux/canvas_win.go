@@ -176,7 +176,7 @@ func (me *canvas) DrawImage(img Image) {
 func (me *canvas) DrawText(text string, width, height float32, paint Paint) {
 	font := &win32.GpFont{}
 	family := &win32.GpFontFamily{}
-	win32.GdipGetGenericFontFamilyMonospace(&family)
+	win32.GdipGetGenericFontFamilySansSerif(&family)
 	win32.GdipCreateFont(family, paint.TextSize(), 0, 0, &font)
 
 	str, _ := syscall.UTF16FromString(text)
@@ -210,7 +210,7 @@ func (me *paint) MeasureText(text string, width, height float32) (outWidth float
 	hwnd := theApp.window.hwnd
 	font := &win32.GpFont{}
 	family := &win32.GpFontFamily{}
-	win32.GdipGetGenericFontFamilyMonospace(&family)
+	win32.GdipGetGenericFontFamilySansSerif(&family)
 	win32.GdipCreateFont(family, me.textSize, 0, 0, &font)
 
 	str, _ := syscall.UTF16FromString(text)
