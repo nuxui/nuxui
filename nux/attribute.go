@@ -482,7 +482,12 @@ func ParseAttrWitthError(attrtext string) (Attr, error) {
 	return (&attr{}).parse(attrtext)
 }
 
-const EOF = -1
+const (
+	_EOF = -1
+	_STRING = iota
+	_ARRAY
+	_STRUCT
+)
 
 type attr struct {
 	data []rune
@@ -498,7 +503,7 @@ func (me *attr) parse(template string) (Attr, error) {
 	me.len = len(me.data)
 	me.pos = -1
 	me.line = 1
-	me.r = EOF
+	me.r = _EOF
 
 	me.nextRune()
 	me.skipBlank()
@@ -517,7 +522,7 @@ func (me *attr) nextStruct() (Attr, error) {
 	for {
 		me.nextRune()
 		me.skipBlank()
-		if me.r == EOF {
+		if me.r == _EOF {
 			return nil, fmt.Errorf("line:%d unclosed attribute, not end with '}'", me.line)
 		}
 		if me.r == '}' {
@@ -533,7 +538,7 @@ func (me *attr) nextStruct() (Attr, error) {
 		}
 		me.nextRune()
 		me.skipBlank()
-		value, err = me.nextValue()
+		value, err = me.nextValue(_STRUCT)
 		if err != nil {
 			return nil, err
 		}
@@ -554,7 +559,7 @@ func (me *attr) nextStruct() (Attr, error) {
 	return data, nil
 }
 
-func (me *attr) nextValue() (any, error) {
+func (me *attr) nextValue(parent int) (any, error) {
 	switch me.r {
 	case '"', '`':
 		return me.nextString(me.r)
@@ -567,6 +572,11 @@ func (me *attr) nextValue() (any, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		if parent == _ARRAY && strings.Contains(str, " "){
+			return nil, fmt.Errorf("line:%d strings which has space in the array should be quoted", me.line)
+		}
+
 		if me.i != nil {
 			strs := strings.Split(str, ".")
 			if len(strs) == 2 {
@@ -593,7 +603,7 @@ func (me *attr) nextArray() ([]any, error) {
 		if me.r == ',' {
 			continue
 		}
-		value, err = me.nextValue()
+		value, err = me.nextValue(_ARRAY)
 		if err != nil {
 			return nil, err
 		}
@@ -622,7 +632,7 @@ func (me *attr) skipBlank() {
 func (me *attr) nextRune() rune {
 	me.pos++
 	if me.pos >= me.len {
-		me.r = EOF
+		me.r = _EOF
 	} else {
 		me.r = me.data[me.pos]
 	}
@@ -632,7 +642,7 @@ func (me *attr) nextRune() rune {
 func (me *attr) previousRune() rune {
 	me.pos--
 	if me.pos >= me.len || me.pos < 0 {
-		me.r = EOF
+		me.r = _EOF
 	} else {
 		me.r = me.data[me.pos]
 	}
@@ -648,13 +658,13 @@ func (me *attr) skipComment() error {
 				me.line++
 				me.nextRune()
 				return nil
-			} else if me.r == EOF {
+			} else if me.r == _EOF {
 				return nil
 			}
 		}
 	} else if me.r == '*' {
 		me.nextRune()
-		for me.r != EOF {
+		for me.r != _EOF {
 			if me.r == '*' {
 				me.nextRune()
 				if me.r == '/' {
@@ -751,7 +761,7 @@ func (me *attr) nextString(end rune) (string, error) {
 					}
 				}
 				p = me.pos + 1
-			} else { // EOF
+			} else { // _EOF
 				if quot {
 					return "", fmt.Errorf("line:%d unclosed string", me.line)
 				}
@@ -764,7 +774,7 @@ func (me *attr) nextString(end rune) (string, error) {
 					if me.r == end && me.data[me.pos-1] != '\\' {
 						return string(append(ret, me.data[p:me.pos]...)), nil
 					}
-				case EOF:
+				case _EOF:
 					return "", fmt.Errorf("line:%d unclosed string", me.line)
 				}
 			} else {
@@ -775,7 +785,7 @@ func (me *attr) nextString(end rune) (string, error) {
 					ret := strings.TrimSpace(string(append(ret, me.data[p:me.pos]...)))
 					me.previousRune()
 					return ret, nil
-				case EOF:
+				case _EOF:
 					return "", fmt.Errorf("line:%d invalid value, syntax error", me.line)
 				}
 			}
