@@ -15,8 +15,10 @@ type Button interface {
 type button label
 
 func NewButton(attr nux.Attr) Button {
-	themeAttr := button_theme(nux.ThemeLight)
-	nux.MergeAttrs(themeAttr, attr)
-	me := NewLabel(themeAttr)
+	if !attr.Has("theme") {
+		attr = nux.MergeAttrs(button_theme(nux.ThemeLight), attr)
+	}
+
+	me := NewLabel(attr)
 	return Button(me)
 }

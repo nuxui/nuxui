@@ -25,6 +25,7 @@
 #include <strings.h>
 #include <string.h>
 #include <locale.h>
+#include <sys/syscall.h>
 
 #include "_cgo_export.h"
 
@@ -82,7 +83,7 @@ static pid_t mainThreadId;
 static short g_ime_pos_x ,g_ime_pos_y;
 
 int isMainThread(){
-    return mainThreadId == gettid();
+    return mainThreadId == syscall(SYS_gettid);
 }
 
 // https://www.x.org/releases/current/doc/libX11/libX11/libX11.html#:~:text=Preedit%20State-,Callbacks,-When%20the%20input
@@ -137,7 +138,7 @@ void run(){
     XIM xim;
     XIC xic;
 
-    mainThreadId = gettid();
+    mainThreadId = syscall(SYS_gettid);
 
     // HACK: If the application has left the locale as "C" then both wide
     //       character text input and explicit UTF-8 input via XIM will break

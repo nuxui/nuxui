@@ -23,11 +23,11 @@ func NewOptions(attr nux.Attr) Options {
 		radio: attr.GetBool("radio", false),
 	}
 	me.ComponentBase = nux.NewComponentBase(me, attr)
-
-	content := attr.GetAttr("content", nux.Attr{})
-	nux.InflateLayoutAttr(me, content)
-	me.bindchild()
 	return me
+}
+
+func (me *options) Mount() {
+	me.bindchild()
 }
 
 func (me *options) bindchild() {

@@ -126,26 +126,11 @@ func RequestFocus(widget Widget) {
 	}
 }
 
-var decorWindowList map[Widget]Window = map[Widget]Window{}
-
 // GetWidgetWindow get the window of widget  return can be nil if widget not attach to window
 func GetWidgetWindow(widget Widget) Window {
 
 	return theApp.window
 }
-
-// if widget.Parent() == nil {
-// 	if util.TypeName(widget) == "nuxui.org/nuxui/ui.layer" {
-// 		if w, ok := decorWindowList[widget]; ok {
-// 			return w
-// 		}
-// 	}
-
-// 	// log.Fatal("nuxui", "can not run here %T", widget)
-// 	// widget not attached to window yet
-// 	return nil
-// }
-// return GetWidgetWindow(widget.Parent())
 
 func RunOnUI(callback func()) {
 	runOnUI(callback)

@@ -45,7 +45,8 @@ func newWindow(attr Attr) *window {
 }
 
 func (me *window) CreateDecor(attr Attr) Widget {
-	creator := FindRegistedWidgetCreator("nuxui.org/nuxui/ui.Layer")
+	creator := FindTypeCreator("nuxui.org/nuxui/ui.Layer")
+	// TODO:: statusBar
 	attr.Set("padding", Attr{"top": "75px"})
 	w := creator(attr)
 	if p, ok := w.(Parent); ok {
@@ -53,8 +54,6 @@ func (me *window) CreateDecor(attr Attr) Widget {
 	} else {
 		log.Fatal("nuxui", "decor must is a Parent")
 	}
-
-	decorWindowList[w] = me
 
 	return me.decor
 }

@@ -54,8 +54,8 @@ func (me *window) OnCreate() {
 	if main == "" {
 		log.Fatal("nuxui", "no main widget found.")
 	} else {
-		mainWidgetCreator := FindRegistedWidgetCreator(main)
-		widgetTree := mainWidgetCreator(Attr{})
+		mainWidgetCreator := FindTypeCreator(main)
+		widgetTree := mainWidgetCreator(Attr{}).(Widget)
 		me.decor.AddChild(widgetTree)
 		mountWidget(me.decor, nil)
 	}

@@ -56,15 +56,13 @@ func newWindow(attr Attr) *window {
 }
 
 func (me *window) CreateDecor(attr Attr) Widget {
-	creator := FindRegistedWidgetCreator("nuxui.org/nuxui/ui.Layer")
+	creator := FindTypeCreator("nuxui.org/nuxui/ui.Layer")
 	w := creator(attr)
 	if p, ok := w.(Parent); ok {
 		me.decor = p
 	} else {
 		log.Fatal("nuxui", "decor must is a Parent")
 	}
-
-	decorWindowList[w] = me
 
 	return me.decor
 }
@@ -108,8 +106,6 @@ func (me *window) CreateDecor(attr Attr) Widget {
 // 	} else {
 // 		log.Fatal("nuxui", "decor must is a Parent")
 // 	}
-
-// 	decorWindowList[w] = me
 
 // 	return me.decor
 // }

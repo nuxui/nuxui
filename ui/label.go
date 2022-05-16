@@ -52,13 +52,10 @@ type label struct {
 }
 
 func NewLabel(attr nux.Attr) Label {
-	themeAttr := text_theme(nux.ThemeLight)
-	attr = nux.MergeAttrs(themeAttr, attr)
-
 	me := &label{
 		text:               attr.GetString("text", ""),
 		textSize:           attr.GetFloat32("textSize", 14),
-		textColor:          attr.GetColor("textColor", nux.White),
+		textColor:          attr.GetColor("textColor", nux.Black),
 		textHighlightColor: attr.GetColor("textHighlightColor", nux.Transparent),
 		align:              NewAlign(attr.GetAttr("align", nux.Attr{"horizontal": "center", "vertical": "center"})),
 		paint:              nux.NewPaint(),
@@ -66,16 +63,16 @@ func NewLabel(attr nux.Attr) Label {
 
 	if icon := attr.GetAttr("icon", nil); icon != nil {
 		if iconLeft := icon.GetAttr("left", nil); iconLeft != nil {
-			me.iconLeft = nux.InflateLayoutAttr(nil, iconLeft)
+			me.iconLeft = nux.InflateLayoutAttr(nil, iconLeft, nil)
 		}
 		if iconTop := icon.GetAttr("top", nil); iconTop != nil {
-			me.iconTop = nux.InflateLayoutAttr(nil, iconTop)
+			me.iconTop = nux.InflateLayoutAttr(nil, iconTop, nil)
 		}
 		if iconRight := icon.GetAttr("right", nil); iconRight != nil {
-			me.iconRight = nux.InflateLayoutAttr(nil, iconRight)
+			me.iconRight = nux.InflateLayoutAttr(nil, iconRight, nil)
 		}
 		if iconBottom := icon.GetAttr("bottom", nil); iconBottom != nil {
-			me.iconBottom = nux.InflateLayoutAttr(nil, iconBottom)
+			me.iconBottom = nux.InflateLayoutAttr(nil, iconBottom, nil)
 		}
 	}
 

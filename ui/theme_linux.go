@@ -11,6 +11,10 @@ import (
 	"nuxui.org/nuxui/nux"
 )
 
+/*
+	Default theme for ui widgets
+*/
+
 func button_theme(kind nux.ThemeKind) nux.Attr {
 	switch kind {
 	case nux.ThemeLight:
@@ -21,7 +25,7 @@ func button_theme(kind nux.ThemeKind) nux.Attr {
 			"clickable":  true,
 			"padding":    nux.Attr{"left": "6px", "top": "3px", "right": "6px", "bottom": "3px"},
 			"background": nux.Attr{
-				"drawable": "nuxui.org/nuxui/ui.ShapeDrawable",
+				"type": "nuxui.org/nuxui/ui.ShapeDrawable",
 				"states": []nux.Attr{
 					{"state": "default", "shape": nux.Attr{
 						"shape":        "rect",
@@ -46,7 +50,7 @@ func button_theme(kind nux.ThemeKind) nux.Attr {
 			"clickable":  true,
 			"padding":    nux.Attr{"left": "6px", "top": "3px", "right": "6px", "bottom": "3px"},
 			"background": nux.Attr{
-				"drawable": "nuxui.org/nuxui/ui.ShapeDrawable",
+				"type": "nuxui.org/nuxui/ui.ShapeDrawable",
 				"states": []nux.Attr{
 					{"state": "default", "shape": nux.Attr{
 						"shape":        "rect",

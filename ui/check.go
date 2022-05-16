@@ -14,8 +14,7 @@ func NewRadio(attr nux.Attr) Radio {
 	a := nux.Attr{
 		"theme": "radio",
 	}
-	nux.MergeAttrs(a, attr)
-	return Radio(NewCheck(a))
+	return Radio(NewCheck(nux.MergeAttrs(a, attr)))
 }
 
 type Check interface {
@@ -35,10 +34,9 @@ func NewCheck(attr nux.Attr) Check {
 		"clickable":  true,
 		"checkable":  true,
 	}
-	nux.MergeAttrs(myattr, attr)
 	me := &check{
 		checked: attr.GetBool("checked", false),
-		label:   NewLabel(myattr).(*label),
+		label:   NewLabel(nux.MergeAttrs(myattr, attr)).(*label),
 	}
 
 	return me

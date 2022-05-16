@@ -19,7 +19,7 @@ var template = `
 
   layout: {
 	id: "root",
-	widget: ui.Column,
+	type: ui.Column,
 	width: 1wt,
 	height: 1wt,
 	background: #215896,
@@ -27,7 +27,7 @@ var template = `
 	children:[
 	{
 		id: "edit",
-		widget: ui.Editor,
+		type: ui.Editor,
 		width: 1wt,
 		height: 30px,
 		background: #982368,
@@ -35,7 +35,7 @@ var template = `
 		font: {family: "Menlo, Monaco, Courier New, monospace", size: 14, color: #ffffff }
 	},{
 		id: "header",
-		widget: ui.Column,
+		type: ui.Column,
 		width: 1wt,
 		height: 100px,
 		background: #123098,
@@ -43,7 +43,7 @@ var template = `
 		children:[
 		{
 			id: "xxx",
-			widget: ui.Text,
+			type: ui.Text,
 			width: auto,
 			height: auto,
 			background: #982368,

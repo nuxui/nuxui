@@ -12,19 +12,37 @@ import (
 	"nuxui.org/nuxui/log"
 )
 
-func InflateLayout(parent Widget, layout string) Widget {
-	attrs := ParseAttr(layout)
-	layoutAttr := attrs.GetAttr("layout", nil)
+func InflateStyles(styles ...string) Attr {
+	attrs := make([]Attr, len(styles))
+	for i, style := range styles {
+		attrs[i] = InflateStyle(style)
+	}
+	return MergeAttrs(attrs...)
+}
+
+func InflateStyle(style string) Attr {
+	attr := ParseAttr(style)
+	if s := attr.GetAttr("style", nil); s != nil {
+		return s
+	}
+
+	log.Fatal("nuxui", "not found 'style' node")
+	return nil
+}
+
+func InflateLayout(parent Widget, layout string, styles Attr) Widget {
+	attr := ParseAttr(layout)
+	layoutAttr := attr.GetAttr("layout", nil)
 	if layoutAttr == nil {
-		log.E("nuxui", "not found 'layout' node")
+		log.Fatal("nuxui", "not found 'layout' node")
 		return parent
 	}
 
-	return InflateLayoutAttr(parent, layoutAttr)
+	return InflateLayoutAttr(parent, layoutAttr, styles)
 }
 
-func InflateLayoutAttr(parent Widget, attr Attr) Widget {
-	widget := inflateLayoutAttr(nil, attr)
+func InflateLayoutAttr(parent Widget, layout Attr, styles Attr) Widget {
+	widget := inflateLayoutAttr(nil, layout, styles)
 
 	if parent == nil {
 		return widget
@@ -42,49 +60,63 @@ func InflateLayoutAttr(parent Widget, attr Attr) Widget {
 	return parent
 }
 
-func inflateLayoutAttr(parent Widget, attr Attr) Widget {
-	widgetName := attr.GetString("widget", "")
-	if widgetName == "" {
-		log.Fatal("nuxui", `must specified "widget"`)
+func inflateLayoutAttr(parent Widget, layoutAttr Attr, styleAttr Attr) Widget {
+	var widgetTheme, widgetStyle Attr
+	if themeNames := layoutAttr.GetStringArray("theme", nil); themeNames != nil {
+		widgetTheme = AppTheme().GetStyle(themeNames...)
+	}
+
+	if styleNames := layoutAttr.GetStringArray("style", nil); styleNames != nil {
+		for _, styleName := range styleNames {
+			if style := styleAttr.GetAttr(styleName, nil); style != nil {
+				widgetStyle = MergeAttrs(widgetStyle, style)
+			}
+		}
+	}
+
+	mergeAttr := MergeAttrs(widgetTheme, widgetStyle, layoutAttr)
+	typeFullName := mergeAttr.GetString("type", "")
+	if typeFullName == "" {
+		log.Fatal("nuxui", `must specified "type" node in layout attr`)
 		return nil
 	}
 
-	widgetCreator := FindRegistedWidgetCreator(widgetName)
+	widgetCreator := FindTypeCreator(typeFullName)
 
-	var widget Widget
-	if theme := attr.GetAttr("theme", nil); theme != nil {
-		if themeAttr := appTheme.GetAttr(
-			widgetName,
-			theme.GetString("name", ""),
-			theme.GetString("kind", ""),
-			theme.GetString("style", "")); themeAttr != nil {
-			widget = widgetCreator(MergeAttrs(themeAttr, attr))
-		}
-	}
+	if widget, ok := widgetCreator(mergeAttr).(Widget); ok {
+		widget.Info().Self = widget
 
-	if widget == nil {
-		widget = widgetCreator(attr)
-	}
-
-	widget.Info().Self = widget
-
-	if childrenNode, ok := attr["children"]; ok {
-		if children, ok := childrenNode.([]any); ok {
-			if p, ok := widget.(Parent); ok {
-				for _, child := range children {
-					if childAttr, ok := child.(Attr); ok {
-						childWidget := inflateLayoutAttr(widget, childAttr)
-						p.AddChild(childWidget)
+		if childrenNode, ok := layoutAttr["children"]; ok {
+			if children, ok := childrenNode.([]any); ok {
+				if p, ok := widget.(Parent); ok {
+					for _, child := range children {
+						if childAttr, ok := child.(Attr); ok {
+							childWidget := inflateLayoutAttr(widget, childAttr, styleAttr)
+							p.AddChild(childWidget)
+						}
 					}
+				} else {
+					log.Fatal("nuxui", "%T is not a WidgetParent but has 'children' node", p)
 				}
 			} else {
-				log.Fatal("nuxui", "%T is not a WidgetParent but has 'children' node", p)
+				log.Fatal("nuxui", "'children' node must be widget array")
 			}
-		} else {
-			log.Fatal("nuxui", "'children' node must be widget array")
 		}
+
+		if content, ok := layoutAttr["content"]; ok {
+			if compt, ok := widget.(Component); ok {
+				if childAttr, ok := content.(Attr); ok {
+					childWidget := inflateLayoutAttr(widget, childAttr, styleAttr)
+					compt.SetContent(childWidget)
+				}
+			}
+		}
+		return widget
+	} else {
+		log.Fatal("nuxui", `the type "%s" is not a Widget`, typeFullName)
 	}
-	return widget
+
+	return nil
 }
 
 // return: can be nil
@@ -96,13 +128,13 @@ func InflateDrawable(drawable any) Drawable {
 	switch t := drawable.(type) {
 	case string:
 		if strings.HasPrefix(t, "#") {
-			return InflateDrawable(Attr{"drawable": "nuxui.org/nuxui/ui.ColorDrawable", "color": t})
-		} else if strings.HasPrefix(t, "assets/") || strings.HasPrefix(t, "http://") {
-			return InflateDrawable(Attr{"drawable": "nuxui.org/nuxui/ui.ImageDrawable", "src": t})
+			return InflateDrawable(Attr{"type": "nuxui.org/nuxui/ui.ColorDrawable", "color": t})
+		} else if strings.Count(t, "/") > 1 {
+			return InflateDrawable(Attr{"type": "nuxui.org/nuxui/ui.ImageDrawable", "src": t})
 		} else {
 			if path, err := filepath.Abs(t); err == nil {
 				if fileInfo, err := os.Stat(path); err == nil && !fileInfo.IsDir() {
-					return InflateDrawable(Attr{"drawable": "nuxui.org/nuxui/ui.ImageDrawable", "src": path})
+					return InflateDrawable(Attr{"type": "nuxui.org/nuxui/ui.ImageDrawable", "src": path})
 				}
 			}
 		}
@@ -112,13 +144,22 @@ func InflateDrawable(drawable any) Drawable {
 	return nil
 }
 
+// return: can be nil
 func InflateDrawableAttr(attr Attr) Drawable {
-	drawableName := attr.GetString("drawable", "")
-	if drawableName == "" {
-		log.Fatal("nuxui", `must specified "drawable"`)
+	if attr == nil {
 		return nil
 	}
 
-	drawableCreator := FindRegistedDrawableCreator(drawableName)
-	return drawableCreator(attr)
+	typeFullName := attr.GetString("type", "")
+	if typeFullName == "" {
+		log.Fatal("nuxui", `must specified "type" node in drawable attr %s`, attr)
+		return nil
+	}
+
+	drawableCreator := FindTypeCreator(typeFullName)
+	if d, ok := drawableCreator(attr).(Drawable); ok {
+		return d
+	}
+	log.Fatal("nuxui", `the type "%s" is not a Drawable`, typeFullName)
+	return nil
 }

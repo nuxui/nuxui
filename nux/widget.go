@@ -58,3 +58,44 @@ func isView(widget Widget) bool {
 
 	return ret
 }
+
+func FindChild(widget Widget, id string) Widget {
+	if id == "" {
+		log.Fatal("nuxui", "the widget %T id must be specified", widget)
+		return nil
+	}
+
+	w := findChild(widget, id)
+	if w == nil {
+		log.Fatal("nuxui", "the id '%s' was not found in widget %T\n", id, widget)
+		return nil
+	}
+
+	return w
+}
+
+func findChild(widget Widget, id string) Widget {
+	if id == widget.Info().ID {
+		return widget
+	}
+
+	if c, ok := widget.(Component); ok {
+		if ret := findChild(c.Content(), id); ret != nil {
+			return ret
+		}
+	}
+
+	if p, ok := widget.(Parent); ok {
+		for _, child := range p.Children() {
+			if _, ok := child.(Component); ok {
+				continue
+			}
+
+			if ret := findChild(child, id); ret != nil {
+				return ret
+			}
+		}
+	}
+
+	return nil
+}

@@ -6,7 +6,6 @@ package nux
 
 import (
 	"fmt"
-	"math"
 	"strconv"
 	"strings"
 	"unsafe"
@@ -14,26 +13,20 @@ import (
 	"nuxui.org/nuxui/log"
 )
 
+// TODO:: GetDimenArray GetIntArray...
+
 type Attr map[string]any
 
-// merge attrs to single one attr, the other attrs will overwrite attrs[0]
-// return attrs[0]
-func MergeAttrs(attrs ...Attr) Attr {
+// merge attrs to a new single attr, the back will override front
+func MergeAttrs(attrs ...Attr) (attr Attr) {
 	l := len(attrs)
 	if l == 0 {
 		return Attr{}
 	}
-	if l == 1 {
-		return attrs[0]
-	}
-	attr := attrs[0]
-	i := 0
-	for _, atr := range attrs {
-		if i == 0 {
-			i++
-			continue
-		}
-		for k, v := range atr {
+
+	attr = Attr{}
+	for _, item := range attrs {
+		for k, v := range item {
 			attr[k] = v
 		}
 	}
@@ -91,9 +84,9 @@ func (me Attr) GetBool(key string, defaultValue bool) bool {
 	if attr, ok := me[key]; ok {
 		switch t := attr.(type) {
 		case string:
-			if "true" == t {
+			if t == "true" {
 				return true
-			} else if "false" == t {
+			} else if t == "false" {
 				return false
 			}
 			log.E("nuxui", "Error: unsupport convert %s %T:%s to bool, use default value instead", key, t, t)
@@ -151,11 +144,6 @@ func (me Attr) GetColor(key string, defaultValue Color) (result Color) {
 		}
 	}
 
-	if result > math.MaxUint32 {
-		log.E("nuxui", "Error: %s %d overflow to Color, use default value instead", key, result)
-		result = defaultValue
-	}
-
 	return result
 }
 
@@ -185,11 +173,6 @@ func (me Attr) GetUint32(key string, defaultValue uint32) (result uint32) {
 			log.E("nuxui", "Error: unsupport convert %s %T:%s to uint32, use default value instead", key, t, t)
 			result = defaultValue
 		}
-	}
-
-	if result > math.MaxUint32 {
-		log.E("nuxui", "Error: %s %d overflow to uint32, use default value instead", key, result)
-		result = defaultValue
 	}
 
 	return result
@@ -360,8 +343,8 @@ func (me Attr) GetAttrArray(key string, defaultValue []Attr) []Attr {
 			return t
 		case []any:
 			ret := make([]Attr, len(t))
-			for i, any := range t {
-				if atr, ok := any.(Attr); ok {
+			for i, a := range t {
+				if atr, ok := a.(Attr); ok {
 					ret[i] = atr
 				} else {
 					log.E("nuxui", "Error: unsupport convert %s %T:%s to []Attr, use default value instead", key, t, t)
@@ -383,8 +366,8 @@ func (me Attr) GetStringArray(key string, defaultValue []string) []string {
 			return t
 		case []any:
 			ret := make([]string, len(t))
-			for i, any := range t {
-				if str, ok := any.(string); ok {
+			for i, a := range t {
+				if str, ok := a.(string); ok {
 					ret[i] = str
 				} else {
 					log.E("nuxui", "Error: unsupport convert %s %T:%s to []string, use default value instead", key, t, t)
@@ -421,31 +404,27 @@ func attrToString(attr Attr, depth int) string {
 
 	ret += space + "{\n"
 
-	depth++
-	space += "  "
 	for k, v := range attr {
 		if arr, ok := v.([]any); ok {
+			ret += fmt.Sprintf("%s  %s: [\n", space, k)
 			for _, a := range arr {
 				if child, ok := a.(Attr); ok {
-					ret += attrToString(child, depth)
+					ret += attrToString(child, depth+1)
 				} else {
-					ret += fmt.Sprintf("%s%s: %s\n", space, k, v)
+					ret += fmt.Sprintf("%s    %s\n", space, a)
 				}
 			}
+			ret += space + "  ]\n"
+		} else if atr, ok := v.(Attr); ok {
+			ret += fmt.Sprintf("%s  %s:\n", space, k)
+			ret += attrToString(atr, depth+1)
 		} else {
-			ret += fmt.Sprintf("%s%s: %s\n", space, k, v)
+			ret += fmt.Sprintf("%s  %s: %s\n", space, k, v)
 		}
 	}
-	ret += space + "}"
+	ret += space + "}\n"
 
 	return ret
-}
-
-// Dimension px
-type Dimension int32
-
-func NumeralToDimension(numeral float64) Dimension {
-	return 0
 }
 
 func (me Attr) GetDimen(key string, defaultValue string) Dimen {
@@ -484,20 +463,23 @@ end:
 
 ///////////////////////////////////// Parse /////////////////////////////////////
 
-// ParseAttr parse all value to string
+// ParseAttr parse attr string to Attr
 // print error if has error and return empty Attr
 func ParseAttr(attrtext string) Attr {
 	ret, err := ParseAttrWitthError(attrtext)
 	if err != nil {
-		log.E("nuxui", err.Error())
+		if debug_attr {
+			log.Fatal("nuxui", err.Error())
+		} else {
+			log.E("nuxui", err.Error())
+		}
 		return Attr{}
 	}
 	return ret
 }
 
-// TODO:: error
 func ParseAttrWitthError(attrtext string) (Attr, error) {
-	return (&attr{}).parse(attrtext), nil
+	return (&attr{}).parse(attrtext)
 }
 
 const EOF = -1
@@ -506,59 +488,73 @@ type attr struct {
 	data []rune
 	len  int
 	pos  int
+	line int
 	r    rune
 	i    Attr // import
 }
 
-func (me *attr) parse(template string) Attr {
+func (me *attr) parse(template string) (Attr, error) {
 	me.data = []rune(template)
 	me.len = len(me.data)
 	me.pos = -1
+	me.line = 1
 	me.r = EOF
 
-	me.next()
+	me.nextRune()
 	me.skipBlank()
 	if me.r != '{' {
-		log.Fatal("nuxui", "first element is not '{'.")
+		return nil, fmt.Errorf("line:%d first element of Attr is not '{'", me.line)
 	}
 	return me.nextStruct()
 }
 
-func (me *attr) nextStruct() Attr {
+func (me *attr) nextStruct() (Attr, error) {
 	data := Attr{}
+	var key string
+	var value any
+	var err error
 
 	for {
-		me.next()
+		me.nextRune()
 		me.skipBlank()
-		if me.r == '}' || me.r == EOF {
+		if me.r == EOF {
+			return nil, fmt.Errorf("line:%d unclosed attribute, not end with '}'", me.line)
+		}
+		if me.r == '}' {
 			break
 		}
 		if me.r == ',' {
 			continue
 		}
 
-		key := me.nextKey()
-		me.next()
+		key, err = me.nextKey()
+		if err != nil {
+			return nil, err
+		}
+		me.nextRune()
 		me.skipBlank()
-		value := me.nextValue()
+		value, err = me.nextValue()
+		if err != nil {
+			return nil, err
+		}
 		if debug_attr {
 			if _, ok := data[key]; ok {
-				log.E("nuxui", "the attribute key %s is already exist.", key)
+				log.E("nuxui", "line:%d attribute key %s is already exist", me.line, key)
 			}
 		}
 		data[key] = value
 
-		if me.i == nil && "import" == key {
+		if me.i == nil && key == "import" {
 			if i, ok := value.(Attr); ok {
 				me.i = i
 			}
 		}
 	}
 
-	return data
+	return data, nil
 }
 
-func (me *attr) nextValue() any {
+func (me *attr) nextValue() (any, error) {
 	switch me.r {
 	case '"', '`':
 		return me.nextString(me.r)
@@ -567,24 +563,29 @@ func (me *attr) nextValue() any {
 	case '[':
 		return me.nextArray()
 	default:
-		str := me.nextString(',')
+		str, err := me.nextString(',')
+		if err != nil {
+			return nil, err
+		}
 		if me.i != nil {
 			strs := strings.Split(str, ".")
 			if len(strs) == 2 {
 				if v, ok := me.i[strs[0]]; ok {
-					return fmt.Sprintf("%s.%s", v, strs[1])
+					return fmt.Sprintf("%s.%s", v, strs[1]), nil
 				}
 			}
 		}
-		return str
+		return str, nil
 	}
-	return nil
+	return nil, nil
 }
 
-func (me *attr) nextArray() []any {
+func (me *attr) nextArray() ([]any, error) {
 	arr := make([]any, 0)
+	var value any
+	var err error
 	for {
-		me.next()
+		me.nextRune()
 		me.skipBlank()
 		if me.r == ']' {
 			break
@@ -592,29 +593,33 @@ func (me *attr) nextArray() []any {
 		if me.r == ',' {
 			continue
 		}
-		value := me.nextValue()
+		value, err = me.nextValue()
+		if err != nil {
+			return nil, err
+		}
 		arr = append(arr, value)
 	}
-	return arr
+	return arr, nil
 }
 
 func (me *attr) skipBlank() {
 	for {
 		switch me.r {
 		case ' ', '\r', '\n', '\t', '\f', '\b', 65279:
-			me.next()
+			if me.r == '\n' {
+				me.line++
+			}
+			me.nextRune()
 			continue
 		case '/':
 			me.skipComment()
 			continue
-		default:
-			break
 		}
 		break
 	}
 }
 
-func (me *attr) next() rune {
+func (me *attr) nextRune() rune {
 	me.pos++
 	if me.pos >= me.len {
 		me.r = EOF
@@ -624,7 +629,7 @@ func (me *attr) next() rune {
 	return me.r
 }
 
-func (me *attr) previous() rune {
+func (me *attr) previousRune() rune {
 	me.pos--
 	if me.pos >= me.len || me.pos < 0 {
 		me.r = EOF
@@ -634,94 +639,151 @@ func (me *attr) previous() rune {
 	return me.r
 }
 
-func (me *attr) skipComment() {
-	me.next()
+func (me *attr) skipComment() error {
+	me.nextRune()
 	if me.r == '/' {
 		for {
-			me.next()
+			me.nextRune()
 			if me.r == '\n' {
-				me.next()
-				return
+				me.line++
+				me.nextRune()
+				return nil
 			} else if me.r == EOF {
-				return
+				return nil
 			}
 		}
 	} else if me.r == '*' {
-		me.next()
+		me.nextRune()
 		for me.r != EOF {
 			if me.r == '*' {
-				me.next()
+				me.nextRune()
 				if me.r == '/' {
-					me.next()
-					return
+					me.nextRune()
+					return nil
 				}
 				continue
 			}
-			me.next()
+			me.nextRune()
 		}
 	} else {
-		log.Fatal("nuxui", "invalid comment")
+		return fmt.Errorf("line:%d invalid comment", me.line)
 	}
+	return nil
 }
 
 // obtain next key, and last rune is ':'
-func (me *attr) nextKey() string {
+func (me *attr) nextKey() (string, error) {
 	p := me.pos
 	if me.r < 'A' || (me.r > 'Z' && me.r < 'a') || me.r > 'z' {
-		log.Fatal("nuxui", "Invalid key name, the first letter must be [A-Za-z]")
+		return "", fmt.Errorf("line:%d invalid key name, the first letter must be [A-Za-z]", me.line)
 	}
-	me.next()
+	me.nextRune()
 	for (me.r >= 'a' && me.r <= 'z') || (me.r >= 'A' && me.r <= 'Z') || (me.r >= '0' && me.r <= '9') || me.r == '_' {
-		me.next()
+		me.nextRune()
 	}
 	key := string(me.data[p:me.pos])
 	me.skipBlank()
 	if me.r != ':' {
-		log.Fatal("nuxui", "Invalid format after key name %s, missing ':'", key)
+		return "", fmt.Errorf(`line:%d invalid format, missing ':' after key name "%s", `, me.line, key)
 	}
-	return key
+	return key, nil
 }
 
-func (me *attr) nextString(end rune) string {
-	p := me.pos
-	ret := ""
+func (me *attr) nextString(end rune) (string, error) {
+	ret := []rune{}
 	quot := (end == '"' || end == '`')
 
-	for {
-		me.next()
-		if quot {
-			switch me.r {
-			case '"', '`':
-				if me.data[me.pos-1] != '\\' {
-					ret = string(me.data[p+1 : me.pos])
-					goto out
-				} else {
-					// TODO
-				}
+	if end == ',' && me.r == end {
+		return "", nil
+	}
 
-			case EOF:
-				log.Fatal("nuxui", "unclosed string")
+	if !quot {
+		me.previousRune()
+	}
+	p := me.pos + 1
+
+	for {
+		me.nextRune()
+		if me.r == '\\' {
+			if me.pos+1 < me.len {
+				ret = append(ret, me.data[p:me.pos]...)
+				me.nextRune()
+				switch me.r {
+				case 'a':
+					ret = append(ret, '\a')
+				case 'b':
+					ret = append(ret, '\b')
+				case '\\':
+					ret = append(ret, '\\')
+				case 't':
+					ret = append(ret, '\t')
+				case 'n':
+					ret = append(ret, '\n')
+				case 'f':
+					ret = append(ret, '\f')
+				case 'r':
+					ret = append(ret, '\r')
+				case 'v':
+					ret = append(ret, '\v')
+				case '\'':
+					ret = append(ret, '\'')
+				case '"':
+					ret = append(ret, '"')
+				case 'x', 'u', 'U':
+					n := 2
+					switch me.r {
+					case 'x':
+						n = 2
+					case 'u':
+						n = 4
+					case 'U':
+						n = 8
+					}
+					if me.pos+n+1 < me.len {
+						v, err := strconv.ParseUint(string(me.data[me.pos+1:me.pos+n+1]), 16, 64)
+						if err != nil {
+							return "", fmt.Errorf("line:%d parsing '\\%s' error, invalid syntax", me.line, string(me.data[me.pos:me.pos+n+1]))
+						}
+						ret = append(ret, rune(v))
+						me.pos += n
+					} else {
+						return "", fmt.Errorf("line:%d parsing '\\%s' error, invalid syntax", me.line, string(me.data[me.pos:me.len-1]))
+					}
+				}
+				p = me.pos + 1
+			} else { // EOF
+				if quot {
+					return "", fmt.Errorf("line:%d unclosed string", me.line)
+				}
+				return "", nil
 			}
 		} else {
-			switch me.r {
-			case ',', '}', ']':
-				if me.data[me.pos-1] != '\\' {
-					ret = strings.TrimSpace(string(me.data[p:me.pos]))
-					me.previous()
-					goto out
-				} else {
-					// TODO
+			if quot {
+				switch me.r {
+				case '"', '`':
+					if me.r == end && me.data[me.pos-1] != '\\' {
+						return string(append(ret, me.data[p:me.pos]...)), nil
+					}
+				case EOF:
+					return "", fmt.Errorf("line:%d unclosed string", me.line)
 				}
-
-			case EOF:
-				log.Fatal("nuxui", "unclosed string")
+			} else {
+				switch me.r {
+				case '\n':
+					return "", fmt.Errorf("line:%d missing comma at line end or quot whole string", me.line)
+				case ',', '}', ']':
+					ret := strings.TrimSpace(string(append(ret, me.data[p:me.pos]...)))
+					me.previousRune()
+					return ret, nil
+				case EOF:
+					return "", fmt.Errorf("line:%d invalid value, syntax error", me.line)
+				}
 			}
 		}
 
 	}
 
-out:
-	return ret
+	return "", nil
 }
 
 func strlen(text string) int {
