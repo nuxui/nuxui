@@ -33,6 +33,8 @@ func (me *logger) output(depth int, color string, level Level, levelTag string, 
 		return
 	}
 
+	str := fmt.Sprintf(format, msg...)
+
 	now := time.Now()
 
 	me.mux.Lock()
@@ -84,22 +86,22 @@ func (me *logger) output(depth int, color string, level Level, levelTag string, 
 		}
 
 		if me.out == os.Stdout {
-			log = fmt.Sprintf(colorTemplate, now.Format(dformat), color, fmt.Sprintf("%s%s %s %s %s\n", levelTag, prefix, file, tag, fmt.Sprintf(format, msg...)))
+			log = fmt.Sprintf(colorTemplate, now.Format(dformat), color, fmt.Sprintf("%s%s %s %s %s\n", levelTag, prefix, file, tag, str))
 		} else {
-			log = fmt.Sprintf("%s %s%s %s %s %s\n", now.Format(dformat), levelTag, prefix, file, tag, fmt.Sprintf(format, msg...))
+			log = fmt.Sprintf("%s %s%s %s %s %s\n", now.Format(dformat), levelTag, prefix, file, tag, str)
 		}
 	} else if me.flags&Llongfile != 0 {
 		frame := getFrameName(depth)
 		if me.out == os.Stdout {
-			log = fmt.Sprintf(colorTemplate, now.Format(dformat), color, fmt.Sprintf("%s%s %s %s %s\n", levelTag, prefix, frame, tag, fmt.Sprintf(format, msg...)))
+			log = fmt.Sprintf(colorTemplate, now.Format(dformat), color, fmt.Sprintf("%s%s %s %s %s\n", levelTag, prefix, frame, tag, str))
 		} else {
-			log = fmt.Sprintf("%s %s%s %s %s %s\n", now.Format(dformat), levelTag, prefix, frame, tag, fmt.Sprintf(format, msg...))
+			log = fmt.Sprintf("%s %s%s %s %s %s\n", now.Format(dformat), levelTag, prefix, frame, tag, str)
 		}
 	} else {
 		if me.out == os.Stdout {
-			log = fmt.Sprintf(colorTemplate, now.Format(dformat), color, fmt.Sprintf("%s%s %s %s\n", levelTag, prefix, tag, fmt.Sprintf(format, msg...)))
+			log = fmt.Sprintf(colorTemplate, now.Format(dformat), color, fmt.Sprintf("%s%s %s %s\n", levelTag, prefix, tag, str))
 		} else {
-			log = fmt.Sprintf("%s %s%s %s %s\n", now.Format(dformat), levelTag, prefix, tag, fmt.Sprintf(format, msg...))
+			log = fmt.Sprintf("%s %s%s %s %s\n", now.Format(dformat), levelTag, prefix, tag, str)
 		}
 	}
 
