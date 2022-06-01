@@ -36,6 +36,10 @@ type WidgetVisual struct {
 }
 
 func NewWidgetVisual(owner nux.Widget, attr nux.Attr) *WidgetVisual {
+	if attr == nil {
+		attr = nux.Attr{}
+	}
+
 	me := &WidgetVisual{
 		owner:       owner,
 		visible:     visibleFromString(attr.GetString("visible", "show")),

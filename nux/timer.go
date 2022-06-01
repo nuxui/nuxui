@@ -30,13 +30,11 @@ func (me *timerLoop) loop() {
 	me.running = true
 	for {
 		t := <-me.ding
-		log.V("nuxui", "t := <-me.ding 0")
 
 		if !t.running {
 			continue
 		}
 
-		log.V("nuxui", "t := <-me.ding 1")
 		if t.backui {
 			RunOnUI(t.callback)
 		} else {

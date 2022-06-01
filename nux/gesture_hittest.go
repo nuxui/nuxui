@@ -4,7 +4,9 @@
 
 package nux
 
-import "nuxui.org/nuxui/log"
+import (
+	"nuxui.org/nuxui/log"
+)
 
 type HitTestResult interface {
 	Add(widget Widget)
@@ -86,7 +88,6 @@ func (me *hitTestResultManager) handlePointerEvent(widget Widget, event PointerE
 		hitTestResult = NewHitTestResult()
 		me.hitTest(widget, hitTestResult, event)
 		me.hitTestResults[event.Pointer()] = hitTestResult
-		log.V("hitTest", "len = %d", len(me.hitTestResults[event.Pointer()].Results()))
 	case Action_Up:
 		hitTestResult = me.hitTestResults[event.Pointer()]
 		delete(me.hitTestResults, event.Pointer())
@@ -114,7 +115,9 @@ func (me *hitTestResultManager) dispatchEvent(event PointerEvent, hitTestResult 
 	for _, w := range hitTestResult.Results() {
 		if rs := GestureManager().getGestureRecognizers(w); rs != nil {
 			for _, r := range rs {
-				r.HandlePointerEvent(event)
+				if r.PointerAllowed(event) {
+					r.HandlePointerEvent(event)
+				}
 			}
 		}
 	}
@@ -135,18 +138,6 @@ func (me *hitTestResultManager) hitTest(widget Widget, hitTestResult HitTestResu
 	if hit, ok := widget.(HitTestable); ok {
 		hit.HitTest(widget, hitTestResult, event)
 	} else {
-		if p, ok := widget.(Parent); ok {
-			if s, ok := widget.(Size); ok {
-				frame := s.Frame()
-				if event.X() >= float32(frame.X) && event.X() <= float32(frame.X+frame.Width) &&
-					event.Y() >= float32(frame.Y) && event.Y() <= float32(frame.Y+frame.Height) {
-					for _, child := range p.Children() {
-						me.hitTest(child, hitTestResult, event)
-					}
-				}
-			}
-		}
-
 		if c, ok := widget.(Component); ok {
 			me.hitTest(c.Content(), hitTestResult, event)
 		}
@@ -155,6 +146,12 @@ func (me *hitTestResultManager) hitTest(widget Widget, hitTestResult HitTestResu
 			frame := s.Frame()
 			if event.X() >= float32(frame.X) && event.X() <= float32(frame.X+frame.Width) &&
 				event.Y() >= float32(frame.Y) && event.Y() <= float32(frame.Y+frame.Height) {
+
+				if p, ok := widget.(Parent); ok {
+					for _, child := range p.Children() {
+						me.hitTest(child, hitTestResult, event)
+					}
+				}
 
 				if rs := GestureManager().getGestureRecognizers(widget); rs != nil {
 					hitTestResult.Add(widget)

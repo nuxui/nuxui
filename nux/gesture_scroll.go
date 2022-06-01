@@ -4,8 +4,6 @@
 
 package nux
 
-import "nuxui.org/nuxui/log"
-
 var scrollWidget map[Widget]GestureCallback = map[Widget]GestureCallback{}
 
 func OnScrollX(widget Widget, callback GestureCallback) {
@@ -17,7 +15,6 @@ func OnScrollY(widget Widget, callback GestureCallback) {
 }
 
 func handleScrollEvent(event ScrollEvent) {
-	log.I("nuxui", "ScrollX=%f, ScrollY=%f", event.ScrollX(), event.ScrollY())
 	for k, v := range scrollWidget {
 		v(scrollEventToDetail(event, k))
 	}

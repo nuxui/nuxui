@@ -16,6 +16,10 @@ type ColorDrawable interface {
 }
 
 func NewColorDrawable(attr nux.Attr) ColorDrawable {
+	if attr == nil {
+		attr = nux.Attr{}
+	}
+
 	me := &colorDrawable{
 		paint: nux.NewPaint(),
 		state: nux.State_Default,

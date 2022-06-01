@@ -6,32 +6,18 @@
 
 package nux
 
-/*
-#cgo CFLAGS: -x objective-c -DGL_SILENCE_DEPRECATION
-#cgo LDFLAGS:
-#import <Carbon/Carbon.h> // for HIToolbox/Events.h
-#import <Cocoa/Cocoa.h>
-
-void cursor_getScreenPosition(CGFloat* x, CGFloat* y);
-void cursor_positionWindowToScreen(uintptr_t window, CGFloat x, CGFloat y, CGFloat *outX, CGFloat *outY);
-void cursor_positionScreenToWindow(uintptr_t window, CGFloat x, CGFloat y, CGFloat *outX, CGFloat *outY);
-*/
-import "C"
+import (
+	"nuxui.org/nuxui/nux/internal/darwin"
+)
 
 func getCursorScreenPosition() (x, y float32) {
-	var outX, outY C.CGFloat
-	C.cursor_getScreenPosition(&outX, &outY)
-	return float32(outX), float32(outY)
+	return darwin.CursorScreenPosition()
 }
 
-func cursorPositionScreenToWindow(wind Window, x0, y0 float32) (x, y float32) {
-	var outX, outY C.CGFloat
-	C.cursor_positionScreenToWindow(wind.(*window).windptr, C.CGFloat(x0), C.CGFloat(y0), &outX, &outY)
-	return float32(outX), float32(outY)
+func cursorPositionScreenToWindow(w Window, px, py float32) (x, y float32) {
+	return darwin.CursorPositionScreenToWindow(w.nativeWindow().ptr, px, py)
 }
 
-func cursorPositionWindowToScreen(wind Window, x0, y0 float32) (x, y float32) {
-	var outX, outY C.CGFloat
-	C.cursor_positionWindowToScreen(wind.(*window).windptr, C.CGFloat(x0), C.CGFloat(y0), &outX, &outY)
-	return float32(outX), float32(outY)
+func cursorPositionWindowToScreen(w Window, px, py float32) (x, y float32) {
+	return darwin.CursorPositionWindowToScreen(w.nativeWindow().ptr, px, py)
 }

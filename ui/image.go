@@ -43,6 +43,10 @@ const (
 type Repeat int32
 
 func NewImage(attr nux.Attr) Image {
+	if attr == nil {
+		attr = nux.Attr{}
+	}
+
 	me := &image{
 		scaleX:    1.0,
 		scaleY:    1.0,

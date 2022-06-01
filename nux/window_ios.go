@@ -197,10 +197,10 @@ func (me *window) handleOtherWidgetKeyEvent(p Parent, e KeyEvent) bool {
 	return false
 }
 
-func (me *window) handleTypeEvent(e TypeEvent) {
+func (me *window) handleTypingEvent(e TypingEvent) {
 	if me.focusWidget != nil {
-		if f, ok := me.focusWidget.(TypeEventHandler); ok {
-			f.OnTypeEvent(e)
+		if f, ok := me.focusWidget.(TypingEventHandler); ok {
+			f.OnTypingEvent(e)
 			return
 		}
 	}

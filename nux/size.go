@@ -24,13 +24,35 @@ type Size interface {
 
 	Frame() *Frame // not nil
 
-	ScrollX() int32
-	ScrollY() int32
-	SetScroll(x, y int32)
-	ScrollTo(x, y int32)
+	ScrollX() float32
+	ScrollY() float32
+	SetScroll(x, y float32)
+	ScrollTo(x, y float32)
 
 	AddSizeObserver(observer func())
 	RemoveSizeObserver(observer func())
+}
+
+type Rect struct {
+	X      int32
+	Y      int32
+	Width  int32
+	Height int32
+}
+
+func (me *Rect) Expand(rect *Rect) {
+	if me.X > rect.X {
+		me.X = rect.X
+	}
+	if me.Y > rect.Y {
+		me.Y = rect.Y
+	}
+	if me.Width < rect.Width {
+		me.Width = rect.Width
+	}
+	if me.Height < rect.Height {
+		me.Height = rect.Height
+	}
 }
 
 type Side struct {
@@ -218,17 +240,19 @@ type WidgetSize struct {
 	padding       *Padding
 	margin        *Margin
 	frame         Frame
-	scrollX       int32
-	scrollY       int32
+	scrollX       float32
+	scrollY       float32
 	sizeObservers []func()
 }
 
-func NewWidgetSize(attrs ...Attr) *WidgetSize {
+func NewWidgetSize(attr Attr) *WidgetSize {
+	if attr == nil {
+		attr = Attr{}
+	}
+
 	me := &WidgetSize{
 		sizeObservers: []func(){},
 	}
-
-	attr := MergeAttrs(attrs...)
 
 	me.width = attr.GetDimen("width", "auto")
 	me.height = attr.GetDimen("height", "auto")
@@ -270,6 +294,7 @@ func (me *WidgetSize) Padding() *Padding {
 	return me.padding
 }
 
+// TODO:: why not use value instead ref
 func (me *WidgetSize) SetPadding(padding *Padding) {
 	if (me.padding == nil && padding != nil) || (me.padding != nil && !me.padding.Equal(padding)) {
 		me.padding = padding
@@ -288,20 +313,20 @@ func (me *WidgetSize) SetMargin(margin *Margin) {
 	}
 }
 
-func (me *WidgetSize) ScrollX() int32 {
+func (me *WidgetSize) ScrollX() float32 {
 	return me.scrollX
 }
 
-func (me *WidgetSize) ScrollY() int32 {
+func (me *WidgetSize) ScrollY() float32 {
 	return me.scrollY
 }
 
-func (me *WidgetSize) SetScroll(x, y int32) {
+func (me *WidgetSize) SetScroll(x, y float32) {
 	me.scrollX = x
 	me.scrollY = y
 }
 
-func (me *WidgetSize) ScrollTo(x, y int32) {
+func (me *WidgetSize) ScrollTo(x, y float32) {
 	me.scrollX += x
 	me.scrollY += y
 }

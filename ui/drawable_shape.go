@@ -22,6 +22,10 @@ type Shape struct {
 }
 
 func NewShape(attr nux.Attr) *Shape {
+	if attr == nil {
+		attr = nux.Attr{}
+	}
+
 	shadow := attr.GetAttr("shadow", nux.Attr{})
 	return &Shape{
 		Name:         attr.GetString("name", "rect"),
@@ -43,6 +47,10 @@ type ShapeDrawable interface {
 }
 
 func NewShapeDrawable(attr nux.Attr) ShapeDrawable {
+	if attr == nil {
+		attr = nux.Attr{}
+	}
+
 	me := &shapeDrawable{
 		state: nux.State_Default,
 		paint: nux.NewPaint(),

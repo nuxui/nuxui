@@ -14,7 +14,7 @@ type MouseButton int
 const (
 	Type_None EventType = iota
 	Type_WindowEvent
-	Type_TypeEvent
+	Type_TypingEvent
 	Type_AppExit
 	Type_KeyEvent
 	Type_PointerEvent
@@ -56,7 +56,7 @@ const (
 )
 
 const (
-	MB_None MouseButton = -1 + iota
+	MB_None MouseButton = iota
 	MB_Left
 	MB_Right
 	MB_Middle
@@ -92,8 +92,8 @@ func (me EventType) String() string {
 		return "Type_None "
 	case Type_WindowEvent:
 		return "Type_WindowEvent"
-	case Type_TypeEvent:
-		return "Type_TypeEvent"
+	case Type_TypingEvent:
+		return "Type_TypingEvent"
 	case Type_AppExit:
 		return "Type_AppExit"
 	case Type_KeyEvent:

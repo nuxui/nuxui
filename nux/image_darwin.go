@@ -6,48 +6,27 @@
 
 package nux
 
-/*
-#import <QuartzCore/QuartzCore.h>
-#import <Cocoa/Cocoa.h>
-
-CGImageRef createImage(char* name){
-    NSURL *url = [NSURL fileURLWithPath: [NSString stringWithUTF8String:name]];
-    NSError *err;
-    if ([url checkResourceIsReachableAndReturnError:&err] == NO){
-        NSLog(@"%@", err);
-    }
-    CGImageSourceRef source = CGImageSourceCreateWithURL((__bridge CFURLRef)url, nil);
-    CGImageRef ref = CGImageSourceCreateImageAtIndex(source, 0, nil);
-	return ref;
-}
-*/
-import "C"
 import (
-	"path/filepath"
+	"nuxui.org/nuxui/nux/internal/darwin"
 	"runtime"
-	"unsafe"
 )
 
-func CreateImage(path string) Image {
-	path, _ = filepath.Abs(path)
-	cpath := C.CString(path)
-	defer C.free(unsafe.Pointer(cpath))
-
+func CreateImage(filename string) Image {
 	me := &nativeImage{
-		ptr: C.createImage(cpath),
+		ref: darwin.CGImageSourceCreateImageAtIndex(filename),
 	}
 	runtime.SetFinalizer(me, freeImage)
 	return me
 }
 
 func freeImage(img *nativeImage) {
-	C.CGImageRelease(img.ptr)
+	darwin.CGImageRelease(img.ref)
 }
 
 type nativeImage struct {
-	ptr C.CGImageRef
+	ref darwin.CGImage
 }
 
 func (me *nativeImage) Size() (width, height int32) {
-	return int32(C.CGImageGetWidth(me.ptr)), int32(C.CGImageGetHeight(me.ptr))
+	return darwin.CGImageGetSize(me.ref)
 }

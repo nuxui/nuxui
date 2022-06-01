@@ -26,7 +26,7 @@ func AppTheme() Theme {
 
 func ApplyTheme(kind ThemeKind, themes ...string) {
 	// TODO:: call at main func, but app is not running, isMainThread is not work
-	if false && !isMainThread() {
+	if false && !IsMainThread() {
 		log.Fatal("nuxui", "ApplyTheme can only run at main thread")
 	}
 

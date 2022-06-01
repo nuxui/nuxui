@@ -25,6 +25,9 @@ type WidgetBase struct {
 }
 
 func NewWidgetBase(attr Attr) *WidgetBase {
+	if attr == nil {
+		attr = Attr{}
+	}
 	return &WidgetBase{
 		info: &WidgetInfo{
 			ID:      attr.GetString("id", ""),

@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+//go:build windows
+
 package win32
 
 // https://doxygen.reactos.org/d3/d39/gdiplusflat_8h_source.html

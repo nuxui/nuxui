@@ -12,7 +12,7 @@ import (
 	"nuxui.org/nuxui/log"
 )
 
-//////////////////////////  Event  //////////////////////////////////////////////////////////////////////////////
+//---------------  Readonly Event --------------------------------
 
 type Event interface {
 	Time() time.Time
@@ -54,7 +54,7 @@ func (me *event) String() string {
 	return fmt.Sprintf("Event: {type:%s, action:%s}", me.etype, me.action)
 }
 
-//////////////////////////  WindowEvent  //////////////////////////////////////////////////////////////////////////////
+//---------------  WindowEvent --------------------------------
 
 // WindowEvent
 type WindowEvent interface {
@@ -68,7 +68,7 @@ type windowEvent struct {
 
 func (me *windowEvent) windowEvent() {}
 
-//////////////////////////  PointerEvent  //////////////////////////////////////////////////////////////////////////////
+//---------------  PointerEvent --------------------------------
 
 type PointerEvent interface {
 	Event
@@ -77,8 +77,8 @@ type PointerEvent interface {
 	Kind() Kind
 	X() float32
 	Y() float32
-	Pressure() float32
-	Stage() int32
+	// Pressure() float32
+	// Stage() int32
 	IsPrimary() bool
 	Distance(x, y float32) float32
 	pointerEvent()
@@ -87,13 +87,13 @@ type PointerEvent interface {
 type pointerEvent struct {
 	event
 
-	pointer  int64
-	kind     Kind
-	x        float32
-	y        float32
-	pressure float32
-	stage    int32
-	button   MouseButton
+	pointer int64
+	kind    Kind
+	x       float32
+	y       float32
+	// pressure float32
+	// stage    int32
+	button MouseButton
 }
 
 func (me *pointerEvent) Pointer() int64 {
@@ -112,13 +112,13 @@ func (me *pointerEvent) Y() float32 {
 	return me.y
 }
 
-func (me *pointerEvent) Pressure() float32 {
-	return me.pressure
-}
+// func (me *pointerEvent) Pressure() float32 {
+// 	return me.pressure
+// }
 
-func (me *pointerEvent) Stage() int32 {
-	return me.stage
-}
+// func (me *pointerEvent) Stage() int32 {
+// 	return me.stage
+// }
 
 func (me *pointerEvent) IsPrimary() bool {
 	if me.kind == Kind_Mouse {
@@ -139,7 +139,7 @@ func (me *pointerEvent) String() string {
 	return fmt.Sprintf("PointerEvent: {pointer=%d, button=%s:%d, action=%s, x=%.2f, y=%.2f}", me.pointer, me.button, me.button, me.action, me.x, me.y)
 }
 
-//////////////////////////  ScrollEvent  //////////////////////////////////////////////////////////////////////////////
+//---------------  ScrollEvent --------------------------------
 
 type ScrollEvent interface {
 	Event
@@ -184,7 +184,7 @@ func (me *scrollEvent) ScrollY() float32 {
 
 func (me *scrollEvent) scrollEvent() {}
 
-//////////////////////////  KeyEvent  //////////////////////////////////////////////////////////////////////////////
+//---------------  KeyEvent --------------------------------
 
 type KeyEvent interface {
 	Event
@@ -225,8 +225,12 @@ func (me *keyEvent) Modifiers() (none, capslock, shift, control, alt, super bool
 
 func (me *keyEvent) Rune() rune {
 	r := []rune(me.keyRune)
+	if debug_event {
+		if len(r) > 1 {
+			log.W("nuxui", "KeyEvent original rune is %s length = %d, %d", me.keyRune, len(me.keyRune), len(r))
+		}
+	}
 	if len(r) > 0 {
-		log.W("nuxui", "KeyEvent original rune is %s length = %d, %d", me.keyRune, len(me.keyRune), len(r))
 		return r[0]
 	}
 	return 0
@@ -238,30 +242,30 @@ func (me *keyEvent) String() string {
 	return fmt.Sprintf("KeyEvent: {keyCode=%s, action=%s, rune='%c'}", me.keyCode, me.action, me.Rune())
 }
 
-//////////////////////////  TypeEvent  //////////////////////////////////////////////////////////////////////////////
+//---------------  TypingEvent --------------------------------
 
-type TypeEvent interface {
+type TypingEvent interface {
 	Event
 	Text() string
 	Location() int32
-	typeEvent()
+	typingEvent()
 }
 
-type typeEvent struct {
+type typingEvent struct {
 	event
 	text     string
 	location int32
 }
 
-func (me *typeEvent) Text() string {
+func (me *typingEvent) Text() string {
 	return me.text
 }
 
-func (me *typeEvent) Location() int32 {
+func (me *typingEvent) Location() int32 {
 	return me.location
 }
 
-func (me *typeEvent) typeEvent() {}
-func (me *typeEvent) String() string {
-	return fmt.Sprintf("TypeEvent: {action=%s, text=%s, location=%d}", me.action, me.text, me.location)
+func (me *typingEvent) typingEvent() {}
+func (me *typingEvent) String() string {
+	return fmt.Sprintf("TypingEvent: {action=%s, text=%s, location=%d}", me.action, me.text, me.location)
 }

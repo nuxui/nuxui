@@ -5,7 +5,7 @@
 package nux
 
 type Focus interface {
-	Focusable() bool // TODO:: widget diablee
+	Focusable() bool
 	HasFocus() bool
 	FocusChanged(focus bool)
 }

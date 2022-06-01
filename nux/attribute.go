@@ -483,7 +483,7 @@ func ParseAttrWitthError(attrtext string) (Attr, error) {
 }
 
 const (
-	_EOF = -1
+	_EOF    = -1
 	_STRING = iota
 	_ARRAY
 	_STRUCT
@@ -573,7 +573,7 @@ func (me *attr) nextValue(parent int) (any, error) {
 			return nil, err
 		}
 
-		if parent == _ARRAY && strings.Contains(str, " "){
+		if parent == _ARRAY && strings.Contains(str, " ") {
 			return nil, fmt.Errorf("line:%d strings which has space in the array should be quoted", me.line)
 		}
 

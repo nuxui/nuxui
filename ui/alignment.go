@@ -16,6 +16,9 @@ type Align struct {
 
 // TODO:: center|left
 func NewAlign(attr nux.Attr) *Align {
+	if attr == nil {
+		attr = nux.Attr{}
+	}
 	me := &Align{}
 	vertical := attr.GetString("vertical", "top")
 	horizontal := attr.GetString("horizontal", "left")

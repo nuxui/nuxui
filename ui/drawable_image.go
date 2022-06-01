@@ -15,6 +15,10 @@ type ImageDrawable interface {
 
 // TODO:: if src exised, duplicate image
 func NewImageDrawable(attr nux.Attr) ImageDrawable {
+	if attr == nil {
+		attr = nux.Attr{}
+	}
+
 	me := &imageDrawable{
 		state: nux.State_Default,
 		image: nil,

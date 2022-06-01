@@ -26,6 +26,10 @@ type layer struct {
 }
 
 func NewLayer(attr nux.Attr) Layer {
+	if attr == nil {
+		attr = nux.Attr{}
+	}
+
 	me := &layer{}
 	me.WidgetParent = nux.NewWidgetParent(me, attr)
 	me.WidgetSize = nux.NewWidgetSize(attr)
@@ -586,6 +590,14 @@ func (me *layer) measureChildrenMargin(width, height nux.MeasureDimen, innerWidt
 }
 
 func (me *layer) Layout(x, y, width, height int32) {
+	if me.Background() != nil {
+		me.Background().SetBounds(x, y, width, height)
+	}
+
+	if me.Foreground() != nil {
+		me.Foreground().SetBounds(x, y, width, height)
+	}
+
 	frame := me.Frame()
 
 	var l float32 = 0
@@ -641,5 +653,4 @@ func (me *layer) Draw(canvas nux.Canvas) {
 	if me.Foreground() != nil {
 		me.Foreground().Draw(canvas)
 	}
-
 }

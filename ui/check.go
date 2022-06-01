@@ -11,6 +11,9 @@ import (
 type Radio Check
 
 func NewRadio(attr nux.Attr) Radio {
+	if attr == nil {
+		attr = nux.Attr{}
+	}
 	a := nux.Attr{
 		"theme": "radio",
 	}
@@ -29,6 +32,9 @@ type check struct {
 }
 
 func NewCheck(attr nux.Attr) Check {
+	if attr == nil {
+		attr = nux.Attr{}
+	}
 	myattr := nux.Attr{
 		"selectable": true,
 		"clickable":  true,

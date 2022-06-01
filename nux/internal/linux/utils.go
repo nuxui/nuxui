@@ -1,0 +1,34 @@
+// go:build (linux && !android)
+
+package linux
+
+/*
+#include <stdint.h>
+#include <sys/syscall.h>
+#include <unistd.h>
+#include <locale.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+uint64_t currentThreadID(){
+	return (uint64_t)syscall(SYS_gettid);
+}
+
+*/
+import "C"
+import "unsafe"
+
+func CurrentThreadID() uint64 {
+	return uint64(C.currentThreadID())
+}
+
+func SetLocale(category Category, locale string) {
+	clocale := C.CString(locale)
+	defer C.free(unsafe.Pointer(clocale))
+	C.setlocale(C.int(category), clocale)
+}
+
+func GetLocale(category Category) string {
+	loc := C.setlocale(C.int(category), nil)
+	return C.GoString(loc)
+}

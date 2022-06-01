@@ -39,6 +39,10 @@ type text struct {
 }
 
 func NewText(attr nux.Attr) Text {
+	if attr == nil {
+		attr = nux.Attr{}
+	}
+
 	me := &text{
 		text:               attr.GetString("text", ""),
 		textSize:           attr.GetFloat32("textSize", 12),

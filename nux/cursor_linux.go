@@ -6,10 +6,6 @@
 
 package nux
 
-/*
- */
-import "C"
-
 func getCursorScreenPosition() (x, y float32) {
 	// TODO::
 	return

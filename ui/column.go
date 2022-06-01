@@ -13,9 +13,6 @@ import (
 type Column interface {
 	nux.Parent
 	nux.Size
-	nux.Measure
-	nux.Layout
-	nux.Draw
 	Visual
 }
 
@@ -31,6 +28,10 @@ type column struct {
 }
 
 func NewColumn(attr nux.Attr) Column {
+	if attr == nil {
+		attr = nux.Attr{}
+	}
+
 	me := &column{
 		align: NewAlign(attr.GetAttr("align", nux.Attr{})),
 	}
@@ -782,7 +783,6 @@ func (me *column) measureHorizontal(width, height nux.MeasureDimen, hPPx, hPPt, 
 // Responsible for determining the position of the widget align, margin
 // TODO measure other mode dimen
 func (me *column) Layout(x, y, width, height int32) {
-	log.D("nuxui", "column layout %d, %d, %d, %d", x, y, width, height)
 	if me.Background() != nil {
 		me.Background().SetBounds(x, y, width, height)
 	}

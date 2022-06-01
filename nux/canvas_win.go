@@ -207,7 +207,7 @@ func (me *paint) MeasureText(text string, width, height float32) (outWidth float
 	}
 
 	// TODO:: use hdc as args for newCanvas
-	hwnd := theApp.window.hwnd
+	hwnd := theApp.window.nativeWindow().hwnd
 	font := &win32.GpFont{}
 	family := &win32.GpFontFamily{}
 	win32.GdipGetGenericFontFamilySansSerif(&family)

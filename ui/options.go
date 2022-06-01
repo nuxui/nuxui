@@ -19,6 +19,10 @@ type options struct {
 }
 
 func NewOptions(attr nux.Attr) Options {
+	if attr == nil {
+		attr = nux.Attr{}
+	}
+
 	me := &options{
 		radio: attr.GetBool("radio", false),
 	}

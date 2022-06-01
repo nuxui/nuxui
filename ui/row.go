@@ -13,9 +13,6 @@ import (
 type Row interface {
 	nux.Parent
 	nux.Size
-	nux.Measure
-	nux.Layout
-	nux.Draw
 	Visual
 }
 
@@ -31,6 +28,10 @@ type row struct {
 }
 
 func NewRow(attr nux.Attr) Row {
+	if attr == nil {
+		attr = nux.Attr{}
+	}
+
 	me := &row{
 		align: NewAlign(attr.GetAttr("align", nux.Attr{})),
 	}
@@ -782,7 +783,6 @@ func (me *row) measureVertical(width, height nux.MeasureDimen, hPPx, hPPt, inner
 // Responsible for determining the position of the widget align, margin...
 // TODO measure other mode dimen
 func (me *row) Layout(x, y, width, height int32) {
-	log.W("nuxui", "row:%s layout %d, %d, %d, %d", me.Info().ID, x, y, width, height)
 	if me.Background() != nil {
 		me.Background().SetBounds(x, y, width, height)
 	}

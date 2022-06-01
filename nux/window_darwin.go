@@ -6,67 +6,55 @@
 
 package nux
 
-/*
-#cgo CFLAGS: -x objective-c -DGL_SILENCE_DEPRECATION
-#cgo LDFLAGS: -framework Cocoa
-#import <Carbon/Carbon.h> // for HIToolbox/Events.h
-#import <Cocoa/Cocoa.h>
-
-char*   window_title(uintptr_t window);
-void    window_setTitle(uintptr_t window, char* title);
-float   window_alpha(uintptr_t window);
-void    window_setAlpha(uintptr_t window, float alpha);
-void    window_getSize(uintptr_t window, int32_t *width, int32_t *height);
-void    window_getContentSize(uintptr_t window, int32_t *width, int32_t *height);
-CGContextRef window_getCGContext(uintptr_t window);
-*/
-import "C"
-
 import (
-	"unsafe"
+	"time"
 
 	"nuxui.org/nuxui/log"
+	"nuxui.org/nuxui/nux/internal/darwin"
 )
 
-type window struct {
-	windptr      C.uintptr_t
-	decor        Parent
-	buffer       unsafe.Pointer
-	bufferWidth  int32
-	bufferHeight int32
-	delegate     WindowDelegate
-	focusWidget  Widget
-
-	initEvent PointerEvent
-	timer     Timer
-
-	canvas Canvas
+type nativeWindow struct {
+	ptr darwin.NSWindow
 }
 
-func newWindow(attr Attr) *window {
-	me := &window{}
-
-	me.CreateDecor(attr)
-	return me
-}
-
-func (me *window) CreateDecor(attr Attr) Widget {
-	creator := FindTypeCreator("nuxui.org/nuxui/ui.Layer")
-	w := creator(attr)
-	if p, ok := w.(Parent); ok {
-		me.decor = p
-	} else {
-		log.Fatal("nuxui", "decor must is a Parent")
+func newNativeWindow(attr Attr) *nativeWindow {
+	darwin.SetWindowEventHandler(nativeWindowEventHandler)
+	return &nativeWindow{
+		ptr: darwin.NewNSWindow(800, 600),
 	}
-
-	return me.decor
 }
 
-var TestDraw func(Canvas)
+func (me *nativeWindow) Center() {
+	me.ptr.Center()
+}
 
-func (me *window) Draw(canvas Canvas) {
-	if me.decor != nil {
-		if f, ok := me.decor.(Draw); ok {
+func (me *nativeWindow) Show() {
+	me.ptr.MakeKeyAndOrderFront()
+}
+
+func (me *nativeWindow) ContentSize() (width, height int32) {
+	return me.ptr.ContentSize()
+}
+
+func (me *nativeWindow) Title() string {
+	return me.ptr.Title()
+}
+
+func (me *nativeWindow) SetTitle(title string) {
+	me.ptr.SetTitle(title)
+}
+
+func (me *nativeWindow) lockCanvas() Canvas {
+	return newCanvas(darwin.CGCurrentContext())
+}
+
+func (me *nativeWindow) unlockCanvas(canvas Canvas) {
+	canvas.Flush()
+}
+
+func (me *nativeWindow) draw(canvas Canvas, decor Widget) {
+	if decor != nil {
+		if f, ok := decor.(Draw); ok {
 			_, h := me.ContentSize()
 			canvas.Save()
 			canvas.Translate(0, float32(h))
@@ -81,206 +69,274 @@ func (me *window) Draw(canvas Canvas) {
 	}
 }
 
-func (me *window) ID() uint64 {
-	return 0
-}
-
-func (me *window) Size() (width, height int32) {
-	var w, h C.int32_t
-	C.window_getSize(me.windptr, &w, &h)
-	return int32(w), int32(h)
-}
-
-func (me *window) ContentSize() (width, height int32) {
-	var w, h C.int32_t
-	C.window_getContentSize(me.windptr, &w, &h)
-	return int32(w), int32(h)
-}
-
-func (me *window) LockCanvas() Canvas {
-	me.canvas = newCanvas(C.window_getCGContext(me.windptr))
-	return me.canvas
-}
-
-func (me *window) UnlockCanvas(c Canvas) {
-	me.canvas.Flush()
-}
-
-func (me *window) Decor() Widget {
-	return me.decor
-}
-
-func (me *window) Alpha() float32 {
-	return float32(C.window_alpha(me.windptr))
-}
-
-func (me *window) SetAlpha(alpha float32) {
-	C.window_setAlpha(me.windptr, C.float(alpha))
-}
-
-func (me *window) Title() string {
-	return C.GoString(C.window_title(me.windptr))
-}
-
-func (me *window) SetTitle(title string) {
-	ctitle := C.CString(title)
-	C.window_setTitle(me.windptr, ctitle)
-	C.free(unsafe.Pointer(ctitle))
-}
-
-func (me *window) SetDelegate(delegate WindowDelegate) {
-	me.delegate = delegate
-}
-
-func (me *window) Delegate() WindowDelegate {
-	return me.delegate
-}
-
-func (me *window) handlePointerEvent(e PointerEvent) {
-	me.switchFocusIfPossible(e)
-
-	// log.I("nuxui", "handlePointerEvent x=%f, y=%f", e.X(), e.Y())
-
-	if me.delegate != nil {
-		if f, ok := me.delegate.(windowDelegate_HandlePointerEvent); ok {
-			f.HandlePointerEvent(e)
-			return
+func nativeWindowEventHandler(event any) bool {
+	switch e := event.(type) {
+	case darwin.NSEvent:
+		return handleNSEvent(e)
+	case *darwin.TypingEvent:
+		return handleTypingEvent(e)
+	case *darwin.WindowEvent:
+		switch e.Type {
+		case darwin.Event_WindowDidResize:
+			theApp.window.measure()
+			theApp.window.layout()
+		case darwin.Event_WindowDrawRect:
+			theApp.window.draw()
 		}
 	}
 
-	hitTestResultManagerInstance.handlePointerEvent(me.Decor(), e)
-}
-
-func (me *window) handleScrollEvent(e ScrollEvent) {
-	hitTestResultManagerInstance.handleScrollEvent(me.Decor(), e)
-}
-
-func (me *window) handleKeyEvent(e KeyEvent) {
-	if me.focusWidget != nil {
-		if f, ok := me.focusWidget.(KeyEventHandler); ok {
-			if f.OnKeyEvent(e) {
-				return
-			} else {
-				goto other
-			}
-		}
-	} else {
-		goto other
-	}
-
-other:
-	if me.decor != nil {
-		me.handleOtherWidgetKeyEvent(me.decor, e)
-	}
-}
-
-func (me *window) handleOtherWidgetKeyEvent(p Parent, e KeyEvent) bool {
-	if p.ChildrenCount() > 0 {
-		var compt Widget
-		for _, c := range p.Children() {
-			compt = nil
-			if cpt, ok := c.(Component); ok {
-				c = cpt.Content()
-				compt = cpt
-			}
-			if cp, ok := c.(Parent); ok {
-				if me.handleOtherWidgetKeyEvent(cp, e) {
-					return true
-				}
-			} else if f, ok := c.(KeyEventHandler); ok {
-				if f.OnKeyEvent(e) {
-					return true
-				}
-			}
-
-			if compt != nil {
-				if f, ok := compt.(KeyEventHandler); ok {
-					if f.OnKeyEvent(e) {
-						return true
-					}
-				}
-			}
-		}
-	}
 	return false
 }
 
-func (me *window) handleTypeEvent(e TypeEvent) {
-	if me.focusWidget != nil {
-		if f, ok := me.focusWidget.(TypeEventHandler); ok {
-			f.OnTypeEvent(e)
-			return
-		}
+func handleNSEvent(event darwin.NSEvent) bool {
+	switch event.Type() {
+	case darwin.NSEventTypeMouseEntered, darwin.NSEventTypeMouseExited,
+		darwin.NSEventTypeLeftMouseDown, darwin.NSEventTypeLeftMouseUp,
+		darwin.NSEventTypeRightMouseDown, darwin.NSEventTypeRightMouseUp,
+		darwin.NSEventTypeMouseMoved, darwin.NSEventTypeLeftMouseDragged,
+		darwin.NSEventTypeRightMouseDragged, darwin.NSEventTypeOtherMouseDown,
+		darwin.NSEventTypeOtherMouseUp, darwin.NSEventTypeOtherMouseDragged:
+		return handlePointerEvent(event)
+	case darwin.NSEventTypePressure:
+		// TODO pressure
+	case darwin.NSEventTypeKeyDown, darwin.NSEventTypeKeyUp, darwin.NSEventTypeFlagsChanged:
+		return handleKeyEvent(event)
+	case darwin.NSEventTypeScrollWheel:
+		return handleScrollEvent2(event)
+	case darwin.NSEventTypeAppKitDefined:
+		log.V("nuxui", "darwin.NSEventTypeAppKitDefined subtype=%d", event.Subtype())
+	case darwin.NSEventTypeSystemDefined:
+		log.V("nuxui", "darwin.NSEventTypeSystemDefined subtype=%d", event.Subtype())
+	case darwin.NSEventTypeApplicationDefined:
+		log.V("nuxui", "darwin.NSEventTypeApplicationDefined subtype=%d", event.Subtype())
+	case darwin.NSEventTypePeriodic:
+		log.V("nuxui", "darwin.NSEventTypePeriodic subtype=%d", event.Subtype())
+		// if event.HasPreciseScrollingDeltas() {
+		// }
+	default:
+		// x, y := event.LocationInWindow()
+		// log.V("nuxui", "sendEvent type=%d, x=%f, y=%f, window=%d", event.Type(), x, y, event.Window())
 	}
-
-	log.E("nuxui", "none widget handle typing event")
+	// x, y := event.LocationInWindow()
+	// log.V("nuxui", "sendEvent type=%d, x=%f, y=%f", event.Type(), x, y)
+	return false
 }
 
-func (me *window) requestFocus(widget Widget) {
-	if me.focusWidget == widget {
-		return
+func handleTypingEvent(tevent *darwin.TypingEvent) bool {
+	// 0 = Action_Input, 1 = Action_Preedit,
+	act := Action_Input
+	if tevent.Action == 1 {
+		act = Action_Preedit
 	}
 
-	if me.focusWidget != nil {
-		if f, ok := me.focusWidget.(Focus); ok && f.HasFocus() {
-			f.FocusChanged(false)
-		}
+	e := &typingEvent{
+		event: event{
+			window: theApp.MainWindow(),
+			time:   time.Now(),
+			etype:  Type_TypingEvent,
+			action: act,
+		},
+		text:     tevent.Text,
+		location: tevent.Location,
 	}
 
-	if f, ok := widget.(Focus); ok {
-		if f.Focusable() {
-			me.focusWidget = widget
-			if !f.HasFocus() {
-				f.FocusChanged(true)
-			}
-		}
-	}
+	return App().MainWindow().handleTypingEvent(e)
 }
 
-func (me *window) switchFocusIfPossible(event PointerEvent) {
-	if event.Type() != Type_PointerEvent || !event.IsPrimary() {
-		return
+func handleScrollEvent2(nsevent darwin.NSEvent) bool {
+	x, y := nsevent.LocationInWindow()
+	e := &scrollEvent{
+		event: event{
+			window: theApp.MainWindow(),
+			time:   time.Now(),
+			etype:  Type_ScrollEvent,
+			action: Action_Scroll,
+		},
+		x:       x,
+		y:       y,
+		scrollX: nsevent.ScrollingDeltaX(),
+		scrollY: nsevent.ScrollingDeltaY(),
 	}
 
-	switch event.Action() {
-	case Action_Down:
-		me.initEvent = event
-		if event.Kind() == Kind_Mouse {
-			me.switchFocusAtPoint(event.X(), event.Y())
-		}
-	case Action_Move:
-		if event.Kind() == Kind_Touch {
-			if me.timer != nil {
-				if me.initEvent.Distance(event.X(), event.Y()) >= GESTURE_MIN_PAN_DISTANCE {
-					me.switchFocusAtPoint(me.initEvent.X(), me.initEvent.Y())
-				}
-			}
-		}
-	case Action_Up:
-		if event.Kind() == Kind_Touch {
-			if event.Time().UnixNano()-me.initEvent.Time().UnixNano() < GESTURE_LONG_PRESS_TIMEOUT.Nanoseconds() {
-				me.switchFocusAtPoint(event.X(), event.Y())
-			}
-		}
+	if nsevent.HasPreciseScrollingDeltas() {
+		e.scrollX *= 0.1
+		e.scrollY *= 0.1
 	}
 
+	return App().MainWindow().handleScrollEvent(e)
 }
 
-func (me *window) switchFocusAtPoint(x, y float32) {
-	if me.focusWidget != nil {
-		if s, ok := me.focusWidget.(Size); ok {
-			f := s.Frame()
-			if x >= float32(f.X) && x <= float32(f.X+f.Width) &&
-				y >= float32(f.Y) && y <= float32(f.Y+f.Height) {
-				// point is in current focus widget, do not need change focus
-				return
-			}
-		}
+var lastMouseEvent map[MouseButton]PointerEvent = map[MouseButton]PointerEvent{}
 
-		if f, ok := me.focusWidget.(Focus); ok && f.HasFocus() {
-			me.focusWidget = nil
-			f.FocusChanged(false)
+func handlePointerEvent(nsevent darwin.NSEvent) bool {
+	x, y := nsevent.LocationInWindow()
+	etype := nsevent.Type()
+
+	e := &pointerEvent{
+		event: event{
+			window: theApp.MainWindow(),
+			time:   time.Now(),
+			etype:  Type_PointerEvent,
+			action: Action_None,
+		},
+		pointer: 0,
+		button:  MB_None,
+		kind:    Kind_Mouse,
+		x:       x,
+		y:       y,
+	}
+
+	switch etype {
+	case darwin.NSEventTypeMouseMoved:
+		e.action = Action_Hover
+		e.button = MB_None
+		e.pointer = 0
+	case darwin.NSEventTypeLeftMouseDown:
+		e.action = Action_Down
+		e.button = MB_Left
+		e.pointer = time.Now().UnixNano()
+		lastMouseEvent[e.button] = e
+	case darwin.NSEventTypeLeftMouseUp:
+		e.action = Action_Up
+		e.button = MB_Left
+		if v, ok := lastMouseEvent[e.button]; ok {
+			e.pointer = v.Pointer()
+			delete(lastMouseEvent, e.button)
+		}
+	case darwin.NSEventTypeLeftMouseDragged:
+		e.action = Action_Drag
+		e.button = MB_Left
+		if v, ok := lastMouseEvent[e.button]; ok {
+			e.pointer = v.Pointer()
+		}
+	case darwin.NSEventTypeRightMouseDown:
+		e.action = Action_Down
+		e.button = MB_Right
+		e.pointer = time.Now().UnixNano()
+		lastMouseEvent[e.button] = e
+	case darwin.NSEventTypeRightMouseUp:
+		e.action = Action_Up
+		e.button = MB_Right
+		if v, ok := lastMouseEvent[e.button]; ok {
+			e.pointer = v.Pointer()
+			delete(lastMouseEvent, e.button)
+		}
+	case darwin.NSEventTypeRightMouseDragged:
+		e.action = Action_Drag
+		e.button = MB_Right
+		if v, ok := lastMouseEvent[e.button]; ok {
+			e.pointer = v.Pointer()
+		}
+	case darwin.NSEventTypeOtherMouseDown:
+		e.action = Action_Down
+		buttonNumber := nsevent.ButtonNumber()
+		switch buttonNumber {
+		case 2:
+			e.button = MB_Middle
+		case 3:
+			e.button = MB_X1
+		case 4:
+			e.button = MB_X2
+		default:
+			e.button = MouseButton(buttonNumber)
+		}
+		e.pointer = time.Now().UnixNano()
+		lastMouseEvent[e.button] = e
+	case darwin.NSEventTypeOtherMouseUp:
+		e.action = Action_Up
+		buttonNumber := nsevent.ButtonNumber()
+		switch buttonNumber {
+		case 2:
+			e.button = MB_Middle
+		case 3:
+			e.button = MB_X1
+		case 4:
+			e.button = MB_X2
+		default:
+			e.button = MouseButton(buttonNumber)
+		}
+		if v, ok := lastMouseEvent[e.button]; ok {
+			e.pointer = v.Pointer()
+			delete(lastMouseEvent, e.button)
+		}
+	case darwin.NSEventTypeOtherMouseDragged:
+		e.action = Action_Drag
+		buttonNumber := nsevent.ButtonNumber()
+		switch buttonNumber {
+		case 2:
+			e.button = MB_Middle
+		case 3:
+			e.button = MB_X1
+		case 4:
+			e.button = MB_X2
+		default:
+			e.button = MouseButton(buttonNumber)
+		}
+		if v, ok := lastMouseEvent[e.button]; ok {
+			e.pointer = v.Pointer()
 		}
 	}
 
+	return App().MainWindow().handlePointerEvent(e)
+}
+
+var lastModifierKeyEvent map[KeyCode]bool = map[KeyCode]bool{}
+
+func handleKeyEvent(nsevent darwin.NSEvent) bool {
+	keyCode := KeyCode(nsevent.KeyCode())
+
+	if keyCode == 0x36 { // kVK_Command
+		keyCode = Key_Command
+	}
+	e := &keyEvent{
+		event: event{
+			window: theApp.MainWindow(),
+			time:   time.Now(),
+			etype:  Type_KeyEvent,
+			action: Action_None,
+		},
+		keyCode:       keyCode,
+		modifierFlags: convertModifierFlags(nsevent.ModifierFlags()),
+	}
+
+	switch nsevent.Type() {
+	case darwin.NSEventTypeKeyDown:
+		e.action = Action_Down
+		e.repeat = nsevent.IsARepeat()
+		e.keyRune = nsevent.Characters()
+	case darwin.NSEventTypeKeyUp:
+		e.action = Action_Up
+		e.repeat = nsevent.IsARepeat()
+		e.keyRune = nsevent.Characters()
+	case darwin.NSEventTypeFlagsChanged:
+		if down, ok := lastModifierKeyEvent[e.keyCode]; ok && down {
+			lastModifierKeyEvent[e.keyCode] = false
+			e.action = Action_Up
+		} else {
+			lastModifierKeyEvent[e.keyCode] = true
+			e.action = Action_Down
+		}
+	}
+
+	return App().MainWindow().handleKeyEvent(e)
+}
+
+func convertModifierFlags(flags darwin.NSEventModifierFlags) uint32 {
+	var mods uint32 = 0
+	if flags&darwin.NSEventModifierFlagShift == darwin.NSEventModifierFlagShift {
+		mods |= Mod_Shift
+	}
+	if flags&darwin.NSEventModifierFlagControl == darwin.NSEventModifierFlagControl {
+		mods |= Mod_Control
+	}
+	if flags&darwin.NSEventModifierFlagOption == darwin.NSEventModifierFlagOption {
+		mods |= Mod_Alt
+	}
+	if flags&darwin.NSEventModifierFlagCommand == darwin.NSEventModifierFlagCommand {
+		mods |= Mod_Super
+	}
+	if flags&darwin.NSEventModifierFlagCapsLock == darwin.NSEventModifierFlagCapsLock {
+		mods |= Mod_CapsLock
+	}
+	return mods
 }

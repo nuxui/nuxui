@@ -24,6 +24,10 @@ type Editor interface {
 }
 
 func NewEditor(attr nux.Attr) Editor {
+	if attr == nil {
+		attr = nux.Attr{}
+	}
+
 	me := &editor{
 		cursorPosition:     0,
 		flicker:            false,
@@ -68,13 +72,6 @@ type editor struct {
 	flicker        bool
 	flickerTimer   nux.Timer
 	focus          bool
-}
-
-func (me *editor) Mount() {
-	log.D("nuxui", "====== Editor Mount")
-	nux.OnTapDown(me, me.onTapDown)
-	nux.OnPanDown(me, me.onPanStart)
-	nux.OnPanUpdate(me, me.OnPanUpdate)
 }
 
 func (me *editor) onTapDown(detail nux.GestureDetail) {
@@ -131,6 +128,8 @@ func (me *editor) SetText(text string) {
 }
 
 func (me *editor) Measure(width, height nux.MeasureDimen) {
+	log.I("nuxui", "editor Measure ")
+
 	frame := me.Frame()
 
 	me.paint.SetTextSize(me.textSize)
@@ -234,7 +233,7 @@ func (me *editor) stopTick() {
 	nux.RequestRedraw(me)
 }
 
-func (me *editor) OnTypeEvent(event nux.TypeEvent) bool {
+func (me *editor) OnTypingEvent(event nux.TypingEvent) bool {
 	switch event.Action() {
 	case nux.Action_Preedit:
 		me.editingText = event.Text()
@@ -257,6 +256,8 @@ func (me *editor) OnTypeEvent(event nux.TypeEvent) bool {
 }
 
 func (me *editor) OnKeyEvent(event nux.KeyEvent) bool {
+	log.I("nuxui", "editor OnKeyEvent %s", event)
+
 	switch event.KeyCode() {
 	case nux.Key_BackSpace:
 		if event.Action() == nux.Action_Down {
@@ -297,6 +298,7 @@ func (me *editor) OnKeyEvent(event nux.KeyEvent) bool {
 			return true
 		}
 	case nux.Key_Left:
+		log.I("nuxui", "editor Key_Left")
 		if event.Action() == nux.Action_Down && me.editingText == "" {
 			if me.cursorPosition == 0 {
 				return true

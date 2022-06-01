@@ -9,6 +9,10 @@ import "nuxui.org/nuxui/nux"
 type Switch Check
 
 func NewSwitch(attr nux.Attr) Switch {
+	if attr == nil {
+		attr = nux.Attr{}
+	}
+
 	me := NewCheck(attr)
 	return Switch(me)
 }

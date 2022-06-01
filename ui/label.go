@@ -52,6 +52,10 @@ type label struct {
 }
 
 func NewLabel(attr nux.Attr) Label {
+	if attr == nil {
+		attr = nux.Attr{}
+	}
+
 	me := &label{
 		text:               attr.GetString("text", ""),
 		textSize:           attr.GetFloat32("textSize", 14),

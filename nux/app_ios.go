@@ -326,19 +326,19 @@ func go_keyEvent(windptr C.uintptr_t, etype uint, keyCode uint16, modifierFlags 
 	// theApp.handleEvent(e)
 }
 
-//export go_typeEvent
-func go_typeEvent(windptr C.uintptr_t, chars *C.char, action, location, length C.int) {
+//export go_typingEvent
+func go_typingEvent(windptr C.uintptr_t, chars *C.char, action, location, length C.int) {
 	// 0 = Action_Input, 1 = Action_Preedit,
 	// act := Action_Input
 	// if action == 1 {
 	// 	act = Action_Preedit
 	// }
 
-	// e := &typeEvent{
+	// e := &typingEvent{
 	// 	event: event{
 	// 		window: theApp.findWindow(windptr),
 	// 		time:   time.Now(),
-	// 		etype:  Type_TypeEvent,
+	// 		etype:  Type_TypingEvent,
 	// 		action: act,
 	// 	},
 	// 	text:     C.GoString(chars),

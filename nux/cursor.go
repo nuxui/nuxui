@@ -21,14 +21,14 @@ func GetCursorScreenPosition() (x, y float32) {
 
 // Retrieves the position of the mouse cursor, in window coordinates.
 func GetCursorWindowPosition(window Window) (x, y float32) {
-	x0, y0 := getCursorScreenPosition()
-	return CursorPositionScreenToWindow(window, x0, y0)
+	px, py := getCursorScreenPosition()
+	return CursorPositionScreenToWindow(window, px, py)
 }
 
-func CursorPositionScreenToWindow(window Window, x0, y0 float32) (x, y float32) {
-	return cursorPositionScreenToWindow(window, x0, y0)
+func CursorPositionScreenToWindow(window Window, px, py float32) (x, y float32) {
+	return cursorPositionScreenToWindow(window, px, py)
 }
 
-func CursorPositionWindowToScreen(window Window, x0, y0 float32) (x, y float32) {
-	return cursorPositionWindowToScreen(window, x0, y0)
+func CursorPositionWindowToScreen(window Window, px, py float32) (x, y float32) {
+	return cursorPositionWindowToScreen(window, px, py)
 }

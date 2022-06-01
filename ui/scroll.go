@@ -21,16 +21,32 @@ type scroll struct {
 	*nux.WidgetParent
 	*nux.WidgetSize
 	*WidgetVisual
-	nux.WidgetBase
 }
 
 func NewScroll(attr nux.Attr) Scroll {
+	if attr == nil {
+		attr = nux.Attr{}
+	}
+
 	me := &scroll{}
 	me.WidgetParent = nux.NewWidgetParent(me, attr)
 	me.WidgetSize = nux.NewWidgetSize(attr)
 	me.WidgetVisual = NewWidgetVisual(me, attr)
 	me.WidgetSize.AddSizeObserver(me.onSizeChanged)
 	return me
+}
+
+func (me *scroll) Mount() {
+	nux.OnScrollY(me, me.onScrollY)
+}
+
+func (me *scroll) Eject() {
+
+}
+
+func (me *scroll) onScrollY(detail nux.GestureDetail) {
+	me.ScrollTo(detail.ScrollX(), detail.ScrollY())
+	nux.RequestRedraw(me)
 }
 
 func (me *scroll) onSizeChanged() {
@@ -557,6 +573,14 @@ func (me *scroll) Measure(width, height nux.MeasureDimen) {
 }
 
 func (me *scroll) Layout(x, y, width, height int32) {
+	if me.Background() != nil {
+		me.Background().SetBounds(x, y, width, height)
+	}
+
+	if me.Foreground() != nil {
+		me.Foreground().SetBounds(x, y, width, height)
+	}
+
 	frame := me.Frame()
 
 	var l float32 = 0
@@ -599,6 +623,9 @@ func (me *scroll) Draw(canvas nux.Canvas) {
 		me.Background().Draw(canvas)
 	}
 
+	canvas.Save()
+	canvas.Translate(float32(me.ScrollX()), float32(me.ScrollY()))
+
 	for _, child := range me.Children() {
 		if compt, ok := child.(nux.Component); ok {
 			child = compt.Content()
@@ -608,6 +635,8 @@ func (me *scroll) Draw(canvas nux.Canvas) {
 			draw.Draw(canvas)
 		}
 	}
+
+	canvas.Restore()
 
 	if me.Foreground() != nil {
 		me.Foreground().Draw(canvas)

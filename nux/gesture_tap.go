@@ -140,8 +140,6 @@ func (me *tapGestureRecognizer) PointerAllowed(event PointerEvent) bool {
 func (me *tapGestureRecognizer) HandlePointerEvent(event PointerEvent) {
 	switch event.Action() {
 	case Action_Down:
-		log.V("nuxui", "HandlePointerEvent Action_Down ")
-
 		me.initEvent = event
 		pointer := event.Pointer()
 		GestureArenaManager().Add(pointer, me)
@@ -155,14 +153,11 @@ func (me *tapGestureRecognizer) HandlePointerEvent(event PointerEvent) {
 		}
 	case Action_Up:
 		// do not accept proactive, wait GestureArea sweep
-		log.V("nuxui", "HandlePointerEvent Action_Up ")
 		if me.state == GestureState_Accepted {
 			me.invokeTapUpAndTap(event.Pointer())
 		}
 
 	case Action_Drag:
-		log.V("nuxui", "HandlePointerEvent Action_Move ")
-
 		if me.state == GestureState_Possible {
 			if me.initEvent.Distance(event.X(), event.Y()) >= GESTURE_MIN_PAN_DISTANCE {
 				GestureArenaManager().Resolve(event.Pointer(), me, false)
@@ -172,8 +167,6 @@ func (me *tapGestureRecognizer) HandlePointerEvent(event PointerEvent) {
 }
 
 func (me *tapGestureRecognizer) RejectGesture(pointer int64) {
-	log.V("nuxui", "tapGestureRecognizer RejectGesture ")
-
 	if me.state == GestureState_Possible {
 		me.invokeTapCancel()
 	}

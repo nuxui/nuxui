@@ -6,144 +6,42 @@
 
 package nux
 
-/*
-#import <QuartzCore/QuartzCore.h>
-#import <Cocoa/Cocoa.h>
-
-NSUInteger characterIndexForPoint(CGFloat x, CGFloat y, char* text, CGFloat size, CGFloat width, CGFloat height){
-	@autoreleasepool{
-		NSString *textstr = [NSString stringWithUTF8String:text];
-		NSFont* font = [NSFont systemFontOfSize:size];
-		NSTextStorage *textStorage = [[NSTextStorage alloc]initWithString:textstr
-			attributes:@{
-				NSFontAttributeName: font,
-			}];
-		NSLayoutManager *layoutManager = [[NSLayoutManager alloc] init];
-		NSTextContainer *textContainer = [[NSTextContainer alloc] initWithSize: NSMakeSize(width, height)];
-		[textContainer setLineFragmentPadding:0];
-		[layoutManager addTextContainer:textContainer];
-		[textStorage addLayoutManager:layoutManager];
-		[layoutManager glyphRangeForTextContainer:textContainer];
-		CGFloat fraction = 0;
-    	NSUInteger index =  [layoutManager characterIndexForPoint: CGPointMake(x,y) inTextContainer:textContainer fractionOfDistanceBetweenInsertionPoints:&fraction];
-		if (fraction > 0.5){
-			index++;
-		}
-		return index;
-	}
-}
-
-void measureText(char* text, CGFloat size, CGFloat width, CGFloat height, CGFloat* outWidth, CGFloat* outHeight){
-	@autoreleasepool{
-		NSString *textstr = [NSString stringWithUTF8String:text];
-		NSFont* font = [NSFont systemFontOfSize:size];
-		NSTextStorage *textStorage = [[NSTextStorage alloc]initWithString:textstr
-			attributes:@{
-				NSFontAttributeName: font,
-			}];
-		NSLayoutManager *layoutManager = [[NSLayoutManager alloc] init];
-		NSTextContainer *textContainer = [[NSTextContainer alloc] initWithSize: NSMakeSize(width, height)];
-		[textContainer setLineFragmentPadding:0];
-		[layoutManager addTextContainer:textContainer];
-		[textStorage addLayoutManager:layoutManager];
-		[layoutManager glyphRangeForTextContainer:textContainer];
-
-		NSRect rect = [layoutManager usedRectForTextContainer: textContainer];
-		*outWidth = rect.size.width;
-		*outHeight = rect.size.height;
-	}
-}
-
-void drawText(char *text, CGFloat width, CGFloat height, uint32_t color, uint32_t bgColor, CGFloat size){
-	@autoreleasepool{
-		NSString *textstr = [NSString stringWithUTF8String:text];
-		CGFloat a = (CGFloat)((color>>24)&0xff) / 255.0;
-		CGFloat r = (CGFloat)((color>>16)&0xff) / 255.0;
-		CGFloat g = (CGFloat)((color>>8)&0xff) / 255.0;
-		CGFloat b = (CGFloat)((color)&0xff) / 255.0;
-
-		CGFloat a0 = (CGFloat)((bgColor>>24)&0xff) / 255.0;
-		CGFloat r0 = (CGFloat)((bgColor>>16)&0xff) / 255.0;
-		CGFloat g0 = (CGFloat)((bgColor>>8)&0xff) / 255.0;
-		CGFloat b0 = (CGFloat)((bgColor)&0xff) / 255.0;
-
-		NSFont* font = [NSFont systemFontOfSize:size];
-		NSTextStorage *textStorage = [[NSTextStorage alloc]initWithString:textstr
-			attributes:@{
-				NSFontAttributeName: font,
-				NSBackgroundColorAttributeName: [NSColor colorWithSRGBRed:r0 green:g0 blue:b0 alpha:a0],
-				NSForegroundColorAttributeName: [NSColor colorWithSRGBRed:r green:g blue:b alpha:a],
-			}];
-		NSLayoutManager *layoutManager = [[NSLayoutManager alloc] init];
-		NSTextContainer *textContainer = [[NSTextContainer alloc] initWithSize: NSMakeSize(width, height)];
-		[textContainer setLineFragmentPadding:0];
-		[layoutManager addTextContainer:textContainer];
-		[textStorage addLayoutManager:layoutManager];
-		NSRange glyphRange = [layoutManager glyphRangeForTextContainer:textContainer];
-		[layoutManager drawGlyphsForGlyphRange: glyphRange atPoint: CGPointMake(0,0)];
-	}
-}
-
-void drawImage(CGContextRef ctx, CGFloat x, CGFloat y, CGFloat width, CGFloat height, CGImageRef image){
-	CGContextSaveGState(ctx);
-	CGContextTranslateCTM(ctx, 0, height);
-	CGContextScaleCTM(ctx, 1, -1);
-	CGContextDrawImage(ctx, CGRectMake(x, y, width, height), image);
-	CGContextRestoreGState(ctx);
-}
-
-void setShadow(CGContextRef ctx, CGFloat x, CGFloat y, CGFloat blur, CGFloat a, CGFloat r, CGFloat g, CGFloat b){
-	CGColorRef color = [[NSColor colorWithSRGBRed:r green:g blue:b alpha:a] CGColor];
-	CGContextSetShadowWithColor(ctx, CGSizeMake(x, -y), blur, color);
-}
-
-#define _RADIAN (3.1415926535897932384626433832795028841971/180.0)
-
-void addRoundRectPath(CGMutablePathRef path, CGFloat x, CGFloat y, CGFloat width, CGFloat height,
-	CGFloat rLT, CGFloat rRT, CGFloat rRB, CGFloat rLB){
-	CGPathAddArc(path, nil, x+width-rRT, y+rRT, rRT, -90*_RADIAN, 0, false);
-	CGPathAddArc(path, nil, x+width-rRB, y+height-rRB, rRB, 0, 90*_RADIAN, false);
-	CGPathAddArc(path, nil, x+rLB, y+height-rLB, rLB, 90*_RADIAN, 180*_RADIAN, false);
-	CGPathAddArc(path, nil, x+rLT, y+rLT, rLT, 180*_RADIAN, 270*_RADIAN, false);
-}
-*/
-import "C"
 import (
-	"unsafe"
+	"nuxui.org/nuxui/nux/internal/darwin"
 )
 
 type canvas struct {
-	ptr C.CGContextRef
+	ctx darwin.CGContext
 }
 
-func newCanvas(ref C.CGContextRef) *canvas {
+func newCanvas(ctx darwin.CGContext) *canvas {
 	return &canvas{
-		ptr: ref,
+		ctx: ctx,
 	}
 }
 
 func (me *canvas) ResetClip() {
-	C.CGContextResetClip(me.ptr)
+	darwin.CGContextResetClip(me.ctx)
 }
 
 func (me *canvas) Save() {
-	C.CGContextSaveGState(me.ptr)
+	darwin.CGContextSaveGState(me.ctx)
 }
 
 func (me *canvas) Restore() {
-	C.CGContextRestoreGState(me.ptr)
+	darwin.CGContextRestoreGState(me.ctx)
 }
 
 func (me *canvas) Translate(x, y float32) {
-	C.CGContextTranslateCTM(me.ptr, C.CGFloat(x), C.CGFloat(y))
+	darwin.CGContextTranslateCTM(me.ctx, x, y)
 }
 
 func (me *canvas) Scale(x, y float32) {
-	C.CGContextScaleCTM(me.ptr, C.CGFloat(x), C.CGFloat(y))
+	darwin.CGContextScaleCTM(me.ctx, x, y)
 }
 
 func (me *canvas) Rotate(angle float32) {
-	C.CGContextRotateCTM(me.ptr, C.CGFloat(_RADIAN*angle))
+	darwin.CGContextRotateCTM(me.ctx, angle)
 }
 
 func (me *canvas) Skew(x, y float32) {
@@ -164,14 +62,14 @@ func (me *canvas) GetMatrix() Matrix {
 }
 
 func (me *canvas) ClipRect(x, y, width, height float32) {
-	C.CGContextClipToRect(me.ptr, C.CGRectMake(C.CGFloat(x), C.CGFloat(y), C.CGFloat(width), C.CGFloat(height)))
+	darwin.CGContextClipToRect(me.ctx, darwin.CGRectMake(x, y, width, height))
 }
 
 func (me *canvas) ClipRoundRect(x, y, width, height, cornerX, cornerY float32) {
-	rect := C.CGRectMake(C.CGFloat(x), C.CGFloat(y), C.CGFloat(width), C.CGFloat(height))
-	path := C.CGPathCreateWithRoundedRect(rect, C.CGFloat(cornerX), C.CGFloat(cornerY), nil)
-	C.CGContextAddPath(me.ptr, path)
-	C.CGContextClip(me.ptr)
+	rect := darwin.CGRectMake(x, y, width, height)
+	path := darwin.CGPathCreateWithRoundedRect(rect, cornerX, cornerY, nil)
+	darwin.CGContextAddPath(me.ctx, path)
+	darwin.CGContextClip(me.ctx)
 }
 
 func (me *canvas) ClipPath(path Path) {
@@ -179,7 +77,7 @@ func (me *canvas) ClipPath(path Path) {
 }
 
 func (me *canvas) SetAlpha(alpha float32) {
-	C.CGContextSetAlpha(me.ptr, C.CGFloat(alpha))
+	darwin.CGContextSetAlpha(me.ctx, alpha)
 }
 
 func (me *canvas) DrawRect(x, y, width, height float32, paint Paint) {
@@ -195,20 +93,20 @@ func (me *canvas) DrawRect(x, y, width, height float32, paint Paint) {
 		me.Translate(-0.5, -0.5)
 	}
 
-	rect := C.CGRectMake(C.CGFloat(x), C.CGFloat(y), C.CGFloat(width), C.CGFloat(height))
+	rect := darwin.CGRectMake(x, y, width, height)
 
 	switch paint.Style() {
 	case PaintStyle_Fill:
-		C.CGContextSetRGBFillColor(me.ptr, C.CGFloat(r), C.CGFloat(g), C.CGFloat(b), C.CGFloat(a))
-		C.CGContextFillRect(me.ptr, rect)
+		darwin.CGContextSetRGBFillColor(me.ctx, r, g, b, a)
+		darwin.CGContextFillRect(me.ctx, rect)
 	case PaintStyle_Stroke:
-		C.CGContextSetRGBStrokeColor(me.ptr, C.CGFloat(r), C.CGFloat(g), C.CGFloat(b), C.CGFloat(a))
-		C.CGContextStrokeRectWithWidth(me.ptr, rect, C.CGFloat(paint.Width()))
+		darwin.CGContextSetRGBStrokeColor(me.ctx, r, g, b, a)
+		darwin.CGContextStrokeRectWithWidth(me.ctx, rect, paint.Width())
 	case PaintStyle_Both:
-		C.CGContextSetRGBFillColor(me.ptr, C.CGFloat(r), C.CGFloat(g), C.CGFloat(b), C.CGFloat(a))
-		C.CGContextFillRect(me.ptr, rect)
-		C.CGContextSetRGBStrokeColor(me.ptr, C.CGFloat(r), C.CGFloat(g), C.CGFloat(b), C.CGFloat(a))
-		C.CGContextStrokeRectWithWidth(me.ptr, rect, C.CGFloat(paint.Width()))
+		darwin.CGContextSetRGBFillColor(me.ctx, r, g, b, a)
+		darwin.CGContextFillRect(me.ctx, rect)
+		darwin.CGContextSetRGBStrokeColor(me.ctx, r, g, b, a)
+		darwin.CGContextStrokeRectWithWidth(me.ctx, rect, paint.Width())
 	}
 
 	if fix {
@@ -216,7 +114,7 @@ func (me *canvas) DrawRect(x, y, width, height float32, paint Paint) {
 	}
 }
 
-func (me *canvas) DrawRoundRect(x, y, width, height float32, rLT, rRT, rRB, rLB float32, paint Paint) {
+func (me *canvas) DrawRoundRect(x, y, width, height, rLT, rRT, rRB, rLB float32, paint Paint) {
 	if width < 0 || height < 0 {
 		return
 	}
@@ -233,36 +131,34 @@ func (me *canvas) DrawRoundRect(x, y, width, height float32, rLT, rRT, rRB, rLB 
 		me.Translate(-0.5, -0.5)
 	}
 
-	C.CGContextSetLineWidth(me.ptr, C.CGFloat(paint.Width()))
-
-	path := C.CGPathCreateMutable()
-	C.addRoundRectPath(path, C.CGFloat(x), C.CGFloat(y), C.CGFloat(width), C.CGFloat(height), C.CGFloat(rLT), C.CGFloat(rRT), C.CGFloat(rRB), C.CGFloat(rLB))
-	C.CGPathCloseSubpath(path)
-	C.CGContextAddPath(me.ptr, C.CGPathRef(path))
-	C.CGContextSetLineWidth(me.ptr, C.CGFloat(paint.Width()))
+	path := darwin.CGPathCreateMutable()
+	darwin.CGPathAddRoundRectPath(path, x, y, width, height, rLT, rRT, rRB, rLB)
+	darwin.CGPathCloseSubpath(path)
+	darwin.CGContextAddPath(me.ctx, darwin.CGPath(path))
+	darwin.CGContextSetLineWidth(me.ctx, paint.Width())
 
 	hasShadow := false
 	if sc, sx, sy, sb := paint.Shadow(); sc != 0 && sb > 0 {
 		hasShadow = true
 		me.Save()
 		a0, r0, g0, b0 := sc.ARGBf()
-		C.setShadow(me.ptr, C.CGFloat(sx), C.CGFloat(sy), C.CGFloat(sb), C.CGFloat(a0), C.CGFloat(r0), C.CGFloat(g0), C.CGFloat(b0))
+		darwin.CGContextSetShadowWithColor(me.ctx, darwin.CGSizeMake(sx, -sy), sb, darwin.CGColorMake(r0, g0, b0, a0))
 	}
 
 	switch paint.Style() {
 	case PaintStyle_Fill:
-		C.CGContextSetRGBFillColor(me.ptr, C.CGFloat(r), C.CGFloat(g), C.CGFloat(b), C.CGFloat(a))
-		C.CGContextFillPath(me.ptr)
+		darwin.CGContextSetRGBFillColor(me.ctx, r, g, b, a)
+		darwin.CGContextFillPath(me.ctx)
 	case PaintStyle_Stroke:
-		C.CGContextSetRGBStrokeColor(me.ptr, C.CGFloat(r), C.CGFloat(g), C.CGFloat(b), C.CGFloat(a))
-		C.CGContextStrokePath(me.ptr)
+		darwin.CGContextSetRGBStrokeColor(me.ctx, r, g, b, a)
+		darwin.CGContextStrokePath(me.ctx)
 	case PaintStyle_Both:
-		C.CGContextSetRGBFillColor(me.ptr, C.CGFloat(r), C.CGFloat(g), C.CGFloat(b), C.CGFloat(a))
-		C.CGContextFillPath(me.ptr)
-		C.CGContextSetRGBStrokeColor(me.ptr, C.CGFloat(r), C.CGFloat(g), C.CGFloat(b), C.CGFloat(a))
-		C.CGContextStrokePath(me.ptr)
+		darwin.CGContextSetRGBFillColor(me.ctx, r, g, b, a)
+		darwin.CGContextFillPath(me.ctx)
+		darwin.CGContextSetRGBStrokeColor(me.ctx, r, g, b, a)
+		darwin.CGContextStrokePath(me.ctx)
 	}
-	C.CGPathRelease(C.CGPathRef(path))
+	darwin.CGPathRelease(darwin.CGPath(path))
 
 	if hasShadow {
 		me.Restore()
@@ -276,18 +172,18 @@ func (me *canvas) DrawRoundRect(x, y, width, height float32, rLT, rRT, rRB, rLB 
 func (me *canvas) DrawArc(x, y, radius, startAngle, endAngle float32, useCenter bool, paint Paint) {
 	// TODO:: useCenter
 	a, r, g, b := paint.Color().ARGBf()
-	C.CGContextSetRGBFillColor(me.ptr, C.CGFloat(r), C.CGFloat(g), C.CGFloat(b), C.CGFloat(a))
-	C.CGContextSetRGBStrokeColor(me.ptr, C.CGFloat(r), C.CGFloat(g), C.CGFloat(b), C.CGFloat(a))
+	darwin.CGContextSetRGBFillColor(me.ctx, r, g, b, a)
+	darwin.CGContextSetRGBStrokeColor(me.ctx, r, g, b, a)
 
-	var clockwise C.int = 0
+	var clockwise int = 0
 	if useCenter {
 		clockwise = 1
 	}
-	C.CGContextAddArc(me.ptr, C.CGFloat(x), C.CGFloat(y), C.CGFloat(radius), C.CGFloat(startAngle), C.CGFloat(endAngle), clockwise)
+	darwin.CGContextAddArc(me.ctx, x, y, radius, startAngle, endAngle, clockwise)
 }
 
 func (me *canvas) DrawOval(x, y, width, height float32, paint Paint) {
-	C.CGContextFillEllipseInRect(me.ptr, C.CGRectMake(C.CGFloat(x), C.CGFloat(y), C.CGFloat(width), C.CGFloat(height)))
+	darwin.CGContextFillEllipseInRect(me.ctx, darwin.CGRectMake(x, y, width, height))
 }
 
 func (me *canvas) DrawPath(path Path) {
@@ -296,39 +192,24 @@ func (me *canvas) DrawPath(path Path) {
 
 func (me *canvas) DrawImage(img Image) {
 	w, h := img.Size()
-	C.drawImage(me.ptr, 0, 0, C.double(w), C.double(h), img.(*nativeImage).ptr)
+	darwin.CGContextDrawImage(me.ctx, darwin.CGRectMake(0, 0, float32(w), float32(h)), img.(*nativeImage).ref)
 }
 
 func (me *canvas) DrawText(text string, width, height float32, paint Paint) {
-	ctext := C.CString(text)
-	defer C.free(unsafe.Pointer(ctext))
-	C.drawText(ctext, C.CGFloat(width), C.CGFloat(height), C.uint32_t(paint.Color()), 0, C.CGFloat(paint.TextSize()))
+	darwin.NSDrawText(text, width, height, uint32(paint.Color()), 0, paint.TextSize())
 }
 
 func (me *canvas) Flush() {
-	C.CGContextFlush(me.ptr)
+	darwin.CGContextFlush(me.ctx)
 }
 
 func (me *canvas) Destroy() {
 }
 
 func (me *paint) MeasureText(text string, width, height float32) (outWidth float32, outHeight float32) {
-	// measureDuration := log.Time()
-	// defer log.TimeEnd(measureDuration, "nuxui", "nux.Paint '%s' Measure", text)
-
-	if text == "" {
-		return 0, 0
-	}
-	var w, h C.CGFloat
-	ctext := C.CString(text)
-	defer C.free(unsafe.Pointer(ctext))
-	C.measureText(ctext, C.CGFloat(me.textSize), C.CGFloat(width), C.CGFloat(height), &w, &h)
-	return float32(w), float32(h)
+	return darwin.NSMeasureText(text, width, height, me.textSize)
 }
 
 func (me *paint) CharacterIndexForPoint(text string, width, height float32, x, y float32) uint32 {
-	ctext := C.CString(text)
-	defer C.free(unsafe.Pointer(ctext))
-	index := C.characterIndexForPoint(C.CGFloat(x), C.CGFloat(y), ctext, C.CGFloat(me.textSize), C.CGFloat(width), C.CGFloat(height))
-	return uint32(index)
+	return darwin.NSCharacterIndexForPoint(text, width, height, x, y, me.textSize)
 }
