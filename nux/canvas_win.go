@@ -8,10 +8,17 @@ package nux
 
 import (
 	"nuxui.org/nuxui/nux/internal/win32"
-	"syscall"
+	"runtime"
 )
 
-func newCanvas(hdcBuffer uintptr) *canvas {
+type canvas struct {
+	ptr    *win32.GpGraphics
+	pen    *win32.GpPen
+	brush  *win32.GpBrush
+	states []win32.GpState
+}
+
+func canvasFromHDC(hdcBuffer uintptr) *canvas {
 	me := &canvas{
 		ptr:    &win32.GpGraphics{},
 		pen:    &win32.GpPen{},
@@ -21,15 +28,18 @@ func newCanvas(hdcBuffer uintptr) *canvas {
 	win32.GdipCreateFromHDC(hdcBuffer, &me.ptr)
 	win32.GdipCreatePen1(0, 1, win32.UnitWorld, &me.pen)
 	win32.GdipCreateSolidFill(0, &me.brush)
+	runtime.SetFinalizer(me, freeCanvas)
 	return me
 }
 
-type canvas struct {
-	// hdc    uintptr
-	ptr    *win32.GpGraphics
-	pen    *win32.GpPen
-	brush  *win32.GpBrush
-	states []win32.GpState
+func freeCanvas(me *canvas) {
+	win32.GdipDeletePen(me.pen)
+	win32.GdipDeleteBrush(me.brush)
+	win32.GdipDeleteGraphics(me.ptr)
+}
+
+func (me *canvas) native() *canvas {
+	return me
 }
 
 func (me *canvas) ResetClip() {
@@ -44,8 +54,8 @@ func (me *canvas) Save() {
 func (me *canvas) Restore() {
 	l := len(me.states)
 	s := me.states[l-1]
-	win32.GdipRestoreGraphics(me.ptr, s)
 	me.states = me.states[0 : l-1]
+	win32.GdipRestoreGraphics(me.ptr, s)
 }
 
 func (me *canvas) Translate(x, y float32) {
@@ -95,26 +105,15 @@ func (me *canvas) SetAlpha(alpha float32) {
 
 func (me *canvas) DrawRect(x, y, width, height float32, paint Paint) {
 	if paint.Style()&PaintStyle_Stroke == PaintStyle_Stroke {
-		win32.GdipSetPenColor(me.pen, win32.ARGB(paint.Color()))
+		win32.GdipSetPenColor(me.pen, win32.ARGB(paint.Color().ARGB()))
 		win32.GdipSetPenWidth(me.pen, paint.Width())
 		win32.GdipDrawRectangle(me.ptr, me.pen, x, y, width, height)
 	}
 	if paint.Style()&PaintStyle_Fill == PaintStyle_Fill {
-		win32.GdipSetSolidFillColor(me.brush, win32.ARGB(paint.Color()))
+		win32.GdipSetSolidFillColor(me.brush, win32.ARGB(paint.Color().ARGB()))
 		win32.GdipFillRectangle(me.ptr, me.brush, x, y, width, height)
 	}
 }
-
-// typedef enum SmoothingMode {
-// 	SmoothingModeInvalid,
-// 	SmoothingModeDefault,
-// 	SmoothingModeHighSpeed,
-// 	SmoothingModeHighQuality,
-// 	SmoothingModeNone,
-// 	SmoothingModeAntiAlias,
-// 	SmoothingModeAntiAlias8x4,
-// 	SmoothingModeAntiAlias8x8
-//   } ;
 
 func (me *canvas) DrawRoundRect(x, y, width, height float32, rLT, rRT, rRB, rLB float32, paint Paint) {
 	// if zero, path can not close
@@ -144,12 +143,12 @@ func (me *canvas) DrawRoundRect(x, y, width, height float32, rLT, rRT, rRB, rLB 
 	win32.GdipClosePathFigure(path)
 
 	if paint.Style()&PaintStyle_Stroke == PaintStyle_Stroke {
-		win32.GdipSetPenColor(me.pen, win32.ARGB(paint.Color()))
+		win32.GdipSetPenColor(me.pen, win32.ARGB(paint.Color().ARGB()))
 		win32.GdipSetPenWidth(me.pen, paint.Width())
 		win32.GdipDrawPath(me.ptr, me.pen, path)
 	}
 	if paint.Style()&PaintStyle_Fill == PaintStyle_Fill {
-		win32.GdipSetSolidFillColor(me.brush, win32.ARGB(paint.Color()))
+		win32.GdipSetSolidFillColor(me.brush, win32.ARGB(paint.Color().ARGB()))
 		win32.GdipFillPath(me.ptr, me.brush, path)
 	}
 
@@ -173,56 +172,10 @@ func (me *canvas) DrawImage(img Image) {
 	win32.GdipDrawImageRect(me.ptr, img.(*nativeImage).ptr, 0, 0, float32(w), float32(h))
 }
 
-func (me *canvas) DrawText(text string, width, height float32, paint Paint) {
-	font := &win32.GpFont{}
-	family := &win32.GpFontFamily{}
-	win32.GdipGetGenericFontFamilySansSerif(&family)
-	win32.GdipCreateFont(family, paint.TextSize(), 0, 0, &font)
-
-	str, _ := syscall.UTF16FromString(text)
-	layout := &win32.RectF{0, 0, width, height}
-	brush := &win32.GpBrush{}
-	win32.GdipCreateSolidFill(win32.ARGB(paint.Color()), &brush)
-
-	// var mode win32.GpSmoothingMode
-	// win32.GdipGetSmoothingMode(me.ptr, &mode)
-	// win32.GdipSetSmoothingMode(me.ptr, win32.SmoothingModeAntiAlias)
-	win32.GdipDrawString(me.ptr, &str[0], int32(len(str)), font, layout, nil, brush)
-	// win32.GdipSetSmoothingMode(me.ptr, mode)
-}
-
 func (me *canvas) Flush() {
 	win32.GdipFlush(me.ptr, win32.FlushIntentionFlush)
 }
 
 func (me *canvas) Destroy() {
-	win32.GdipDeletePen(me.pen)
-	win32.GdipDeleteBrush(me.brush)
-	win32.GdipDeleteGraphics(me.ptr)
-}
 
-func (me *paint) MeasureText(text string, width, height float32) (outWidth float32, outHeight float32) {
-	if text == "" {
-		return 0, 0
-	}
-
-	// TODO:: use hdc as args for newCanvas
-	hwnd := theApp.window.nativeWindow().hwnd
-	font := &win32.GpFont{}
-	family := &win32.GpFontFamily{}
-	win32.GdipGetGenericFontFamilySansSerif(&family)
-	win32.GdipCreateFont(family, me.textSize, 0, 0, &font)
-
-	str, _ := syscall.UTF16FromString(text)
-	layout := &win32.RectF{0, 0, width, height}
-	size := &win32.RectF{}
-	g := &win32.GpGraphics{}
-	win32.GdipCreateFromHWND(hwnd, &g)
-	win32.GdipMeasureString(g, &str[0], int32(len(str)), font, layout, nil, size, nil, nil)
-	win32.GdipDeleteGraphics(g)
-	return size.Width, size.Height
-}
-
-func (me *paint) CharacterIndexForPoint(text string, width, height float32, x, y float32) uint32 {
-	return 0
 }

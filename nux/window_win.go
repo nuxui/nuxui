@@ -41,7 +41,7 @@ func newNativeWindow(attr Attr) *nativeWindow {
 		LpfnWndProc:   syscall.NewCallback(nativeWindowEventHandler),
 		CbClsExtra:    0,
 		CbWndExtra:    0,
-		HInstance:     theApp.nativeApp.ptr,
+		HInstance:     theApp.native.ptr,
 		HIcon:         0,
 		HCursor:       cursor,
 		HbrBackground: 0,
@@ -66,7 +66,7 @@ func newNativeWindow(attr Attr) *nativeWindow {
 		600,
 		0,
 		0,
-		theApp.nativeApp.ptr,
+		theApp.native.ptr,
 		0,
 	)
 
@@ -121,19 +121,16 @@ func (me *nativeWindow) lockCanvas() Canvas {
 	// most time preHdc == hdc
 	if me.preHdc != hdc {
 		if me.preHdc != 0 {
-			me.canvas.Destroy()
 			win32.DeleteObject(me.hBitMap)
 			win32.DeleteDC(me.preHdc)
 			win32.DeleteDC(me.hdcBuffer)
 		}
+		w, h := me.ContentSize()
 		me.preHdc = hdc
-		var rectClient win32.RECT
-		win32.GetClientRect(me.hwnd, &rectClient)
 		me.hdcBuffer, _ = win32.CreateCompatibleDC(hdc)
-		me.hBitMap, _ = win32.CreateCompatibleBitmap(hdc, rectClient.Right-rectClient.Left, rectClient.Bottom-rectClient.Top)
+		me.hBitMap, _ = win32.CreateCompatibleBitmap(hdc, w, h)
 		win32.SelectObject(me.hdcBuffer, me.hBitMap)
-		log.I("nuxui", "win32 lockCanvas")
-		me.canvas = newCanvas(me.hdcBuffer)
+		me.canvas = canvasFromHDC(me.hdcBuffer)
 	}
 	return me.canvas
 }
@@ -145,22 +142,18 @@ func (me *nativeWindow) unlockCanvas(canvas Canvas) {
 func (me *nativeWindow) draw(canvas Canvas, decor Widget) {
 	if decor != nil {
 		if f, ok := decor.(Draw); ok {
-			var rectClient win32.RECT
-			win32.GetClientRect(me.hwnd, &rectClient)
-
-			win32.PatBlt(me.hdcBuffer, 0, 0, rectClient.Right-rectClient.Left, rectClient.Bottom-rectClient.Top, win32.WHITENESS)
-
-			canvas.Save()
-			canvas.ClipRect(0, 0, float32(rectClient.Right-rectClient.Left), float32(rectClient.Bottom-rectClient.Top))
+			w, h := me.ContentSize()
+			win32.PatBlt(me.hdcBuffer, 0, 0, w, h, win32.WHITENESS)
+			// canvas.Save()
+			canvas.ClipRect(0, 0, float32(w), float32(h))
 			if TestDraw != nil {
 				TestDraw(canvas)
 			} else {
 				f.Draw(canvas)
 			}
-			canvas.Restore()
+			// canvas.Restore()
 			canvas.Flush()
-
-			win32.BitBlt(me.preHdc, 0, 0, rectClient.Right-rectClient.Left, rectClient.Bottom-rectClient.Top, me.hdcBuffer, 0, 0, win32.SRCCOPY)
+			win32.BitBlt(me.preHdc, 0, 0, w, h, me.hdcBuffer, 0, 0, win32.SRCCOPY)
 		}
 	}
 }
@@ -200,12 +193,13 @@ func nativeWindowEventHandler(hwnd uintptr, msg uint32, wParam uintptr, lParam u
 		backToUI()
 	case win32.WM_CREATE:
 	case win32.WM_PAINT:
-		log.I("nuxui", "WM_PAINT")
+		// log.I("nuxui", "WM_PAINT")
 		theApp.window.draw()
 	case win32.WM_SIZE:
-		log.I("nuxui", "WM_SIZE")
-		theApp.window.measure()
-		theApp.window.layout()
+		theApp.window.resize()
+		// w, h := theApp.window.ContentSize()
+		// log.I("nuxui", "WM_SIZE, w=%d, h=%d",w,h)
+		InvalidateRect(0, 0, 0, 0)
 	case win32.WM_NCLBUTTONDBLCLK,
 		win32.WM_NCLBUTTONDOWN,
 		win32.WM_NCLBUTTONUP,

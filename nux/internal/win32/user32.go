@@ -342,3 +342,11 @@ func RedrawWindow(hwnd uintptr, lprcUpdate *RECT, hrgnUpdate uintptr, flags uint
 	}
 	return
 }
+
+func GetDC(hwnd uintptr) (hdc uintptr, err error) {
+	hdc, _, err = procGetDC.Call(hwnd)
+	if hdc != 0 {
+		err = nil
+	}
+	return
+}

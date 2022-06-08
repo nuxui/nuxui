@@ -5,51 +5,63 @@
 package nux
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
-
-	"nuxui.org/nuxui/log"
 )
 
+// rgba color
 type Color uint32
 
 const (
 	Transparent Color = 0x00000000
 	White       Color = 0xFFFFFFFF
-	Black       Color = 0xFF000000
-	Red         Color = 0xFFFF0000
-	Green       Color = 0xFF00FF00
-	Blue        Color = 0xFF0000FF
-	Purple      Color = 0xFFFF00FF
-	Yellow      Color = 0xFFFFFF00
+	Black       Color = 0x000000FF
+	Red         Color = 0xFF0000FF
+	Green       Color = 0x00FF00FF
+	Blue        Color = 0x0000FFFF
+	Purple      Color = 0xFF00FFFF
+	Yellow      Color = 0xFFFF00FF
 )
 
-func ParseColor(color string, defaultValue Color) Color {
-	if color == "" {
-		return defaultValue
+func ParseColor(color string, defaultValue Color) (Color, error) {
+	c := strings.TrimSpace(color)
+
+	if c == "" {
+		return defaultValue, fmt.Errorf("empty string for parse color, use default value instead")
+	} else if c[0] == '#' {
+		c = c[1:]
+	} else if strlen(c) >= 2 && c[0] == '0' && (c[1] == 'x' || c[1] == 'X') {
+		c = c[2:]
+	} else {
+		return defaultValue, fmt.Errorf("color should start with #, use default value instead")
 	}
 
-	if strlen(color) >= 1 && color[0] == '#' {
-		color = strings.Replace(color, "#", "", 1)
-	} else if strlen(color) >= 2 && color[0] == '0' && color[1] == 'x' {
-		color = strings.Replace(color, "0x", "", 1)
+	if strlen(c) == 6 {
+		c += "FF"
+	}
+	if strlen(c) != 8 {
+		return defaultValue, fmt.Errorf("cannot convert %s to Color, use default value instead", color)
 	}
 
-	i, e := strconv.ParseUint(color, 16, 32)
+	i, e := strconv.ParseUint(c, 16, 32)
 	if e != nil {
-		log.E("color", "%s", e)
-		return defaultValue
+		return defaultValue, fmt.Errorf("parse color error: %s", e.Error())
 	}
 
-	return Color(i)
+	return Color(i), nil
 }
 
-func (me Color) ARGBf() (a, r, g, b float32) {
-	a = float32((me>>24)&0xff) / 255
-	r = float32((me>>16)&0xff) / 255
-	g = float32((me>>8)&0xff) / 255
-	b = float32((me)&0xff) / 255
+func (me Color) RGBAf() (r, g, b, a float32) {
+	r = float32((me>>24)&0xff) / 255
+	g = float32((me>>16)&0xff) / 255
+	b = float32((me>>8)&0xff) / 255
+	a = float32((me)&0xff) / 255
 	return
+}
+
+func (me Color) ARGB() uint32 {
+	return uint32(((me & 0xff) << 24) | (me >> 8))
 }
 
 func (me Color) Equal(color Color) bool {

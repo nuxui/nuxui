@@ -32,9 +32,10 @@ func NewEditor(attr nux.Attr) Editor {
 		cursorPosition:     0,
 		flicker:            false,
 		text:               attr.GetString("text", ""),
-		textSize:           attr.GetFloat32("textSize", 12),
 		textColor:          attr.GetColor("textColor", nux.White),
 		textHighlightColor: attr.GetColor("textHighlightColor", nux.Transparent),
+		font:               nux.NewFont(attr.GetAttr("font", nil)),
+		fontLayout:         nux.NewFontLayout(),
 		paint:              nux.NewPaint(),
 		// paint:              nux.NewPaint(attr.GetAttr("font", nux.Attr{})),
 		paintFlicker: nux.NewPaint(),
@@ -58,8 +59,9 @@ type editor struct {
 	*nux.WidgetSize
 	*WidgetVisual
 
+	font               nux.Font
+	fontLayout         nux.FontLayout
 	text               string
-	textSize           float32
 	textColor          nux.Color
 	textHighlightColor nux.Color
 	editingText        string
@@ -76,7 +78,7 @@ type editor struct {
 
 func (me *editor) onTapDown(detail nux.GestureDetail) {
 	frame := me.Frame()
-	me.cursorPosition = me.paint.CharacterIndexForPoint(me.text, float32(frame.Width), float32(frame.Height), detail.X(), detail.Y())
+	me.cursorPosition = me.fontLayout.CharacterIndexForPoint(me.font, me.text, frame.Width, frame.Height, detail.X(), detail.Y())
 	nux.RequestFocus(me)
 }
 
@@ -103,7 +105,7 @@ func (me *editor) FocusChanged(focus bool) {
 		nux.StartTextInput()
 		frame := me.Frame()
 		// TODO:: cursor position
-		nux.SetTextInputRect(float32(frame.X), float32(frame.Y)+me.paint.TextSize(), 0, 0)
+		nux.SetTextInputRect(float32(frame.X), float32(frame.Y+me.font.Size()), 0, 0)
 		me.startTick()
 	} else {
 		nux.StopTextInput()
@@ -128,14 +130,11 @@ func (me *editor) SetText(text string) {
 }
 
 func (me *editor) Measure(width, height nux.MeasureDimen) {
-	log.I("nuxui", "editor Measure ")
-
 	frame := me.Frame()
 
-	me.paint.SetTextSize(me.textSize)
-	outW, outH := me.paint.MeasureText(me.text, float32(width.Value()), float32(height.Value()))
+	outW, outH := me.fontLayout.MeasureText(me.font, me.text, width.Value(), height.Value())
 
-	hPPx, hPPt, vPPx, vPPt, paddingMeasuredFlag := measurePadding(width, height, me.Padding(), frame, outH, 0)
+	hPPx, hPPt, vPPx, vPPt, paddingMeasuredFlag := measurePadding(width, height, me.Padding(), frame, float32(outH), 0)
 	if hPPt >= 100.0 || vPPt >= 100.0 {
 		log.Fatal("nuxui", "padding percent size should at 0% ~ 100%")
 	}
@@ -157,7 +156,7 @@ func (me *editor) Measure(width, height nux.MeasureDimen) {
 	}
 
 	if paddingMeasuredFlag&flagMeasuredPaddingComplete != flagMeasuredPaddingComplete {
-		measurePadding(width, height, me.Padding(), frame, outH, paddingMeasuredFlag)
+		measurePadding(width, height, me.Padding(), frame, float32(outH), paddingMeasuredFlag)
 	}
 }
 
@@ -187,11 +186,12 @@ func (me *editor) Draw(canvas nux.Canvas) {
 	canvas.Translate(float32(frame.Padding.Left), float32(frame.Padding.Top))
 
 	me.paint.SetColor(me.textColor)
-	canvas.DrawText(all, float32(frame.Width-frame.Padding.Left-frame.Padding.Right), float32(frame.Height-frame.Padding.Top-frame.Padding.Bottom), me.paint)
+	me.fontLayout.DrawText(canvas, me.font, me.paint, all, frame.Width-frame.Padding.Left-frame.Padding.Right, frame.Height-frame.Padding.Top-frame.Padding.Bottom)
 
 	// draw cursor
 	m := fmt.Sprintf("%s%s", front, string([]rune(me.editingText)[:me.editingLoc]))
-	outW, outH := me.paint.MeasureText(m, 1000, 1000) // TODO:: 1000
+	outW, outH := me.fontLayout.MeasureText(me.font, m, 1000, 1000) // TODO:: 1000
+
 	canvas.Translate(float32(outW), 0)
 	if me.flicker {
 		me.paintFlicker.SetColor(0xcc000000)

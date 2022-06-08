@@ -571,3 +571,14 @@ const (
 	SPI_GETDOCKMOVING               = 0x0090
 	SPI_SETDOCKMOVING               = 0x0091
 )
+
+type FontStyle int32
+
+const (
+	FontStyleRegular    FontStyle = 0
+	FontStyleBold       FontStyle = 1
+	FontStyleItalic     FontStyle = 2
+	FontStyleBoldItalic FontStyle = 3
+	FontStyleUnderline  FontStyle = 4
+	FontStyleStrikeout  FontStyle = 8
+)

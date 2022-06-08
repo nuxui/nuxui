@@ -2,23 +2,16 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build linux && !android
+//go:build (linux && !android) || (windows && cairo)
 
 package nux
 
 import (
-	"nuxui.org/nuxui/nux/internal/cairo"
 	"nuxui.org/nuxui/log"
 )
 
-type canvas struct {
-	cairo *cairo.Cairo
-}
-
-func newCanvas(surface *cairo.Surface) *canvas {
-	return &canvas{
-		cairo: cairo.Create(surface),
-	}
+func (me *canvas) native() *canvas {
+	return me
 }
 
 func (me *canvas) ResetClip() {
@@ -33,15 +26,15 @@ func (me *canvas) Restore() {
 }
 
 func (me *canvas) Translate(x, y float32) {
-	me.cairo.Translate(x,y)
+	me.cairo.Translate(x, y)
 }
 
 func (me *canvas) Scale(x, y float32) {
-	me.cairo.Scale(x,y)
+	me.cairo.Scale(x, y)
 }
 
 func (me *canvas) Rotate(angle float32) {
-	me.cairo.Rotate(_RADIAN*angle)
+	me.cairo.Rotate(_RADIAN * angle)
 }
 
 func (me *canvas) Skew(x, y float32) {
@@ -76,6 +69,7 @@ func (me *canvas) ClipRoundRect(x, y, width, height, cornerX, cornerY float32) {
 func (me *canvas) ClipPath(path Path) {
 	// TODO::
 }
+
 func (me *canvas) SetAlpha(alpha float32) {
 }
 
@@ -128,10 +122,10 @@ func (me *canvas) DrawRoundRect(x, y, width, height float32, rLT, rRT, rRB, rLB 
 func (me *canvas) DrawArc(x, y, radius, startAngle, endAngle float32, useCenter bool, paint Paint) {
 	// TODO:: useCenter
 	if useCenter {
-		me.cairo.Arc(x,y, radius, startAngle*_RADIAN, endAngle*_RADIAN)
+		me.cairo.Arc(x, y, radius, startAngle*_RADIAN, endAngle*_RADIAN)
 		me.drawPaint(paint)
 	} else {
-		me.cairo.Arc(x,y, radius, startAngle*_RADIAN, endAngle*_RADIAN)
+		me.cairo.Arc(x, y, radius, startAngle*_RADIAN, endAngle*_RADIAN)
 		me.drawPaint(paint)
 	}
 }
@@ -164,9 +158,9 @@ func (me *canvas) DrawPath(path Path) {
 }
 
 func (me *canvas) drawPaint(paint Paint) {
-	a, r, g, b := paint.Color().ARGBf()
+	r, g, b, a := paint.Color().RGBAf()
 	// C.cairo_fill_preserve(me.ptr)
-	me.cairo.SetSourceRGBA(r,g,b,a)
+	me.cairo.SetSourceRGBA(r, g, b, a)
 	me.cairo.SetLineWidth(paint.Width())
 	switch paint.Style() {
 	case PaintStyle_Stroke:
@@ -180,8 +174,8 @@ func (me *canvas) drawPaint(paint Paint) {
 }
 
 func (me *canvas) DrawColor(color Color) {
-	a, r, g, b := color.ARGBf()
-	me.cairo.SetSourceRGBA(r,g,b,a)
+	r, g, b, a := color.RGBAf()
+	me.cairo.SetSourceRGBA(r, g, b, a)
 	me.cairo.Paint()
 }
 
@@ -193,7 +187,7 @@ func (me *canvas) DrawImage(img Image) {
 func (me *canvas) DrawText(text string, width, height float32, paint Paint) {
 	// cfamily := C.CString("")
 	// ctext := C.CString(text)
-	// a, r, g, b := paint.Color().ARGBf()
+	// r, g, b, a := paint.Color().RGBAf()
 	// me.cairo.SetSourceRGBA(r,g,b,a)
 	// C.drawText(me.ptr, cfamily, C.int(1), C.int(paint.TextSize()), ctext, C.int(width), C.int(height))
 	// me.drawPaint(paint)
@@ -202,30 +196,8 @@ func (me *canvas) DrawText(text string, width, height float32, paint Paint) {
 }
 
 func (me *canvas) Flush() {
+	me.surface.Flush()
 }
 
 func (me *canvas) Destroy() {
-	me.cairo.Destroy()
-}
-
-var canvas4measure *cairo.Cairo = cairo.Create(nil)
-
-func (me *paint) MeasureText(text string, width, height float32) (outWidth float32, outHeight float32) {
-	// if text == "" {
-	// 	return 0, 0
-	// }
-
-	// cfamily := C.CString("")
-	// ctext := C.CString(text)
-	// var w, h C.int
-	// C.measureText(canvas4measure, cfamily, C.int(1), C.int(me.TextSize()), ctext, C.int(width), C.int(height), &w, &h)
-	// outWidth = float32(int32(float64(w)/float64(C.PANGO_SCALE) + 0.99999))
-	// outHeight = float32(int32(float64(h)/float64(C.PANGO_SCALE) + 0.99999))
-	// C.free(unsafe.Pointer(cfamily))
-	// C.free(unsafe.Pointer(ctext))
-	return
-}
-
-func (me *paint) CharacterIndexForPoint(text string, width, height float32, x, y float32) uint32 {
-	return 0
 }

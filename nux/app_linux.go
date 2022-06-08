@@ -7,9 +7,10 @@
 package nux
 
 import (
-	"nuxui.org/nuxui/log"
+	// "nuxui.org/nuxui/log"
 	"nuxui.org/nuxui/nux/internal/linux"
 	"nuxui.org/nuxui/nux/internal/linux/xlib"
+	"unsafe"
 )
 
 type nativeApp struct {
@@ -23,7 +24,7 @@ func createNativeApp_() *nativeApp {
 
 	xlib.XInitThreads()
 	xlib.XrmInitialize()
-	if xlib.XSupportsLocale(){
+	if xlib.XSupportsLocale() {
 		xlib.XSetLocaleModifiers("")
 	}
 
@@ -35,13 +36,21 @@ func createNativeApp_() *nativeApp {
 func (me *nativeApp) run() {
 	defer xlib.XCloseDisplay(me.display)
 
+	// fix:: first event will delay until second event send
+	go func() { runOnUI(func() {}) }()
+
 	var event xlib.XEvent
 	for {
 		xlib.XNextEvent(me.display, &event)
-		log.I("nuxui", "### event type %d, %T", event.Type(), event.Convert())
+		// log.I("nuxui", "### event type %d, %T, %s", event.Type(),event.Convert(), event.Convert())
+		// log.I("nuxui", "### event type %d, %T", event.Type(), event.Convert())
 
 		if xlib.XFilterEvent(&event, xlib.None) {
 			continue
+		}
+
+		if theApp.window.native().handleNativeEvent(event.Convert()) {
+
 		}
 	}
 }
@@ -49,19 +58,39 @@ func (me *nativeApp) run() {
 func (me *nativeApp) terminate() {
 }
 
+var chanRunOnUI = make(chan func())
 
 func runOnUI(callback func()) {
-	// if IsMainThread() {
-	// 	callback()
-	// } else {
-	// 	darwin.BackToUI(callback)
-	// }
+	if IsMainThread() {
+		callback()
+	} else {
+		go func() {
+			chanRunOnUI <- callback
+		}()
+
+		event := &xlib.XClientMessageEvent{
+			Type:        xlib.ClientMessage,
+			Serial:      0,
+			SendEvent:   1,
+			Display:     theApp.native.display,
+			Window:      theApp.window.native().window,
+			MessageType: xlib.XInternAtom(theApp.native.display, "nux_user_backToUI", false),
+			Format:      32,
+		}
+		xlib.XSendEvent(event.Display, event.Window, true, xlib.NoEventMask, (*xlib.XEvent)(unsafe.Pointer(event)))
+	}
+}
+
+func backToUI() {
+	callback := <-chanRunOnUI
+	callback()
 }
 
 func invalidateRectAsync_(dirtRect *Rect) {
-	// TODO:: error for render radio options
-	// darwin.NSApp().KeyWindow().InvalidateRectAsync(float32(rect.X), float32(rect.Y), float32(rect.Width), float32(rect.Height))
-	// darwin.NSApp().KeyWindow().InvalidateRectAsync(0, 0, 0, 0)
+	nw := theApp.window.native()
+	w, h := nw.ContentSize()
+	xlib.XClearArea(nw.display, nw.window, 0, 0, w, h, true)
+	// xlib.XClearArea(nw.display, nw.window, 0, 0, 0, 0, true)
 }
 
 func startTextInput() {

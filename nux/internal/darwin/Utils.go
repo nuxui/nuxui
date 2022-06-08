@@ -31,6 +31,10 @@ uint64 nux_CurrentThreadID() {
   if (pthread_threadid_np(pthread_self(), &id)) { abort(); };
   return id;
 }
+
+void nux_NSObject_release(uintptr_t ptr){
+	[((NSObject*)ptr) release];
+}
 */
 import "C"
 
@@ -54,4 +58,8 @@ func CursorPositionWindowToScreen(window NSWindow, px, py float32) (x, y float32
 	var outX, outY C.CGFloat
 	C.nux_CursorPositionWindowToScreen(C.uintptr_t(window), C.CGFloat(px), C.CGFloat(py), &outX, &outY)
 	return float32(outX), float32(outY)
+}
+
+func NSObject_release(ptr uintptr) {
+	C.nux_NSObject_release(C.uintptr_t(ptr))
 }

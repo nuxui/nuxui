@@ -100,7 +100,7 @@ func (me *canvas) SetAlpha(alpha float32) {
 
 func (me *canvas) DrawRect(x, y, width, height float32, paint Paint) {
 	p := C.new_Paint()
-	C.paint_setColor(p, C.uint32_t(paint.Color()))
+	C.paint_setColor(p, C.uint32_t(paint.Color().ARGB()))
 	C.paint_setTextSize(p, C.jfloat(paint.TextSize()))
 	C.paint_setStyle(p, C.jint(paint.Style()))
 	C.paint_setAntiAlias(p, C.jboolean(1))
@@ -110,7 +110,7 @@ func (me *canvas) DrawRect(x, y, width, height float32, paint Paint) {
 
 func (me *canvas) DrawRoundRect(x, y, width, height float32, rLT, rRT, rRB, rLB float32, paint Paint) {
 	p := C.new_Paint()
-	C.paint_setColor(p, C.uint32_t(paint.Color()))
+	C.paint_setColor(p, C.uint32_t(paint.Color().ARGB()))
 	C.paint_setTextSize(p, C.jfloat(paint.TextSize()))
 	C.paint_setStyle(p, C.jint(paint.Style())) // TODO:: the style is not same with android
 	C.paint_setAntiAlias(p, C.jboolean(1))
@@ -143,7 +143,7 @@ func (me *canvas) DrawImage(img Image) {
 func (me *canvas) DrawText(text string, width, height float32, paint Paint) {
 	chars := ([]byte)(text)
 	p := C.new_Paint()
-	C.paint_setColor(p, C.uint32_t(paint.Color()))
+	C.paint_setColor(p, C.uint32_t(paint.Color().ARGB()))
 	C.paint_setTextSize(p, C.jfloat(paint.TextSize()))
 	C.paint_setStyle(p, C.jint(paint.Style()))
 	C.paint_setAntiAlias(p, C.jboolean(1))
@@ -165,7 +165,7 @@ func (me *paint) MeasureText(text string, width, height float32) (outWidth float
 
 	chars := ([]byte)(text)
 	p := C.new_Paint()
-	C.paint_setColor(p, C.uint32_t(me.Color()))
+	C.paint_setColor(p, C.uint32_t(me.Color().ARGB()))
 	C.paint_setTextSize(p, C.jfloat(me.TextSize()))
 	C.paint_setStyle(p, C.jint(me.Style()))
 	C.paint_setAntiAlias(p, C.jboolean(1))

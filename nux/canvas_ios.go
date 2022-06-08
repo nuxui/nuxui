@@ -186,7 +186,7 @@ func (me *canvas) SetAlpha(alpha float32) {
 }
 
 func (me *canvas) DrawRect(x, y, width, height float32, paint Paint) {
-	a, r, g, b := paint.Color().ARGBf()
+	r, g, b, a := paint.Color().RGBAf()
 	fix := paint.Style() == PaintStyle_Stroke && int32(paint.Width())%2 != 0
 	if fix {
 		x += 1
@@ -220,7 +220,7 @@ func (me *canvas) DrawRect(x, y, width, height float32, paint Paint) {
 }
 
 func (me *canvas) DrawRoundRect(x, y, width, height float32, rLT, rRT, rRB, rLB float32, paint Paint) {
-	a, r, g, b := paint.Color().ARGBf()
+	r, g, b, a := paint.Color().RGBAf()
 	fix := paint.Style() == PaintStyle_Stroke && int32(paint.Width())%2 != 0
 	if fix {
 		x += 1
@@ -242,7 +242,7 @@ func (me *canvas) DrawRoundRect(x, y, width, height float32, rLT, rRT, rRB, rLB 
 	if sc, sx, sy, sb := paint.Shadow(); sc != 0 && sb > 0 {
 		hasShadow = true
 		me.Save()
-		a0, r0, g0, b0 := sc.ARGBf()
+		r0, g0, b0, a0 := sc.RGBAf()
 		C.setShadow(me.ptr, C.CGFloat(sx), C.CGFloat(sy), C.CGFloat(sb), C.CGFloat(a0), C.CGFloat(r0), C.CGFloat(g0), C.CGFloat(b0))
 	}
 
@@ -272,7 +272,7 @@ func (me *canvas) DrawRoundRect(x, y, width, height float32, rLT, rRT, rRB, rLB 
 
 func (me *canvas) DrawArc(x, y, radius, startAngle, endAngle float32, useCenter bool, paint Paint) {
 	// TODO:: useCenter
-	a, r, g, b := paint.Color().ARGBf()
+	r, g, b, a := paint.Color().RGBAf()
 	C.CGContextSetRGBFillColor(me.ptr, C.CGFloat(r), C.CGFloat(g), C.CGFloat(b), C.CGFloat(a))
 	C.CGContextSetRGBStrokeColor(me.ptr, C.CGFloat(r), C.CGFloat(g), C.CGFloat(b), C.CGFloat(a))
 

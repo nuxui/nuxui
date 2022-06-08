@@ -49,7 +49,7 @@ func (me *nativeWindow) lockCanvas() Canvas {
 }
 
 func (me *nativeWindow) unlockCanvas(canvas Canvas) {
-	canvas.Flush()
+	// canvas.Flush()
 }
 
 func (me *nativeWindow) draw(canvas Canvas, decor Widget) {
@@ -78,8 +78,7 @@ func nativeWindowEventHandler(event any) bool {
 	case *darwin.WindowEvent:
 		switch e.Type {
 		case darwin.Event_WindowDidResize:
-			theApp.window.measure()
-			theApp.window.layout()
+			theApp.window.resize()
 		case darwin.Event_WindowDrawRect:
 			theApp.window.draw()
 		}

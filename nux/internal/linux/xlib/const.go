@@ -66,7 +66,7 @@ const (
 	OwnerGrabButtonMask      EventMask = 1 << 24
 )
 
-type ErrorCode int
+type ErrorCode C.uchar
 
 const (
 	Success             ErrorCode = 0  /* everything's okay */
@@ -132,7 +132,7 @@ const (
 	CWCursor           CW = (1 << 14)
 )
 
-type EventType int
+type EventType C.int
 
 const (
 	KeyPress         EventType = 2
@@ -178,6 +178,27 @@ const (
 	PropModeReplace PropertyMode = 0
 	PropModePrepend PropertyMode = 1
 	PropModeAppend  PropertyMode = 2
+)
+
+type ButtonMask C.uint
+
+const (
+	Button1Mask = (1 << 8)
+	Button2Mask = (1 << 9)
+	Button3Mask = (1 << 10)
+	Button4Mask = (1 << 11)
+	Button5Mask = (1 << 12)
+	AnyModifier = (1 << 15)
+)
+
+type Button C.uint
+
+const (
+	Button1 Button = 1
+	Button2 Button = 2
+	Button3 Button = 3
+	Button4 Button = 4
+	Button5 Button = 5
 )
 
 const (

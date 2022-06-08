@@ -51,43 +51,43 @@ type Drawable C.Drawable
 
 // X11/xlib.h => struct XAnyEvent
 type XAnyEvent struct {
-	Type      C.int
+	Type      EventType
 	Serial    C.ulong
 	SendEvent C.Bool
-	Display   *C.Display
-	Window    C.Window
+	Display   *Display
+	Window    Window
 }
 
 type XButtonPressedEvent XButtonEvent
 type XButtonReleasedEvent XButtonEvent
 type XButtonEvent struct {
-	Type       C.int
+	Type       EventType
 	Serial     C.ulong
 	SendEvent  C.Bool
-	Display    *C.Display
-	Window     C.Window
-	Root       C.Window
-	SubWindow  C.Window
+	Display    *Display
+	Window     Window
+	Root       Window
+	SubWindow  Window
 	Time       C.Time
 	X          C.int
 	Y          C.int
 	Xroot      C.int
 	Yroot      C.int
 	State      C.uint
-	Button     C.uint
+	Button     Button
 	SameScreen C.Bool
 }
 
 type XKeyPressedEvent XKeyEvent
 type XKeyReleasedEvent XKeyEvent
 type XKeyEvent struct {
-	Type       C.int
+	Type       EventType
 	Serial     C.ulong
 	SendEvent  C.Bool
-	Display    *C.Display
-	Window     C.Window
-	Root       C.Window
-	SubWindow  C.Window
+	Display    *Display
+	Window     Window
+	Root       Window
+	SubWindow  Window
 	Time       C.Time
 	X          C.int
 	Y          C.int
@@ -100,19 +100,19 @@ type XKeyEvent struct {
 
 type XPointerMovedEvent XMotionEvent
 type XMotionEvent struct {
-	Type       C.int
+	Type       EventType
 	Serial     C.ulong
 	SendEvent  C.Bool
-	Display    *C.Display
-	Window     C.Window
-	Root       C.Window
-	SubWindow  C.Window
+	Display    *Display
+	Window     Window
+	Root       Window
+	SubWindow  Window
 	Time       C.Time
 	X          C.int
 	Y          C.int
 	Xroot      C.int
 	Yroot      C.int
-	State      C.uint
+	State      ButtonMask
 	IsHint     C.char
 	SameScreen C.Bool
 }
@@ -120,13 +120,13 @@ type XMotionEvent struct {
 type XEnterWindowEvent XCrossingEvent
 type XLeaveWindowEvent XCrossingEvent
 type XCrossingEvent struct {
-	Type       C.int
+	Type       EventType
 	Serial     C.ulong
 	SendEvent  C.Bool
-	Display    *C.Display
-	Window     C.Window
-	Root       C.Window
-	SubWindow  C.Window
+	Display    *Display
+	Window     Window
+	Root       Window
+	SubWindow  Window
 	Time       C.Time
 	X          C.int
 	Y          C.int
@@ -142,30 +142,30 @@ type XCrossingEvent struct {
 type XFocusInEvent XFocusChangeEvent
 type XFocusOutEvent XFocusChangeEvent
 type XFocusChangeEvent struct {
-	Type      C.int
+	Type      EventType
 	Serial    C.ulong
 	SendEvent C.Bool
-	Display   *C.Display
-	Window    C.Window
+	Display   *Display
+	Window    Window
 	Mode      C.int
 	Detail    C.int
 }
 
 type XKeymapEvent struct {
-	Type      C.int
+	Type      EventType
 	Serial    C.ulong
 	SendEvent C.Bool
-	Display   *C.Display
-	Window    C.Window
+	Display   *Display
+	Window    Window
 	KeyVector []C.char
 }
 
 type XExposeEvent struct {
-	Type      C.int
+	Type      EventType
 	Serial    C.ulong
 	SendEvent C.Bool
-	Display   *C.Display
-	Window    C.Window
+	Display   *Display
+	Window    Window
 	X         C.int
 	Y         C.int
 	Width     C.int
@@ -174,10 +174,10 @@ type XExposeEvent struct {
 }
 
 type XGraphicsExposeEvent struct {
-	Type      C.int
+	Type      EventType
 	Serial    C.ulong
 	SendEvent C.Bool
-	Display   *C.Display
+	Display   *Display
 	Drawable  C.Drawable
 	X         C.int
 	Y         C.int
@@ -189,31 +189,31 @@ type XGraphicsExposeEvent struct {
 }
 
 type XNoExposeEvent struct {
-	Type      C.int
+	Type      EventType
 	Serial    C.ulong
 	SendEvent C.Bool
-	Display   *C.Display
+	Display   *Display
 	Drawable  C.Drawable
 	MajorCode C.int
 	MinorCode C.int
 }
 
 type XVisibilityEvent struct {
-	Type      C.int
+	Type      EventType
 	Serial    C.ulong
 	SendEvent C.Bool
-	Display   *C.Display
-	Window    C.Window
+	Display   *Display
+	Window    Window
 	State     C.int
 }
 
 type XCreateWindowEvent struct {
-	Type             C.int
+	Type             EventType
 	Serial           C.ulong
 	SendEvent        C.Bool
-	Display          *C.Display
-	Parent           C.Window
-	Window           C.Window
+	Display          *Display
+	Parent           Window
+	Window           Window
 	X                C.int
 	Y                C.int
 	Width            C.int
@@ -223,213 +223,213 @@ type XCreateWindowEvent struct {
 }
 
 type XDestroyWindowEvent struct {
-	Type      C.int
+	Type      EventType
 	Serial    C.ulong
 	SendEvent C.Bool
-	Display   *C.Display
-	Event     C.Window
-	Window    C.Window
+	Display   *Display
+	Event     Window
+	Window    Window
 }
 
 type XUnmapEvent struct {
-	Type          C.int
+	Type          EventType
 	Serial        C.ulong
 	SendEvent     C.Bool
-	Display       *C.Display
-	Event         C.Window
-	Window        C.Window
+	Display       *Display
+	Event         Window
+	Window        Window
 	FromConfigure C.Bool
 }
 
 type XMapEvent struct {
-	Type             C.int
+	Type             EventType
 	Serial           C.ulong
 	SendEvent        C.Bool
-	Display          *C.Display
-	Event            C.Window
-	Window           C.Window
+	Display          *Display
+	Event            Window
+	Window           Window
 	OverrideRedirect C.Bool
 }
 
 type XMapRequestEvent struct {
-	Type      C.int
+	Type      EventType
 	Serial    C.ulong
 	SendEvent C.Bool
-	Display   *C.Display
-	Parent    C.Window
-	Window    C.Window
+	Display   *Display
+	Parent    Window
+	Window    Window
 }
 
 type XReparentEvent struct {
-	Type             C.int
+	Type             EventType
 	Serial           C.ulong
 	SendEvent        C.Bool
-	Display          *C.Display
-	Event            C.Window
-	Window           C.Window
-	Parent           C.Window
+	Display          *Display
+	Event            Window
+	Window           Window
+	Parent           Window
 	X                C.int
 	Y                C.int
 	OverrideRedirect C.Bool
 }
 
 type XConfigureEvent struct {
-	Type             C.int
+	Type             EventType
 	Serial           C.ulong
 	SendEvent        C.Bool
-	Display          *C.Display
-	Event            C.Window
-	Window           C.Window
+	Display          *Display
+	Event            Window
+	Window           Window
 	X                C.int
 	Y                C.int
 	Width            C.int
 	Height           C.int
 	BorderWidth      C.int
-	Above            C.Window
+	Above            Window
 	OverrideRedirect C.Bool
 }
 
 type XGravityEvent struct {
-	Type      C.int
+	Type      EventType
 	Serial    C.ulong
 	SendEvent C.Bool
-	Display   *C.Display
-	Event     C.Window
-	Window    C.Window
+	Display   *Display
+	Event     Window
+	Window    Window
 	X         C.int
 	Y         C.int
 }
 
 type XResizeRequestEvent struct {
-	Type      C.int
+	Type      EventType
 	Serial    C.ulong
 	SendEvent C.Bool
-	Display   *C.Display
-	Event     C.Window
-	Window    C.Window
+	Display   *Display
+	Event     Window
+	Window    Window
 	Width     C.int
 	Height    C.int
 }
 
 type XConfigureRequestEvent struct {
-	Type        C.int
+	Type        EventType
 	Serial      C.ulong
 	SendEvent   C.Bool
-	Display     *C.Display
-	Parent      C.Window
-	Window      C.Window
+	Display     *Display
+	Parent      Window
+	Window      Window
 	X           C.int
 	Y           C.int
 	Width       C.int
 	Height      C.int
 	BorderWidth C.int
-	Above       C.Window
+	Above       Window
 	Detail      C.int
 	ValueMask   C.ulong
 }
 
 type XCirculateEvent struct {
-	Type      C.int
+	Type      EventType
 	Serial    C.ulong
 	SendEvent C.Bool
-	Display   *C.Display
-	Event     C.Window
-	Window    C.Window
+	Display   *Display
+	Event     Window
+	Window    Window
 	Place     C.int
 }
 
 type XCirculateRequestEvent struct {
-	Type      C.int
+	Type      EventType
 	Serial    C.ulong
 	SendEvent C.Bool
-	Display   *C.Display
-	Parent    C.Window
-	Window    C.Window
+	Display   *Display
+	Parent    Window
+	Window    Window
 	Place     C.int
 }
 
 type XPropertyEvent struct {
-	Type      C.int
+	Type      EventType
 	Serial    C.ulong
 	SendEvent C.Bool
-	Display   *C.Display
-	Window    C.Window
-	Atom      C.Atom
+	Display   *Display
+	Window    Window
+	Atom      Atom
 	Time      C.Time
 	State     C.int
 }
 
 type XSelectionClearEvent struct {
-	Type      C.int
+	Type      EventType
 	Serial    C.ulong
 	SendEvent C.Bool
-	Display   *C.Display
-	Window    C.Window
-	Selection C.Atom
+	Display   *Display
+	Window    Window
+	Selection Atom
 	Time      C.Time
 }
 
 type XSelectionRequestEvent struct {
-	Type      C.int
+	Type      EventType
 	Serial    C.ulong
 	SendEvent C.Bool
-	Display   *C.Display
-	Owner     C.Window
-	Requestor C.Window
-	Selection C.Atom
-	Target    C.Atom
-	Property  C.Atom
+	Display   *Display
+	Owner     Window
+	Requestor Window
+	Selection Atom
+	Target    Atom
+	Property  Atom
 	Time      C.Time
 }
 
 type XSelectionEvent struct {
-	Type      C.int
+	Type      EventType
 	Serial    C.ulong
 	SendEvent C.Bool
-	Display   *C.Display
-	Requestor C.Window
-	Selection C.Atom
-	Target    C.Atom
-	Property  C.Atom
+	Display   *Display
+	Requestor Window
+	Selection Atom
+	Target    Atom
+	Property  Atom
 	Time      C.Time
 }
 
 type XColormapEvent struct {
-	Type      C.int
+	Type      EventType
 	Serial    C.ulong
 	SendEvent C.Bool
-	Display   *C.Display
-	Window    C.Window
+	Display   *Display
+	Window    Window
 	Colormap  C.Colormap
 	New       C.Bool
 	state     C.int
 }
 
 type XClientMessageEvent struct {
-	Type        C.int
+	Type        EventType
 	Serial      C.ulong
 	SendEvent   C.Bool
-	Display     *C.Display
-	Window      C.Window
-	MessageType C.Atom
+	Display     *Display
+	Window      Window
+	MessageType Atom
 	Format      C.int
-	Data        [20]C.char
+	Data        [20]byte // save Atom data
 }
 
 type XMappingEvent struct {
-	Type         C.int
+	Type         EventType
 	Serial       C.ulong
 	SendEvent    C.Bool
-	Display      *C.Display
-	Window       C.Window
+	Display      *Display
+	Window       Window
 	Request      C.int
 	FirstKeycode C.int
 	Count        C.int
 }
 
 type XErrorEvent struct {
-	Type        C.int
-	Display     *C.Display
+	Type        EventType
+	Display     *Display
 	ResourceID  C.XID
 	Serial      C.ulong
 	ErrorCode   C.uchar
@@ -438,12 +438,12 @@ type XErrorEvent struct {
 }
 
 type XGenericEvent struct {
-	Type      C.int
+	Type      EventType
 	Serial    C.ulong
 	SendEvent C.Bool
-	Display   *C.Display
+	Display   *Display
 	Extension C.int
-	Evtype    C.int
+	EvType    EventType
 }
 
 type XSetWindowAttributes struct {

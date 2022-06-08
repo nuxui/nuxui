@@ -19,7 +19,7 @@ type Application interface {
 }
 
 type application struct {
-	nativeApp        *nativeApp
+	native           *nativeApp
 	mainThreadID     uint64
 	window           Window
 	invalidateSignal chan *Rect
@@ -31,7 +31,7 @@ const (
 )
 
 var theApp = &application{
-	nativeApp:        createNativeApp(),
+	native:           createNativeApp(),
 	invalidateSignal: make(chan *Rect, invalidateSignalSize),
 	measureSignal:    make(chan Widget, invalidateSignalSize),
 }
@@ -63,7 +63,7 @@ func Run(window Window) {
 }
 
 func (me *application) Run() {
-	me.nativeApp.run()
+	me.native.run()
 }
 
 // not nil
@@ -75,7 +75,7 @@ func (me *application) MainWindow() Window {
 }
 
 func (me *application) Terminate() {
-	me.nativeApp.terminate()
+	me.native.terminate()
 }
 
 func createNativeApp() *nativeApp {
@@ -128,8 +128,7 @@ func RequestLayout(widget Widget) {
 
 func requestLayoutAsync(widget Widget) {
 	runOnUI(func() {
-		theApp.window.measure()
-		theApp.window.layout()
+		theApp.window.resize()
 	})
 }
 

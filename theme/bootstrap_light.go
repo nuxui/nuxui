@@ -25,13 +25,13 @@ const BootstrapLight = `
 						shape: rect,
 						solid: #e0e0e0,
 						cornerRadius: 4px,
-						shadow:{color: #88000000, x: 0, y: 1px, blur: 3px},
+						shadow:{color: #00000088, x: 0, y: 1px, blur: 3px},
 					}},
 					{state:"pressed", shape:{
 						shape: rect,
 						solid: #9e9e9e,
 						cornerRadius: 4px,
-						shadow:{color: #88000000, x: 0, y: 1px, blur: 3px},
+						shadow:{color: #00000088, x: 0, y: 1px, blur: 3px},
 					}},
 				]
 			}
@@ -45,13 +45,13 @@ const BootstrapLight = `
 						shape: rect,
 						solid: #3f51b5,
 						cornerRadius: 4px,
-						shadow:{color: #88000000, x: 0, y: 1px, blur: 3px},
+						shadow:{color: #00000088, x: 0, y: 1px, blur: 3px},
 					}},
 					{state:"pressed", shape:{
 						shape: rect,
 						solid: #2b397e,
 						cornerRadius: 4px,
-						shadow:{color: #88000000, x: 0, y: 1px, blur: 3px},
+						shadow:{color: #00000088, x: 0, y: 1px, blur: 3px},
 					}},
 				]
 			}
@@ -65,13 +65,13 @@ const BootstrapLight = `
 						shape: rect,
 						solid: #f50057,
 						cornerRadius: 4px,
-						shadow:{color: #88000000, x: 0, y: 1px, blur: 3px},
+						shadow:{color: #00000088, x: 0, y: 1px, blur: 3px},
 					}},
 					{state:"pressed", shape:{
 						shape: rect,
 						solid: #ab003c,
 						cornerRadius: 4px,
-						shadow:{color: #88000000, x: 0, y: 1px, blur: 3px},
+						shadow:{color: #00000088, x: 0, y: 1px, blur: 3px},
 					}},
 				],
 			},
@@ -86,7 +86,7 @@ const BootstrapLight = `
 						shape: rect,
 						solid: #494949,
 						cornerRadius: 4px,
-						shadow:{color: #88000000, x: 0, y: 1px, blur: 3px},
+						shadow:{color: #00000088, x: 0, y: 1px, blur: 3px},
 					}},
 				],
 			},
@@ -111,14 +111,14 @@ const BootstrapLight = `
 				states:[
 					{state:"default", shape:{
 						shape: rect,
-						stroke: #3affffff,
+						stroke: #ffffff3a,
 						strokeWidth: 1px,
 						cornerRadius: 4px,
 					}},
 					{state:"pressed", shape:{
 						shape: rect,
 						solid: #797979,,
-						stroke: #3affffff,
+						stroke: #ffffff3a,
 						strokeWidth: 1px,
 						cornerRadius: 4px,
 					}},

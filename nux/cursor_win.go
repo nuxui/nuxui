@@ -25,7 +25,7 @@ func getCursorScreenPosition() (x, y float32) {
 
 func cursorPositionScreenToWindow(wind Window, x0, y0 float32) (x, y float32) {
 	p := &win32.POINT{X: int32(x0), Y: int32(y0)}
-	err := win32.ScreenToClient(wind.nativeWindow().hwnd, p)
+	err := win32.ScreenToClient(wind.native().hwnd, p)
 	if err != nil {
 		log.E("nux", "windows ScreenToClient faild: %s", err.Error())
 		return
@@ -35,7 +35,7 @@ func cursorPositionScreenToWindow(wind Window, x0, y0 float32) (x, y float32) {
 
 func cursorPositionWindowToScreen(wind Window, x0, y0 float32) (x, y float32) {
 	p := &win32.POINT{X: int32(x0), Y: int32(y0)}
-	err := win32.ClientToScreen(wind.nativeWindow().hwnd, p)
+	err := win32.ClientToScreen(wind.native().hwnd, p)
 	if err != nil {
 		log.E("nux", "windows ClientToScreen faild: %s", err.Error())
 		return

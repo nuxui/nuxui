@@ -20,6 +20,10 @@ func newCanvas(ctx darwin.CGContext) *canvas {
 	}
 }
 
+func (me *canvas) native() *canvas {
+	return me
+}
+
 func (me *canvas) ResetClip() {
 	darwin.CGContextResetClip(me.ctx)
 }
@@ -81,7 +85,7 @@ func (me *canvas) SetAlpha(alpha float32) {
 }
 
 func (me *canvas) DrawRect(x, y, width, height float32, paint Paint) {
-	a, r, g, b := paint.Color().ARGBf()
+	r, g, b, a := paint.Color().RGBAf()
 	fix := paint.Style() == PaintStyle_Stroke && int32(paint.Width())%2 != 0
 	if fix {
 		x += 1
@@ -119,7 +123,7 @@ func (me *canvas) DrawRoundRect(x, y, width, height, rLT, rRT, rRB, rLB float32,
 		return
 	}
 
-	a, r, g, b := paint.Color().ARGBf()
+	r, g, b, a := paint.Color().RGBAf()
 	fix := paint.Style() == PaintStyle_Stroke && int32(paint.Width())%2 != 0
 	if fix {
 		x += 1
@@ -141,7 +145,7 @@ func (me *canvas) DrawRoundRect(x, y, width, height, rLT, rRT, rRB, rLB float32,
 	if sc, sx, sy, sb := paint.Shadow(); sc != 0 && sb > 0 {
 		hasShadow = true
 		me.Save()
-		a0, r0, g0, b0 := sc.ARGBf()
+		r0, g0, b0, a0 := sc.RGBAf()
 		darwin.CGContextSetShadowWithColor(me.ctx, darwin.CGSizeMake(sx, -sy), sb, darwin.CGColorMake(r0, g0, b0, a0))
 	}
 
@@ -171,7 +175,7 @@ func (me *canvas) DrawRoundRect(x, y, width, height, rLT, rRT, rRB, rLB float32,
 
 func (me *canvas) DrawArc(x, y, radius, startAngle, endAngle float32, useCenter bool, paint Paint) {
 	// TODO:: useCenter
-	a, r, g, b := paint.Color().ARGBf()
+	r, g, b, a := paint.Color().RGBAf()
 	darwin.CGContextSetRGBFillColor(me.ctx, r, g, b, a)
 	darwin.CGContextSetRGBStrokeColor(me.ctx, r, g, b, a)
 
@@ -195,21 +199,9 @@ func (me *canvas) DrawImage(img Image) {
 	darwin.CGContextDrawImage(me.ctx, darwin.CGRectMake(0, 0, float32(w), float32(h)), img.(*nativeImage).ref)
 }
 
-func (me *canvas) DrawText(text string, width, height float32, paint Paint) {
-	darwin.NSDrawText(text, width, height, uint32(paint.Color()), 0, paint.TextSize())
-}
-
 func (me *canvas) Flush() {
-	darwin.CGContextFlush(me.ctx)
+	// darwin.CGContextFlush(me.ctx)
 }
 
 func (me *canvas) Destroy() {
-}
-
-func (me *paint) MeasureText(text string, width, height float32) (outWidth float32, outHeight float32) {
-	return darwin.NSMeasureText(text, width, height, me.textSize)
-}
-
-func (me *paint) CharacterIndexForPoint(text string, width, height float32, x, y float32) uint32 {
-	return darwin.NSCharacterIndexForPoint(text, width, height, x, y, me.textSize)
 }

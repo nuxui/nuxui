@@ -15,9 +15,9 @@ func getCursorScreenPosition() (x, y float32) {
 }
 
 func cursorPositionScreenToWindow(w Window, px, py float32) (x, y float32) {
-	return darwin.CursorPositionScreenToWindow(w.nativeWindow().ptr, px, py)
+	return darwin.CursorPositionScreenToWindow(w.native().ptr, px, py)
 }
 
 func cursorPositionWindowToScreen(w Window, px, py float32) (x, y float32) {
-	return darwin.CursorPositionWindowToScreen(w.nativeWindow().ptr, px, py)
+	return darwin.CursorPositionWindowToScreen(w.native().ptr, px, py)
 }

@@ -13,8 +13,13 @@ package darwin
 #cgo CFLAGS: -x objective-c -DGL_SILENCE_DEPRECATION
 #cgo LDFLAGS: -framework Cocoa
 
-CGColorRef CGColorMake_(CGFloat red, CGFloat green, CGFloat blue, CGFloat alpha){
+CGColorRef nux_CGColorMake(CGFloat red, CGFloat green, CGFloat blue, CGFloat alpha){
 	return [[NSColor colorWithSRGBRed:red green:green blue:blue alpha:alpha] CGColor];
+}
+
+void nux_NSRect_size(NSRect rect, CGFloat *outWidth, CGFloat* outHeight){
+	*outWidth = rect.size.width;
+	*outHeight = rect.size.height;
 }
 */
 import "C"
@@ -41,6 +46,11 @@ type NSView C.uintptr_t
 type NSApplication C.uintptr_t
 type NSEvent C.uintptr_t
 type NSWindow C.uintptr_t
+type NSFont C.uintptr_t
+type NSFontManager C.uintptr_t
+type NSLayoutManager C.uintptr_t
+type NSTextContainer C.uintptr_t
+type NSTextStorage C.uintptr_t
 
 type NSWindowStyleMask uint32
 type NSEventType uint32
@@ -60,17 +70,10 @@ type TypingEvent struct {
 	Length   int32
 }
 
-func (me NSView) NotNil() bool {
-	return me != 0
-}
-
-func (me NSWindow) NotNil() bool {
-	return me != 0
-}
-
-func (me NSApplication) NotNil() bool {
-	return me != 0
-}
+func (me NSFont) IsNil() bool        { return me == 0 }
+func (me NSView) IsNil() bool        { return me == 0 }
+func (me NSWindow) IsNil() bool      { return me == 0 }
+func (me NSApplication) IsNil() bool { return me == 0 }
 
 func CGRectMake(x, y, width, height float32) CGRect {
 	return CGRect(C.CGRectMake(C.CGFloat(x), C.CGFloat(y), C.CGFloat(width), C.CGFloat(height)))
@@ -81,9 +84,15 @@ func CGSizeMake(width, height float32) CGSize {
 }
 
 func CGColorMake(red, green, blue, alpha float32) CGColor {
-	return CGColor(C.CGColorMake_(C.CGFloat(red), C.CGFloat(green), C.CGFloat(blue), C.CGFloat(alpha)))
+	return CGColor(C.nux_CGColorMake(C.CGFloat(red), C.CGFloat(green), C.CGFloat(blue), C.CGFloat(alpha)))
 }
 
 func NSMakeRect(x, y, width, height float32) NSRect {
 	return NSRect(C.NSMakeRect(C.CGFloat(x), C.CGFloat(y), C.CGFloat(width), C.CGFloat(height)))
+}
+
+func (me NSRect) Size() (width, height float32) {
+	var w, h C.CGFloat
+	C.nux_NSRect_size(C.NSRect(me), &w, &h)
+	return float32(w), float32(h)
 }

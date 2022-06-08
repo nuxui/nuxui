@@ -291,28 +291,6 @@ func GdipSetClipRect(graphics *GpGraphics, x float32, y float32, width float32, 
 	return GpStatus(ret)
 }
 
-// func GdipMeasureString(graphics *GpGraphics, text string, font *GpFont, layout *RectF, size *RectF) GpStatus {
-// 	str, err := syscall.UTF16FromString(text)
-// 	l := len(str)
-// 	if err != nil {
-// 		panic(err.Error())
-// 	}
-
-// 	ret, _, _ := gdipMeasureString.Call(
-// 		uintptr(unsafe.Pointer(graphics)),
-// 		uintptr(unsafe.Pointer(&str[0])),
-// 		uintptr(l),
-// 		uintptr(unsafe.Pointer(font)),
-// 		uintptr(0),
-// 		uintptr(unsafe.Pointer(layout)),
-// 		uintptr(0),
-// 		uintptr(unsafe.Pointer(size)),
-// 		uintptr(0),
-// 		uintptr(0),
-// 	)
-// 	return GpStatus(ret)
-// }
-
 func GdipSetCompositingMode(graphics *GpGraphics, mode int32) GpStatus {
 	ret, _, _ := gdipSetCompositingMode.Call(
 		uintptr(unsafe.Pointer(graphics)),
@@ -550,18 +528,6 @@ func GdipDrawPath(graphics *GpGraphics, pen *GpPen, path *GpPath) GpStatus {
 	return GpStatus(ret)
 }
 
-func GdipDrawString(graphics *GpGraphics, text *uint16, length int32, font *GpFont, layoutRect *RectF, stringFormat *GpStringFormat, brush *GpBrush) GpStatus {
-	ret, _, _ := gdipDrawString.Call(
-		uintptr(unsafe.Pointer(graphics)),
-		uintptr(unsafe.Pointer(text)),
-		uintptr(length),
-		uintptr(unsafe.Pointer(font)),
-		uintptr(unsafe.Pointer(layoutRect)),
-		uintptr(unsafe.Pointer(stringFormat)),
-		uintptr(unsafe.Pointer(brush)))
-	return GpStatus(ret)
-}
-
 func GdipDrawImage(graphics *GpGraphics, image *GpImage, x, y float32) GpStatus {
 	ret, _, _ := gdipDrawImage.Call(
 		uintptr(unsafe.Pointer(graphics)),
@@ -675,14 +641,19 @@ func GdipFillPath(graphics *GpGraphics, brush *GpBrush, path *GpPath) GpStatus {
 }
 
 func GdipMeasureString(
-	graphics *GpGraphics, text *uint16,
-	length int32, font *GpFont, layoutRect *RectF,
+	graphics *GpGraphics, text string, font *GpFont, layoutRect *RectF,
 	stringFormat *GpStringFormat, boundingBox *RectF,
 	codepointsFitted *int32, linesFilled *int32) GpStatus {
 
+	str, err := syscall.UTF16FromString(text)
+	length := len(str)
+	if err != nil {
+		panic(err.Error())
+	}
+
 	ret, _, _ := gdipMeasureString.Call(
 		uintptr(unsafe.Pointer(graphics)),
-		uintptr(unsafe.Pointer(text)),
+		uintptr(unsafe.Pointer(&str[0])),
 		uintptr(length),
 		uintptr(unsafe.Pointer(font)),
 		uintptr(unsafe.Pointer(layoutRect)),
@@ -708,6 +679,24 @@ func GdipMeasureCharacterRanges(
 		uintptr(unsafe.Pointer(stringFormat)),
 		uintptr(regionCount),
 		uintptr(unsafe.Pointer(regions)))
+	return GpStatus(ret)
+}
+
+func GdipDrawString(graphics *GpGraphics, text string, font *GpFont, layoutRect *RectF, stringFormat *GpStringFormat, brush *GpBrush) GpStatus {
+	str, err := syscall.UTF16FromString(text)
+	length := len(str)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	ret, _, _ := gdipDrawString.Call(
+		uintptr(unsafe.Pointer(graphics)),
+		uintptr(unsafe.Pointer(&str[0])),
+		uintptr(length),
+		uintptr(unsafe.Pointer(font)),
+		uintptr(unsafe.Pointer(layoutRect)),
+		uintptr(unsafe.Pointer(stringFormat)),
+		uintptr(unsafe.Pointer(brush)))
 	return GpStatus(ret)
 }
 
@@ -1088,9 +1077,13 @@ func GdipNewInstalledFontCollection(fontCollection **GpFontCollection) GpStatus 
 	return GpStatus(ret)
 }
 
-func GdipCreateFontFamilyFromName(name *uint16, fontCollection *GpFontCollection, fontFamily **GpFontFamily) GpStatus {
+func GdipCreateFontFamilyFromName(familyName string, fontCollection *GpFontCollection, fontFamily **GpFontFamily) GpStatus {
+	cname, err := syscall.UTF16PtrFromString(familyName)
+	if err != nil {
+		panic(err)
+	}
 	ret, _, _ := gdipCreateFontFamilyFromName.Call(
-		uintptr(unsafe.Pointer(name)),
+		uintptr(unsafe.Pointer(cname)),
 		uintptr(unsafe.Pointer(fontCollection)),
 		uintptr(unsafe.Pointer(fontFamily)))
 	return GpStatus(ret)

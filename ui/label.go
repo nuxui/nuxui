@@ -30,8 +30,9 @@ type label struct {
 	*nux.WidgetSize
 	*WidgetVisual
 
+	font               nux.Font
+	fontLayout         nux.FontLayout
 	text               string
-	textSize           float32
 	textColor          nux.Color
 	textHighlightColor nux.Color
 	paint              nux.Paint
@@ -58,10 +59,11 @@ func NewLabel(attr nux.Attr) Label {
 
 	me := &label{
 		text:               attr.GetString("text", ""),
-		textSize:           attr.GetFloat32("textSize", 14),
 		textColor:          attr.GetColor("textColor", nux.Black),
 		textHighlightColor: attr.GetColor("textHighlightColor", nux.Transparent),
 		align:              NewAlign(attr.GetAttr("align", nux.Attr{"horizontal": "center", "vertical": "center"})),
+		font:               nux.NewFont(attr.GetAttr("font", nil)),
+		fontLayout:         nux.NewFontLayout(),
 		paint:              nux.NewPaint(),
 	}
 
@@ -84,7 +86,6 @@ func NewLabel(attr nux.Attr) Label {
 	me.WidgetSize = nux.NewWidgetSize(attr)
 	me.WidgetVisual = NewWidgetVisual(me, attr)
 	me.WidgetSize.AddSizeObserver(me.onSizeChanged)
-
 	return me
 }
 
@@ -184,12 +185,11 @@ func (me *label) SetText(text string) {
 func (me *label) Measure(width, height nux.MeasureDimen) {
 	frame := me.Frame()
 
-	me.paint.SetTextSize(me.textSize)
-	txtW, txtH := me.paint.MeasureText(me.text, float32(width.Value()), float32(height.Value()))
-	me.textWidth = int32(math.Ceil(float64(txtW)))
-	me.textHeight = int32(math.Ceil(float64(txtH)))
+	me.textWidth, me.textHeight = me.fontLayout.MeasureText(me.font, me.text, width.Value(), height.Value())
+	txtW := float32(me.textWidth)
+	txtH := float32(me.textHeight)
 
-	hPPx, hPPt, vPPx, vPPt, paddingMeasuredFlag := measurePadding(width, height, me.Padding(), frame, txtH, 0)
+	hPPx, hPPt, vPPx, vPPt, paddingMeasuredFlag := measurePadding(width, height, me.Padding(), frame, float32(txtH), 0)
 	if hPPt >= 100.0 || vPPt >= 100.0 {
 		log.Fatal("nuxui", "padding percent size should at 0% ~ 100%")
 	}
@@ -904,9 +904,8 @@ func (me *label) Draw(canvas nux.Canvas) {
 	canvas.Translate(float32(frame.X+me.textOffsetX), float32(frame.Y+me.textOffsetY))
 
 	if me.text != "" {
-		me.paint.SetTextSize(me.textSize)
 		me.paint.SetColor(me.textColor)
-		canvas.DrawText(me.text, float32(frame.Width), float32(frame.Height), me.paint)
+		me.fontLayout.DrawText(canvas, me.font, me.paint, me.text, frame.Width, frame.Height)
 	}
 	canvas.Restore()
 

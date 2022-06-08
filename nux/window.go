@@ -27,24 +27,22 @@ type Window interface {
 	// private methods
 	// created()
 	createDecor(Attr) Parent
-	measure()
-	layout()
+	resize()
 	draw()
 	handlePointerEvent(event PointerEvent) bool
 	handleScrollEvent(event ScrollEvent) bool
 	handleKeyEvent(event KeyEvent) bool
 	handleTypingEvent(event TypingEvent) bool
 	requestFocus(widget Widget)
-	nativeWindow() *nativeWindow
+	native() *nativeWindow
 }
 
 type window struct {
 	*ComponentBase
 
-	wind        *nativeWindow
+	nativeWnd   *nativeWindow
 	focusWidget Widget
 	decor       Widget
-	canvas      Canvas
 	initEvent   PointerEvent
 	timer       Timer
 }
@@ -60,20 +58,24 @@ func NewWindow(attr Attr) Window {
 		InflateLayoutAttr(me.decor, content, nil)
 	}
 
-	me.wind = newNativeWindow(attr)
+	me.nativeWnd = newNativeWindow(attr)
 
 	mountWidget(me.decor, nil)
 
 	return me
 }
 
-func (me *window) nativeWindow() *nativeWindow {
-	return me.wind
+func (me *window) native() *nativeWindow {
+	return me.nativeWnd
 }
 
 func (me *window) createDecor(attr Attr) Parent {
+	decorAttr := Attr{
+		"background": "#ffffff",
+	}
+
 	creator := FindTypeCreator("nuxui.org/nuxui/ui.Layer")
-	w := creator(attr)
+	w := creator(MergeAttrs(decorAttr, attr))
 	if p, ok := w.(Parent); ok {
 		return p
 	} else {
@@ -88,23 +90,23 @@ func (me *window) Decor() Widget {
 }
 
 func (me *window) Center() {
-	me.wind.Center()
+	me.nativeWnd.Center()
 }
 
 func (me *window) Show() {
-	me.wind.Show()
+	me.nativeWnd.Show()
 }
 
 func (me *window) Title() string {
-	return me.wind.Title()
+	return me.nativeWnd.Title()
 }
 
 func (me *window) SetTitle(title string) {
-	me.wind.SetTitle(title)
+	me.nativeWnd.SetTitle(title)
 }
 
 func (me *window) ContentSize() (width, height int32) {
-	return me.wind.ContentSize()
+	return me.nativeWnd.ContentSize()
 }
 
 func (me *window) handleKeyEvent(e KeyEvent) bool {
@@ -256,13 +258,12 @@ func (me *window) switchFocusAtPoint(x, y float32) {
 	}
 }
 
-func (me *window) measure() {
+func (me *window) resize() {
 	if me.decor == nil {
 		return
 	}
 
 	width, height := me.ContentSize()
-	log.I("nuxui", "w=%d, h=%d", width, height)
 
 	if s, ok := me.decor.(Size); ok {
 		f := s.Frame()
@@ -273,32 +274,24 @@ func (me *window) measure() {
 	if f, ok := me.decor.(Measure); ok {
 		f.Measure(MeasureSpec(width, Pixel), MeasureSpec(height, Pixel))
 	}
-}
-
-func (me *window) layout() {
-	if me.decor == nil {
-		return
-	}
 
 	if f, ok := me.decor.(Layout); ok {
-		width, height := me.ContentSize()
 		f.Layout(0, 0, width, height)
 	}
 }
 
 func (me *window) lockCanvas() Canvas {
-	me.canvas = me.wind.lockCanvas()
-	return me.canvas
+	return me.nativeWnd.lockCanvas()
 }
 
 func (me *window) unlockCanvas(canvas Canvas) {
-	me.wind.unlockCanvas(canvas)
+	me.nativeWnd.unlockCanvas(canvas)
 }
 
 var TestDraw func(Canvas)
 
 func (me *window) draw() {
 	canvas := me.lockCanvas()
-	me.wind.draw(canvas, me.decor)
+	me.nativeWnd.draw(canvas, me.decor)
 	me.unlockCanvas(canvas)
 }

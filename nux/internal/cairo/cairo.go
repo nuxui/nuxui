@@ -6,16 +6,12 @@ package cairo
 
 /*
 #cgo pkg-config: cairo
-#cgo pkg-config: pango
-#cgo pkg-config: pangocairo
-#cgo pkg-config: gobject-2.0
 #cgo pkg-config: libjpeg
 
 #include <cairo/cairo.h>
 #include <cairo/cairo-pdf.h>
 #include <cairo/cairo-ps.h>
 #include <cairo/cairo-svg.h>
-#include <pango/pangocairo.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -160,5 +156,4 @@ func (me *Cairo) NewSubPath() {
 
 func (me *Cairo) ClosePath() {
 	C.cairo_close_path((*C.cairo_t)(me))
-
 }

@@ -29,11 +29,12 @@ type text struct {
 	*WidgetVisual
 
 	text               string
-	textSize           float32
 	textColor          nux.Color
 	textHighlightColor nux.Color
 	paint              nux.Paint
 	ellipsize          int //TODO
+	font               nux.Font
+	fontLayout         nux.FontLayout
 
 	downTime time.Time
 }
@@ -45,10 +46,11 @@ func NewText(attr nux.Attr) Text {
 
 	me := &text{
 		text:               attr.GetString("text", ""),
-		textSize:           attr.GetFloat32("textSize", 12),
 		textColor:          attr.GetColor("textColor", nux.White),
 		textHighlightColor: attr.GetColor("textHighlightColor", nux.Transparent),
 		paint:              nux.NewPaint(),
+		font:               nux.NewFont(attr.GetAttr("font", nil)),
+		fontLayout:         nux.NewFontLayout(),
 	}
 
 	me.WidgetBase = nux.NewWidgetBase(attr)
@@ -120,10 +122,10 @@ func (me *text) SetText(text string) {
 func (me *text) Measure(width, height nux.MeasureDimen) {
 	frame := me.Frame()
 
-	me.paint.SetTextSize(me.textSize)
-	outW, outH := me.paint.MeasureText(me.text, float32(width.Value()), float32(height.Value()))
+	outW, outH := me.fontLayout.MeasureText(me.font, me.text, width.Value(), height.Value())
+	// log.I("nuxui", "fontLayout.MeasureText outW=%d, outH=%d", outW, outH)
 
-	hPPx, hPPt, vPPx, vPPt, paddingMeasuredFlag := measurePadding(width, height, me.Padding(), frame, outH, 0)
+	hPPx, hPPt, vPPx, vPPt, paddingMeasuredFlag := measurePadding(width, height, me.Padding(), frame, float32(outH), 0)
 	if hPPt >= 100.0 || vPPt >= 100.0 {
 		log.Fatal("nuxui", "padding percent size should at 0% ~ 100%")
 	}
@@ -145,7 +147,7 @@ func (me *text) Measure(width, height nux.MeasureDimen) {
 	}
 
 	if paddingMeasuredFlag&flagMeasuredPaddingComplete != flagMeasuredPaddingComplete {
-		measurePadding(width, height, me.Padding(), frame, outH, paddingMeasuredFlag)
+		measurePadding(width, height, me.Padding(), frame, float32(outH), paddingMeasuredFlag)
 	}
 }
 
@@ -171,9 +173,8 @@ func (me *text) Draw(canvas nux.Canvas) {
 	canvas.Translate(float32(frame.Padding.Left), float32(frame.Padding.Top))
 
 	if me.text != "" {
-		me.paint.SetTextSize(me.textSize)
 		me.paint.SetColor(me.textColor)
-		canvas.DrawText(me.text, float32(frame.Width), float32(frame.Height), me.paint)
+		me.fontLayout.DrawText(canvas, me.font, me.paint, me.text, frame.Width, frame.Height)
 	}
 	canvas.Restore()
 

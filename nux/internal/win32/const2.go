@@ -26,16 +26,6 @@ const (
 	BlueMask  = 0x000000ff
 )
 
-// FontStyle
-const (
-	FontStyleRegular    = 0
-	FontStyleBold       = 1
-	FontStyleItalic     = 2
-	FontStyleBoldItalic = 3
-	FontStyleUnderline  = 4
-	FontStyleStrikeout  = 8
-)
-
 // QualityMode
 const (
 	QualityModeInvalid = iota - 1

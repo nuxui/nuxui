@@ -135,12 +135,12 @@ func XInternAtom(display *Display, atom_name string, only_if_exists bool) Atom {
 	return Atom(C.XInternAtom((*C.Display)(display), cstr, exist))
 }
 
-func XSendEvent(display *Display, window Window, propagate bool, event_mask uint64, event *XEvent) Status {
+func XSendEvent(display *Display, window Window, propagate bool, eventMask EventMask, event *XEvent) Status {
 	var p C.Bool
 	if propagate {
 		p = 1
 	}
-	return Status(C.XSendEvent((*C.Display)(display), C.Window(window), p, C.long(event_mask), (*C.XEvent)(event)))
+	return Status(C.XSendEvent((*C.Display)(display), C.Window(window), p, C.long(eventMask), (*C.XEvent)(event)))
 }
 
 // KeySym keysym;
@@ -239,11 +239,11 @@ func XFlush(display *Display) {
 	C.XFlush((*C.Display)(display))
 }
 
-func XFree(data unsafe.Pointer)ErrorCode{
+func XFree(data unsafe.Pointer) ErrorCode {
 	return ErrorCode(C.XFree(data))
 }
 
-func XFreeColormap(display *Display, colormap Colormap)ErrorCode{
+func XFreeColormap(display *Display, colormap Colormap) ErrorCode {
 	return ErrorCode(C.XFreeColormap((*C.Display)(display), C.Colormap(colormap)))
 }
 
