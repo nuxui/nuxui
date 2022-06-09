@@ -181,3 +181,7 @@ func IsMainThread() bool {
 func currentThreadID() uint64 {
 	return currentThreadID_()
 }
+
+func ScreenSize() (width, height int32) {
+	return screenSize()
+}

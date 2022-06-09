@@ -7,6 +7,7 @@
 package nux
 
 import (
+	"runtime"
 	"time"
 
 	"nuxui.org/nuxui/log"
@@ -19,9 +20,19 @@ type nativeWindow struct {
 
 func newNativeWindow(attr Attr) *nativeWindow {
 	darwin.SetWindowEventHandler(nativeWindowEventHandler)
-	return &nativeWindow{
-		ptr: darwin.NewNSWindow(800, 600),
+
+	w, h := measureWindowSize(attr)
+	me := &nativeWindow{
+		ptr: darwin.NewNSWindow(w, h),
 	}
+	me.SetTitle(attr.GetString("title", ""))
+
+	runtime.SetFinalizer(me, freeWindow)
+	return me
+}
+
+func freeWindow(me *nativeWindow) {
+	darwin.NSObject_release(uintptr(me.ptr))
 }
 
 func (me *nativeWindow) Center() {

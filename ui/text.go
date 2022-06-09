@@ -46,7 +46,7 @@ func NewText(attr nux.Attr) Text {
 
 	me := &text{
 		text:               attr.GetString("text", ""),
-		textColor:          attr.GetColor("textColor", nux.White),
+		textColor:          attr.GetColor("textColor", nux.Black),
 		textHighlightColor: attr.GetColor("textHighlightColor", nux.Transparent),
 		paint:              nux.NewPaint(),
 		font:               nux.NewFont(attr.GetAttr("font", nil)),

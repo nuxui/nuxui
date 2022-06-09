@@ -246,8 +246,6 @@ uintptr_t nux_NewNSWindow(CGFloat width, CGFloat height) {
   return (uintptr_t)window;
 }
 
-
-
 char *nux_NSWindow_Title(uintptr_t window) {
   return (char *)[[(NSWindow *)window title] UTF8String];
 }

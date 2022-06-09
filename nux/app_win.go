@@ -80,3 +80,9 @@ func backToUI() {
 func currentThreadID_() uint64 {
 	return uint64(win32.GetCurrentThreadId())
 }
+
+func screenSize() (width, height int32) {
+	width, _ = win32.GetSystemMetrics(win32.SM_CXSCREEN)
+	height, _ = win32.GetSystemMetrics(win32.SM_CYSCREEN)
+	return
+}

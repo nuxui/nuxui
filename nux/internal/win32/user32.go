@@ -52,6 +52,7 @@ var (
 	procSystemParametersInfoW      = moduser32.NewProc("SystemParametersInfoW")
 	procInvalidateRect             = moduser32.NewProc("InvalidateRect")
 	procRedrawWindow               = moduser32.NewProc("RedrawWindow")
+	procGetSystemMetrics           = moduser32.NewProc("GetSystemMetrics")
 )
 
 func RGB(r, g, b byte) COLORREF {
@@ -349,4 +350,13 @@ func GetDC(hwnd uintptr) (hdc uintptr, err error) {
 		err = nil
 	}
 	return
+}
+
+// https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getsystemmetrics
+func GetSystemMetrics(index SMCode) (int32, error) {
+	ret, _, err := procGetSystemMetrics.Call(uintptr(index))
+	if ret != 0 {
+		err = nil
+	}
+	return int32(ret), err
 }

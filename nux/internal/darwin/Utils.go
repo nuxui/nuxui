@@ -35,6 +35,11 @@ uint64 nux_CurrentThreadID() {
 void nux_NSObject_release(uintptr_t ptr){
 	[((NSObject*)ptr) release];
 }
+
+void nux_NSScreen_frameSize(CGFloat *width, CGFloat *height){
+  if (width) { *width = [NSScreen mainScreen].frame.size.width; };
+  if (height) { *height = [NSScreen mainScreen].frame.size.height; };
+}
 */
 import "C"
 
@@ -62,4 +67,10 @@ func CursorPositionWindowToScreen(window NSWindow, px, py float32) (x, y float32
 
 func NSObject_release(ptr uintptr) {
 	C.nux_NSObject_release(C.uintptr_t(ptr))
+}
+
+func NSScreen_frameSize() (width, height int32) {
+	var w, h C.CGFloat
+	C.nux_NSScreen_frameSize(&w, &h)
+	return int32(w), int32(h)
 }

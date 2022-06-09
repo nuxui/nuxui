@@ -143,20 +143,6 @@ func XSendEvent(display *Display, window Window, propagate bool, eventMask Event
 	return Status(C.XSendEvent((*C.Display)(display), C.Window(window), p, C.long(eventMask), (*C.XEvent)(event)))
 }
 
-// KeySym keysym;
-// Status status;
-// int len = Xutf8LookupString(xic, &event.xkey, NULL, 0, &keysym, &status);
-// char* text = (char*)calloc(len+1, sizeof(char));
-// len = Xutf8LookupString(xic, &event.xkey, text, len, &keysym, &status);
-// if (status == XLookupChars){
-// 	go_typingEvent(0, text, len, 0);
-// }else if (status == XLookupBoth){
-// 	if (keysym >= 0x20 && keysym <= 0x7E){
-// 		go_typingEvent(0, text, len, 0);
-// 	}
-// }
-// free(text);
-
 func Xutf8LookupString(xic XIC, event *XKeyPressedEvent) (buffer string, keySym KeySym, status Status) {
 	var k *C.KeySym = (*C.KeySym)(&keySym)
 	var s *C.Status = (*C.Status)(&status)
@@ -186,12 +172,6 @@ func XClearWindow(display *Display, window Window) int {
 	return int(C.XClearWindow((*C.Display)(display), C.Window(window)))
 }
 
-// extern XIM XOpenIM(
-//     Display*			/* dpy */,
-//     struct _XrmHashBucketRec*	/* rdb */,
-//     char*			/* res_name */,
-//     char*			/* res_class */
-// );
 func XOpenIM(display *Display) XIM {
 	return XIM(C.XOpenIM((*C.Display)(display), nil, nil, nil))
 }

@@ -53,3 +53,7 @@ func stopTextInput() {
 func currentThreadID_() uint64 {
 	return darwin.CurrentThreadID()
 }
+
+func screenSize() (width, height int32) {
+	return darwin.NSScreen_frameSize()
+}

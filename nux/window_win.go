@@ -28,7 +28,6 @@ type nativeWindow struct {
 
 func newNativeWindow(attr Attr) *nativeWindow {
 	wcname, _ := syscall.UTF16PtrFromString(windowClass)
-	title, _ := syscall.UTF16PtrFromString("title")
 	cursor, err := win32.LoadCursor(0, win32.IDC_ARROW)
 	if err != nil {
 		log.E("nuxui", "error LoadCursor: %s", err.Error())
@@ -55,6 +54,9 @@ func newNativeWindow(attr Attr) *nativeWindow {
 		log.Fatal("nuxui", "error RegisterClass: %s", err.Error())
 	}
 
+	width, height := measureWindowSize(attr)
+	title, _ := syscall.UTF16PtrFromString(attr.GetString("title", ""))
+
 	hwnd, err := win32.CreateWindowEx(
 		win32.WS_EX_CLIENTEDGE,
 		wcname,
@@ -62,8 +64,8 @@ func newNativeWindow(attr Attr) *nativeWindow {
 		win32.WS_OVERLAPPEDWINDOW,
 		win32.CW_USEDEFAULT,
 		win32.CW_USEDEFAULT,
-		800,
-		600,
+		width,
+		height,
 		0,
 		0,
 		theApp.native.ptr,

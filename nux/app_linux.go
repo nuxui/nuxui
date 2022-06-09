@@ -104,3 +104,9 @@ func stopTextInput() {
 func currentThreadID_() uint64 {
 	return linux.CurrentThreadID()
 }
+
+func screenSize() (width, height int32) {
+	display := theApp.native.display
+	screenNum := xlib.XDefaultScreen(display)
+	return xlib.XDisplayWidth(display, screenNum), xlib.XDisplayHeight(display, screenNum)
+}

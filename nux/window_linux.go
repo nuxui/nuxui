@@ -59,17 +59,14 @@ func newNativeWindow(attr Attr) *nativeWindow {
 		log.E("nuxui", "XCreateColormap failed")
 	}
 
-	me.width = 600
-	me.height = 400
+	me.width, me.height = measureWindowSize(attr)
 	me.sizeChanged = true
 	me.window = xlib.XCreateWindow(me.display, me.parent, 0, 0, uint32(me.width), uint32(me.height), 0, me.depth, xlib.InputOutput, me.visual, AllMaskBits, &attrs)
+	me.SetTitle(attr.GetString("title", ""))
 
 	runtime.SetFinalizer(me, freeNativeWindow)
 	return me
 }
-
-// XResizeWindow
-// XGetWindowProperty
 
 func freeNativeWindow(me *nativeWindow) {
 	xlib.XFreeColormap(me.display, me.colormap)

@@ -6,6 +6,7 @@ package nux
 
 import (
 	"nuxui.org/nuxui/log"
+	"nuxui.org/nuxui/util"
 )
 
 type Window interface {
@@ -294,4 +295,45 @@ func (me *window) draw() {
 	canvas := me.lockCanvas()
 	me.nativeWnd.draw(canvas, me.decor)
 	me.unlockCanvas(canvas)
+}
+
+func measureWindowSize(attr Attr) (width, height int32) {
+	w := attr.GetDimen("width", "50%")
+	h := attr.GetDimen("height", "50%")
+	sw, sh := ScreenSize() // TODO taskbar size
+	switch w.Mode() {
+	case Auto:
+		width = 400
+	case Pixel:
+		width = util.Roundi32(w.Value())
+	case Percent:
+		width = util.Roundi32(float32(sw) * w.Value() / 100.0)
+	case Weight:
+		width = sw
+	}
+
+	switch h.Mode() {
+	case Auto:
+		height = 300
+	case Pixel:
+		height = util.Roundi32(h.Value())
+	case Percent:
+		height = util.Roundi32(float32(sh) * h.Value() / 100.0)
+	case Weight:
+		height = sh
+	}
+
+	if w.Mode() == Ratio {
+		if h.Mode() != Ratio {
+			width = util.Roundi32(float32(height) * w.Value())
+		} else {
+			log.Fatal("nuxui", "width and height size mode can not both Ratio")
+		}
+	}
+
+	if h.Mode() == Ratio {
+		height = util.Roundi32(float32(width) / h.Value())
+	}
+
+	return
 }
