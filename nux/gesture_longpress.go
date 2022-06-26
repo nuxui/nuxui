@@ -125,7 +125,7 @@ func (me *longPressGestureRecognizer) PointerAllowed(event PointerEvent) bool {
 	return false
 }
 
-func (me *longPressGestureRecognizer) HandlePointerEvent(event PointerEvent) {
+func (me *longPressGestureRecognizer) HandleAllowedPointer(event PointerEvent) {
 	switch event.Action() {
 	case Action_Down:
 		me.initEvent = event
@@ -135,7 +135,7 @@ func (me *longPressGestureRecognizer) HandlePointerEvent(event PointerEvent) {
 			me.state = GestureState_Possible
 			GestureArenaManager().Resolve(pointer, me, true)
 		})
-	case Action_Move:
+	case Action_Drag:
 		if me.state == GestureState_Accepted {
 			me.invokeLongPressMove(event.Pointer())
 		} else {

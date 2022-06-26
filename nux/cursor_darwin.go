@@ -7,6 +7,7 @@
 package nux
 
 import (
+	"nuxui.org/nuxui/log"
 	"nuxui.org/nuxui/nux/internal/darwin"
 )
 
@@ -20,4 +21,24 @@ func cursorPositionScreenToWindow(w Window, px, py float32) (x, y float32) {
 
 func cursorPositionWindowToScreen(w Window, px, py float32) (x, y float32) {
 	return darwin.CursorPositionWindowToScreen(w.native().ptr, px, py)
+}
+
+type cursor struct {
+	ptr darwin.NSCursor
+}
+
+func (me *cursor) Set() {
+	me.ptr.Set()
+}
+
+func loadNativeCursor(c NativeCursor) *cursor {
+	switch c {
+	case CursorArrow:
+		return &cursor{ptr: darwin.NSCursor_ArrowCursor()}
+	case CursorIBeam:
+		return &cursor{ptr: darwin.NSCursor_IBeamCursor()}
+	}
+
+	log.Fatal("nux", "unknown cursor type: %d", c)
+	return nil
 }

@@ -108,6 +108,10 @@ func (me *imageDrawable) Size() (width, height int32) {
 	return 0, 0
 }
 
+func (me *imageDrawable) HasState() bool {
+	return me.states == nil || len(me.states) == 0 || (len(me.states) == 1 && me.state == nux.State_Default)
+}
+
 func (me *imageDrawable) SetBounds(x, y, width, height int32) {
 	me.x = x
 	me.y = y

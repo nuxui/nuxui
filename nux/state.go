@@ -10,6 +10,7 @@ type Stateable interface {
 	AddState(state uint32)
 	DelState(state uint32)
 	State() uint32
+	HasState() bool
 }
 
 const (

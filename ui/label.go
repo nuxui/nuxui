@@ -18,7 +18,7 @@ import (
 type Label interface {
 	nux.Widget
 	nux.Size
-	nux.Stateable
+	// nux.Stateable
 	Visual
 
 	Text() string
@@ -49,7 +49,7 @@ type label struct {
 	textWidth   int32
 	textHeight  int32
 
-	state uint32
+	// state uint32
 }
 
 func NewLabel(attr nux.Attr) Label {
@@ -94,9 +94,47 @@ func (me *label) Mount() {
 	nux.OnTapUp(me.Info().Self, me.onTapUp)
 	nux.OnTapCancel(me.Info().Self, me.onTapUp)
 	nux.OnTap(me.Info().Self, me.onTap)
+	nux.OnHoverEnter(me.Info().Self, me.OnHoverEnter)
+	nux.OnHoverExit(me.Info().Self, me.OnHoverExit)
 }
 
 func (me *label) Eject() {
+}
+
+func (me *label) OnHoverEnter(detail nux.GestureDetail) {
+	changed := false
+	if !me.Disable() {
+		if me.Background() != nil {
+			me.Background().AddState(nux.State_Hovered)
+			changed = true
+		}
+		if me.Foreground() != nil {
+			me.Foreground().AddState(nux.State_Hovered)
+			changed = true
+		}
+		changed = changed || me.addIconState(me.iconLeft) || me.addIconState(me.iconTop) || me.addIconState(me.iconRight) || me.addIconState(me.iconBottom)
+	}
+	if changed {
+		nux.RequestRedraw(me)
+	}
+}
+
+func (me *label) OnHoverExit(detail nux.GestureDetail) {
+	changed := false
+	if !me.Disable() {
+		if me.Background() != nil {
+			me.Background().DelState(nux.State_Hovered)
+			changed = true
+		}
+		if me.Foreground() != nil {
+			me.Foreground().DelState(nux.State_Hovered)
+			changed = true
+		}
+		changed = changed || me.delIconState(me.iconLeft) || me.delIconState(me.iconTop) || me.delIconState(me.iconRight) || me.delIconState(me.iconBottom)
+	}
+	if changed {
+		nux.RequestRedraw(me)
+	}
 }
 
 func (me *label) onTapDown(detail nux.GestureDetail) {
@@ -110,12 +148,7 @@ func (me *label) onTapDown(detail nux.GestureDetail) {
 			me.Foreground().AddState(nux.State_Pressed)
 			changed = true
 		}
-		if me.iconLeft != nil {
-			if s, ok := me.iconLeft.(nux.Stateable); ok {
-				s.AddState(nux.State_Pressed)
-				changed = true
-			}
-		}
+		changed = changed || me.addIconState(me.iconLeft) || me.addIconState(me.iconTop) || me.addIconState(me.iconRight) || me.addIconState(me.iconBottom)
 	}
 	if changed {
 		nux.RequestRedraw(me)
@@ -133,12 +166,7 @@ func (me *label) onTapUp(detail nux.GestureDetail) {
 			me.Foreground().DelState(nux.State_Pressed)
 			changed = true
 		}
-		if me.iconLeft != nil {
-			if s, ok := me.iconLeft.(nux.Stateable); ok {
-				s.DelState(nux.State_Pressed)
-				changed = true
-			}
-		}
+		changed = changed || me.delIconState(me.iconLeft) || me.delIconState(me.iconTop) || me.delIconState(me.iconRight) || me.delIconState(me.iconBottom)
 	}
 	if changed {
 		nux.RequestRedraw(me)
@@ -148,23 +176,43 @@ func (me *label) onTapUp(detail nux.GestureDetail) {
 func (me *label) onTap(detail nux.GestureDetail) {
 }
 
-func (me *label) AddState(state uint32) {
-	s := me.state
-	s |= state
-	me.state = s
-	// me.applyState()
+func (me *label) addIconState(icon nux.Widget) (changed bool) {
+	if icon != nil {
+		if s, ok := icon.(nux.Stateable); ok {
+			s.AddState(nux.State_Pressed)
+			changed = true
+		}
+	}
+	return
 }
 
-func (me *label) DelState(state uint32) {
-	s := me.state
-	s &= ^state
-	me.state = s
-	// me.applyState()
+func (me *label) delIconState(icon nux.Widget) (changed bool) {
+	if icon != nil {
+		if s, ok := icon.(nux.Stateable); ok {
+			s.DelState(nux.State_Pressed)
+			changed = true
+		}
+	}
+	return
 }
 
-func (me *label) State() uint32 {
-	return me.state
-}
+// func (me *label) AddState(state uint32) {
+// 	s := me.state
+// 	s |= state
+// 	me.state = s
+// 	// me.applyState()
+// }
+
+// func (me *label) DelState(state uint32) {
+// 	s := me.state
+// 	s &= ^state
+// 	me.state = s
+// 	// me.applyState()
+// }
+
+// func (me *label) State() uint32 {
+// 	return me.state
+// }
 
 func (me *label) onSizeChanged() {
 	nux.RequestLayout(me)

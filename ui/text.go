@@ -62,9 +62,12 @@ func NewText(attr nux.Attr) Text {
 }
 
 func (me *text) Mount() {
-	nux.OnTapDown(me, me.onTapDown)
-	nux.OnTapUp(me, me.onTapUp)
-	nux.OnTapCancel(me, me.onTapUp)
+	// TODO:: widget gesture penetrate
+	if me.Background() != nil && me.Background().HasState() {
+		nux.OnTapDown(me, me.onTapDown)
+		nux.OnTapUp(me, me.onTapUp)
+		nux.OnTapCancel(me, me.onTapUp)
+	}
 }
 
 func (me *text) Eject() {

@@ -63,9 +63,9 @@ func setNewHeight(frame *nux.Frame, originHeight, newHeight nux.MeasureDimen) {
 }
 
 func mergedStateFromString(statestr string) (state uint32) {
-	names := strings.Split(strings.TrimSpace(statestr), "|")
+	names := strings.Split(statestr, "|")
 	for _, name := range names {
-		state |= nux.StateFromString(name)
+		state |= nux.StateFromString(strings.TrimSpace(name))
 	}
 	return
 }

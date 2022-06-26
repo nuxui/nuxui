@@ -55,6 +55,7 @@ func NewWindow(attr Attr) Window {
 	me := &window{}
 	me.ComponentBase = NewComponentBase(me, attr)
 	me.decor = me.createDecor(attr)
+	OnHoverEnter(me.decor, func(detail GestureDetail) {})
 	if content := attr.GetAttr("content", nil); content != nil {
 		InflateLayoutAttr(me.decor, content, nil)
 	}
@@ -136,7 +137,7 @@ func (me *window) handleOtherWidgetKeyEvent(p Parent, e KeyEvent) bool {
 		for _, c := range p.Children() {
 			compt = nil
 			if cpt, ok := c.(Component); ok {
-				c = cpt.Content()
+				c = cpt.Content() // TODO:: conent still si compent
 				compt = cpt
 			}
 			if cp, ok := c.(Parent); ok {
@@ -223,7 +224,7 @@ func (me *window) switchFocusIfPossible(event PointerEvent) {
 		if event.Kind() == Kind_Mouse {
 			me.switchFocusAtPoint(event.X(), event.Y())
 		}
-	case Action_Move:
+	case Action_Drag:
 		if event.Kind() == Kind_Touch {
 			if me.timer != nil {
 				if me.initEvent.Distance(event.X(), event.Y()) >= GESTURE_MIN_PAN_DISTANCE {
@@ -297,9 +298,7 @@ func (me *window) draw() {
 	me.unlockCanvas(canvas)
 }
 
-func measureWindowSize(attr Attr) (width, height int32) {
-	w := attr.GetDimen("width", "50%")
-	h := attr.GetDimen("height", "50%")
+func measureWindowSize(w, h Dimen) (width, height int32) {
 	sw, sh := ScreenSize() // TODO taskbar size
 	switch w.Mode() {
 	case Auto:

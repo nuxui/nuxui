@@ -7,7 +7,6 @@ package nux
 import (
 	"math"
 	"runtime"
-	"time"
 
 	"nuxui.org/nuxui/log"
 )
@@ -116,7 +115,7 @@ func refreshLoop() {
 			requestLayoutAsync(widget)
 		}
 
-		time.Sleep(16 * time.Millisecond)
+		// time.Sleep(16 * time.Millisecond)
 	}
 }
 

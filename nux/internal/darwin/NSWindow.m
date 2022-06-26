@@ -94,7 +94,7 @@
   }
 
   char *text = (char *)[aString UTF8String];
-  NSLog(@"insertText %@", aString);
+  // NSLog(@"insertText %@", aString);
 
   // Don't post text events for unprintable characters
   if ((unsigned char)*text < ' ' || *text == 127) {
@@ -123,7 +123,7 @@
 }
 
 - (void)keyDown:(NSEvent *)theEvent {
-  NSLog(@"NuxView keyDown");
+  // NSLog(@"NuxView keyDown");
   [self interpretKeyEvents:[NSArray arrayWithObject:theEvent]];
 }
 @end // @implementation NuxView

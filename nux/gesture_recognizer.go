@@ -14,8 +14,8 @@ type GestureCallback func(detail GestureDetail)
 type GestureRecognizer interface {
 	GestureArenaMember
 	PointerAllowed(event PointerEvent) bool
-	HandlePointerEvent(event PointerEvent)
-	Clear(widget Widget) // clear callbacks of widget when unmount widget
+	HandleAllowedPointer(event PointerEvent)
+	Clear(widget Widget) // clear callbacks of widget when ejected
 }
 
 // ------------- gestureRecognizerManager -------------------------

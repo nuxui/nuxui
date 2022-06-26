@@ -45,8 +45,7 @@ func (me *gestureArenaManager) Sweep(pointer int64) {
 		delete(me.arenas, pointer)
 
 		if len(arena.members) != 0 {
-			i := 0
-			for _, v := range arena.members {
+			for i, v := range arena.members {
 				if i == 0 {
 					log.V("nuxui", "Sweep AccpetGesture %T", v)
 					v.AccpetGesture(pointer)
@@ -54,7 +53,6 @@ func (me *gestureArenaManager) Sweep(pointer int64) {
 					log.V("nuxui", "Sweep RejectGesture %T", v)
 					v.RejectGesture(pointer)
 				}
-				i++
 			}
 		}
 	}
@@ -78,7 +76,7 @@ func (me *gestureArenaManager) Release(pointer int64) {
 }
 
 func (me *gestureArenaManager) Resolve(pointer int64, member GestureArenaMember, accepted bool) {
-	log.V("nuxui", "gestureArenaManager Resolve ")
+	// log.V("nuxui", "gestureArenaManager Resolve ")
 
 	if arena, ok := me.arenas[pointer]; ok {
 		if accepted {
@@ -91,7 +89,7 @@ func (me *gestureArenaManager) Resolve(pointer int64, member GestureArenaMember,
 			}
 		} else {
 			arena.remove(member)
-			log.V("nuxui", "arena remain = %d", len(arena.members))
+			// log.V("nuxui", "arena remain = %d", len(arena.members))
 
 			member.RejectGesture(pointer)
 			if !arena.isOpen {

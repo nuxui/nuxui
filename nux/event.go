@@ -81,6 +81,7 @@ type PointerEvent interface {
 	// Stage() int32
 	IsPrimary() bool
 	Distance(x, y float32) float32
+	Button() PointerButton
 	pointerEvent()
 }
 
@@ -93,7 +94,7 @@ type pointerEvent struct {
 	y       float32
 	// pressure float32
 	// stage    int32
-	button MouseButton
+	button PointerButton
 }
 
 func (me *pointerEvent) Pointer() int64 {
@@ -112,6 +113,10 @@ func (me *pointerEvent) Y() float32 {
 	return me.y
 }
 
+func (me *pointerEvent) Button() PointerButton {
+	return me.button
+}
+
 // func (me *pointerEvent) Pressure() float32 {
 // 	return me.pressure
 // }
@@ -122,7 +127,7 @@ func (me *pointerEvent) Y() float32 {
 
 func (me *pointerEvent) IsPrimary() bool {
 	if me.kind == Kind_Mouse {
-		return me.button == MB_Left
+		return me.button == ButtonPrimary
 	}
 	return true // TODO:: multi finger
 }

@@ -117,6 +117,10 @@ func (me *shapeDrawable) State() uint32 {
 	return me.state
 }
 
+func (me *shapeDrawable) HasState() bool {
+	return me.states == nil || len(me.states) == 0 || (len(me.states) == 1 && me.state == nux.State_Default)
+}
+
 func (me *shapeDrawable) Size() (width, height int32) {
 	return me.width, me.height
 }

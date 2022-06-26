@@ -28,6 +28,10 @@ func NewEditor(attr nux.Attr) Editor {
 		attr = nux.Attr{}
 	}
 
+	if !attr.Has("theme") {
+		attr = nux.MergeAttrs(editor_theme(nux.ThemeLight), attr)
+	}
+
 	me := &editor{
 		cursorPosition:     0,
 		flicker:            false,
@@ -46,10 +50,6 @@ func NewEditor(attr nux.Attr) Editor {
 	me.WidgetSize = nux.NewWidgetSize(attr)
 	me.WidgetVisual = NewWidgetVisual(me, attr)
 	me.WidgetSize.AddSizeObserver(me.onSizeChanged)
-
-	nux.OnTapDown(me, me.onTapDown)
-	nux.OnPanDown(me, me.onPanStart)
-	nux.OnPanUpdate(me, me.OnPanUpdate)
 
 	return me
 }
@@ -76,10 +76,34 @@ type editor struct {
 	focus          bool
 }
 
+func (me *editor) Mount() {
+	// log.I("nuxui", "editor mount")
+	nux.OnTapDown(me.Info().Self, me.onTapDown)
+	nux.OnTapUp(me.Info().Self, me.onTapUp)
+	nux.OnTapCancel(me.Info().Self, me.onTapCancel)
+	nux.OnPanDown(me.Info().Self, me.onPanStart)
+
+	nux.OnHoverEnter(me.Info().Self, func(detail nux.GestureDetail) {
+		nux.LoadNativeCursor(nux.CursorIBeam).Set()
+	})
+	nux.OnHoverExit(me.Info().Self, func(detail nux.GestureDetail) {
+		nux.LoadNativeCursor(nux.CursorArrow).Set()
+	})
+}
+
 func (me *editor) onTapDown(detail nux.GestureDetail) {
+	// log.I("nuxui", "editor onTapDown")
 	frame := me.Frame()
 	me.cursorPosition = me.fontLayout.CharacterIndexForPoint(me.font, me.text, frame.Width, frame.Height, detail.X(), detail.Y())
 	nux.RequestFocus(me)
+}
+
+func (me *editor) onTapUp(detail nux.GestureDetail) {
+	// log.I("nuxui", "editor onTapUp")
+}
+
+func (me *editor) onTapCancel(detail nux.GestureDetail) {
+	// log.I("nuxui", "editor onTapCancel")
 }
 
 func (me *editor) onPanStart(detail nux.GestureDetail) {
@@ -179,6 +203,7 @@ func (me *editor) Draw(canvas nux.Canvas) {
 	front := string(runes[:me.cursorPosition])
 	end := string(runes[me.cursorPosition:])
 	all := fmt.Sprintf("%s%s%s", front, me.editingText, end)
+	// log.I("nuxui", "all: %s", all)
 
 	frame := me.Frame()
 	canvas.Save()
@@ -186,15 +211,14 @@ func (me *editor) Draw(canvas nux.Canvas) {
 	canvas.Translate(float32(frame.Padding.Left), float32(frame.Padding.Top))
 
 	me.paint.SetColor(me.textColor)
-	me.fontLayout.DrawText(canvas, me.font, me.paint, all, frame.Width-frame.Padding.Left-frame.Padding.Right, frame.Height-frame.Padding.Top-frame.Padding.Bottom)
+	// me.fontLayout.DrawText(canvas, me.font, me.paint, all, frame.Width-frame.Padding.Left-frame.Padding.Right, frame.Height-frame.Padding.Top-frame.Padding.Bottom)
+	me.fontLayout.DrawText(canvas, me.font, me.paint, all, 10000, 100000)
 
-	// draw cursor
-	m := fmt.Sprintf("%s%s", front, string([]rune(me.editingText)[:me.editingLoc]))
-	outW, outH := me.fontLayout.MeasureText(me.font, m, 1000, 1000) // TODO:: 1000
-
-	canvas.Translate(float32(outW), 0)
 	if me.flicker {
-		me.paintFlicker.SetColor(0xcc000000)
+		m := fmt.Sprintf("%s%s", front, string([]rune(me.editingText)[:me.editingLoc]))
+		outW, outH := me.fontLayout.MeasureText(me.font, m, 1000, 1000) // TODO:: 1000
+		canvas.Translate(float32(outW), 0)
+		me.paintFlicker.SetColor(0x000000cc)
 		canvas.DrawRect(0, 1, 1, float32(outH-1), me.paintFlicker)
 	}
 
@@ -203,7 +227,6 @@ func (me *editor) Draw(canvas nux.Canvas) {
 	if me.Foreground() != nil {
 		me.Foreground().Draw(canvas)
 	}
-
 }
 
 func (me *editor) startTick() {
@@ -212,7 +235,7 @@ func (me *editor) startTick() {
 		me.flickerTimer = nil
 	}
 
-	if me.flicker != true {
+	if !me.flicker {
 		me.flicker = true // make first is show
 		nux.RequestRedraw(me)
 	}
@@ -256,7 +279,7 @@ func (me *editor) OnTypingEvent(event nux.TypingEvent) bool {
 }
 
 func (me *editor) OnKeyEvent(event nux.KeyEvent) bool {
-	log.I("nuxui", "editor OnKeyEvent %s", event)
+	// log.I("nuxui", "editor OnKeyEvent %s", event)
 
 	switch event.KeyCode() {
 	case nux.Key_BackSpace:
@@ -298,7 +321,7 @@ func (me *editor) OnKeyEvent(event nux.KeyEvent) bool {
 			return true
 		}
 	case nux.Key_Left:
-		log.I("nuxui", "editor Key_Left")
+		// log.I("nuxui", "editor Key_Left")
 		if event.Action() == nux.Action_Down && me.editingText == "" {
 			if me.cursorPosition == 0 {
 				return true

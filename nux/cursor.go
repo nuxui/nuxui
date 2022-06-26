@@ -4,14 +4,28 @@
 
 package nux
 
+type NativeCursor int
+
+const (
+	CursorArrow NativeCursor = iota
+	CursorIBeam
+	CursorWait
+	CursorCrosshair
+	CursorResizeEW
+	CursorResizeNS
+	CursorResizeNWSE
+	CursorResizeNESW
+	CursorHand
+	CursorSizeAll
+	CursorCustom
+)
+
 type Cursor interface {
-	X() float32
-	Y() float32
+	Set()
 }
 
-func GetCursor() Cursor {
-	// TODO:: implement
-	return nil
+func LoadNativeCursor(c NativeCursor) Cursor {
+	return loadNativeCursor(c)
 }
 
 // Retrieves the position of the mouse cursor, in screen coordinates.

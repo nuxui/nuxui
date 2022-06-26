@@ -12,7 +12,8 @@ import (
 )
 
 type nativeApp struct {
-	ptr uintptr
+	ptr    uintptr
+	cursor uintptr
 }
 
 var (

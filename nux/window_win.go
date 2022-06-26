@@ -54,7 +54,7 @@ func newNativeWindow(attr Attr) *nativeWindow {
 		log.Fatal("nuxui", "error RegisterClass: %s", err.Error())
 	}
 
-	width, height := measureWindowSize(attr)
+	width, height := measureWindowSize(attr.GetDimen("width", "50%"), attr.GetDimen("height", "50%"))
 	title, _ := syscall.UTF16PtrFromString(attr.GetString("title", ""))
 
 	hwnd, err := win32.CreateWindowEx(
@@ -229,6 +229,12 @@ func nativeWindowEventHandler(hwnd uintptr, msg uint32, wParam uintptr, lParam u
 		win32.WM_MOUSEHOVER,
 		win32.WM_MOUSELEAVE:
 		return win32.DefWindowProc(hwnd, msg, wParam, lParam)
+	case win32.WM_SETCURSOR:
+		if win32.LOWORD(lParam) == win32.HTCLIENT && theApp.native.cursor != 0 {
+			win32.SetCursor(theApp.native.cursor)
+			return 1
+		}
+		return win32.DefWindowProc(hwnd, msg, wParam, lParam)
 	case win32.WM_CLOSE:
 		win32.DestroyWindow(hwnd)
 	case win32.WM_DESTROY:
@@ -237,7 +243,7 @@ func nativeWindowEventHandler(hwnd uintptr, msg uint32, wParam uintptr, lParam u
 	return win32.DefWindowProc(hwnd, msg, wParam, lParam)
 }
 
-var lastMouseEvent map[MouseButton]PointerEvent = map[MouseButton]PointerEvent{}
+var lastMouseEvent map[PointerButton]PointerEvent = map[PointerButton]PointerEvent{}
 
 func handlePointerEvent(hwnd uintptr, etype uint32, buttonNumber, x, y int32) bool {
 	e := &pointerEvent{
@@ -248,7 +254,7 @@ func handlePointerEvent(hwnd uintptr, etype uint32, buttonNumber, x, y int32) bo
 			action: Action_None,
 		},
 		pointer: 0,
-		button:  MB_None,
+		button:  ButtonNone,
 		kind:    Kind_Mouse,
 		x:       float32(x),
 		y:       float32(y),
@@ -259,38 +265,38 @@ func handlePointerEvent(hwnd uintptr, etype uint32, buttonNumber, x, y int32) bo
 	switch etype {
 	case win32.WM_MOUSEMOVE:
 		e.event.action = Action_Hover
-		e.button = MB_None
+		e.button = ButtonNone
 		e.pointer = 0
 	case win32.WM_LBUTTONDOWN:
 		e.event.action = Action_Down
-		e.button = MB_Left
+		e.button = ButtonPrimary
 		e.pointer = time.Now().UnixNano()
 		lastMouseEvent[e.button] = e
 	case win32.WM_LBUTTONUP:
 		e.event.action = Action_Up
-		e.button = MB_Left
+		e.button = ButtonPrimary
 		if v, ok := lastMouseEvent[e.button]; ok {
 			e.pointer = v.Pointer()
 		}
 	case win32.WM_RBUTTONDOWN:
 		e.event.action = Action_Down
-		e.button = MB_Right
+		e.button = ButtonSecondary
 		e.pointer = time.Now().UnixNano()
 		lastMouseEvent[e.button] = e
 	case win32.WM_RBUTTONUP:
 		e.event.action = Action_Up
-		e.button = MB_Right
+		e.button = ButtonSecondary
 		if v, ok := lastMouseEvent[e.button]; ok {
 			e.pointer = v.Pointer()
 		}
 	case win32.WM_MBUTTONDOWN:
 		e.event.action = Action_Down
-		e.button = MB_Middle
+		e.button = ButtonMiddle
 		e.pointer = time.Now().UnixNano()
 		lastMouseEvent[e.button] = e
 	case win32.WM_MBUTTONUP:
 		e.event.action = Action_Up
-		e.button = MB_Middle
+		e.button = ButtonMiddle
 		if v, ok := lastMouseEvent[e.button]; ok {
 			e.pointer = v.Pointer()
 		}
@@ -298,11 +304,11 @@ func handlePointerEvent(hwnd uintptr, etype uint32, buttonNumber, x, y int32) bo
 		e.event.action = Action_Down
 		switch buttonNumber {
 		case 1:
-			e.button = MB_X1
+			e.button = ButtonX1
 		case 2:
-			e.button = MB_X2
+			e.button = ButtonX2
 		default:
-			e.button = MouseButton(buttonNumber)
+			e.button = PointerButton(buttonNumber)
 		}
 		e.pointer = time.Now().UnixNano()
 		lastMouseEvent[e.button] = e
@@ -310,11 +316,11 @@ func handlePointerEvent(hwnd uintptr, etype uint32, buttonNumber, x, y int32) bo
 		e.event.action = Action_Up
 		switch buttonNumber {
 		case 1:
-			e.button = MB_X1
+			e.button = ButtonX1
 		case 2:
-			e.button = MB_X2
+			e.button = ButtonX2
 		default:
-			e.button = MouseButton(buttonNumber)
+			e.button = PointerButton(buttonNumber)
 		}
 		if v, ok := lastMouseEvent[e.button]; ok {
 			e.pointer = v.Pointer()
@@ -406,7 +412,7 @@ func handleTypingEvent(hwnd uintptr, msg uint32, wParam uintptr, lParam uintptr)
 		buf[0] = uint16(wParam & 0xffff)
 		buf[1] = 0 // uint16((wParam >> 16) & 0xffff)
 		e.text = syscall.UTF16ToString(buf)
-		log.V("nux", "typing event WM_CHAR 2 : %s", syscall.UTF16ToString(buf))
+		// log.V("nux", "typing event WM_CHAR 2 : %s", syscall.UTF16ToString(buf))
 	} else {
 		hIMC := win32.ImmGetContext(hwnd)
 
@@ -418,7 +424,7 @@ func handleTypingEvent(hwnd uintptr, msg uint32, wParam uintptr, lParam uintptr)
 			textLen := int32(win32.ImmGetCompositionStringW(hIMC, win32.GCS_COMPSTR, 0, 0) + 1)
 			buf := make([]uint16, textLen)
 			win32.ImmGetCompositionStringW(hIMC, win32.GCS_COMPSTR, uintptr(unsafe.Pointer((&buf[0]))), textLen)
-			log.V("nux", "typing event GCS_COMPSTR: %s", syscall.UTF16ToString(buf))
+			// log.V("nux", "typing event GCS_COMPSTR: %s", syscall.UTF16ToString(buf))
 			e.action = Action_Preedit
 			e.text = syscall.UTF16ToString(buf)
 
@@ -428,7 +434,7 @@ func handleTypingEvent(hwnd uintptr, msg uint32, wParam uintptr, lParam uintptr)
 			textLen := int32(win32.ImmGetCompositionStringW(hIMC, win32.GCS_RESULTSTR, 0, 0) + 1)
 			buf := make([]uint16, textLen)
 			win32.ImmGetCompositionStringW(hIMC, win32.GCS_RESULTSTR, uintptr(unsafe.Pointer((&buf[0]))), textLen)
-			log.V("nux", "typing event GCS_RESULTSTR: %s", syscall.UTF16ToString(buf))
+			// log.V("nux", "typing event GCS_RESULTSTR: %s", syscall.UTF16ToString(buf))
 			e.action = Action_Input
 			e.text = syscall.UTF16ToString(buf)
 		}

@@ -142,6 +142,10 @@ func (me *image) State() uint32 {
 	return me.state
 }
 
+func (me *image) HasState() bool {
+	return false
+}
+
 func (me *image) Mount() {
 }
 

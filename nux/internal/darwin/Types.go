@@ -51,6 +51,7 @@ type NSFontManager C.uintptr_t
 type NSLayoutManager C.uintptr_t
 type NSTextContainer C.uintptr_t
 type NSTextStorage C.uintptr_t
+type NSCursor C.uintptr_t
 
 type NSWindowStyleMask uint32
 type NSEventType uint32

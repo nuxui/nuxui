@@ -10,36 +10,69 @@ import (
 )
 
 func OnTap(widget Widget, callback GestureCallback) {
-	addTapCallback(widget, _ACTION_TAP, callback)
+	addTapCallback(widget, actionTap, callback)
 }
 
 func OnTapDown(widget Widget, callback GestureCallback) {
-	addTapCallback(widget, _ACTION_TAP_DOWN, callback)
+	addTapCallback(widget, actionTapDown, callback)
 }
 
 func OnTapUp(widget Widget, callback GestureCallback) {
-	addTapCallback(widget, _ACTION_TAP_UP, callback)
+	addTapCallback(widget, actionTapUp, callback)
 }
 
 func OnTapCancel(widget Widget, callback GestureCallback) {
-	addTapCallback(widget, _ACTION_TAP_CANCEL, callback)
+	addTapCallback(widget, actionTapCancel, callback)
 }
 
+func OnSecondaryTap(widget Widget, callback GestureCallback) {
+	addTapCallback(widget, actionSecondaryTap, callback)
+}
+
+func OnSecondaryTapDown(widget Widget, callback GestureCallback) {
+	addTapCallback(widget, actionSecondaryTapDown, callback)
+}
+
+func OnSecondaryTapUp(widget Widget, callback GestureCallback) {
+	addTapCallback(widget, actionSecondaryTapUp, callback)
+}
+
+func OnSecondaryTapCancel(widget Widget, callback GestureCallback) {
+	addTapCallback(widget, actionSecondaryTapCancel, callback)
+}
+
+func OnOtherTap(widget Widget, callback GestureCallback) {
+	addTapCallback(widget, actionOtherTap, callback)
+}
+
+func OnOtherTapDown(widget Widget, callback GestureCallback) {
+	addTapCallback(widget, actionOtherTapDown, callback)
+}
+
+func OnOtherTapUp(widget Widget, callback GestureCallback) {
+	addTapCallback(widget, actionOtherTapUp, callback)
+}
+
+func OnOtherTapCancel(widget Widget, callback GestureCallback) {
+	addTapCallback(widget, actionOtherTapCancel, callback)
+}
+
+/*
 func RemoveTapGesture(widget Widget, callback GestureCallback) {
-	removeTapCallback(widget, _ACTION_TAP, callback)
+	removeTapCallback(widget, actionTap, callback)
 }
 
 func RemoveTapDownGesture(widget Widget, callback GestureCallback) {
-	removeTapCallback(widget, _ACTION_TAP_DOWN, callback)
+	removeTapCallback(widget, actionTapDown, callback)
 }
 
 func RemoveTapUpGesture(widget Widget, callback GestureCallback) {
-	removeTapCallback(widget, _ACTION_TAP_UP, callback)
+	removeTapCallback(widget, actionTapUp, callback)
 }
 
 func RemoveTapCancelGesture(widget Widget, callback GestureCallback) {
-	removeTapCallback(widget, _ACTION_TAP_CANCEL, callback)
-}
+	removeTapCallback(widget, actionTapCancel, callback)
+}*/
 
 func addTapCallback(widget Widget, which int, callback GestureCallback) {
 	if r := GestureManager().FindGestureRecognizer(widget, (*tapGestureRecognizer)(nil)); r != nil {
@@ -52,18 +85,28 @@ func addTapCallback(widget Widget, which int, callback GestureCallback) {
 	}
 }
 
+/*
 func removeTapCallback(widget Widget, which int, callback GestureCallback) {
 	if r := GestureManager().FindGestureRecognizer(widget, (*tapGestureRecognizer)(nil)); r != nil {
 		recognizer := r.(*tapGestureRecognizer)
 		recognizer.removeCallback(which, callback)
 	}
 }
+*/
 
 const (
-	_ACTION_TAP_DOWN = iota
-	_ACTION_TAP_UP
-	_ACTION_TAP
-	_ACTION_TAP_CANCEL
+	actionTapDown = iota
+	actionTapUp
+	actionTap
+	actionTapCancel
+	actionSecondaryTapDown
+	actionSecondaryTapUp
+	actionSecondaryTap
+	actionSecondaryTapCancel
+	actionOtherTapDown
+	actionOtherTapUp
+	actionOtherTap
+	actionOtherTapCancel
 )
 
 ///////////////////////////// TapGestureRecognizer   /////////////////////////////
@@ -73,12 +116,13 @@ type TapGestureRecognizer interface {
 }
 
 type tapGestureRecognizer struct {
-	callbacks   [][]GestureCallback
-	initEvent   PointerEvent
 	target      Widget
+	callbacks   map[int][]GestureCallback
+	initEvent   PointerEvent
 	timer       Timer
 	state       GestureState
 	triggerDown bool
+	action      EventAction
 }
 
 func newTapGestureRecognizer(target Widget) *tapGestureRecognizer {
@@ -87,12 +131,13 @@ func newTapGestureRecognizer(target Widget) *tapGestureRecognizer {
 	}
 
 	return &tapGestureRecognizer{
-		callbacks:   [][]GestureCallback{{}, {}, {}, {}},
+		callbacks:   map[int][]GestureCallback{},
 		initEvent:   nil,
 		target:      target,
 		timer:       nil,
 		state:       GestureState_Ready,
 		triggerDown: false,
+		action:      Action_None,
 	}
 }
 
@@ -101,13 +146,17 @@ func (me *tapGestureRecognizer) addCallback(which int, callback GestureCallback)
 		return
 	}
 
-	for _, cb := range me.callbacks[which] {
-		if util.SameFunc(cb, callback) {
-			log.Fatal("nuxui", "The %s callback is already existed.", []string{"OnTapDown", "OnTapUp", "OnTap"}[which])
+	if cbs, ok := me.callbacks[which]; ok {
+		for _, cb := range cbs {
+			if util.SameFunc(cb, callback) {
+				log.Fatal("nuxui", "The %s callback is already existed.", []string{"OnTapDown", "OnTapUp", "OnTap"}[which])
+			}
 		}
+		me.callbacks[which] = append(cbs, callback)
+	} else {
+		me.callbacks[which] = []GestureCallback{callback}
 	}
 
-	me.callbacks[which] = append(me.callbacks[which], callback)
 }
 
 func (me *tapGestureRecognizer) removeCallback(which int, callback GestureCallback) {
@@ -115,31 +164,39 @@ func (me *tapGestureRecognizer) removeCallback(which int, callback GestureCallba
 		return
 	}
 
-	for i, cb := range me.callbacks[which] {
-		if util.SameFunc(cb, callback) {
-			me.callbacks[which] = append(me.callbacks[which][:i], me.callbacks[which][i+1:]...)
+	if cbs, ok := me.callbacks[which]; ok {
+		for i, cb := range cbs {
+			if util.SameFunc(cb, callback) {
+				me.callbacks[which] = append(cbs[:i], cbs[i+1:]...)
+			}
 		}
 	}
 }
 
 func (me *tapGestureRecognizer) PointerAllowed(event PointerEvent) bool {
-	if len(me.callbacks[_ACTION_TAP]) == 0 &&
-		len(me.callbacks[_ACTION_TAP_DOWN]) == 0 &&
-		len(me.callbacks[_ACTION_TAP_UP]) == 0 &&
-		len(me.callbacks[_ACTION_TAP_CANCEL]) == 0 {
-		return false
-	}
-
-	if event.IsPrimary() {
-		return true
+	for k, _ := range me.callbacks {
+		if k <= actionTapCancel {
+			if event.IsPrimary() {
+				return true
+			}
+		} else if k <= actionSecondaryTapCancel {
+			if event.Button() == ButtonSecondary {
+				return true
+			}
+		} else if k > actionSecondaryTapCancel {
+			if event.Button() > ButtonSecondary {
+				return true
+			}
+		}
 	}
 
 	return false
 }
 
-func (me *tapGestureRecognizer) HandlePointerEvent(event PointerEvent) {
+func (me *tapGestureRecognizer) HandleAllowedPointer(event PointerEvent) {
 	switch event.Action() {
 	case Action_Down:
+		me.action = Action_Down
 		me.initEvent = event
 		pointer := event.Pointer()
 		GestureArenaManager().Add(pointer, me)
@@ -149,15 +206,19 @@ func (me *tapGestureRecognizer) HandlePointerEvent(event PointerEvent) {
 				me.invokeTapDown(pointer)
 			})
 		} else {
+			// log.I("nuxui", "first down second=%t", event.Button() == ButtonSecondary)
 			me.invokeTapDown(pointer)
 		}
 	case Action_Up:
 		// do not accept proactive, wait GestureArea sweep
+		// log.I("nuxui", "Action_Up accept=%t", me.state == GestureState_Accepted)
+		me.action = Action_Up
 		if me.state == GestureState_Accepted {
 			me.invokeTapUpAndTap(event.Pointer())
 		}
 
 	case Action_Drag:
+		me.action = Action_Drag
 		if me.state == GestureState_Possible {
 			if me.initEvent.Distance(event.X(), event.Y()) >= GESTURE_MIN_PAN_DISTANCE {
 				GestureArenaManager().Resolve(event.Pointer(), me, false)
@@ -167,6 +228,7 @@ func (me *tapGestureRecognizer) HandlePointerEvent(event PointerEvent) {
 }
 
 func (me *tapGestureRecognizer) RejectGesture(pointer int64) {
+	// log.I("nuxui", "tap gesture reject %s", me.target.Info().ID)
 	if me.state == GestureState_Possible {
 		me.invokeTapCancel()
 	}
@@ -175,6 +237,7 @@ func (me *tapGestureRecognizer) RejectGesture(pointer int64) {
 }
 
 func (me *tapGestureRecognizer) AccpetGesture(pointer int64) {
+	// log.I("nuxui", "tap gesture accept %s", me.target.Info().ID)
 	if me.timer != nil {
 		r := me.timer.Running()
 		me.timer.Cancel()
@@ -186,14 +249,21 @@ func (me *tapGestureRecognizer) AccpetGesture(pointer int64) {
 	}
 
 	me.state = GestureState_Accepted
+	if me.action == Action_Up {
+		me.invokeTapUpAndTap(pointer)
+	}
 }
 
 func (me *tapGestureRecognizer) Clear(widget Widget) {
+	if me.target != widget {
+		log.Fatal("nuxui", "target is not matched")
+	}
 	if me.initEvent != nil {
 		GestureArenaManager().Resolve(me.initEvent.Pointer(), me, false)
 	}
 	me.reset()
-	me.callbacks = [][]GestureCallback{{}, {}, {}, {}}
+	me.target = nil
+	me.callbacks = map[int][]GestureCallback{}
 }
 
 func (me *tapGestureRecognizer) reset() {
@@ -203,6 +273,7 @@ func (me *tapGestureRecognizer) reset() {
 	}
 
 	me.state = GestureState_Ready
+	me.action = Action_None
 	me.triggerDown = false
 	me.initEvent = nil
 }
@@ -215,7 +286,14 @@ func (me *tapGestureRecognizer) invokeTapDown(pointer int64) {
 	me.triggerDown = true
 	me.state = GestureState_Possible
 	if me.initEvent.Pointer() == pointer {
-		for _, cb := range me.callbacks[_ACTION_TAP_DOWN] {
+		which := actionOtherTapDown
+		switch me.initEvent.Button() {
+		case ButtonPrimary:
+			which = actionTapDown
+		case ButtonSecondary:
+			which = actionSecondaryTapDown
+		}
+		for _, cb := range me.callbacks[which] {
 			cb(pointerEventToDetail(me.initEvent, me.target))
 		}
 	}
@@ -223,7 +301,14 @@ func (me *tapGestureRecognizer) invokeTapDown(pointer int64) {
 
 func (me *tapGestureRecognizer) invokeTapCancel() {
 	if me.triggerDown {
-		for _, cb := range me.callbacks[_ACTION_TAP_CANCEL] {
+		which := actionOtherTapCancel
+		switch me.initEvent.Button() {
+		case ButtonPrimary:
+			which = actionTapCancel
+		case ButtonSecondary:
+			which = actionSecondaryTapCancel
+		}
+		for _, cb := range me.callbacks[which] {
 			cb(pointerEventToDetail(nil, me.target))
 		}
 	}
@@ -234,11 +319,22 @@ func (me *tapGestureRecognizer) invokeTapUpAndTap(pointer int64) {
 		return
 	}
 
-	for _, cb := range me.callbacks[_ACTION_TAP_UP] {
+	whichUp := actionOtherTapUp
+	whichTap := actionOtherTap
+	switch me.initEvent.Button() {
+	case ButtonPrimary:
+		whichUp = actionTapUp
+		whichTap = actionTap
+	case ButtonSecondary:
+		whichUp = actionSecondaryTapUp
+		whichTap = actionSecondaryTap
+	}
+
+	for _, cb := range me.callbacks[whichUp] {
 		cb(pointerEventToDetail(me.initEvent, me.target))
 	}
 
-	for _, cb := range me.callbacks[_ACTION_TAP] {
+	for _, cb := range me.callbacks[whichTap] {
 		cb(pointerEventToDetail(me.initEvent, me.target))
 	}
 

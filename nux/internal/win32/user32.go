@@ -28,6 +28,7 @@ var (
 	procGetKeyboardState           = moduser32.NewProc("GetKeyboardState")
 	procGetKeyState                = moduser32.NewProc("GetKeyState")
 	procGetMessageW                = moduser32.NewProc("GetMessageW")
+	procSetCursor                  = moduser32.NewProc("SetCursor")
 	procLoadCursorW                = moduser32.NewProc("LoadCursorW")
 	procLoadIconW                  = moduser32.NewProc("LoadIconW")
 	procMoveWindow                 = moduser32.NewProc("MoveWindow")
@@ -155,6 +156,14 @@ func TranslateMessage(msg *MSG) (done bool) {
 func DispatchMessage(msg *MSG) (ret int32) {
 	r0, _, _ := procDispatchMessageW.Call(uintptr(unsafe.Pointer(msg)))
 	ret = int32(r0)
+	return
+}
+
+func SetCursor(cursor uintptr) (previousCursor uintptr, err error) {
+	previousCursor, _, err = procSetCursor.Call(cursor)
+	if previousCursor != 0 {
+		err = nil
+	}
 	return
 }
 

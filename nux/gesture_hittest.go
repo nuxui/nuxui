@@ -73,10 +73,6 @@ type hitTestResultManager struct {
 }
 
 func (me *hitTestResultManager) handlePointerEvent(widget Widget, event PointerEvent) {
-	if event.Type() != Type_PointerEvent {
-		return
-	}
-
 	var hitTestResult HitTestResult
 
 	switch event.Action() {
@@ -90,14 +86,16 @@ func (me *hitTestResultManager) handlePointerEvent(widget Widget, event PointerE
 		me.hitTestResults[event.Pointer()] = hitTestResult
 	case Action_Up:
 		hitTestResult = me.hitTestResults[event.Pointer()]
-		delete(me.hitTestResults, event.Pointer())
+		//TODO:: delete(me.hitTestResults, event.Pointer())
 	case Action_Scroll:
 		log.E("nuxui", "can not run here")
 	default:
 		hitTestResult = me.hitTestResults[event.Pointer()]
 	}
 
-	if hitTestResult != nil || event.Action() == Action_Hover {
+	if event.Action() == Action_Hover {
+		me.handleHoverEvent(widget, event)
+	} else if hitTestResult != nil {
 		me.dispatchEvent(event, hitTestResult)
 	}
 }
@@ -106,17 +104,39 @@ func (me *hitTestResultManager) handleScrollEvent(widget Widget, event ScrollEve
 	handleScrollEvent(event)
 }
 
-func (me *hitTestResultManager) dispatchEvent(event PointerEvent, hitTestResult HitTestResult) {
-	if hitTestResult == nil {
-		// route event
-		return
+func (me *hitTestResultManager) handleHoverEvent(widget Widget, event PointerEvent) bool {
+	if c, ok := widget.(Component); ok {
+		return me.handleHoverEvent(c.Content(), event)
 	}
 
+	if s, ok := widget.(Size); ok {
+		frame := s.Frame()
+		if event.X() >= float32(frame.X) && event.X() <= float32(frame.X+frame.Width) &&
+			event.Y() >= float32(frame.Y) && event.Y() <= float32(frame.Y+frame.Height) {
+
+			if p, ok := widget.(Parent); ok {
+				for _, child := range p.Children() {
+					if me.handleHoverEvent(child, event) {
+						return true
+					}
+				}
+			}
+
+			if HoverGestureManager().existHoverCallback(widget) {
+				HoverGestureManager().invokeHoverEvent(widget, event)
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (me *hitTestResultManager) dispatchEvent(event PointerEvent, hitTestResult HitTestResult) {
 	for _, w := range hitTestResult.Results() {
 		if rs := GestureManager().getGestureRecognizers(w); rs != nil {
 			for _, r := range rs {
 				if r.PointerAllowed(event) {
-					r.HandlePointerEvent(event)
+					r.HandleAllowedPointer(event)
 				}
 			}
 		}

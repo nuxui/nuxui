@@ -42,3 +42,31 @@ func cursorPositionWindowToScreen(wind Window, x0, y0 float32) (x, y float32) {
 	}
 	return float32(p.X), float32(p.Y)
 }
+
+type cursor struct {
+	ptr uintptr
+}
+
+func (me *cursor) Set() {
+	theApp.native.cursor = me.ptr
+}
+
+func loadNativeCursor(c NativeCursor) *cursor {
+	switch c {
+	case CursorArrow:
+		c, err := win32.LoadCursor(0, win32.IDC_ARROW)
+		if err != nil {
+			log.Fatal("nuxui", "error when LoadCursor: %s", err.Error())
+		}
+		return &cursor{ptr: c}
+	case CursorIBeam:
+		c, err := win32.LoadCursor(0, win32.IDC_IBEAM)
+		if err != nil {
+			log.Fatal("nuxui", "error when LoadCursor: %s", err.Error())
+		}
+		return &cursor{ptr: c}
+	}
+
+	log.Fatal("nux", "unknown cursor type: %d", c)
+	return nil
+}

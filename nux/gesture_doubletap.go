@@ -100,7 +100,7 @@ func (me *doubleTapGestureRecognizer) PointerAllowed(event PointerEvent) bool {
 	return false
 }
 
-func (me *doubleTapGestureRecognizer) HandlePointerEvent(event PointerEvent) {
+func (me *doubleTapGestureRecognizer) HandleAllowedPointer(event PointerEvent) {
 	switch event.Action() {
 	case Action_Down:
 		GestureArenaManager().Add(event.Pointer(), me)
@@ -120,7 +120,7 @@ func (me *doubleTapGestureRecognizer) HandlePointerEvent(event PointerEvent) {
 			GestureArenaManager().Resolve(me.firstTap.Pointer(), me, true)
 			GestureArenaManager().Resolve(event.Pointer(), me, true)
 		}
-	case Action_Move:
+	case Action_Drag:
 		if me.firstTap != nil {
 			if me.firstTap.Distance(event.X(), event.Y()) >= GESTURE_MIN_PAN_DISTANCE {
 				GestureArenaManager().Resolve(event.Pointer(), me, false)

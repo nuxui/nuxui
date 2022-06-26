@@ -9,7 +9,7 @@ import "nuxui.org/nuxui/log"
 type EventAction int
 type EventType int
 type Kind int
-type MouseButton int
+type PointerButton int
 
 const (
 	Type_None EventType = iota
@@ -25,7 +25,7 @@ const (
 const (
 	Action_None EventAction = iota
 	Action_Down
-	Action_Move
+	// Action_Move
 	Action_Drag
 	Action_Up
 	Action_Hover
@@ -56,13 +56,13 @@ const (
 )
 
 const (
-	MB_None MouseButton = iota
-	MB_Left
-	MB_Right
-	MB_Middle
-	MB_X1
-	MB_X2
-	MB_Other
+	ButtonNone PointerButton = iota
+	ButtonPrimary
+	ButtonSecondary
+	ButtonMiddle
+	ButtonX1
+	ButtonX2
+	ButtonOther
 )
 
 func (me Kind) String() string {
@@ -111,8 +111,8 @@ func (me EventAction) String() string {
 		return "Action_None"
 	case Action_Down:
 		return "Action_Down"
-	case Action_Move:
-		return "Action_Move"
+	// case Action_Move:
+	// 	return "Action_Move"
 	case Action_Drag:
 		return "Action_Drag"
 	case Action_Up:
@@ -146,23 +146,21 @@ func (me EventAction) String() string {
 	return ""
 }
 
-func (me MouseButton) String() string {
+func (me PointerButton) String() string {
 	switch me {
-	case MB_None:
-		return "MB_None"
-	case MB_Left:
-		return "MB_Left"
-	case MB_Middle:
-		return "MB_Middle"
-	case MB_Right:
-		return "MB_Right"
-	case MB_X1:
-		return "MB_X1"
-	case MB_X2:
-		return "MB_X2"
-	case MB_Other:
-		return "MB_Other"
+	case ButtonPrimary:
+		return "ButtonPrimary"
+	case ButtonSecondary:
+		return "ButtonSecondary"
+	case ButtonMiddle:
+		return "ButtonMiddle"
+	case ButtonX1:
+		return "ButtonX1"
+	case ButtonX2:
+		return "ButtonX2"
+	case ButtonOther:
+		return "ButtonOther"
 	}
-	log.Fatal("nuxui", "MouseButton %d not handled in switch", me)
+	log.Fatal("nuxui", "unknow PointerButton %d", me)
 	return ""
 }

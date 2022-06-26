@@ -211,7 +211,7 @@ func (me *layer) measureChildren(width, height nux.MeasureDimen, innerWidth, inn
 					}
 				}
 
-				if measuredFlags&flagMeasuredMarginRight == flagMeasuredMarginRight {
+				if measuredFlags&flagMeasuredMarginRight != flagMeasuredMarginRight {
 					switch cm.Right.Mode() {
 					case nux.Pixel:
 						r := cm.Right.Value()
@@ -407,7 +407,7 @@ func (me *layer) measureChildren(width, height nux.MeasureDimen, innerWidth, inn
 					}
 				}
 
-				if measuredFlags&flagMeasuredMarginRight == flagMeasuredMarginRight {
+				if measuredFlags&flagMeasuredMarginRight != flagMeasuredMarginRight {
 					switch cm.Right.Mode() {
 					case nux.Weight:
 						switch width.Mode() {

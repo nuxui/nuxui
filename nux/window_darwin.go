@@ -21,9 +21,9 @@ type nativeWindow struct {
 func newNativeWindow(attr Attr) *nativeWindow {
 	darwin.SetWindowEventHandler(nativeWindowEventHandler)
 
-	w, h := measureWindowSize(attr)
+	width, height := measureWindowSize(attr.GetDimen("width", "50%"), attr.GetDimen("height", "50%"))
 	me := &nativeWindow{
-		ptr: darwin.NewNSWindow(w, h),
+		ptr: darwin.NewNSWindow(width, height),
 	}
 	me.SetTitle(attr.GetString("title", ""))
 
@@ -176,7 +176,7 @@ func handleScrollEvent2(nsevent darwin.NSEvent) bool {
 	return App().MainWindow().handleScrollEvent(e)
 }
 
-var lastMouseEvent map[MouseButton]PointerEvent = map[MouseButton]PointerEvent{}
+var lastMouseEvent map[PointerButton]PointerEvent = map[PointerButton]PointerEvent{}
 
 func handlePointerEvent(nsevent darwin.NSEvent) bool {
 	x, y := nsevent.LocationInWindow()
@@ -190,7 +190,7 @@ func handlePointerEvent(nsevent darwin.NSEvent) bool {
 			action: Action_None,
 		},
 		pointer: 0,
-		button:  MB_None,
+		button:  ButtonNone,
 		kind:    Kind_Mouse,
 		x:       x,
 		y:       y,
@@ -199,41 +199,41 @@ func handlePointerEvent(nsevent darwin.NSEvent) bool {
 	switch etype {
 	case darwin.NSEventTypeMouseMoved:
 		e.action = Action_Hover
-		e.button = MB_None
+		e.button = ButtonNone
 		e.pointer = 0
 	case darwin.NSEventTypeLeftMouseDown:
 		e.action = Action_Down
-		e.button = MB_Left
+		e.button = ButtonPrimary
 		e.pointer = time.Now().UnixNano()
 		lastMouseEvent[e.button] = e
 	case darwin.NSEventTypeLeftMouseUp:
 		e.action = Action_Up
-		e.button = MB_Left
+		e.button = ButtonPrimary
 		if v, ok := lastMouseEvent[e.button]; ok {
 			e.pointer = v.Pointer()
 			delete(lastMouseEvent, e.button)
 		}
 	case darwin.NSEventTypeLeftMouseDragged:
 		e.action = Action_Drag
-		e.button = MB_Left
+		e.button = ButtonPrimary
 		if v, ok := lastMouseEvent[e.button]; ok {
 			e.pointer = v.Pointer()
 		}
 	case darwin.NSEventTypeRightMouseDown:
 		e.action = Action_Down
-		e.button = MB_Right
+		e.button = ButtonSecondary
 		e.pointer = time.Now().UnixNano()
 		lastMouseEvent[e.button] = e
 	case darwin.NSEventTypeRightMouseUp:
 		e.action = Action_Up
-		e.button = MB_Right
+		e.button = ButtonSecondary
 		if v, ok := lastMouseEvent[e.button]; ok {
 			e.pointer = v.Pointer()
 			delete(lastMouseEvent, e.button)
 		}
 	case darwin.NSEventTypeRightMouseDragged:
 		e.action = Action_Drag
-		e.button = MB_Right
+		e.button = ButtonSecondary
 		if v, ok := lastMouseEvent[e.button]; ok {
 			e.pointer = v.Pointer()
 		}
@@ -242,13 +242,13 @@ func handlePointerEvent(nsevent darwin.NSEvent) bool {
 		buttonNumber := nsevent.ButtonNumber()
 		switch buttonNumber {
 		case 2:
-			e.button = MB_Middle
+			e.button = ButtonMiddle
 		case 3:
-			e.button = MB_X1
+			e.button = ButtonX1
 		case 4:
-			e.button = MB_X2
+			e.button = ButtonX2
 		default:
-			e.button = MouseButton(buttonNumber)
+			e.button = PointerButton(buttonNumber)
 		}
 		e.pointer = time.Now().UnixNano()
 		lastMouseEvent[e.button] = e
@@ -257,13 +257,13 @@ func handlePointerEvent(nsevent darwin.NSEvent) bool {
 		buttonNumber := nsevent.ButtonNumber()
 		switch buttonNumber {
 		case 2:
-			e.button = MB_Middle
+			e.button = ButtonMiddle
 		case 3:
-			e.button = MB_X1
+			e.button = ButtonX1
 		case 4:
-			e.button = MB_X2
+			e.button = ButtonX2
 		default:
-			e.button = MouseButton(buttonNumber)
+			e.button = PointerButton(buttonNumber)
 		}
 		if v, ok := lastMouseEvent[e.button]; ok {
 			e.pointer = v.Pointer()
@@ -274,13 +274,13 @@ func handlePointerEvent(nsevent darwin.NSEvent) bool {
 		buttonNumber := nsevent.ButtonNumber()
 		switch buttonNumber {
 		case 2:
-			e.button = MB_Middle
+			e.button = ButtonMiddle
 		case 3:
-			e.button = MB_X1
+			e.button = ButtonX1
 		case 4:
-			e.button = MB_X2
+			e.button = ButtonX2
 		default:
-			e.button = MouseButton(buttonNumber)
+			e.button = PointerButton(buttonNumber)
 		}
 		if v, ok := lastMouseEvent[e.button]; ok {
 			e.pointer = v.Pointer()
