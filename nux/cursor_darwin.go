@@ -32,13 +32,14 @@ func (me *cursor) Set() {
 }
 
 func loadNativeCursor(c NativeCursor) *cursor {
+	var ptr darwin.NSCursor
 	switch c {
 	case CursorArrow:
-		return &cursor{ptr: darwin.NSCursor_ArrowCursor()}
+		ptr = darwin.NSCursor_ArrowCursor()
 	case CursorIBeam:
-		return &cursor{ptr: darwin.NSCursor_IBeamCursor()}
+		ptr = darwin.NSCursor_IBeamCursor()
+	default:
+		log.Fatal("nux", "unknown cursor type: %d", c)
 	}
-
-	log.Fatal("nux", "unknown cursor type: %d", c)
-	return nil
+	return &cursor{ptr: ptr}
 }

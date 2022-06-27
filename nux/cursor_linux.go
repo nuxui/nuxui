@@ -6,6 +6,11 @@
 
 package nux
 
+import (
+	"nuxui.org/nuxui/log"
+	"nuxui.org/nuxui/nux/internal/linux/xlib"
+)
+
 func getCursorScreenPosition() (x, y float32) {
 	// TODO::
 	return
@@ -19,4 +24,39 @@ func cursorPositionScreenToWindow(wind Window, x0, y0 float32) (x, y float32) {
 func cursorPositionWindowToScreen(wind Window, x0, y0 float32) (x, y float32) {
 	// TODO::
 	return
+}
+
+type cursor struct {
+	c xlib.Cursor
+}
+
+func (me *cursor) Set() {
+	w := theApp.MainWindow().native()
+	xlib.XDefineCursor(w.display, w.window, me.c)
+}
+
+// https://tronche.com/gui/x/xlib/appendix/b/
+func loadNativeCursor(c NativeCursor) *cursor {
+	var shape xlib.CursorShape
+	switch c {
+	case CursorArrow:
+		shape = xlib.XC_left_ptr
+	case CursorIBeam:
+		shape = xlib.XC_xterm
+	case CursorWait:
+		shape = xlib.XC_watch
+	case CursorCrosshair:
+		shape = xlib.XC_tcross
+	case CursorResizeWE:
+		shape = xlib.XC_sb_h_double_arrow
+	case CursorResizeNS:
+		shape = xlib.XC_sb_v_double_arrow
+	case CursorResizeNWSE:
+		shape = xlib.XC_fleur
+	case CursorResizeNESW:
+		shape = xlib.XC_fleur
+	default:
+		log.Fatal("nux", "unknown cursor type: %d", c)
+	}
+	return &cursor{c: xlib.XCreateFontCursor(theApp.native.display, shape)}
 }

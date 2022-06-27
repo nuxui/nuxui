@@ -36,9 +36,6 @@ func createNativeApp_() *nativeApp {
 func (me *nativeApp) run() {
 	defer xlib.XCloseDisplay(me.display)
 
-	// fix:: first event will delay until second event send
-	go func() { runOnUI(func() {}) }()
-
 	var event xlib.XEvent
 	for {
 		xlib.XNextEvent(me.display, &event)

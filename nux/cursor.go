@@ -11,7 +11,7 @@ const (
 	CursorIBeam
 	CursorWait
 	CursorCrosshair
-	CursorResizeEW
+	CursorResizeWE
 	CursorResizeNS
 	CursorResizeNWSE
 	CursorResizeNESW

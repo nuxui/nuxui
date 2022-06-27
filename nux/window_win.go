@@ -164,8 +164,10 @@ func nativeWindowEventHandler(hwnd uintptr, msg uint32, wParam uintptr, lParam u
 	switch msg {
 	case win32.WM_NCHITTEST:
 		return win32.DefWindowProc(hwnd, msg, wParam, lParam)
-	case win32.WM_MOUSEMOVE,
-		win32.WM_LBUTTONDOWN,
+	case win32.WM_MOUSEMOVE:
+		log.I("nuxui", "WM_MOUSEMOVE")
+		return win32.DefWindowProc(hwnd, msg, wParam, lParam)
+	case win32.WM_LBUTTONDOWN,
 		win32.WM_LBUTTONUP,
 		win32.WM_MBUTTONDOWN,
 		win32.WM_MBUTTONUP,
@@ -202,6 +204,9 @@ func nativeWindowEventHandler(hwnd uintptr, msg uint32, wParam uintptr, lParam u
 		// w, h := theApp.window.ContentSize()
 		// log.I("nuxui", "WM_SIZE, w=%d, h=%d",w,h)
 		InvalidateRect(0, 0, 0, 0)
+	case win32.WM_NCMOUSEMOVE:
+		log.I("nuxui", "WM_NCMOUSEMOVE")
+		return win32.DefWindowProc(hwnd, msg, wParam, lParam)
 	case win32.WM_NCLBUTTONDBLCLK,
 		win32.WM_NCLBUTTONDOWN,
 		win32.WM_NCLBUTTONUP,
@@ -210,7 +215,7 @@ func nativeWindowEventHandler(hwnd uintptr, msg uint32, wParam uintptr, lParam u
 		win32.WM_NCMBUTTONUP,
 		win32.WM_NCMOUSEHOVER,
 		win32.WM_NCMOUSELEAVE,
-		win32.WM_NCMOUSEMOVE,
+		// win32.WM_NCMOUSEMOVE,
 		win32.WM_NCRBUTTONDBLCLK,
 		win32.WM_NCRBUTTONDOWN,
 		win32.WM_NCRBUTTONUP,
@@ -264,9 +269,13 @@ func handlePointerEvent(hwnd uintptr, etype uint32, buttonNumber, x, y int32) bo
 
 	switch etype {
 	case win32.WM_MOUSEMOVE:
+		log.I("nuxui", "buttonNumber=%d", buttonNumber)
 		e.event.action = Action_Hover
 		e.button = ButtonNone
-		e.pointer = 0
+		if v, ok := lastMouseEvent[e.button]; ok {
+			e.pointer = v.Pointer()
+			e.event.action = Action_Drag
+		}
 	case win32.WM_LBUTTONDOWN:
 		e.event.action = Action_Down
 		e.button = ButtonPrimary

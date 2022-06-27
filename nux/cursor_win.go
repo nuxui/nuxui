@@ -52,21 +52,31 @@ func (me *cursor) Set() {
 }
 
 func loadNativeCursor(c NativeCursor) *cursor {
+	var shape uintptr
 	switch c {
 	case CursorArrow:
-		c, err := win32.LoadCursor(0, win32.IDC_ARROW)
-		if err != nil {
-			log.Fatal("nuxui", "error when LoadCursor: %s", err.Error())
-		}
-		return &cursor{ptr: c}
+		shape = win32.IDC_ARROW
 	case CursorIBeam:
-		c, err := win32.LoadCursor(0, win32.IDC_IBEAM)
-		if err != nil {
-			log.Fatal("nuxui", "error when LoadCursor: %s", err.Error())
-		}
-		return &cursor{ptr: c}
+		shape = win32.IDC_IBEAM
+	case CursorWait:
+		shape = win32.IDC_WAIT
+	case CursorCrosshair:
+		shape = win32.IDC_CROSS
+	case CursorResizeWE:
+		shape = win32.IDC_SIZEWE
+	case CursorResizeNS:
+		shape = win32.IDC_SIZENS
+	case CursorResizeNWSE:
+		shape = win32.IDC_SIZENWSE
+	case CursorResizeNESW:
+		shape = win32.IDC_SIZENESW
+	default:
+		log.Fatal("nux", "unknown cursor type: %d", c)
 	}
 
-	log.Fatal("nux", "unknown cursor type: %d", c)
-	return nil
+	c, err := win32.LoadCursor(0, shape)
+	if err != nil {
+		log.Fatal("nuxui", "error when LoadCursor: %s", err.Error())
+	}
+	return &cursor{ptr: c}
 }

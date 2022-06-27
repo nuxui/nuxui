@@ -215,8 +215,28 @@ func XChangeProperty(display *Display, window Window, property, typee Atom, form
 	return int(C.XChangeProperty((*C.Display)(display), C.Window(window), C.Atom(property), C.Atom(typee), C.int(format), C.int(mode), (*C.uchar)(unsafe.Pointer(cstr)), C.int(C.strlen(cstr))))
 }
 
+func XCreateFontCursor(display *Display, shape CursorShape) Cursor {
+	return Cursor(C.XCreateFontCursor((*C.Display)(display), C.uint(shape)))
+}
+
+func XDefineCursor(display *Display, window Window, cursor Cursor) ErrorCode {
+	return ErrorCode(C.XDefineCursor((*C.Display)(display), C.Window(window), C.Cursor(cursor)))
+}
+
+func XUndefineCursor(display *Display, window Window) ErrorCode {
+	return ErrorCode(C.XUndefineCursor((*C.Display)(display), C.Window(window)))
+}
+
 func XFlush(display *Display) {
 	C.XFlush((*C.Display)(display))
+}
+
+func XSync(display *Display, discard bool) {
+	var d C.Bool
+	if discard {
+		d = 1
+	}
+	C.XSync((*C.Display)(display), d)
 }
 
 func XFree(data unsafe.Pointer) ErrorCode {

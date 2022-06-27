@@ -94,7 +94,7 @@ type XKeyEvent struct {
 	Xroot      C.int
 	Yroot      C.int
 	State      C.uint
-	Keycode    C.uint
+	Keycode    KeyCode
 	SameScreen C.Bool
 }
 

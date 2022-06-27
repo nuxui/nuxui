@@ -7,6 +7,7 @@
 package nux
 
 import (
+	// "nuxui.org/nuxui/log"
 	"nuxui.org/nuxui/nux/internal/cairo"
 	"nuxui.org/nuxui/nux/internal/pango"
 	"runtime"
@@ -84,6 +85,12 @@ func (me *nativeFontLayout) DrawText(canvas Canvas, font Font, paint Paint, text
 }
 
 func (me *nativeFontLayout) CharacterIndexForPoint(font Font, text string, width, height int32, x, y float32) uint32 {
-	// return me.layout.XYtoIndex()
-	return 0
+	me.layout.SetFontDescription(font.native().fd)
+	me.layout.SetText(text)
+	me.layout.SetWidth(width * pango.Scale)
+	me.layout.SetHeight(height * pango.Scale)
+	// index, trailing, hit := me.layout.XYtoIndex(int32(x), int32(y))
+	// log.I("nuxui", "CharacterIndexForPoint x=%f,y=%f index=%d, trailing=%d, hit=%t", x, y, index, trailing, hit)
+	index, _, _ := me.layout.XYtoIndex(int32(x), int32(y))
+	return uint32(index)
 }

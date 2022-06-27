@@ -33,6 +33,8 @@ type nativeWindow struct {
 	display     *xlib.Display
 	visual      *xlib.Visual
 	colormap    xlib.Colormap
+	xim         xlib.XIM
+	xic         xlib.XIC
 	screenNum   int32
 	depth       int32
 	canvas      *canvas
@@ -63,6 +65,11 @@ func newNativeWindow(attr Attr) *nativeWindow {
 	me.sizeChanged = true
 	me.window = xlib.XCreateWindow(me.display, me.parent, 0, 0, uint32(me.width), uint32(me.height), 0, me.depth, xlib.InputOutput, me.visual, AllMaskBits, &attrs)
 	me.SetTitle(attr.GetString("title", ""))
+
+	me.xim = xlib.XOpenIM(me.display)
+	me.xic = xlib.XCreateIC(me.xim, me.window)
+	xlib.XSetICFocus(me.xic)
+	xlib.XFlush(me.display)
 
 	runtime.SetFinalizer(me, freeNativeWindow)
 	return me
@@ -132,6 +139,7 @@ func (me *nativeWindow) handleNativeEvent(event any) bool {
 	case *xlib.XPointerMovedEvent, *xlib.XButtonPressedEvent, *xlib.XButtonReleasedEvent:
 		return me.handlePointerEvent(e)
 	case *xlib.XKeyPressedEvent, *xlib.XKeyReleasedEvent:
+		return me.handleKeyEvent(e)
 	case *xlib.XEnterWindowEvent, *xlib.XLeaveWindowEvent:
 	case *xlib.XFocusInEvent, *xlib.XFocusOutEvent:
 	case *xlib.XPropertyEvent:
@@ -147,6 +155,7 @@ func (me *nativeWindow) handleNativeEvent(event any) bool {
 		// log.I("nuxui", "XConfigureEvent: width=%d, height=%d, w=%d, h=%d", e.Width, e.Height, w, h)
 	case *xlib.XClientMessageEvent:
 		if xlib.XGetAtomName(me.display, e.MessageType) == "nux_user_backToUI" {
+			// log.I("nuxui", "XClientMessageEvent nux_user_backToUI")
 			backToUI()
 		}
 	case *xlib.XExposeEvent:
@@ -167,7 +176,7 @@ func (me *nativeWindow) handleNativeEvent(event any) bool {
 	return false
 }
 
-var lastMouseEvent map[MouseButton]PointerEvent = map[MouseButton]PointerEvent{}
+var lastMouseEvent map[PointerButton]PointerEvent = map[PointerButton]PointerEvent{}
 
 func (me *nativeWindow) handlePointerEvent(xevent any) bool {
 	e := &pointerEvent{
@@ -178,7 +187,7 @@ func (me *nativeWindow) handlePointerEvent(xevent any) bool {
 			action: Action_None,
 		},
 		pointer: 0,
-		button:  MB_None,
+		button:  ButtonNone,
 		kind:    Kind_Mouse,
 	}
 
@@ -187,7 +196,7 @@ func (me *nativeWindow) handlePointerEvent(xevent any) bool {
 		e.x = float32(xe.X)
 		e.y = float32(xe.Y)
 		e.action = Action_Hover
-		e.button = MB_None
+		e.button = ButtonNone
 		e.pointer = 0
 	case *xlib.XButtonPressedEvent:
 		e.x = float32(xe.X)
@@ -210,18 +219,106 @@ func (me *nativeWindow) handlePointerEvent(xevent any) bool {
 	return App().MainWindow().handlePointerEvent(e)
 }
 
-func xbutton2nuxbutton(button xlib.Button) MouseButton {
+func xbutton2nuxbutton(button xlib.Button) PointerButton {
 	switch button {
 	case xlib.Button1:
-		return MB_Left
+		return ButtonPrimary
 	case xlib.Button2:
-		return MB_Middle
+		return ButtonMiddle
 	case xlib.Button3:
-		return MB_Right
+		return ButtonSecondary
 	case 8:
-		return MB_X2
+		return ButtonX2
 	default:
 		log.E("nuxui", "not handle button number %d", button)
 	}
-	return MB_None
+	return ButtonNone
+}
+
+func (me *nativeWindow) handleKeyEvent(xevent any) bool {
+	// 1. handle key event
+	var ev *xlib.XKeyEvent
+	switch t := xevent.(type) {
+	case *xlib.XKeyPressedEvent:
+		ev = (*xlib.XKeyEvent)(t)
+	case *xlib.XKeyReleasedEvent:
+		ev = (*xlib.XKeyEvent)(t)
+	}
+
+	keysym := xlib.XkbKeycodeToKeysym(me.display, ev.Keycode, 0, 0)
+	if keysym >= xlib.XK_KP_Decimal || keysym <= xlib.XK_KP_9 {
+		keyState := xlib.XGetKeyboardControl(me.display)
+		if (keyState.LedMask & 2) == 2 { // NumLock On
+			keysym = xlib.XkbKeycodeToKeysym(me.display, ev.Keycode, 0, 1)
+		} else {
+			switch keysym {
+			case xlib.XK_KP_Insert:
+				keysym = xlib.XK_Insert
+			case xlib.XK_KP_Up:
+				keysym = xlib.XK_Up
+			case xlib.XK_KP_Down:
+				keysym = xlib.XK_Down
+			case xlib.XK_KP_Left:
+				keysym = xlib.XK_Left
+			case xlib.XK_KP_Right:
+				keysym = xlib.XK_Right
+			case xlib.XK_KP_Home:
+				keysym = xlib.XK_Home
+			case xlib.XK_KP_End:
+				keysym = xlib.XK_End
+			case xlib.XK_KP_Page_Up:
+				keysym = xlib.XK_Page_Up
+			case xlib.XK_KP_Page_Down:
+				keysym = xlib.XK_Page_Down
+			case xlib.XK_KP_Delete:
+				keysym = xlib.XK_Delete
+			case xlib.XK_KP_Begin:
+				keysym = xlib.XK_KP_Begin
+			default:
+			}
+		}
+	}
+	e := &keyEvent{
+		event: event{
+			window: App().MainWindow(),
+			time:   time.Now(),
+			etype:  Type_KeyEvent,
+			action: Action_Down,
+		},
+		keyCode: KeyCode(keysym),
+		repeat:  false,
+		// keyRune: chars,
+		// modifierFlags: convertModifierFlags(modifierFlags),
+	}
+	// log.I("nuxui", "keycode = %s", e.KeyCode())
+
+	if ev.Type == xlib.KeyRelease {
+		e.event.action = Action_Up
+	}
+
+	ret := App().MainWindow().handleKeyEvent(e)
+
+	// 2. handle input event
+	if ev.Type == xlib.KeyPress {
+		text, keysym, status := xlib.Xutf8LookupString(me.xic, (*xlib.XKeyPressedEvent)(ev))
+		e := &typingEvent{
+			event: event{
+				window: theApp.MainWindow(),
+				time:   time.Now(),
+				etype:  Type_TypingEvent,
+				action: Action_Input,
+			},
+			text:     text,
+			location: 0,
+		}
+		if status == xlib.XLookupChars {
+			return ret || App().MainWindow().handleTypingEvent(e)
+		} else if status == xlib.XLookupBoth {
+			if keysym >= 0x20 && keysym <= 0x7E {
+				return ret || App().MainWindow().handleTypingEvent(e)
+			}
+		}
+	}
+
+	return ret
 }
