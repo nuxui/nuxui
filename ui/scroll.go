@@ -36,11 +36,11 @@ func NewScroll(attr nux.Attr) Scroll {
 	return me
 }
 
-func (me *scroll) Mount() {
+func (me *scroll) OnMount() {
 	nux.OnScrollY(me, me.onScrollY)
 }
 
-func (me *scroll) Eject() {
+func (me *scroll) OnEject() {
 
 }
 

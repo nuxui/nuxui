@@ -10,7 +10,6 @@ import (
 	"runtime"
 	"time"
 
-	"nuxui.org/nuxui/log"
 	"nuxui.org/nuxui/nux/internal/darwin"
 )
 
@@ -114,13 +113,13 @@ func handleNSEvent(event darwin.NSEvent) bool {
 	case darwin.NSEventTypeScrollWheel:
 		return handleScrollEvent2(event)
 	case darwin.NSEventTypeAppKitDefined:
-		log.V("nuxui", "darwin.NSEventTypeAppKitDefined subtype=%d", event.Subtype())
+		// log.V("nuxui", "darwin.NSEventTypeAppKitDefined subtype=%d", event.Subtype())
 	case darwin.NSEventTypeSystemDefined:
-		log.V("nuxui", "darwin.NSEventTypeSystemDefined subtype=%d", event.Subtype())
+		// log.V("nuxui", "darwin.NSEventTypeSystemDefined subtype=%d", event.Subtype())
 	case darwin.NSEventTypeApplicationDefined:
-		log.V("nuxui", "darwin.NSEventTypeApplicationDefined subtype=%d", event.Subtype())
+		// log.V("nuxui", "darwin.NSEventTypeApplicationDefined subtype=%d", event.Subtype())
 	case darwin.NSEventTypePeriodic:
-		log.V("nuxui", "darwin.NSEventTypePeriodic subtype=%d", event.Subtype())
+		// log.V("nuxui", "darwin.NSEventTypePeriodic subtype=%d", event.Subtype())
 		// if event.HasPreciseScrollingDeltas() {
 		// }
 	default:

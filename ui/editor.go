@@ -76,7 +76,7 @@ type editor struct {
 	focus          bool
 }
 
-func (me *editor) Mount() {
+func (me *editor) OnMount() {
 	// log.I("nuxui", "editor mount")
 	nux.OnTapDown(me.Info().Self, me.onTapDown)
 	nux.OnTapUp(me.Info().Self, me.onTapUp)

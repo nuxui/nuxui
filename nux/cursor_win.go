@@ -74,9 +74,9 @@ func loadNativeCursor(c NativeCursor) *cursor {
 		log.Fatal("nux", "unknown cursor type: %d", c)
 	}
 
-	c, err := win32.LoadCursor(0, shape)
+	cur, err := win32.LoadCursor(0, shape)
 	if err != nil {
 		log.Fatal("nuxui", "error when LoadCursor: %s", err.Error())
 	}
-	return &cursor{ptr: c}
+	return &cursor{ptr: cur}
 }

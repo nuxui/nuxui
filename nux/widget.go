@@ -64,7 +64,7 @@ func isView(widget Widget) bool {
 
 func FindChild(widget Widget, id string) Widget {
 	if id == "" {
-		log.Fatal("nuxui", "the widget %T id must be specified", widget)
+		log.Fatal("nuxui", "id can not empty")
 		return nil
 	}
 
@@ -91,6 +91,9 @@ func findChild(widget Widget, id string) Widget {
 	if p, ok := widget.(Parent); ok {
 		for _, child := range p.Children() {
 			if _, ok := child.(Component); ok {
+				if id == child.Info().ID {
+					return child
+				}
 				continue
 			}
 

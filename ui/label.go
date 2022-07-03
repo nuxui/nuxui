@@ -89,7 +89,7 @@ func NewLabel(attr nux.Attr) Label {
 	return me
 }
 
-func (me *label) Mount() {
+func (me *label) OnMount() {
 	nux.OnTapDown(me.Info().Self, me.onTapDown)
 	nux.OnTapUp(me.Info().Self, me.onTapUp)
 	nux.OnTapCancel(me.Info().Self, me.onTapUp)
@@ -98,7 +98,7 @@ func (me *label) Mount() {
 	nux.OnHoverExit(me.Info().Self, me.OnHoverExit)
 }
 
-func (me *label) Eject() {
+func (me *label) OnEject() {
 }
 
 func (me *label) OnHoverEnter(detail nux.GestureDetail) {

@@ -71,8 +71,8 @@ func (me NSWindow) Title() string {
 
 func (me NSWindow) SetTitle(title string) {
 	ctitle := C.CString(title)
+	defer C.free(unsafe.Pointer(ctitle))
 	C.nux_NSWindow_SetTitle(C.uintptr_t(me), ctitle)
-	C.free(unsafe.Pointer(ctitle))
 }
 
 func (me NSWindow) Size() (width, height int32) {

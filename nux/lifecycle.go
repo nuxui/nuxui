@@ -13,11 +13,11 @@ type OnCreate interface {
 }
 
 type Mount interface {
-	Mount()
+	OnMount()
 }
 
 type Eject interface {
-	Eject()
+	OnEject()
 }
 
 // // Active, it does not mean Focused, it should be Actived and it can also run animation
@@ -72,11 +72,11 @@ func mountWidget(child Widget, parent Parent) {
 	// mount child to parent
 	child.Info().Parent = parent
 	if f, ok := child.(Mount); ok {
-		f.Mount()
+		f.OnMount()
 	}
 	for _, m := range child.Info().Mixins {
 		if mf, ok := m.(Mount); ok {
-			mf.Mount()
+			mf.OnMount()
 		}
 	}
 	child.Info().Mounted = true
@@ -103,7 +103,7 @@ func EjectChild(child Widget) {
 	}
 
 	if f, ok := child.(Eject); ok {
-		f.Eject()
+		f.OnEject()
 	}
 	child.Info().Mounted = false
 	child.Info().Parent = nil

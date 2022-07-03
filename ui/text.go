@@ -61,7 +61,7 @@ func NewText(attr nux.Attr) Text {
 	return me
 }
 
-func (me *text) Mount() {
+func (me *text) OnMount() {
 	// TODO:: widget gesture penetrate
 	if me.Background() != nil && me.Background().HasState() {
 		nux.OnTapDown(me, me.onTapDown)
@@ -70,7 +70,7 @@ func (me *text) Mount() {
 	}
 }
 
-func (me *text) Eject() {
+func (me *text) OnEject() {
 }
 
 func (me *text) onTapDown(detail nux.GestureDetail) {

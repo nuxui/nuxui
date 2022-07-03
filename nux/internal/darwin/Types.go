@@ -9,9 +9,10 @@ package darwin
 /*
 #import <QuartzCore/QuartzCore.h>
 #import <Cocoa/Cocoa.h>
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 #cgo CFLAGS: -x objective-c -DGL_SILENCE_DEPRECATION
-#cgo LDFLAGS: -framework Cocoa
+#cgo LDFLAGS: -framework Cocoa -framework UniformTypeIdentifiers
 
 CGColorRef nux_CGColorMake(CGFloat red, CGFloat green, CGFloat blue, CGFloat alpha){
 	return [[NSColor colorWithSRGBRed:red green:green blue:blue alpha:alpha] CGColor];
@@ -21,8 +22,20 @@ void nux_NSRect_size(NSRect rect, CGFloat *outWidth, CGFloat* outHeight){
 	*outWidth = rect.size.width;
 	*outHeight = rect.size.height;
 }
+int nux_NSArray_count(uintptr_t nsarray){
+	return (int)((NSArray*)nsarray).count;
+}
+
+uintptr_t nux_NSArray_objectAtIndex(uintptr_t nsarray, NSUInteger index){
+	return (uintptr_t)[(NSArray*)nsarray objectAtIndex:index];
+}
+
+uintptr_t nux_UTType_typeWithFilenameExtension(char* ext){
+	return (uintptr_t)[UTType typeWithFilenameExtension: [NSString stringWithUTF8String:ext]];
+}
 */
 import "C"
+import "unsafe"
 
 const (
 	_PI     = 3.1415926535897932384626433832795028841971
@@ -52,11 +65,18 @@ type NSLayoutManager C.uintptr_t
 type NSTextContainer C.uintptr_t
 type NSTextStorage C.uintptr_t
 type NSCursor C.uintptr_t
+type NSSavePanel C.uintptr_t
+type NSOpenPanel C.uintptr_t
+type NSWorkspace C.uintptr_t
+type NSArray C.uintptr_t
+type NSURL C.uintptr_t
+type UTType C.uintptr_t
 
 type NSWindowStyleMask uint32
 type NSEventType uint32
 type NSEventSubtype int32
 type NSEventModifierFlags uint32
+type NSModalResponse int32
 
 type WindowEvent struct {
 	Window NSWindow
@@ -75,6 +95,8 @@ func (me NSFont) IsNil() bool        { return me == 0 }
 func (me NSView) IsNil() bool        { return me == 0 }
 func (me NSWindow) IsNil() bool      { return me == 0 }
 func (me NSApplication) IsNil() bool { return me == 0 }
+func (me UTType) IsNil() bool        { return me == 0 }
+func (me NSURL) IsNil() bool         { return me == 0 }
 
 func CGRectMake(x, y, width, height float32) CGRect {
 	return CGRect(C.CGRectMake(C.CGFloat(x), C.CGFloat(y), C.CGFloat(width), C.CGFloat(height)))
@@ -96,4 +118,18 @@ func (me NSRect) Size() (width, height float32) {
 	var w, h C.CGFloat
 	C.nux_NSRect_size(C.NSRect(me), &w, &h)
 	return float32(w), float32(h)
+}
+
+func (me NSArray) Count() int {
+	return int(C.nux_NSArray_count(C.uintptr_t(me)))
+}
+
+func (me NSArray) ObjectAtIndex(index int) uintptr {
+	return uintptr(C.nux_NSArray_objectAtIndex(C.uintptr_t(me), C.NSUInteger(index)))
+}
+
+func UTTypeWithFilenameExtension(ext string) UTType {
+	cstr := C.CString(ext)
+	defer C.free(unsafe.Pointer(cstr))
+	return UTType(C.nux_UTType_typeWithFilenameExtension(cstr))
 }

@@ -29,6 +29,8 @@ type check struct {
 	*label
 	checked  bool
 	listener CheckChangedCallback
+	hasValue bool // if !hasValue, value is text
+	value    string
 }
 
 func NewCheck(attr nux.Attr) Check {
@@ -41,15 +43,17 @@ func NewCheck(attr nux.Attr) Check {
 		"checkable":  true,
 	}
 	me := &check{
-		checked: attr.GetBool("checked", false),
-		label:   NewLabel(nux.MergeAttrs(myattr, attr)).(*label),
+		checked:  attr.GetBool("checked", false),
+		hasValue: attr.Has("value"),
+		value:    attr.GetString("value", ""),
+		label:    NewLabel(nux.MergeAttrs(myattr, attr)).(*label),
 	}
 
 	return me
 }
 
-func (me *check) Mount() {
-	me.label.Mount()
+func (me *check) OnMount() {
+	me.label.OnMount()
 	nux.OnTap(me.Info().Self, me.onTap)
 }
 
@@ -117,6 +121,18 @@ func (me *check) SetChecked(checked bool, fromUser bool) {
 
 func (me *check) Checked() bool {
 	return me.checked
+}
+
+func (me *check) SetValue(value string) {
+	me.hasValue = true
+	me.value = value
+}
+
+func (me *check) Value() string {
+	if me.hasValue {
+		return me.value
+	}
+	return me.Text()
 }
 
 func (me *check) SetCheckChangedCallback(listener CheckChangedCallback) {

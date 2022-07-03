@@ -11,6 +11,8 @@ type CheckChangedCallback func(widget CheckableWidget, checked bool, fromUser bo
 type Checkable interface {
 	SetChecked(checked bool, fromUser bool)
 	Checked() bool
+	SetValue(value string)
+	Value() string
 	SetCheckChangedCallback(listener CheckChangedCallback)
 }
 

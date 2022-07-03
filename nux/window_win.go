@@ -165,7 +165,7 @@ func nativeWindowEventHandler(hwnd uintptr, msg uint32, wParam uintptr, lParam u
 	case win32.WM_NCHITTEST:
 		return win32.DefWindowProc(hwnd, msg, wParam, lParam)
 	case win32.WM_MOUSEMOVE:
-		log.I("nuxui", "WM_MOUSEMOVE")
+		// log.I("nuxui", "WM_MOUSEMOVE")
 		return win32.DefWindowProc(hwnd, msg, wParam, lParam)
 	case win32.WM_LBUTTONDOWN,
 		win32.WM_LBUTTONUP,
@@ -205,7 +205,7 @@ func nativeWindowEventHandler(hwnd uintptr, msg uint32, wParam uintptr, lParam u
 		// log.I("nuxui", "WM_SIZE, w=%d, h=%d",w,h)
 		InvalidateRect(0, 0, 0, 0)
 	case win32.WM_NCMOUSEMOVE:
-		log.I("nuxui", "WM_NCMOUSEMOVE")
+		// log.I("nuxui", "WM_NCMOUSEMOVE")
 		return win32.DefWindowProc(hwnd, msg, wParam, lParam)
 	case win32.WM_NCLBUTTONDBLCLK,
 		win32.WM_NCLBUTTONDOWN,

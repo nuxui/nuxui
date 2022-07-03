@@ -77,7 +77,7 @@ func inflateLayoutAttr(parent Widget, layoutAttr Attr, styleAttr Attr) Widget {
 	mergeAttr := MergeAttrs(widgetTheme, widgetStyle, layoutAttr)
 	typeFullName := mergeAttr.GetString("type", "")
 	if typeFullName == "" {
-		log.Fatal("nuxui", `must specified "type" node in layout attr`)
+		log.Fatal("nuxui", `there has no "type" node in theme, style or layout attr`)
 		return nil
 	}
 

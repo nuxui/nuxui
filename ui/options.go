@@ -10,12 +10,14 @@ import (
 
 type Options interface {
 	nux.Component
+	Values() []string
+	Selected() bool
 }
 
 type options struct {
 	*nux.ComponentBase
 
-	radio bool
+	single bool
 }
 
 func NewOptions(attr nux.Attr) Options {
@@ -24,35 +26,43 @@ func NewOptions(attr nux.Attr) Options {
 	}
 
 	me := &options{
-		radio: attr.GetBool("radio", false),
+		single: attr.GetBool("single", false),
 	}
 	me.ComponentBase = nux.NewComponentBase(me, attr)
 	return me
 }
 
-func (me *options) Mount() {
-	me.bindchild()
+func (me *options) OnMount() {
+	me.initChildrenCallback(me.Content())
 }
 
-func (me *options) bindchild() {
-	if p, ok := me.Content().(nux.Parent); ok {
+func (me *options) initChildrenCallback(widget nux.Widget) {
+	if p, ok := widget.(nux.Parent); ok {
 		for _, child := range p.Children() {
-			if item, ok := child.(Checkable); ok {
-				item.SetCheckChangedCallback(me.onCheckedChanged)
-			}
+			me.initChildrenCallback(child)
+		}
+	} else {
+		if check, ok := widget.(Checkable); ok {
+			check.SetCheckChangedCallback(me.onCheckedChanged)
 		}
 	}
 }
 
 func (me *options) onCheckedChanged(widget CheckableWidget, checked bool, fromUser bool) {
-	if me.radio && fromUser {
-		if p, ok := me.Content().(nux.Parent); ok {
-			for _, child := range p.Children() {
-				if item, ok := child.(Checkable); ok {
-					if item != widget && item.Checked() {
-						item.SetChecked(false, false)
-					}
-				}
+	if me.single && fromUser {
+		me.clearAllExcept(me.Content(), widget)
+	}
+}
+
+func (me *options) clearAllExcept(widget nux.Widget, except CheckableWidget) {
+	if p, ok := widget.(nux.Parent); ok {
+		for _, child := range p.Children() {
+			me.clearAllExcept(child, except)
+		}
+	} else {
+		if check, ok := widget.(Checkable); ok {
+			if widget != except && check.Checked() {
+				check.SetChecked(false, false)
 			}
 		}
 	}
@@ -60,4 +70,44 @@ func (me *options) onCheckedChanged(widget CheckableWidget, checked bool, fromUs
 
 func (me *options) doCheckedChanged() {
 
+}
+
+func (me *options) Values() []string {
+	return me.getValues(me.Content())
+}
+
+func (me *options) getValues(widget nux.Widget) (values []string) {
+	if p, ok := widget.(nux.Parent); ok {
+		for _, child := range p.Children() {
+			values = append(values, me.getValues(child)...)
+		}
+	} else {
+		if check, ok := widget.(Checkable); ok {
+			if check.Checked() {
+				values = append(values, check.Value())
+			}
+		}
+	}
+	return
+}
+
+func (me *options) Selected() bool {
+	return me.hasSelected(me.Content())
+}
+
+func (me *options) hasSelected(widget nux.Widget) bool {
+	if p, ok := widget.(nux.Parent); ok {
+		for _, child := range p.Children() {
+			if me.hasSelected(child) {
+				return true
+			}
+		}
+	} else {
+		if check, ok := widget.(Checkable); ok {
+			if check.Checked() {
+				return true
+			}
+		}
+	}
+	return false
 }

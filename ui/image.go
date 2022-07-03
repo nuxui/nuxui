@@ -146,7 +146,7 @@ func (me *image) HasState() bool {
 	return false
 }
 
-func (me *image) Mount() {
+func (me *image) OnMount() {
 }
 
 func (me *image) Measure(width, height nux.MeasureDimen) {

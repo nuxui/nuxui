@@ -11,6 +11,12 @@ import (
 )
 
 const (
+	S_OK               = 0
+	S_FALSE            = 0x0001
+	RPC_E_CHANGED_MODE = 0x80010106
+)
+
+const (
 	AlphaShift = 24
 	RedShift   = 16
 	GreenShift = 8
@@ -721,4 +727,259 @@ const (
 	HTOBJECT      = 19
 	HTCLOSE       = 20
 	HTHELP        = 21
+)
+
+// https://github.com/tpn/winsdk-10/blob/master/Include/10.0.14393.0/um/commdlg.h
+const (
+	OFN_READONLY             = 0x00000001
+	OFN_OVERWRITEPROMPT      = 0x00000002
+	OFN_HIDEREADONLY         = 0x00000004
+	OFN_NOCHANGEDIR          = 0x00000008
+	OFN_SHOWHELP             = 0x00000010
+	OFN_ENABLEHOOK           = 0x00000020
+	OFN_ENABLETEMPLATE       = 0x00000040
+	OFN_ENABLETEMPLATEHANDLE = 0x00000080
+	OFN_NOVALIDATE           = 0x00000100
+	OFN_ALLOWMULTISELECT     = 0x00000200
+	OFN_EXTENSIONDIFFERENT   = 0x00000400
+	OFN_PATHMUSTEXIST        = 0x00000800
+	OFN_FILEMUSTEXIST        = 0x00001000
+	OFN_CREATEPROMPT         = 0x00002000
+	OFN_SHAREAWARE           = 0x00004000
+	OFN_NOREADONLYRETURN     = 0x00008000
+	OFN_NOTESTFILECREATE     = 0x00010000
+	OFN_NONETWORKBUTTON      = 0x00020000
+	OFN_NOLONGNAMES          = 0x00040000 // force no long names for 4.x modules
+	OFN_EXPLORER             = 0x00080000 // new look commdlg
+	OFN_NODEREFERENCELINKS   = 0x00100000
+	OFN_LONGNAMES            = 0x00200000 // force long names for 3.x modules
+	OFN_ENABLEINCLUDENOTIFY  = 0x00400000 // send include message to callback
+	OFN_ENABLESIZING         = 0x00800000
+	OFN_DONTADDTORECENT      = 0x02000000
+	OFN_FORCESHOWHIDDEN      = 0x10000000 // Show All files including System and hidden files
+	OFN_EX_NOPLACESBAR       = 0x00000001
+	OFN_SHAREFALLTHROUGH     = 2
+	OFN_SHARENOWARN          = 1
+	OFN_SHAREWARN            = 0
+)
+
+//SHBrowseForFolder flags
+const (
+	BIF_RETURNONLYFSDIRS    = 0x00000001
+	BIF_DONTGOBELOWDOMAIN   = 0x00000002
+	BIF_STATUSTEXT          = 0x00000004
+	BIF_RETURNFSANCESTORS   = 0x00000008
+	BIF_EDITBOX             = 0x00000010
+	BIF_VALIDATE            = 0x00000020
+	BIF_NEWDIALOGSTYLE      = 0x00000040
+	BIF_BROWSEINCLUDEURLS   = 0x00000080
+	BIF_USENEWUI            = BIF_EDITBOX | BIF_NEWDIALOGSTYLE
+	BIF_UAHINT              = 0x00000100
+	BIF_NONEWFOLDERBUTTON   = 0x00000200
+	BIF_NOTRANSLATETARGETS  = 0x00000400
+	BIF_BROWSEFORCOMPUTER   = 0x00001000
+	BIF_BROWSEFORPRINTER    = 0x00002000
+	BIF_BROWSEINCLUDEFILES  = 0x00004000
+	BIF_SHAREABLE           = 0x00008000
+	BIF_BROWSEFILEJUNCTIONS = 0x00010000
+)
+
+//MessageBox flags
+const (
+	MB_OK                = 0x00000000
+	MB_OKCANCEL          = 0x00000001
+	MB_ABORTRETRYIGNORE  = 0x00000002
+	MB_YESNOCANCEL       = 0x00000003
+	MB_YESNO             = 0x00000004
+	MB_RETRYCANCEL       = 0x00000005
+	MB_CANCELTRYCONTINUE = 0x00000006
+	MB_ICONHAND          = 0x00000010
+	MB_ICONQUESTION      = 0x00000020
+	MB_ICONEXCLAMATION   = 0x00000030
+	MB_ICONASTERISK      = 0x00000040
+	MB_USERICON          = 0x00000080
+	MB_ICONWARNING       = MB_ICONEXCLAMATION
+	MB_ICONERROR         = MB_ICONHAND
+	MB_ICONINFORMATION   = MB_ICONASTERISK
+	MB_ICONSTOP          = MB_ICONHAND
+	MB_DEFBUTTON1        = 0x00000000
+	MB_DEFBUTTON2        = 0x00000100
+	MB_DEFBUTTON3        = 0x00000200
+	MB_DEFBUTTON4        = 0x00000300
+)
+
+// ------------------------- GDI+ -------------------
+
+const LANG_NEUTRAL = 0x00
+
+// Unit
+const (
+	UnitWorld      = 0 // 0 -- World coordinate (non-physical unit)
+	UnitDisplay    = 1 // 1 -- Variable -- for PageTransform only
+	UnitPixel      = 2 // 2 -- Each unit is one device pixel.
+	UnitPoint      = 3 // 3 -- Each unit is a printer's point, or 1/72 inch.
+	UnitInch       = 4 // 4 -- Each unit is 1 inch.
+	UnitDocument   = 5 // 5 -- Each unit is 1/300 inch.
+	UnitMillimeter = 6 // 6 -- Each unit is 1 millimeter.
+)
+
+const (
+	AlphaMask = 0xff000000
+	RedMask   = 0x00ff0000
+	GreenMask = 0x0000ff00
+	BlueMask  = 0x000000ff
+)
+
+// QualityMode
+const (
+	QualityModeInvalid = iota - 1
+	QualityModeDefault
+	QualityModeLow  // Best performance
+	QualityModeHigh // Best rendering quality
+)
+
+// Alpha Compositing mode
+const (
+	CompositingModeSourceOver = iota // 0
+	CompositingModeSourceCopy        // 1
+)
+
+// Alpha Compositing quality
+const (
+	CompositingQualityInvalid = iota + QualityModeInvalid
+	CompositingQualityDefault
+	CompositingQualityHighSpeed
+	CompositingQualityHighQuality
+	CompositingQualityGammaCorrected
+	CompositingQualityAssumeLinear
+)
+
+// InterpolationMode
+const (
+	InterpolationModeInvalid = iota + QualityModeInvalid
+	InterpolationModeDefault
+	InterpolationModeLowQuality
+	InterpolationModeHighQuality
+	InterpolationModeBilinear
+	InterpolationModeBicubic
+	InterpolationModeNearestNeighbor
+	InterpolationModeHighQualityBilinear
+	InterpolationModeHighQualityBicubic
+)
+
+type GpSmoothingMode int32
+
+const (
+	SmoothingModeInvalid      GpSmoothingMode = QualityModeInvalid
+	SmoothingModeDefault      GpSmoothingMode = 0
+	SmoothingModeHighSpeed    GpSmoothingMode = 1
+	SmoothingModeHighQuality  GpSmoothingMode = 2
+	SmoothingModeNone         GpSmoothingMode = 3
+	SmoothingModeAntiAlias8x4 GpSmoothingMode = 4
+	SmoothingModeAntiAlias    GpSmoothingMode = 4
+	SmoothingModeAntiAlias8x8 GpSmoothingMode = 5
+)
+
+type GpFlushIntention int32
+
+const (
+	FlushIntentionFlush GpFlushIntention = 0
+	FlushIntentionSync  GpFlushIntention = 1
+)
+
+// Pixel Format Mode
+const (
+	PixelOffsetModeInvalid = iota + QualityModeInvalid
+	PixelOffsetModeDefault
+	PixelOffsetModeHighSpeed
+	PixelOffsetModeHighQuality
+	PixelOffsetModeNone // No pixel offset
+	PixelOffsetModeHalf // Offset by -0.5, -0.5 for fast anti-alias perf
+)
+
+// Text Rendering Hint
+const (
+	TextRenderingHintSystemDefault            = iota // Glyph with system default rendering hint
+	TextRenderingHintSingleBitPerPixelGridFit        // Glyph bitmap with hinting
+	TextRenderingHintSingleBitPerPixel               // Glyph bitmap without hinting
+	TextRenderingHintAntiAliasGridFit                // Glyph anti-alias bitmap with hinting
+	TextRenderingHintAntiAlias                       // Glyph anti-alias bitmap without hinting
+	TextRenderingHintClearTypeGridFit                // Glyph CT bitmap with hinting
+)
+
+// Fill mode constants
+const (
+	FillModeAlternate = iota // 0
+	FillModeWinding          // 1
+)
+
+// BrushType
+const (
+	BrushTypeSolidColor GpBrushType = iota
+	BrushTypeHatchFill
+	BrushTypeTextureFill
+	BrushTypePathGradient
+	BrushTypeLinearGradient
+)
+
+// LineCap
+const (
+	LineCapFlat GpLineCap = iota
+	LineCapSquare
+	LineCapRound
+	LineCapTriangle
+	LineCapNoAnchor
+	LineCapSquareAnchor
+	LineCapRoundAnchor
+	LineCapDiamondAnchor
+	LineCapArrowAnchor
+	LineCapCustom
+	LineCapAnchorMask
+)
+
+// LineJoin
+const (
+	LineJoinMiter GpLineJoin = iota
+	LineJoinBevel
+	LineJoinRound
+	LineJoinMiterClipped
+)
+
+// DashCap
+const (
+	DashCapFlat GpDashCap = iota
+	DashCapRound
+	DashCapTriangle
+)
+
+// DashStyle
+const (
+	DashStyleSolid GpDashStyle = iota
+	DashStyleDash
+	DashStyleDot
+	DashStyleDashDot
+	DashStyleDashDotDot
+	DashStyleCustom
+)
+
+// PenAlignment
+const (
+	PenAlignmentCenter GpPenAlignment = iota
+	PenAlignmentInset
+)
+
+// MatrixOrder
+const (
+	MatrixOrderPrepend GpMatrixOrder = iota
+	MatrixOrderAppend
+)
+
+// PenType
+const (
+	PenTypeSolidColor GpPenType = iota
+	PenTypeHatchFill
+	PenTypeTextureFill
+	PenTypePathGradient
+	PenTypeLinearGradient
+	PenTypeUnknown
 )

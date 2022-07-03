@@ -11,12 +11,12 @@ import (
 )
 
 var (
-	kernel32           = syscall.NewLazyDLL("kernel32.dll")
-	getCurrentThreadId = kernel32.NewProc("GetCurrentThreadId")
+	modkernel32            = syscall.NewLazyDLL("kernel32.dll")
+	procGetCurrentThreadId = modkernel32.NewProc("GetCurrentThreadId")
 )
 
 // https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getcurrentthreadid
 func GetCurrentThreadId() uint32 {
-	ret, _, _ := getCurrentThreadId.Call()
+	ret, _, _ := procGetCurrentThreadId.Call()
 	return uint32(ret)
 }

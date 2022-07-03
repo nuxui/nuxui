@@ -170,13 +170,13 @@
 @implementation NuxWindowDelegate
 
 - (NSSize)windowWillResize:(NSWindow *)sender toSize:(NSSize)frameSize {
-  NSLog(@"NuxWindowDelegate windowWillResize sender=%@", sender);
+  // NSLog(@"NuxWindowDelegate windowWillResize sender=%@", sender);
   return frameSize;
 }
 
 - (void)windowDidResize:(NSNotification *)notification {
   NSWindow *window = [notification object];
-  NSLog(@"NuxWindowDelegate windowDidResize keyWindow=%@", window);
+  // NSLog(@"NuxWindowDelegate windowDidResize keyWindow=%@", window);
   // if (!mainWindowCreated){
   //     mainWindowCreated = true;
   //     // go_windowCreated((uintptr_t)[notification object]);
@@ -185,11 +185,11 @@
 }
 
 - (void)windowWillStartLiveResize:(NSNotification *)notification {
-  NSLog(@"NuxWindowDelegate windowWillStartLiveResize");
+  // NSLog(@"NuxWindowDelegate windowWillStartLiveResize");
 }
 
 - (void)windowDidEndLiveResize:(NSNotification *)notification {
-  NSLog(@"NuxWindowDelegate windowDidEndLiveResize");
+  // NSLog(@"NuxWindowDelegate windowDidEndLiveResize");
 }
 
 // Updating Windows
@@ -203,22 +203,22 @@
 // Exposing Windows
 
 - (void)windowDidExpose:(NSNotification *)notification {
-  NSLog(@"NuxWindowDelegate windowDidExpose");
+  // NSLog(@"NuxWindowDelegate windowDidExpose");
 }
 
 // Managing Key Status
 - (void)windowDidBecomeKey:(NSNotification *)notification {
-  NSLog(@"NuxWindowDelegate windowDidBecomeKey");
+  // NSLog(@"NuxWindowDelegate windowDidBecomeKey");
 }
 
 - (void)windowDidResignKey:(NSNotification *)notification {
-  NSLog(@"NuxWindowDelegate windowDidResignKey");
+  // NSLog(@"NuxWindowDelegate windowDidResignKey");
 }
 
 // Managing Occlusion State
 
 - (void)windowDidChangeOcclusionState:(NSNotification *)notification {
-  NSLog(@"NuxWindowDelegate windowDidChangeOcclusionState");
+  // NSLog(@"NuxWindowDelegate windowDidChangeOcclusionState");
 }
 
 @end // @implementation NuxWindowDelegate

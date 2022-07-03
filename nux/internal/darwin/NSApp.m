@@ -14,7 +14,7 @@
 
 @implementation NuxApplication
 - (void)terminate:(id)sender {
-  NSLog(@"NuxApplication terminate");
+  // NSLog(@"NuxApplication terminate");
   [super terminate:sender];
 }
 
@@ -46,11 +46,11 @@
 @implementation NuxApplicationDelegate
 // Launching Applications
 - (void)applicationWillFinishLaunching:(NSNotification *)notification {
-  NSLog(@"NuxApplicationDelegate applicationWillFinishLaunching");
+  // NSLog(@"NuxApplicationDelegate applicationWillFinishLaunching");
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
-  NSLog(@"NuxApplicationDelegate applicationDidFinishLaunching");
+  // NSLog(@"NuxApplicationDelegate applicationDidFinishLaunching");
   if (true /*TODO:: background*/) {
     [NSApp activateIgnoringOtherApps:YES];
   }
@@ -68,11 +68,11 @@
 
 // Managing Active Status
 - (void)applicationWillBecomeActive:(NSNotification *)notification {
-  NSLog(@"NuxApplicationDelegate applicationWillBecomeActive");
+  // NSLog(@"NuxApplicationDelegate applicationWillBecomeActive");
 }
 
 - (void)applicationDidBecomeActive:(NSNotification *)notification {
-  NSLog(@"NuxApplicationDelegate applicationDidBecomeActive");
+  // NSLog(@"NuxApplicationDelegate applicationDidBecomeActive");
 
   // NSLog(@"window = %@", [[NSApplication sharedApplication] mainWindow]);
   // NSLog(@"window2 = %@", [[[[NSApplication sharedApplication] windows]
@@ -86,11 +86,11 @@
 }
 
 - (void)applicationWillResignActive:(NSNotification *)notification {
-  NSLog(@"NuxApplicationDelegate applicationWillResignActive");
+  // NSLog(@"NuxApplicationDelegate applicationWillResignActive");
 }
 
 - (void)applicationDidResignActive:(NSNotification *)notification {
-  NSLog(@"NuxApplicationDelegate applicationDidResignActive");
+  // NSLog(@"NuxApplicationDelegate applicationDidResignActive");
 }
 
 // // Terminating Applications
@@ -102,30 +102,30 @@
 
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:
     (NSApplication *)sender {
-  NSLog(@"NuxApplicationDelegate "
-        @"applicationShouldTerminateAfterLastWindowClosed");
+  // NSLog(@"NuxApplicationDelegate "
+        // @"applicationShouldTerminateAfterLastWindowClosed");
   return YES;
 }
 
 - (void)applicationWillTerminate:(NSNotification *)notification {
-  NSLog(@"NuxApplicationDelegate applicationWillTerminate");
+  // NSLog(@"NuxApplicationDelegate applicationWillTerminate");
 }
 
 // Hiding Applications
 - (void)applicationWillHide:(NSNotification *)notification {
-  NSLog(@"NuxApplicationDelegate applicationWillHide");
+  // NSLog(@"NuxApplicationDelegate applicationWillHide");
 }
 
 - (void)applicationDidHide:(NSNotification *)notification {
-  NSLog(@"NuxApplicationDelegate applicationDidHide");
+  // NSLog(@"NuxApplicationDelegate applicationDidHide");
 }
 
 - (void)applicationWillUnhide:(NSNotification *)notification {
-  NSLog(@"NuxApplicationDelegate applicationWillUnhide");
+  // NSLog(@"NuxApplicationDelegate applicationWillUnhide");
 }
 
 - (void)applicationDidUnhide:(NSNotification *)notification {
-  NSLog(@"NuxApplicationDelegate applicationDidUnhide");
+  // NSLog(@"NuxApplicationDelegate applicationDidUnhide");
 }
 
 // Managing Windows
@@ -141,7 +141,7 @@
 
 - (BOOL)applicationShouldHandleReopen:(NSApplication *)sender
                     hasVisibleWindows:(BOOL)flag {
-  NSLog(@"NuxApplicationDelegate applicationShouldHandleReopen");
+  // NSLog(@"NuxApplicationDelegate applicationShouldHandleReopen");
   return NO;
 }
 
