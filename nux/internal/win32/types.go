@@ -8,6 +8,7 @@ package win32
 
 import "unsafe"
 
+type DWORD uint32
 type COLORREF uint32
 
 type PAINTSTRUCT struct {
@@ -68,31 +69,29 @@ type MSG struct {
 // https://docs.microsoft.com/en-us/windows/win32/api/commdlg/ns-commdlg-openfilenamew
 // https://github.com/tpn/winsdk-10/blob/master/Include/10.0.14393.0/um/commdlg.h
 type OPENFILENAME struct { // OPENFILENAMEW
-	StructSize      uint32  //DWORD
-	Owner           uintptr //HWND
-	Instance        uintptr //HINSTANCE
-	Filter          *uint16 //LPCWSTR
-	CustomFilter    *uint16 //LPWSTR
-	MaxCustomFilter uint32  //DWORD
-	FilterIndex     uint32  //DWORD
-	File            *uint16 //LPWSTR
-	MaxFile         uint32  //DWORD
-	FileTitle       *uint16 //LPWSTR
-	MaxFileTitle    uint32  //DWORD
-	InitialDir      *uint16 //LPCWSTR
-	Title           *uint16 //LPCWSTR
-	Flags           uint32  //DWORD
-	FileOffset      uint16  //WORD
-	FileExtension   uint16  //WORD
-	DefExt          *uint16 //LPCWSTR
-	CustData        uintptr //LPARAM
-	FnHook          uintptr //LPOFNHOOKPROC
-	TemplateName    *uint16 //LPCWSTR
-	// EditInfo        uintptr        //LPEDITMENU #ifdef _MAC
-	// Prompt          *uint8         //LPCSTR #ifdef _MAC
-	PvReserved unsafe.Pointer //void*
-	DwReserved uint32         //DWORD
-	FlagsEx    uint32         //DWORD
+	StructSize      uint32         //DWORD
+	Owner           uintptr        //HWND
+	Instance        uintptr        //HINSTANCE
+	Filter          *uint16        //LPCWSTR
+	CustomFilter    *uint16        //LPWSTR
+	MaxCustomFilter uint32         //DWORD
+	FilterIndex     uint32         //DWORD
+	File            *uint16        //LPWSTR
+	MaxFile         uint32         //DWORD
+	FileTitle       *uint16        //LPWSTR
+	MaxFileTitle    uint32         //DWORD
+	InitialDir      *uint16        //LPCWSTR
+	Title           *uint16        //LPCWSTR
+	Flags           uint32         //DWORD
+	FileOffset      uint16         //WORD
+	FileExtension   uint16         //WORD
+	DefExt          *uint16        //LPCWSTR
+	CustData        uintptr        //LPARAM
+	FnHook          uintptr        //LPOFNHOOKPROC
+	TemplateName    *uint16        //LPCWSTR
+	PvReserved      unsafe.Pointer //void*
+	DwReserved      uint32         //DWORD
+	FlagsEx         uint32         //DWORD
 }
 
 // https://docs.microsoft.com/en-us/windows/win32/api/shlobj_core/ns-shlobj_core-browseinfow

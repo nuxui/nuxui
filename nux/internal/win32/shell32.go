@@ -73,7 +73,7 @@ func SHOpenFolderAndSelectItems(dir *ITEMIDLIST, count uint32, childArray []*ITE
 		uintptr(count),
 		uintptr(unsafe.Pointer(&childArray[0])),
 		uintptr(flags))
-	if ret == S_OK {
+	if ret == 0 {
 		err = nil
 	}
 	return err

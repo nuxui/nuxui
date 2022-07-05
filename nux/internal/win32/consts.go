@@ -11,12 +11,6 @@ import (
 )
 
 const (
-	S_OK               = 0
-	S_FALSE            = 0x0001
-	RPC_E_CHANGED_MODE = 0x80010106
-)
-
-const (
 	AlphaShift = 24
 	RedShift   = 16
 	GreenShift = 8

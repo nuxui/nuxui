@@ -36,3 +36,9 @@ func GetLocale(category Category) string {
 	loc := C.setlocale(C.int(category), nil)
 	return C.GoString(loc)
 }
+
+func System(cmd string){
+	cstr := C.CString(cmd)
+	defer C.free(unsafe.Pointer(cstr))
+	C.system(cstr)
+}

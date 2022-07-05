@@ -48,6 +48,10 @@ void nux_NSOpenPanel_setAllowsMultipleSelection(uintptr_t nsOpenPanel, BOOL allo
 	[(NSOpenPanel*)(nsOpenPanel) setAllowsMultipleSelection:allow];
 }
 
+void nux_NSOpenPanel_setCanCreateDirectories(uintptr_t nsOpenPanel, BOOL can){
+	[(NSOpenPanel*)(nsOpenPanel) setCanCreateDirectories:can];
+}
+
 void nux_NSOpenPanel_setAllowedContentTypes(uintptr_t nsOpenPanel, void* types, int count){
 	NSArray<UTType*> *arr = [NSArray arrayWithObjects:(UTType**)types count:count];
 	[(NSOpenPanel*)(nsOpenPanel) setAllowedContentTypes:arr];
@@ -101,31 +105,39 @@ func SharedNSOpenPanel() NSOpenPanel {
 }
 
 func (me NSOpenPanel) SetCanChooseFiles(can bool) {
-	var c C.BOOL
+	var b C.BOOL
 	if can {
-		c = 1
+		b = 1
 	}
-	C.nux_NSOpenPanel_setCanChooseFiles(C.uintptr_t(me), c)
+	C.nux_NSOpenPanel_setCanChooseFiles(C.uintptr_t(me), b)
 }
 
 func (me NSOpenPanel) SetCanChooseDirectories(can bool) {
-	var c C.BOOL
+	var b C.BOOL
 	if can {
-		c = 1
+		b = 1
 	}
-	C.nux_NSOpenPanel_setCanChooseDirectories(C.uintptr_t(me), c)
+	C.nux_NSOpenPanel_setCanChooseDirectories(C.uintptr_t(me), b)
 }
 
 func (me NSOpenPanel) SetAllowsMultipleSelection(allow bool) {
-	var c C.BOOL
+	var b C.BOOL
 	if allow {
-		c = 1
+		b = 1
 	}
-	C.nux_NSOpenPanel_setAllowsMultipleSelection(C.uintptr_t(me), c)
+	C.nux_NSOpenPanel_setAllowsMultipleSelection(C.uintptr_t(me), b)
 }
 
 func (me NSOpenPanel) SetAllowedContentTypes(types []UTType) {
 	C.nux_NSOpenPanel_setAllowedContentTypes(C.uintptr_t(me), unsafe.Pointer(&types[0]), C.int(len(types)))
+}
+
+func (me NSOpenPanel) SetCanCreateDirectories(can bool) {
+	var b C.BOOL
+	if can {
+		b = 1
+	}
+	C.nux_NSOpenPanel_setCanCreateDirectories(C.uintptr_t(me), b)
 }
 
 func (me NSOpenPanel) SetDirectoryURL(url NSURL) {
