@@ -23,10 +23,27 @@ func showPickFileDialog(dialog *pickFileDialog) (ok bool, paths []string) {
 	if !gtk3.InitCheck() {
 		return false, nil
 	}
-	chooser := gtk3.NewFileChooserDialog("", 0, gtk3.FILE_CHOOSER_ACTION_OPEN)
+
+	action := gtk3.FILE_CHOOSER_ACTION_OPEN
+	if dialog.allowsChooseFolders {
+		action = gtk3.FILE_CHOOSER_ACTION_SELECT_FOLDER
+	}
+
+	chooser := gtk3.FileChooserDialogNew("", 0, action)
 
 	if dialog.directory != "" {
 		chooser.SetCurrentFolder(dialog.directory)
+	}
+
+	if !dialog.allowsChooseFolders {
+		for k, v := range dialog.filters {
+			filter := gtk3.FileFilterNew()
+			filter.SetName(k)
+			for _, f := range v {
+				filter.AddPattern("*." + f)
+			}
+			chooser.AddFilter(filter)
+		}
 	}
 
 	chooser.SetSelectMultiple(dialog.allowsMultipleSelection)
@@ -40,7 +57,7 @@ func showSaveFileDialog(dialog *saveFileDialog) (ok bool, saveName string) {
 	if !gtk3.InitCheck() {
 		return false, ""
 	}
-	chooser := gtk3.NewFileChooserDialog("", 0, gtk3.FILE_CHOOSER_ACTION_SAVE)
+	chooser := gtk3.FileChooserDialogNew("", 0, gtk3.FILE_CHOOSER_ACTION_SAVE)
 
 	if dialog.directory != "" {
 		chooser.SetCurrentFolder(dialog.directory)

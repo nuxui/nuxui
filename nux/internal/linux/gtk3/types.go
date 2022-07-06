@@ -22,6 +22,7 @@ type GtkWidget GPointer
 type GtkDialog GPointer
 type GtkWindow GPointer
 type GtkFileChooser GPointer
+type GtkFileFilter GPointer
 type GSList GPointer
 
 func (me GSList) Free() {

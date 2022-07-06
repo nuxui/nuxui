@@ -84,7 +84,7 @@ func PickFileDialog() *pickFileDialog {
 type pickFileDialog struct {
 	title                   string
 	directory               string
-	filters                 []string
+	filters                 map[string][]string
 	allowsChooseFiles       bool
 	allowsChooseFolders     bool
 	allowsMultipleSelection bool
@@ -97,7 +97,7 @@ func (me *pickFileDialog) SetDirectory(directory string) *pickFileDialog {
 	return me
 }
 
-func (me *pickFileDialog) SetExtensionFilters(filters []string) *pickFileDialog {
+func (me *pickFileDialog) SetExtensionFilters(filters map[string][]string) *pickFileDialog {
 	me.filters = filters
 	return me
 }

@@ -7,7 +7,6 @@
 package nux
 
 import (
-	// "fmt"
 	"nuxui.org/nuxui/log"
 	"nuxui.org/nuxui/nux/internal/win32"
 	"nuxui.org/nuxui/nux/internal/win32/com"
@@ -65,7 +64,7 @@ func showViewFileDialog(dialog *viewFileDialog) {
 }
 
 func showPickFileDialog(dialog *pickFileDialog) (ok bool, paths []string) {
-	if dialog.allowsChooseFolders{
+	if dialog.allowsChooseFolders {
 		return showPickFolderPanel(dialog)
 	}
 
@@ -202,12 +201,25 @@ func showPickJustFileDialog(dialog *pickFileDialog) (ok bool, paths []string) {
 		// explorer default allowed
 	}
 
-	ok = win32.GetOpenFileName(&ofn)
+	filters := []uint16{}
+	for k, v := range dialog.filters {
+		s, _ := syscall.UTF16FromString(k)
+		filters = append(filters, s...)
+		types := ""
+		for i, f := range v {
+			if i == 0 {
+				types = "*." + f
+			} else {
+				types = types + ";" + "*." + f
+			}
+		}
+		s, _ = syscall.UTF16FromString(types)
+		filters = append(filters, s...)
+	}
+	filters = append(filters, 0)
+	ofn.Filter = &filters[0]
 
-	// for _, c := range filePath {
-	// 	fmt.Printf("%d",c)
-	// }
-	// fmt.Println()
+	ok = win32.GetOpenFileName(&ofn)
 
 	if ok {
 		path := syscall.UTF16ToString(filePath)

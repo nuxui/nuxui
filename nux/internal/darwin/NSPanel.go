@@ -129,7 +129,11 @@ func (me NSOpenPanel) SetAllowsMultipleSelection(allow bool) {
 }
 
 func (me NSOpenPanel) SetAllowedContentTypes(types []UTType) {
-	C.nux_NSOpenPanel_setAllowedContentTypes(C.uintptr_t(me), unsafe.Pointer(&types[0]), C.int(len(types)))
+	if len(types) == 0 {
+		C.nux_NSOpenPanel_setAllowedContentTypes(C.uintptr_t(me), nil, 0)
+	} else {
+		C.nux_NSOpenPanel_setAllowedContentTypes(C.uintptr_t(me), unsafe.Pointer(&types[0]), C.int(len(types)))
+	}
 }
 
 func (me NSOpenPanel) SetCanCreateDirectories(can bool) {

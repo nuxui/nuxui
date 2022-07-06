@@ -13,12 +13,12 @@ package gtk3
 #include <stdlib.h>
 #include <libintl.h>
 
-uintptr_t nux_gtk_file_chooser_dialog_new(char* title, GtkWindow* parent, GtkFileChooserAction action){
+gpointer nux_gtk_file_chooser_dialog_new(char* title, GtkWindow* parent, GtkFileChooserAction action){
 	GtkWidget *dialog = gtk_file_chooser_dialog_new((gchar*)title, parent, action,
 		dgettext("gtk30", "_Cancel"), GTK_RESPONSE_CANCEL,
 		dgettext("gtk30", "_Open"), GTK_RESPONSE_ACCEPT,
 		NULL);
-	return (uintptr_t)dialog;
+	return (gpointer)dialog;
 }
 
 */
@@ -30,7 +30,7 @@ func InitCheck() bool {
 }
 
 // https://docs.gtk.org/gtk3/iface.FileChooser.html
-func NewFileChooserDialog(title string, parent GtkWindow, action GtkFileChooserAction) GtkFileChooser {
+func FileChooserDialogNew(title string, parent GtkWindow, action GtkFileChooserAction) GtkFileChooser {
 	cstr := C.CString(title)
 	defer C.free(unsafe.Pointer(cstr))
 	return GtkFileChooser(C.nux_gtk_file_chooser_dialog_new(cstr, (*C.GtkWindow)(unsafe.Pointer(parent)), C.GtkFileChooserAction(action)))
@@ -98,6 +98,14 @@ func (me GtkFileChooser) SetDoOverwriteConfirmation(enable bool) {
 	C.gtk_file_chooser_set_do_overwrite_confirmation((*C.GtkFileChooser)(unsafe.Pointer(me)), b)
 }
 
+func (me GtkFileChooser) SetFilter(filter GtkFileFilter) {
+	C.gtk_file_chooser_set_filter((*C.GtkFileChooser)(unsafe.Pointer(me)), (*C.GtkFileFilter)(unsafe.Pointer(filter)))
+}
+
+func (me GtkFileChooser) AddFilter(filter GtkFileFilter) {
+	C.gtk_file_chooser_add_filter((*C.GtkFileChooser)(unsafe.Pointer(me)), (*C.GtkFileFilter)(unsafe.Pointer(filter)))
+}
+
 func (me GtkFileChooser) Close() {
 	GtkWidget(me).Destroy()
 	/* The Destroy call itself isn't enough to remove the dialog from the screen; apparently
@@ -112,4 +120,20 @@ func (me GtkFileChooser) Close() {
 
 func (me GtkWidget) Destroy() {
 	C.gtk_widget_destroy((*C.GtkWidget)(unsafe.Pointer(me)))
+}
+
+func FileFilterNew() GtkFileFilter {
+	return GtkFileFilter(C.gpointer(C.gtk_file_filter_new()))
+}
+
+func (me GtkFileFilter) SetName(name string) {
+	cstr := C.CString(name)
+	defer C.free(unsafe.Pointer(cstr))
+	C.gtk_file_filter_set_name((*C.GtkFileFilter)(unsafe.Pointer(me)), cstr)
+}
+
+func (me GtkFileFilter) AddPattern(pattern string) {
+	cstr := C.CString(pattern)
+	defer C.free(unsafe.Pointer(cstr))
+	C.gtk_file_filter_add_pattern((*C.GtkFileFilter)(unsafe.Pointer(me)), cstr)
 }

@@ -40,9 +40,9 @@ func showPickFileDialog(dialog *pickFileDialog) (ok bool, paths []string) {
 	}
 
 	// add filters
-	if len(dialog.filters) > 0 {
-		types := []darwin.UTType{}
-		for _, ext := range dialog.filters {
+	types := []darwin.UTType{}
+	for _, filters := range dialog.filters {
+		for _, ext := range filters {
 			if ext != "" {
 				uttype := darwin.UTTypeWithFilenameExtension(ext)
 				if !uttype.IsNil() {
@@ -50,8 +50,8 @@ func showPickFileDialog(dialog *pickFileDialog) (ok bool, paths []string) {
 				}
 			}
 		}
-		p.SetAllowedContentTypes(types)
 	}
+	p.SetAllowedContentTypes(types)
 
 	ok = p.RunModal() == darwin.NSModalResponseOK
 	for _, url := range p.URLs() {
