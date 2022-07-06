@@ -7,17 +7,19 @@
 package win32
 
 import (
+	"nuxui.org/nuxui/nux/internal/win32/com"
 	"syscall"
 	"unsafe"
 )
 
 var (
-	modeshell32                    = syscall.NewLazyDLL("shell32.dll")
-	procSHBrowseForFolderW         = modeshell32.NewProc("SHBrowseForFolderW")
-	procShellExecuteW              = modeshell32.NewProc("ShellExecuteW")
-	procILCreateFromPathW          = modeshell32.NewProc("ILCreateFromPathW")
-	procILFree                     = modeshell32.NewProc("ILFree")
-	procSHOpenFolderAndSelectItems = modeshell32.NewProc("SHOpenFolderAndSelectItems")
+	modeshell32                     = syscall.NewLazyDLL("shell32.dll")
+	procSHBrowseForFolderW          = modeshell32.NewProc("SHBrowseForFolderW")
+	procShellExecuteW               = modeshell32.NewProc("ShellExecuteW")
+	procILCreateFromPathW           = modeshell32.NewProc("ILCreateFromPathW")
+	procILFree                      = modeshell32.NewProc("ILFree")
+	procSHOpenFolderAndSelectItems  = modeshell32.NewProc("SHOpenFolderAndSelectItems")
+	procSHCreateItemFromParsingName = modeshell32.NewProc("SHCreateItemFromParsingName")
 )
 
 // https://docs.microsoft.com/en-us/windows/win32/api/shlobj_core/nf-shlobj_core-shbrowseforfolderw
@@ -75,6 +77,25 @@ func SHOpenFolderAndSelectItems(dir *ITEMIDLIST, count uint32, childArray []*ITE
 		uintptr(flags))
 	if ret == 0 {
 		err = nil
+	}
+	return err
+}
+
+// https://docs.microsoft.com/en-us/windows/win32/api/shobjidl_core/nf-shobjidl_core-shcreateitemfromparsingname
+func SHCreateItemFromParsingName(name string, pbc *com.IBindCtx, iid *com.GUID, object unsafe.Pointer) error {
+	pszPath, err := syscall.UTF16PtrFromString(name)
+	if err != nil {
+		return err
+	}
+
+	ret, _, err := procSHCreateItemFromParsingName.Call(
+		uintptr(unsafe.Pointer(pszPath)),
+		uintptr(unsafe.Pointer(pbc)),
+		uintptr(unsafe.Pointer(iid)),
+		uintptr(unsafe.Pointer(object)))
+
+	if ret == 0 {
+		return nil
 	}
 	return err
 }

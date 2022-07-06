@@ -111,6 +111,30 @@ func (me *IFileDialog) GetResult() (*IShellItem, error) {
 	return nil, err
 }
 
+func (me *IFileDialog) SetDefaultFolder(item *IShellItem) error {
+	vtbl := (*IFileDialogVtbl)(unsafe.Pointer(me.Vtbl))
+	_, _, err := syscall.Syscall(vtbl.SetDefaultFolder, 2,
+		uintptr(unsafe.Pointer(me)),
+		uintptr(unsafe.Pointer(item)),
+		0)
+	if err == 0 {
+		return nil
+	}
+	return err
+}
+
+func (me *IFileDialog) SetFolder(item *IShellItem) error {
+	vtbl := (*IFileDialogVtbl)(unsafe.Pointer(me.Vtbl))
+	_, _, err := syscall.Syscall(vtbl.SetFolder, 2,
+		uintptr(unsafe.Pointer(me)),
+		uintptr(unsafe.Pointer(item)),
+		0)
+	if err == 0 {
+		return nil
+	}
+	return err
+}
+
 type IFileOpenDialog struct {
 	IFileDialog
 }

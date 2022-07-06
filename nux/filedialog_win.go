@@ -93,6 +93,17 @@ func showPickFolderPanel(dialog *pickFileDialog) (ok bool, paths []string) {
 	}
 	defer fileOpenDialog.Release()
 
+	if dialog.directory != "" {
+		var item *com.IShellItem
+		err := win32.SHCreateItemFromParsingName(dialog.directory, nil, &com.IID_IShellItem, unsafe.Pointer(&item))
+		if err != nil {
+			log.E("nuxui", "error call SHCreateItemFromParsingName %s", err.Error())
+			return false, nil
+		}
+		defer item.Release()
+		fileOpenDialog.SetFolder(item)
+	}
+
 	options, err := fileOpenDialog.GetOptions()
 	if err != nil {
 		log.E("nuxui", "error call GetOptions %s", err.Error())
@@ -233,20 +244,6 @@ func showPickJustFileDialog(dialog *pickFileDialog) (ok bool, paths []string) {
 	}
 
 	return ok, paths
-}
-
-func showPickFileDialog_deprecated(dialog *pickFileDialog) (ok bool, paths []string) {
-
-	var info win32.BROWSEINFO
-	info.Owner = theApp.MainWindow().native().hwnd
-	info.Flags = win32.BIF_RETURNONLYFSDIRS
-
-	_, err := win32.SHBrowseForFolder(&info)
-	if err != nil {
-		log.E("nuxui", "call SHBrowseForFolder error %s", err.Error())
-	}
-
-	return false, []string{}
 }
 
 func showSaveFileDialog(dialog *saveFileDialog) (ok bool, saveName string) {
