@@ -9,7 +9,6 @@ import (
 
 	"nuxui.org/nuxui/log"
 	"nuxui.org/nuxui/nux/internal/darwin"
-
 )
 
 func TestLog(t *testing.T) {

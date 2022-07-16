@@ -40,7 +40,7 @@ func NewImageDrawable(attr nux.Attr) ImageDrawable {
 		}
 	} else {
 		if src := attr.GetString("src", ""); src != "" {
-			me.image = nux.CreateImage(src)
+			me.image, _ = nux.CreateImage(src)
 		}
 	}
 
@@ -74,7 +74,7 @@ func (me *imageDrawable) applyState() {
 			case nux.Image:
 				me.image = t
 			case string:
-				me.image = nux.CreateImage(t)
+				me.image, _ = nux.CreateImage(t)
 				me.states[me.state] = me.image
 			default:
 				log.Fatal("nuxui", "unknow image of %T:%s", t, t)
@@ -103,7 +103,7 @@ func (me *imageDrawable) State() uint32 {
 
 func (me *imageDrawable) Size() (width, height int32) {
 	if me.image != nil {
-		return me.image.Size()
+		return me.image.PixelSize()
 	}
 	return 0, 0
 }

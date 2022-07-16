@@ -46,10 +46,14 @@ const (
 type CGPoint C.CGPoint
 type CGSize C.CGSize
 type CGRect C.CGRect
-type CGPath C.CGPathRef
-type CGMutablePath C.CGMutablePathRef
-type CGContext C.CGContextRef
 type CGAffineTransform C.CGAffineTransform
+
+// typedef struct CF_BRIDGED_TYPE(id) CGPath *CGMutablePathRef;
+// typedef const struct CF_BRIDGED_TYPE(id) CGPath *CGPathRef;
+// /Library/Developer/CommandLineTools/SDKs/MacOSX11.3.sdk/System/Library/Frameworks/CoreGraphics.framework/Versions/A/Headers/CGPath.h
+type CGPathRef C.CGPathRef
+type CGMutablePathRef C.CGMutablePathRef
+type CGContextRef C.CGContextRef
 type CGImage C.CGImageRef
 type CGColor C.CGColorRef
 

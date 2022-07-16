@@ -16,7 +16,7 @@ import (
 
 func CreateImage(path string) Image {
 	path, _ = filepath.Abs(path)
-	ext := strings.ToLowerSpecial(unicode.TurkishCase, filepath.Ext(path))
+	ext := strings.ToLower(filepath.Ext(path))
 
 	var img *nativeImage
 	switch ext {

@@ -6,8 +6,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build android
-// +build arm 386 amd64 arm64
+//go:build android && (arm || 386 || amd64 || arm64)
 
 // Package callfn provides an android entry point.
 //

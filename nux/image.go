@@ -4,6 +4,36 @@
 
 package nux
 
+import (
+	"os"
+	"path/filepath"
+	"strings"
+)
+
 type Image interface {
-	Size() (width, height int32)
+	PixelSize() (width, height int32)
+	Draw(canvas Canvas)
+}
+
+func CreateImage(filename string) (Image, error) {
+	_, err := os.Stat(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	filename, err = filepath.Abs(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	ext := strings.ToLower(filepath.Ext(filename))
+
+	switch ext {
+	case ".svg":
+		return NewImageSVGFromFile(filename), nil
+	case ".png", ".jpg", ".jpeg":
+		return createImage(filename), nil
+	}
+
+	return nil, nil
 }

@@ -35,7 +35,7 @@ type Canvas interface {
 	DrawRoundRect(x, y, width, height float32, rLT, rRT, rRB, rLB float32, paint Paint)
 	DrawArc(x, y, radius, startAngle, endAngle float32, useCenter bool, paint Paint)
 	DrawOval(x, y, width, height float32, paint Paint)
-	DrawPath(path Path)
+	DrawPath(path Path, paint Paint)
 	// DrawColor(color Color)
 	DrawImage(img Image)
 	// DrawText(text string, width, height float32, paint Paint)

@@ -149,6 +149,10 @@ var (
 	procGdipAddPathArcI                       = modgdiplus.NewProc("GdipAddPathArcI")
 	procGdipAddPathLine                       = modgdiplus.NewProc("GdipAddPathLine")
 	procGdipAddPathLineI                      = modgdiplus.NewProc("GdipAddPathLineI")
+	procGdipAddPathEllipse                    = modgdiplus.NewProc("GdipAddPathEllipse")
+	procGdipAddPathEllipseI                   = modgdiplus.NewProc("GdipAddPathEllipseI")
+	procGdipAddPathRectangle                  = modgdiplus.NewProc("GdipAddPathRectangle")
+	procGdipAddPathBezier                     = modgdiplus.NewProc("GdipAddPathBezier")
 	procGdipClosePathFigure                   = modgdiplus.NewProc("GdipClosePathFigure")
 	procGdipClosePathFigures                  = modgdiplus.NewProc("GdipClosePathFigures")
 	procGdipGetGenericFontFamilySerif         = modgdiplus.NewProc("GdipGetGenericFontFamilySerif")
@@ -1167,6 +1171,54 @@ func GdipAddPathLineI(path *GpPath, x1, y1, x2, y2 int32) GpStatus {
 		uintptr(y1),
 		uintptr(x2),
 		uintptr(y2))
+	return GpStatus(ret)
+}
+
+func GdipAddPathEllipseI(path *GpPath, x, y, width, height int32) GpStatus {
+	ret, _, _ := procGdipAddPathEllipseI.Call(
+		uintptr(unsafe.Pointer(path)),
+		uintptr(x),
+		uintptr(y),
+		uintptr(width),
+		uintptr(height),
+	)
+	return GpStatus(ret)
+}
+
+func GdipAddPathEllipse(path *GpPath, x, y, width, height float32) GpStatus {
+	ret, _, _ := procGdipAddPathEllipse.Call(
+		uintptr(unsafe.Pointer(path)),
+		uintptr(math.Float32bits(x)),
+		uintptr(math.Float32bits(y)),
+		uintptr(math.Float32bits(width)),
+		uintptr(math.Float32bits(height)),
+	)
+	return GpStatus(ret)
+}
+
+func GdipAddPathRectangle(path *GpPath, x, y, width, height float32) GpStatus {
+	ret, _, _ := procGdipAddPathRectangle.Call(
+		uintptr(unsafe.Pointer(path)),
+		uintptr(math.Float32bits(x)),
+		uintptr(math.Float32bits(y)),
+		uintptr(math.Float32bits(width)),
+		uintptr(math.Float32bits(height)),
+	)
+	return GpStatus(ret)
+}
+
+func GdipAddPathBezier(path *GpPath, x1, y1, x2, y2, x3, y3, x4, y4 float32) GpStatus {
+	ret, _, _ := procGdipAddPathBezier.Call(
+		uintptr(unsafe.Pointer(path)),
+		uintptr(math.Float32bits(x1)),
+		uintptr(math.Float32bits(y1)),
+		uintptr(math.Float32bits(x2)),
+		uintptr(math.Float32bits(y2)),
+		uintptr(math.Float32bits(x3)),
+		uintptr(math.Float32bits(y3)),
+		uintptr(math.Float32bits(x4)),
+		uintptr(math.Float32bits(y4)),
+	)
 	return GpStatus(ret)
 }
 

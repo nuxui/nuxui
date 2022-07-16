@@ -23,7 +23,7 @@ import (
 	"unsafe"
 )
 
-func CreateImage(path string) Image {
+func createImage(path string) Image {
 	path, _ = filepath.Abs(path)
 	cpath := C.CString(path)
 	defer C.free(unsafe.Pointer(cpath))

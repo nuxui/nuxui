@@ -11,10 +11,10 @@ import (
 )
 
 type canvas struct {
-	ctx darwin.CGContext
+	ctx darwin.CGContextRef
 }
 
-func newCanvas(ctx darwin.CGContext) *canvas {
+func newCanvas(ctx darwin.CGContextRef) *canvas {
 	return &canvas{
 		ctx: ctx,
 	}
@@ -138,7 +138,7 @@ func (me *canvas) DrawRoundRect(x, y, width, height, rLT, rRT, rRB, rLB float32,
 	path := darwin.CGPathCreateMutable()
 	darwin.CGPathAddRoundRectPath(path, x, y, width, height, rLT, rRT, rRB, rLB)
 	darwin.CGPathCloseSubpath(path)
-	darwin.CGContextAddPath(me.ctx, darwin.CGPath(path))
+	darwin.CGContextAddPath(me.ctx, darwin.CGPathRef(path))
 	darwin.CGContextSetLineWidth(me.ctx, paint.Width())
 
 	hasShadow := false
@@ -162,7 +162,7 @@ func (me *canvas) DrawRoundRect(x, y, width, height, rLT, rRT, rRB, rLB float32,
 		darwin.CGContextSetRGBStrokeColor(me.ctx, r, g, b, a)
 		darwin.CGContextStrokePath(me.ctx)
 	}
-	darwin.CGPathRelease(darwin.CGPath(path))
+	darwin.CGPathRelease(darwin.CGPathRef(path))
 
 	if hasShadow {
 		me.Restore()
@@ -184,19 +184,46 @@ func (me *canvas) DrawArc(x, y, radius, startAngle, endAngle float32, useCenter 
 		clockwise = 1
 	}
 	darwin.CGContextAddArc(me.ctx, x, y, radius, startAngle, endAngle, clockwise)
+
+	switch paint.Style() {
+	case PaintStyle_Fill:
+		darwin.CGContextSetRGBFillColor(me.ctx, r, g, b, a)
+		darwin.CGContextFillPath(me.ctx)
+	case PaintStyle_Stroke:
+		darwin.CGContextSetRGBStrokeColor(me.ctx, r, g, b, a)
+		darwin.CGContextStrokePath(me.ctx)
+	case PaintStyle_Both:
+		darwin.CGContextSetRGBFillColor(me.ctx, r, g, b, a)
+		darwin.CGContextFillPath(me.ctx)
+		darwin.CGContextSetRGBStrokeColor(me.ctx, r, g, b, a)
+		darwin.CGContextStrokePath(me.ctx)
+	}
 }
 
 func (me *canvas) DrawOval(x, y, width, height float32, paint Paint) {
 	darwin.CGContextFillEllipseInRect(me.ctx, darwin.CGRectMake(x, y, width, height))
 }
 
-func (me *canvas) DrawPath(path Path) {
-	// TODO::
+func (me *canvas) DrawPath(path Path, paint Paint) {
+	darwin.CGContextAddPath(me.ctx, darwin.CGPathRef(path.native().ptr))
+	r, g, b, a := paint.Color().RGBAf()
+	switch paint.Style() {
+	case PaintStyle_Fill:
+		darwin.CGContextSetRGBFillColor(me.ctx, r, g, b, a)
+		darwin.CGContextFillPath(me.ctx)
+	case PaintStyle_Stroke:
+		darwin.CGContextSetRGBStrokeColor(me.ctx, r, g, b, a)
+		darwin.CGContextStrokePath(me.ctx)
+	case PaintStyle_Both:
+		darwin.CGContextSetRGBFillColor(me.ctx, r, g, b, a)
+		darwin.CGContextFillPath(me.ctx)
+		darwin.CGContextSetRGBStrokeColor(me.ctx, r, g, b, a)
+		darwin.CGContextStrokePath(me.ctx)
+	}
 }
 
 func (me *canvas) DrawImage(img Image) {
-	w, h := img.Size()
-	darwin.CGContextDrawImage(me.ctx, darwin.CGRectMake(0, 0, float32(w), float32(h)), img.(*nativeImage).ref)
+	img.Draw(me)
 }
 
 func (me *canvas) Flush() {

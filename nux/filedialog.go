@@ -22,14 +22,8 @@ func ViewFileDialog() *viewFileDialog {
 }
 
 type viewFileDialog struct {
-	title           string
 	directory       string
 	activeFileNames []string
-}
-
-func (me *viewFileDialog) SetTitle(title string) *viewFileDialog {
-	me.title = title
-	return me
 }
 
 func (me *viewFileDialog) SetDirectory(directory string) *viewFileDialog {
@@ -80,9 +74,9 @@ func PickFileDialog() *pickFileDialog {
 	return &pickFileDialog{}
 }
 
-// pick single || mlti,  files, folders, files and folders
+// pick single or multi files, folders
+// both pick files and folders can not implement at windows and linux
 type pickFileDialog struct {
-	title                   string
 	directory               string
 	filters                 map[string][]string
 	allowsChooseFiles       bool
@@ -92,7 +86,6 @@ type pickFileDialog struct {
 }
 
 func (me *pickFileDialog) SetDirectory(directory string) *pickFileDialog {
-	// check dir
 	me.directory = directory
 	return me
 }

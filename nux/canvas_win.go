@@ -131,10 +131,13 @@ func (me *canvas) DrawRoundRect(x, y, width, height float32, rLT, rRT, rRB, rLB 
 	}
 
 	var path *win32.GpPath
+
+	// TODO:: use paint smooth
 	var lastSmoothingMode win32.GpSmoothingMode
 	win32.GdipGetSmoothingMode(me.ptr, &lastSmoothingMode)
 	win32.GdipSetSmoothingMode(me.ptr, win32.SmoothingModeAntiAlias)
 
+	// TODO:: if r=0, use line
 	win32.GdipCreatePath(win32.FillModeAlternate, &path)
 	win32.GdipAddPathArc(path, x+width-rRT-rRT, y, rRT+rRT, rRT+rRT, -90, 90)
 	win32.GdipAddPathArc(path, x+width-rRB-rRB, y+height-rRB-rRB, rRB+rRB, rRB+rRB, 0, 90)
@@ -142,6 +145,7 @@ func (me *canvas) DrawRoundRect(x, y, width, height float32, rLT, rRT, rRB, rLB 
 	win32.GdipAddPathArc(path, x, y, rLT+rLT, rLT+rLT, 180, 90)
 	win32.GdipClosePathFigure(path)
 
+	// TODO:: use native paint
 	if paint.Style()&PaintStyle_Stroke == PaintStyle_Stroke {
 		win32.GdipSetPenColor(me.pen, win32.ARGB(paint.Color().ARGB()))
 		win32.GdipSetPenWidth(me.pen, paint.Width())
@@ -163,13 +167,22 @@ func (me *canvas) DrawArc(x, y, radius, startAngle, endAngle float32, useCenter 
 func (me *canvas) DrawOval(x, y, width, height float32, paint Paint) {
 }
 
-func (me *canvas) DrawPath(path Path) {
-	// TODO::
+func (me *canvas) DrawPath(path Path, paint Paint) {
+	win32.GdipSetSmoothingMode(me.ptr, win32.SmoothingModeHighQuality)
+
+	if paint.Style()&PaintStyle_Stroke == PaintStyle_Stroke {
+		win32.GdipSetPenColor(me.pen, win32.ARGB(paint.Color().ARGB()))
+		win32.GdipSetPenWidth(me.pen, paint.Width())
+		win32.GdipDrawPath(me.ptr, me.pen, path.native().ptr)
+	}
+	if paint.Style()&PaintStyle_Fill == PaintStyle_Fill {
+		win32.GdipSetSolidFillColor(me.brush, win32.ARGB(paint.Color().ARGB()))
+		win32.GdipFillPath(me.ptr, me.brush, path.native().ptr)
+	}
 }
 
 func (me *canvas) DrawImage(img Image) {
-	w, h := img.Size()
-	win32.GdipDrawImageRect(me.ptr, img.(*nativeImage).ptr, 0, 0, float32(w), float32(h))
+	img.Draw(me)
 }
 
 func (me *canvas) Flush() {

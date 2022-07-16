@@ -14,7 +14,7 @@ import (
 	"nuxui.org/nuxui/nux/internal/win32"
 )
 
-func CreateImage(path string) Image {
+func createImage(path string) Image {
 	path, _ = filepath.Abs(path)
 	me := &nativeImage{}
 	str, _ := syscall.UTF16PtrFromString(path)
@@ -31,7 +31,7 @@ type nativeImage struct {
 	ptr *win32.GpImage
 }
 
-func (me *nativeImage) Size() (width, height int32) {
+func (me *nativeImage) PixelSize() (width, height int32) {
 	if me.ptr == nil {
 		return 0, 0
 	}
@@ -39,4 +39,9 @@ func (me *nativeImage) Size() (width, height int32) {
 	win32.GdipGetImageWidth(me.ptr, &w)
 	win32.GdipGetImageHeight(me.ptr, &h)
 	return int32(w), int32(h)
+}
+
+func (me *nativeImage) Draw(canvas Canvas) {
+	w, h := me.PixelSize()
+	win32.GdipDrawImageRect(canvas.native().ptr, me.ptr, 0, 0, float32(w), float32(h))
 }

@@ -84,12 +84,12 @@ func (me Attr) GetBool(key string, defaultValue bool) bool {
 	if attr, ok := me[key]; ok {
 		switch t := attr.(type) {
 		case string:
-			if t == "true" {
-				return true
-			} else if t == "false" {
-				return false
+			b, e := strconv.ParseBool(t)
+			if e != nil {
+				log.E("nuxui", "unsupport convert %s %T:%s to bool, use default value instead", key, t, t)
+				return defaultValue
 			}
-			log.E("nuxui", "unsupport convert %s %T:%s to bool, use default value instead", key, t, t)
+			return b
 		case bool:
 			return t
 		default:
@@ -151,7 +151,7 @@ func (me Attr) GetUint32(key string, defaultValue uint32) (result uint32) {
 	if attr, ok := me[key]; ok {
 		switch t := attr.(type) {
 		case string:
-			v, e := strconv.ParseFloat(t, 64)
+			v, e := strconv.ParseUint(t, 10, 32)
 			if e != nil {
 				log.E("nuxui", "cannot convert %s %T:%s to uint32, use default value instead", key, t, t)
 				result = defaultValue
@@ -181,7 +181,7 @@ func (me Attr) GetInt32(key string, defaultValue int32) int32 {
 	if attr, ok := me[key]; ok {
 		switch t := attr.(type) {
 		case string:
-			v, e := strconv.ParseFloat(t, 64)
+			v, e := strconv.ParseInt(t, 10, 32)
 			if e != nil {
 				log.E("nuxui", "cannot convert %s %T:%s to int32, use default value instead", key, t, t)
 				return defaultValue
@@ -208,7 +208,7 @@ func (me Attr) GetInt(key string, defaultValue int) int {
 	if attr, ok := me[key]; ok {
 		switch t := attr.(type) {
 		case string:
-			v, e := strconv.ParseFloat(t, 64)
+			v, e := strconv.ParseInt(t, 10, 32)
 			if e != nil {
 				log.E("nuxui", "cannot convert %s %T:%s to int32, use default value instead", key, t, t)
 				return defaultValue
@@ -235,7 +235,7 @@ func (me Attr) GetInt64(key string, defaultValue int64) int64 {
 	if attr, ok := me[key]; ok {
 		switch t := attr.(type) {
 		case string:
-			v, e := strconv.ParseFloat(t, 64)
+			v, e := strconv.ParseInt(t, 10, 64)
 			if e != nil {
 				log.E("nuxui", "cannot convert %s %T:%s to int64, use default value instead", key, t, t)
 				return defaultValue
@@ -263,7 +263,7 @@ func (me Attr) GetFloat32(key string, defaultValue float32) float32 {
 	if attr, ok := me[key]; ok {
 		switch t := attr.(type) {
 		case string:
-			v, e := strconv.ParseFloat(t, 64)
+			v, e := strconv.ParseFloat(t, 32)
 			if e != nil {
 				log.E("nuxui", "cannot convert %s %T:%s to float32, use default value instead", key, t, t)
 				return defaultValue

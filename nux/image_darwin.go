@@ -11,22 +11,27 @@ import (
 	"runtime"
 )
 
-func CreateImage(filename string) Image {
+func createImage(filename string) Image {
 	me := &nativeImage{
-		ref: darwin.CGImageSourceCreateImageAtIndex(filename),
+		ptr: darwin.CGImageSourceCreateImageAtIndex(filename),
 	}
 	runtime.SetFinalizer(me, freeImage)
 	return me
 }
 
 func freeImage(img *nativeImage) {
-	darwin.CGImageRelease(img.ref)
+	darwin.CGImageRelease(img.ptr)
 }
 
 type nativeImage struct {
-	ref darwin.CGImage
+	ptr darwin.CGImage
 }
 
-func (me *nativeImage) Size() (width, height int32) {
-	return darwin.CGImageGetSize(me.ref)
+func (me *nativeImage) PixelSize() (width, height int32) {
+	return darwin.CGImageGetSize(me.ptr)
+}
+
+func (me *nativeImage) Draw(canvas Canvas) {
+	w, h := me.PixelSize()
+	darwin.CGContextDrawImage(canvas.native().ctx, darwin.CGRectMake(0, 0, float32(w), float32(h)), me.ptr)
 }

@@ -5,12 +5,21 @@
 package nux
 
 type Path interface {
-	AddRoundRect(left, top, right, bottom, rx, ry float32)
-	// AddArc(left, top, right, bottom, startAngle, sweepAngle float32)
-	// MoveTo(x, y float32)
-	// LineTo(x, y float32)
-	// Close()
+	Rect(x, y, width, height float32)
+	RoundRect(x, y, width, height, rx, ry float32)
+	Ellipse(cx, cy, rx, ry float32)
+	MoveTo(x, y float32)
+	LineTo(x, y float32)
+	CurveTo(x1, y1, x2, y2, x3, y3 float32)
+	CurveToV(x2, y2, x3, y3 float32)
+	Close()
+
+	native() *path
 }
 
 type Gradient interface {
+}
+
+func NewPath() Path {
+	return newPath()
 }
