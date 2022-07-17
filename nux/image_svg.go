@@ -16,15 +16,23 @@ import (
 	"nuxui.org/nuxui/log"
 )
 
+func NewImageSVG(svgstr string) Image {
+	return NewImageSVGFromReader(strings.NewReader(svgstr))
+}
+
 func NewImageSVGFromFile(fileName string) Image {
 	data, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		log.Fatal("nuxui", "%s", err.Error())
 	}
 
+	return NewImageSVGFromReader(bytes.NewReader(data))
+}
+
+func NewImageSVGFromReader(reader io.Reader) Image {
 	svg := &imageSvg{}
 
-	decoder := xml.NewDecoder(bytes.NewReader(data))
+	decoder := xml.NewDecoder(reader)
 	for {
 		t, err := decoder.Token()
 		if err != nil {
@@ -502,8 +510,10 @@ func (me *imageSvg) PixelSize() (width, height int32) {
 }
 
 func (me *imageSvg) Draw(canvas Canvas) {
+	canvas.Save()
 	canvas.Scale(me.width/me.viewBox.Width, me.height/me.viewBox.Height)
 	for _, p := range me.paths {
 		canvas.DrawPath(p.path, p.paint)
 	}
+	canvas.Restore()
 }

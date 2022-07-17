@@ -11,10 +11,9 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"unicode"
 )
 
-func CreateImage(path string) Image {
+func createImage(path string) Image {
 	path, _ = filepath.Abs(path)
 	ext := strings.ToLower(filepath.Ext(path))
 
@@ -22,10 +21,6 @@ func CreateImage(path string) Image {
 	switch ext {
 	case ".png":
 		img = &nativeImage{ptr: cairo.ImageSurfaceCreateFromPNG(path)}
-	case ".svg":
-		img = &nativeImage{ptr: cairo.SVGSurfaceCreate(path, 400, 400)}
-		cairo.SVGSurfaceSetDocumentUnit(img.ptr, cairo.CAIRO_SVG_UNIT_PX)
-		return img
 	case ".jpg", ".jpeg":
 		img = &nativeImage{ptr: cairo.ImageSurfaceCreateFromJPEG(path)}
 	}
@@ -42,9 +37,14 @@ type nativeImage struct {
 	ptr *cairo.Surface
 }
 
-func (me *nativeImage) Size() (width, height int32) {
+func (me *nativeImage) PixelSize() (width, height int32) {
 	if me.ptr == nil {
 		return 0, 0
 	}
 	return cairo.ImageSurfaceGetWidth(me.ptr), cairo.ImageSurfaceGetHeight(me.ptr)
+}
+
+func (me *nativeImage) Draw(canvas Canvas) {
+	canvas.native().cairo.SetSourceSurface(me.ptr, 0, 0)
+	canvas.native().cairo.Paint()
 }

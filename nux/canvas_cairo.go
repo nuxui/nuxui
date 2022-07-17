@@ -153,10 +153,6 @@ func (me *canvas) DrawOval(x, y, width, height float32, paint Paint) {
 	me.cairo.Restore()
 }
 
-func (me *canvas) DrawPath(path Path) {
-	// TODO::
-}
-
 func (me *canvas) drawPaint(paint Paint) {
 	r, g, b, a := paint.Color().RGBAf()
 	// C.cairo_fill_preserve(me.ptr)
@@ -179,9 +175,16 @@ func (me *canvas) DrawColor(color Color) {
 	me.cairo.Paint()
 }
 
+func (me *canvas) DrawPath(path Path, paint Paint) {
+	me.cairo.NewPath()
+	copy := path.native().cairo.CopyPath()
+	me.cairo.AppendPath(copy)
+	copy.Destroy()
+	me.drawPaint(paint)
+}
+
 func (me *canvas) DrawImage(img Image) {
-	me.cairo.SetSourceSurface(img.(*nativeImage).ptr, 0, 0)
-	me.cairo.Paint()
+	img.Draw(me)
 }
 
 func (me *canvas) DrawText(text string, width, height float32, paint Paint) {
