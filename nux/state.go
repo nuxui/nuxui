@@ -7,10 +7,56 @@ package nux
 import "nuxui.org/nuxui/log"
 
 type Stateable interface {
-	AddState(state uint32)
-	DelState(state uint32)
+	AddState(state uint32) (changed bool)
+	DelState(state uint32) (changed bool)
 	State() uint32
 	HasState() bool
+}
+
+func NewStateBase(stateChanged func()) *StateBase {
+	return &StateBase{
+		state:        State_Default,
+		stateChanged: stateChanged,
+	}
+}
+
+type StateBase struct {
+	state        uint32
+	stateChanged func()
+}
+
+func (me *StateBase) AddState(state uint32) bool {
+	s := me.state
+	s |= state
+	if me.state != s {
+		me.state = s
+		if me.stateChanged != nil {
+			me.stateChanged()
+		}
+		return true
+	}
+	return false
+}
+
+func (me *StateBase) DelState(state uint32) bool {
+	s := me.state
+	s &= ^state
+	if me.state != s {
+		me.state = s
+		if me.stateChanged != nil {
+			me.stateChanged()
+		}
+		return true
+	}
+	return false
+}
+
+func (me *StateBase) State() uint32 {
+	return me.state
+}
+
+func (me *StateBase) HasState() bool {
+	return false
 }
 
 const (

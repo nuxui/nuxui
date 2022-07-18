@@ -49,6 +49,10 @@ func NewCheck(attr nux.Attr) Check {
 		label:    NewLabel(nux.MergeAttrs(myattr, attr)).(*label),
 	}
 
+	if me.checked {
+		me.doCheckedChanged(false)
+	}
+
 	return me
 }
 

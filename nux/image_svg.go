@@ -16,20 +16,20 @@ import (
 	"nuxui.org/nuxui/log"
 )
 
-func NewImageSVG(svgstr string) Image {
-	return NewImageSVGFromReader(strings.NewReader(svgstr))
+func ReadImageSVG(svgstr string) Image {
+	return LoadImageSVGFromReader(strings.NewReader(svgstr))
 }
 
-func NewImageSVGFromFile(fileName string) Image {
+func LoadImageSVGFromFile(fileName string) Image {
 	data, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		log.Fatal("nuxui", "%s", err.Error())
 	}
 
-	return NewImageSVGFromReader(bytes.NewReader(data))
+	return LoadImageSVGFromReader(bytes.NewReader(data))
 }
 
-func NewImageSVGFromReader(reader io.Reader) Image {
+func LoadImageSVGFromReader(reader io.Reader) Image {
 	svg := &imageSvg{}
 
 	decoder := xml.NewDecoder(reader)
@@ -168,6 +168,9 @@ func (me *imageSvg) parsePath(str string) (Path, error) {
 
 	for pp.pos < pp.len {
 		pp.skipBlank()
+		if pp.pos >= pp.len {
+			break
+		}
 
 		preCmd = cmd
 

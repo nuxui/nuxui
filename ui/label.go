@@ -150,6 +150,7 @@ func (me *label) onTapDown(detail nux.GestureDetail) {
 		}
 		changed = changed || me.addIconState(me.iconLeft) || me.addIconState(me.iconTop) || me.addIconState(me.iconRight) || me.addIconState(me.iconBottom)
 	}
+
 	if changed {
 		nux.RequestRedraw(me)
 	}

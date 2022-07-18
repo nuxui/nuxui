@@ -11,7 +11,7 @@ import (
 	"runtime"
 )
 
-func createImage(filename string) Image {
+func loadImageFromFile(filename string) Image {
 	me := &nativeImage{
 		ptr: darwin.CGImageSourceCreateImageAtIndex(filename),
 	}

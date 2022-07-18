@@ -10,7 +10,7 @@ package nux
 #import <QuartzCore/QuartzCore.h>
 #import <UIKit/UIKit.h>
 
-CGImageRef createImage(char* name){
+CGImageRef nux_loadImageFromFile(char* name){
 	UIImage *loadImage = [UIImage imageNamed:[NSString stringWithUTF8String:name]];
 	CGImageRef cgimage=loadImage.CGImage;
 	return cgimage;
@@ -23,13 +23,13 @@ import (
 	"unsafe"
 )
 
-func createImage(path string) Image {
+func loadImageFromFile(path string) Image {
 	path, _ = filepath.Abs(path)
 	cpath := C.CString(path)
 	defer C.free(unsafe.Pointer(cpath))
 
 	me := &nativeImage{
-		ptr: C.createImage(cpath),
+		ptr: C.nux_loadImageFromFile(cpath),
 	}
 	runtime.SetFinalizer(me, freeImage)
 	return me

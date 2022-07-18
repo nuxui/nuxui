@@ -22,8 +22,9 @@ func NewColorDrawable(attr nux.Attr) ColorDrawable {
 
 	me := &colorDrawable{
 		paint: nux.NewPaint(),
-		state: nux.State_Default,
 	}
+
+	me.StateBase = nux.NewStateBase(me.applyState)
 
 	if states := attr.GetAttrArray("states", nil); states != nil {
 		me.states = map[uint32]nux.Color{}
@@ -52,6 +53,8 @@ func NewColorDrawableWithColor(color nux.Color) ColorDrawable {
 }
 
 type colorDrawable struct {
+	*nux.StateBase
+
 	x      int32
 	y      int32
 	width  int32
@@ -63,32 +66,14 @@ type colorDrawable struct {
 
 func (me *colorDrawable) applyState() {
 	if me.states != nil {
-		if color, ok := me.states[me.state]; ok {
+		if color, ok := me.states[me.State()]; ok {
 			me.paint.SetColor(color)
 		}
 	}
 }
 
-func (me *colorDrawable) AddState(state uint32) {
-	s := me.state
-	s |= state
-	me.state = s
-	me.applyState()
-}
-
-func (me *colorDrawable) DelState(state uint32) {
-	s := me.state
-	s &= ^state
-	me.state = s
-	me.applyState()
-}
-
-func (me *colorDrawable) State() uint32 {
-	return me.state
-}
-
 func (me *colorDrawable) HasState() bool {
-	return !(me.states == nil || len(me.states) == 0 || (len(me.states) == 1 && me.state == nux.State_Default))
+	return !(me.states == nil || len(me.states) == 0 || (len(me.states) == 1 && me.State() == nux.State_Default))
 }
 
 func (me *colorDrawable) Size() (width, height int32) {

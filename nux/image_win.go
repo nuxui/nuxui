@@ -14,7 +14,7 @@ import (
 	"nuxui.org/nuxui/nux/internal/win32"
 )
 
-func createImage(path string) Image {
+func loadImageFromFile(path string) Image {
 	path, _ = filepath.Abs(path)
 	me := &nativeImage{}
 	str, _ := syscall.UTF16PtrFromString(path)

@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-func createImage(path string) Image {
+func loadImageFromFile(path string) Image {
 	path, _ = filepath.Abs(path)
 	ext := strings.ToLower(filepath.Ext(path))
 

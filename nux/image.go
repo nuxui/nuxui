@@ -15,7 +15,7 @@ type Image interface {
 	Draw(canvas Canvas)
 }
 
-func CreateImage(filename string) (Image, error) {
+func LoadImageFromFile(filename string) (Image, error) {
 	_, err := os.Stat(filename)
 	if err != nil {
 		return nil, err
@@ -30,9 +30,9 @@ func CreateImage(filename string) (Image, error) {
 
 	switch ext {
 	case ".svg":
-		return NewImageSVGFromFile(filename), nil
+		return LoadImageSVGFromFile(filename), nil
 	case ".png", ".jpg", ".jpeg":
-		return createImage(filename), nil
+		return loadImageFromFile(filename), nil
 	}
 
 	return nil, nil

@@ -13,16 +13,17 @@ type ImageDrawable interface {
 	nux.Drawable
 }
 
-// TODO:: if src exised, duplicate image
+// TODO:: if src exised, get cached image
 func NewImageDrawable(attr nux.Attr) ImageDrawable {
 	if attr == nil {
 		attr = nux.Attr{}
 	}
 
 	me := &imageDrawable{
-		state: nux.State_Default,
 		image: nil,
 	}
+
+	me.StateBase = nux.NewStateBase(me.applyState)
 
 	if states := attr.GetAttrArray("states", nil); states != nil {
 		me.states = map[uint32]any{}
@@ -40,7 +41,7 @@ func NewImageDrawable(attr nux.Attr) ImageDrawable {
 		}
 	} else {
 		if src := attr.GetString("src", ""); src != "" {
-			me.image, _ = nux.CreateImage(src)
+			me.image, _ = nux.LoadImageFromFile(src)
 		}
 	}
 
@@ -56,49 +57,36 @@ func NewImageDrawableWithResource(src string) ImageDrawable {
 }
 
 type imageDrawable struct {
+	*nux.StateBase
+
 	x      int32
 	y      int32
 	width  int32
 	height int32
 	image  nux.Image
 	states map[uint32]any
-	state  uint32
 	scaleX float32
 	scaleY float32
 }
 
 func (me *imageDrawable) applyState() {
 	if me.states != nil {
-		if i, ok := me.states[me.state]; ok {
+		if i, ok := me.states[me.State()]; ok {
 			switch t := i.(type) {
 			case nux.Image:
 				me.image = t
 			case string:
-				me.image, _ = nux.CreateImage(t)
-				me.states[me.state] = me.image
+				var err error
+				me.image, err = nux.LoadImageFromFile(t)
+				if err != nil {
+					log.Fatal("nuxui", "load image from file: %s", err.Error())
+				}
+				me.states[me.State()] = me.image
 			default:
 				log.Fatal("nuxui", "unknow image of %T:%s", t, t)
 			}
 		}
 	}
-}
-
-func (me *imageDrawable) AddState(state uint32) {
-	s := me.state
-	s |= state
-	me.state = s
-	me.applyState()
-}
-
-func (me *imageDrawable) DelState(state uint32) {
-	s := me.state
-	s &= ^state
-	me.state = s
-	me.applyState()
-}
-
-func (me *imageDrawable) State() uint32 {
-	return me.state
 }
 
 func (me *imageDrawable) Size() (width, height int32) {
@@ -109,7 +97,7 @@ func (me *imageDrawable) Size() (width, height int32) {
 }
 
 func (me *imageDrawable) HasState() bool {
-	return me.states == nil || len(me.states) == 0 || (len(me.states) == 1 && me.state == nux.State_Default)
+	return !(me.states == nil || len(me.states) == 0 || (len(me.states) == 1 && me.State() == nux.State_Default))
 }
 
 func (me *imageDrawable) SetBounds(x, y, width, height int32) {

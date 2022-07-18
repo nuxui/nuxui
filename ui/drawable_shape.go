@@ -52,9 +52,10 @@ func NewShapeDrawable(attr nux.Attr) ShapeDrawable {
 	}
 
 	me := &shapeDrawable{
-		state: nux.State_Default,
 		paint: nux.NewPaint(),
 	}
+
+	me.StateBase = nux.NewStateBase(me.applyState)
 
 	if states := attr.GetAttrArray("states", nil); states != nil {
 		me.states = map[uint32]*Shape{}
@@ -81,44 +82,46 @@ func NewShapeDrawable(attr nux.Attr) ShapeDrawable {
 }
 
 type shapeDrawable struct {
+	*nux.StateBase
+
 	x      int32
 	y      int32
 	width  int32
 	height int32
 	paint  nux.Paint
 	shape  *Shape
-	state  uint32
 	states map[uint32]*Shape
 }
 
 func (me *shapeDrawable) applyState() {
 	if me.states != nil {
-		if s, ok := me.states[me.state]; ok {
+		if s, ok := me.states[me.State()]; ok {
 			me.shape = s
 		}
 	}
 }
 
-func (me *shapeDrawable) AddState(state uint32) {
-	s := me.state
-	s |= state
-	me.state = s
-	me.applyState()
-}
+// func (me *shapeDrawable) AddState(state uint32) {
+// 	s := me.state
+// 	s |= state
+// 	me.state = s
+// 	log.I("nuxui", "AddState %X", me.state)
+// 	me.applyState()
+// }
 
-func (me *shapeDrawable) DelState(state uint32) {
-	s := me.state
-	s &= ^state
-	me.state = s
-	me.applyState()
-}
+// func (me *shapeDrawable) DelState(state uint32) {
+// 	s := me.state
+// 	s &= ^state
+// 	me.state = s
+// 	me.applyState()
+// }
 
-func (me *shapeDrawable) State() uint32 {
-	return me.state
-}
+// func (me *shapeDrawable) State() uint32 {
+// 	return me.state
+// }
 
 func (me *shapeDrawable) HasState() bool {
-	return me.states == nil || len(me.states) == 0 || (len(me.states) == 1 && me.state == nux.State_Default)
+	return !(me.states == nil || len(me.states) == 0 || (len(me.states) == 1 && me.State() == nux.State_Default))
 }
 
 func (me *shapeDrawable) Size() (width, height int32) {

@@ -19,7 +19,7 @@ import (
 	"runtime"
 )
 
-func createImage(path string) Image {
+func loadImageFromFile(path string) Image {
 	path, _ = filepath.Abs(path)
 	chars := ([]byte)(path)
 

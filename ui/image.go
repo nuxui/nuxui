@@ -102,40 +102,44 @@ func convertScaleTypeFromString(scaleType string) ScaleType {
 	return ScaleType_Center
 }
 
-func (me *image) AddState(state uint32) {
+func (me *image) AddState(state uint32) (ret bool) {
 	s := me.state
 	s |= state
+	ret = s == me.state
 	me.state = s
 
 	if me.background != nil {
-		me.background.AddState(state)
+		ret = ret || me.background.AddState(state)
 	}
 
 	if me.srcDrawable != nil {
-		me.srcDrawable.AddState(state)
+		ret = ret || me.srcDrawable.AddState(state)
 	}
 
 	if me.foreground != nil {
-		me.background.AddState(state)
+		ret = ret || me.background.AddState(state)
 	}
+	return
 }
 
-func (me *image) DelState(state uint32) {
+func (me *image) DelState(state uint32) (ret bool) {
 	s := me.state
 	s &= ^state
+	ret = s == me.state
 	me.state = s
 
 	if me.background != nil {
-		me.background.DelState(state)
+		ret = ret || me.background.DelState(state)
 	}
 
 	if me.srcDrawable != nil {
-		me.srcDrawable.DelState(state)
+		ret = ret || me.srcDrawable.DelState(state)
 	}
 
 	if me.foreground != nil {
-		me.background.DelState(state)
+		ret = ret || me.background.DelState(state)
 	}
+	return
 }
 
 func (me *image) State() uint32 {
