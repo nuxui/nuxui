@@ -901,12 +901,6 @@ const (
 	TextRenderingHintClearTypeGridFit                // Glyph CT bitmap with hinting
 )
 
-// Fill mode constants
-const (
-	FillModeAlternate = iota // 0
-	FillModeWinding          // 1
-)
-
 // BrushType
 const (
 	BrushTypeSolidColor GpBrushType = iota
@@ -976,4 +970,11 @@ const (
 	PenTypePathGradient
 	PenTypeLinearGradient
 	PenTypeUnknown
+)
+
+type GpFillMode int
+
+const (
+	FillModeAlternate GpFillMode = iota
+	FillModeWinding
 )

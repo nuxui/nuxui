@@ -153,8 +153,10 @@ var (
 	procGdipAddPathEllipseI                   = modgdiplus.NewProc("GdipAddPathEllipseI")
 	procGdipAddPathRectangle                  = modgdiplus.NewProc("GdipAddPathRectangle")
 	procGdipAddPathBezier                     = modgdiplus.NewProc("GdipAddPathBezier")
+	procGdipStartPathFigure                   = modgdiplus.NewProc("GdipStartPathFigure")
 	procGdipClosePathFigure                   = modgdiplus.NewProc("GdipClosePathFigure")
 	procGdipClosePathFigures                  = modgdiplus.NewProc("GdipClosePathFigures")
+	procGdipSetPathFillMode                   = modgdiplus.NewProc("GdipSetPathFillMode")
 	procGdipGetGenericFontFamilySerif         = modgdiplus.NewProc("GdipGetGenericFontFamilySerif")
 	procGdipGetGenericFontFamilySansSerif     = modgdiplus.NewProc("GdipGetGenericFontFamilySansSerif")
 	procGdipGetGenericFontFamilyMonospace     = modgdiplus.NewProc("GdipGetGenericFontFamilyMonospace")
@@ -1120,7 +1122,7 @@ func GdipDeleteStringFormat(format *GpStringFormat) GpStatus {
 
 // Path
 
-func GdipCreatePath(brushMode int32, path **GpPath) GpStatus {
+func GdipCreatePath(brushMode GpFillMode, path **GpPath) GpStatus {
 	ret, _, _ := procGdipCreatePath.Call(uintptr(brushMode), uintptr(unsafe.Pointer(path)))
 	return GpStatus(ret)
 }
@@ -1222,6 +1224,11 @@ func GdipAddPathBezier(path *GpPath, x1, y1, x2, y2, x3, y3, x4, y4 float32) GpS
 	return GpStatus(ret)
 }
 
+func GdipStartPathFigure(path *GpPath) GpStatus {
+	ret, _, _ := procGdipStartPathFigure.Call(uintptr(unsafe.Pointer(path)))
+	return GpStatus(ret)
+}
+
 func GdipClosePathFigure(path *GpPath) GpStatus {
 	ret, _, _ := procGdipClosePathFigure.Call(uintptr(unsafe.Pointer(path)))
 	return GpStatus(ret)
@@ -1229,6 +1236,14 @@ func GdipClosePathFigure(path *GpPath) GpStatus {
 
 func GdipClosePathFigures(path *GpPath) GpStatus {
 	ret, _, _ := procGdipClosePathFigures.Call(uintptr(unsafe.Pointer(path)))
+	return GpStatus(ret)
+}
+
+func GdipSetPathFillMode(path *GpPath, fillmode GpFillMode) GpStatus {
+	ret, _, _ := procGdipSetPathFillMode.Call(
+		uintptr(unsafe.Pointer(path)),
+		uintptr(fillmode),
+	)
 	return GpStatus(ret)
 }
 

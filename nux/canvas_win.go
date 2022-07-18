@@ -138,7 +138,7 @@ func (me *canvas) DrawRoundRect(x, y, width, height float32, rLT, rRT, rRB, rLB 
 	win32.GdipSetSmoothingMode(me.ptr, win32.SmoothingModeAntiAlias)
 
 	// TODO:: if r=0, use line
-	win32.GdipCreatePath(win32.FillModeAlternate, &path)
+	win32.GdipCreatePath(win32.FillModeWinding, &path)
 	win32.GdipAddPathArc(path, x+width-rRT-rRT, y, rRT+rRT, rRT+rRT, -90, 90)
 	win32.GdipAddPathArc(path, x+width-rRB-rRB, y+height-rRB-rRB, rRB+rRB, rRB+rRB, 0, 90)
 	win32.GdipAddPathArc(path, x, y+height-rLB-rLB, rLB+rLB, rLB+rLB, 90, 90)

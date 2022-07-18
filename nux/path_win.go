@@ -19,7 +19,7 @@ type path struct {
 
 func newPath() *path {
 	me := &path{}
-	win32.GdipCreatePath(win32.FillModeAlternate, &me.ptr)
+	win32.GdipCreatePath(win32.FillModeWinding, &me.ptr)
 	runtime.SetFinalizer(me, freePath)
 	return me
 }
@@ -56,6 +56,7 @@ func (me *path) Ellipse(cx, cy, rx, ry float32) {
 }
 
 func (me *path) MoveTo(x, y float32) {
+	win32.GdipStartPathFigure(me.ptr)
 	me.curX = x
 	me.curY = y
 }
