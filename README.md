@@ -15,4 +15,4 @@ go build . && ./widgets
 ```
 ## Screenshot
 
-![](https://github.com/nuxui/website/blob/master/static/samples/screenshot_widgets.jpg?raw=true)
+![](https://gitee.com/nuxui/website/raw/master/static/samples/screenshot_widgets.jpg)
