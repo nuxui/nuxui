@@ -8,16 +8,28 @@ import (
 	"nuxui.org/nuxui/nux"
 )
 
+type Switch Check
+
+func NewSwitch(attr nux.Attr) Switch {
+	if attr == nil {
+		attr = nux.Attr{}
+	}
+	if !attr.Has("theme") {
+		attr = nux.MergeAttrs(switch_theme(nux.ThemeLight), attr)
+	}
+	return Switch(NewCheck(attr))
+}
+
 type Radio Check
 
 func NewRadio(attr nux.Attr) Radio {
 	if attr == nil {
 		attr = nux.Attr{}
 	}
-	a := nux.Attr{
-		"theme": "radio",
+	if !attr.Has("theme") {
+		attr = nux.MergeAttrs(radio_theme(nux.ThemeLight), attr)
 	}
-	return Radio(NewCheck(nux.MergeAttrs(a, attr)))
+	return Radio(NewCheck(attr))
 }
 
 type Check interface {
@@ -37,11 +49,17 @@ func NewCheck(attr nux.Attr) Check {
 	if attr == nil {
 		attr = nux.Attr{}
 	}
+
+	if !attr.Has("theme") {
+		attr = nux.MergeAttrs(check_theme(nux.ThemeLight), attr)
+	}
+
 	myattr := nux.Attr{
 		"selectable": true,
 		"clickable":  true,
 		"checkable":  true,
 	}
+
 	me := &check{
 		checked:  attr.GetBool("checked", false),
 		hasValue: attr.Has("value"),

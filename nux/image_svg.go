@@ -57,17 +57,10 @@ func LoadImageSVGFromReader(reader io.Reader) Image {
 	return svg
 }
 
-type RectF struct {
-	X      float32
-	Y      float32
-	Width  float32
-	Height float32
-}
-
 type imageSvg struct {
-	viewBox RectF
-	width   float32
-	height  float32
+	viewBox Rect
+	width   int32
+	height  int32
 	paths   []*svgpath
 }
 
@@ -92,25 +85,25 @@ func (me *imageSvg) readSVGAttr(attrs []xml.Attr) {
 			strs := strings.Split(strings.TrimSpace(a.Value), " ")
 			if len(strs) == 4 {
 				if v, e := strconv.ParseFloat(strs[0], 32); e == nil {
-					me.viewBox.X = float32(v)
+					me.viewBox.X = int32(v)
 				}
 				if v, e := strconv.ParseFloat(strs[1], 32); e == nil {
-					me.viewBox.Y = float32(v)
+					me.viewBox.Y = int32(v)
 				}
 				if v, e := strconv.ParseFloat(strs[2], 32); e == nil {
-					me.viewBox.Width = float32(v) - me.viewBox.X
+					me.viewBox.Width = int32(v) - me.viewBox.X
 				}
 				if v, e := strconv.ParseFloat(strs[3], 32); e == nil {
-					me.viewBox.Height = float32(v) - me.viewBox.Y
+					me.viewBox.Height = int32(v) - me.viewBox.Y
 				}
 			}
 		case "width":
 			if v, e := strconv.ParseFloat(a.Value, 32); e == nil {
-				me.width = float32(v)
+				me.width = int32(v)
 			}
 		case "height":
 			if v, e := strconv.ParseFloat(a.Value, 32); e == nil {
-				me.height = float32(v)
+				me.height = int32(v)
 			}
 		}
 	}
@@ -451,6 +444,20 @@ func (me *imageSvg) arcToCurve(path Path, startX, startY, radiusX, radiusY, angl
 	me.arcToCurve2(path, startX, startY, radiusX, radiusY, angle, sweep, endX, endY, startAngle, endAngle, centerX, centerY, endControlX, endControlY)
 }
 
+func (me *imageSvg) PixelSize() (width, height int32) {
+	return int32(me.width), int32(me.height)
+}
+
+func (me *imageSvg) Draw(canvas Canvas) {
+	canvas.Save()
+	canvas.Scale(float32(me.width)/float32(me.viewBox.Width), float32(me.height)/float32(me.viewBox.Height))
+	for _, p := range me.paths {
+		canvas.DrawPath(p.path, p.paint)
+	}
+	canvas.Restore()
+}
+
+// --------------- pathparse ----------------------------
 func (me *pathparse) isdigit(c uint8) bool {
 	return (c >= '0' && c <= '9') || c == '.' || c == '-'
 }
@@ -506,17 +513,4 @@ func (me *pathparse) getPoints(count int) [8]float32 {
 	}
 
 	return me.points
-}
-
-func (me *imageSvg) PixelSize() (width, height int32) {
-	return int32(me.width), int32(me.height)
-}
-
-func (me *imageSvg) Draw(canvas Canvas) {
-	canvas.Save()
-	canvas.Scale(me.width/me.viewBox.Width, me.height/me.viewBox.Height)
-	for _, p := range me.paths {
-		canvas.DrawPath(p.path, p.paint)
-	}
-	canvas.Restore()
 }

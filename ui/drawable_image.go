@@ -31,7 +31,7 @@ func NewImageDrawable(attr nux.Attr) ImageDrawable {
 		for _, state := range states {
 			if s := state.GetString("state", ""); s != "" {
 				if state.Has("src") {
-					me.states[mergedStateFromString(s)] = state.GetString("src", "")
+					me.states[mergedStateFromString(s)] = state.Get("src", nil)
 				} else {
 					log.E("nuxui", "the state need a src field")
 				}
@@ -40,8 +40,17 @@ func NewImageDrawable(attr nux.Attr) ImageDrawable {
 			}
 		}
 	} else {
-		if src := attr.GetString("src", ""); src != "" {
-			me.image, _ = nux.LoadImageFromFile(src)
+		if src := attr.Get("src", nil); src != nil {
+			if s, ok := src.(string); ok {
+				img, err := nux.LoadImageFromFile(s)
+				if err != nil {
+					log.E("nuxui", "%s", err.Error())
+				} else {
+					me.image = img
+				}
+			} else if img, ok := src.(nux.Image); ok {
+				me.image = img
+			}
 		}
 	}
 
