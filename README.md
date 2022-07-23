@@ -1,8 +1,8 @@
 <a href="https://nuxui.org/">
   <h1 align="center">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://gitee.com/nuxui/website/raw/master/static/logo.svg">
-      <img alt="Flutter" src="https://gitee.com/nuxui/website/raw/master/static/logo.svg">
+      <source width="100" height="100" media="(prefers-color-scheme: dark)" srcset="https://gitee.com/nuxui/website/raw/master/static/logo.svg">
+      <img alt="NuxUI" width="100" height="100" src="https://gitee.com/nuxui/website/raw/master/static/logo.svg">
     </picture>
   </h1>
 </a>
