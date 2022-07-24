@@ -796,8 +796,8 @@ func (me *column) Layout(x, y, width, height int32) {
 	var l float32 = 0
 	var t float32 = 0
 
-	var innerHeight float32 = float32(width)
-	var innerWidth float32 = float32(height)
+	var innerWidth float32 = float32(width)
+	var innerHeight float32 = float32(height)
 
 	innerHeight -= float32(frame.Padding.Top + frame.Padding.Bottom)
 	innerWidth -= float32(frame.Padding.Left + frame.Padding.Right)
