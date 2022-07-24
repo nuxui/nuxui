@@ -118,13 +118,14 @@ func NewPadding(attr any) *Padding {
 			Bottom: getPadding(t, "bottom", "0"),
 		}
 	case string:
-		dimens := strings.Split(strings.TrimSpace(t), ",")
+		dimens := strings.Split(t, ",")
 		if len(dimens) == 1 {
-			d := SDimen(dimens[0])
+			d := SDimen(strings.TrimSpace(dimens[0]))
 			return &Padding{d, d, d, d}
 		} else {
 			p := &Padding{}
 			for i, d := range dimens {
+				d = strings.TrimSpace(d)
 				switch i {
 				case 0:
 					p.Left = SDimen(d)
@@ -189,13 +190,14 @@ func NewMargin(attr any) *Margin {
 			Bottom: getMargin(t, "bottom", "0"),
 		}
 	case string:
-		dimens := strings.Split(strings.TrimSpace(t), ",")
+		dimens := strings.Split(t, ",")
 		if len(dimens) == 1 {
-			d := SDimen(dimens[0])
+			d := SDimen(strings.TrimSpace(dimens[0]))
 			return &Margin{d, d, d, d}
 		} else {
 			m := &Margin{}
 			for i, d := range dimens {
+				d = strings.TrimSpace(d)
 				switch i {
 				case 0:
 					m.Left = SDimen(d)
