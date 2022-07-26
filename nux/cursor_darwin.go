@@ -38,6 +38,8 @@ func loadNativeCursor(c NativeCursor) *cursor {
 		ptr = darwin.NSCursor_ArrowCursor()
 	case CursorIBeam:
 		ptr = darwin.NSCursor_IBeamCursor()
+	case CursorHand:
+		ptr = darwin.NSCursor_PointingHandCursor()
 	default:
 		log.Fatal("nux", "unknown cursor type: %d", c)
 	}

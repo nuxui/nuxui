@@ -21,6 +21,8 @@ type Text interface {
 
 	Text() string
 	SetText(text string)
+	SetTextColor(nux.Color)
+	TextColor()nux.Color
 }
 
 type text struct {
@@ -119,6 +121,18 @@ func (me *text) SetText(text string) {
 	if me.text != text {
 		me.text = text
 		nux.RequestLayout(me)
+		nux.RequestRedraw(me)
+	}
+}
+
+func (me *text) TextColor() nux.Color {
+	return me.textColor
+}
+
+func (me *text) SetTextColor(color nux.Color) {
+	if me.textColor != color{
+		me.textColor = color
+		nux.RequestRedraw(me)
 	}
 }
 

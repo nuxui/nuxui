@@ -23,6 +23,9 @@ type Paint interface {
 	SetStyle(style PaintStyle)
 	// TextSize() float32 // TODO:: no use
 	// SetTextSize(size float32)
+	SetDash(dash []float32)
+	Dash() []float32
+
 	SetShadow(color Color, offsetX, offsetY, blur float32)
 	Shadow() (color Color, offsetX, offsetY, blur float32)
 	HasShadow() bool
@@ -64,6 +67,7 @@ type paint struct {
 	shadowX     float32
 	shadowY     float32
 	shadowBlur  float32
+	dash        []float32
 }
 
 func (me *paint) Color() Color {
@@ -104,6 +108,14 @@ func (me *paint) TextSize() float32 {
 
 func (me *paint) SetTextSize(size float32) {
 	me.textSize = size
+}
+
+func (me *paint) SetDash(dash []float32) {
+	me.dash = dash
+}
+
+func (me *paint) Dash() []float32 {
+	return me.dash
 }
 
 func (me *paint) SetShadow(color Color, offsetX, offsetY, blur float32) {

@@ -50,6 +50,7 @@ func (me *window) CreateDecor(attr Attr) Widget {
 	attr.Set("padding", Attr{"top": "75px"})
 	w := creator(attr)
 	if p, ok := w.(Parent); ok {
+		p.Info().Self = p
 		me.decor = p
 	} else {
 		log.Fatal("nuxui", "decor must is a Parent")

@@ -76,7 +76,7 @@ func NewCheck(attr nux.Attr) Check {
 
 func (me *check) OnMount() {
 	me.label.OnMount()
-	nux.OnTap(me.Info().Self, me.onTap)
+	nux.OnTap(me, me.onTap)
 }
 
 func (me *check) onTap(detail nux.GestureDetail) {

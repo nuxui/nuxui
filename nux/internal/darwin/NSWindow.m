@@ -118,7 +118,7 @@
 }
 
 - (void)doCommandBySelector:(SEL)selector {
-  NSLog(@"NuxView doCommandBySelector");
+  // NSLog(@"NuxView doCommandBySelector");
   // do nothing otherwise beep
 }
 

@@ -23,6 +23,7 @@ CGContextRef CGCurrentContext_(){
 }
 */
 import "C"
+import "unsafe"
 
 func CGCurrentContext() CGContextRef {
 	return CGContextRef(C.CGCurrentContext_())
@@ -111,4 +112,17 @@ func CGContextStrokeRectWithWidth(ctx CGContextRef, rect CGRect, width float32) 
 
 func CGContextDrawImage(ctx CGContextRef, rect CGRect, image CGImage) {
 	C.CGContextDrawImage_(C.CGContextRef(ctx), C.CGRect(rect), C.CGImageRef(image))
+}
+
+func CGContextSetLineDash(ctx CGContextRef, phase float32, dash []float32, count int) {
+	if len(dash) == 0 || count == 0 {
+		C.CGContextSetLineDash(C.CGContextRef(ctx), 0, nil, 0)
+		return
+	}
+
+	d := make([]C.CGFloat, len(dash))
+	for i, v := range dash {
+		d[i] = C.CGFloat(v)
+	}
+	C.CGContextSetLineDash(C.CGContextRef(ctx), C.CGFloat(phase), (*C.CGFloat)(unsafe.Pointer(&d[0])), C.size_t(count))
 }

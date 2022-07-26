@@ -10,6 +10,7 @@ import (
 )
 
 func OnDoubleTap(widget Widget, callback GestureCallback) {
+	widget = widget.Info().Self
 	if r := GestureManager().FindGestureRecognizer(widget, (*doubleTapGestureRecognizer)(nil)); r != nil {
 		recognizer := r.(*doubleTapGestureRecognizer)
 		recognizer.addCallback(_ACTION_DOUBLETAP, callback)
@@ -22,6 +23,7 @@ func OnDoubleTap(widget Widget, callback GestureCallback) {
 
 // widget will auto clear all gesture when destroy
 func RemoveDoubleTapGesture(widget Widget, callback GestureCallback) {
+	widget = widget.Info().Self
 	if r := GestureManager().FindGestureRecognizer(widget, (*doubleTapGestureRecognizer)(nil)); r != nil {
 		recognizer := r.(*doubleTapGestureRecognizer)
 		recognizer.removeCallback(_ACTION_DOUBLETAP, callback)

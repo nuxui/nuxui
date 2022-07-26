@@ -22,6 +22,7 @@ func OnHoverExit(widget Widget, callback GestureCallback) {
 }
 
 func addHoverCallback(widget Widget, which int, callback GestureCallback) {
+	widget = widget.Info().Self
 	c, ok := hoverGestureManager_.c[widget]
 	if !ok {
 		c = [][]GestureCallback{{}, {}, {}}

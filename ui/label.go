@@ -90,12 +90,12 @@ func NewLabel(attr nux.Attr) Label {
 }
 
 func (me *label) OnMount() {
-	nux.OnTapDown(me.Info().Self, me.onTapDown)
-	nux.OnTapUp(me.Info().Self, me.onTapUp)
-	nux.OnTapCancel(me.Info().Self, me.onTapUp)
-	nux.OnTap(me.Info().Self, me.onTap)
-	nux.OnHoverEnter(me.Info().Self, me.OnHoverEnter)
-	nux.OnHoverExit(me.Info().Self, me.OnHoverExit)
+	nux.OnTapDown(me, me.onTapDown)
+	nux.OnTapUp(me, me.onTapUp)
+	nux.OnTapCancel(me, me.onTapUp)
+	nux.OnTap(me, me.onTap)
+	nux.OnHoverEnter(me, me.OnHoverEnter)
+	nux.OnHoverExit(me, me.OnHoverExit)
 }
 
 func (me *label) OnEject() {

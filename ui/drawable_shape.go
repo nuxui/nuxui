@@ -15,6 +15,7 @@ type Shape struct {
 	Stroke       nux.Color
 	StrokeWidth  float32
 	CornerRadius float32
+	Dash         []float32
 	ShadowColor  nux.Color
 	ShadowX      float32
 	ShadowY      float32
@@ -33,6 +34,7 @@ func NewShape(attr nux.Attr) *Shape {
 		Stroke:       attr.GetColor("stroke", 0),
 		StrokeWidth:  attr.GetDimen("strokeWidth", "1px").Value(),
 		CornerRadius: attr.GetDimen("cornerRadius", "0").Value(),
+		Dash:         attr.GetFloat32Array("dash", []float32{}),
 		ShadowColor:  shadow.GetColor("color", 0),
 		ShadowX:      shadow.GetDimen("x", "0").Value(),
 		ShadowY:      shadow.GetDimen("y", "0").Value(),
@@ -169,6 +171,7 @@ func (me *shapeDrawable) Draw(canvas nux.Canvas) {
 		me.paint.SetColor(me.shape.Stroke)
 		me.paint.SetStyle(nux.PaintStyle_Stroke)
 		me.paint.SetWidth(me.shape.StrokeWidth)
+		me.paint.SetDash(me.shape.Dash)
 		if me.shape.CornerRadius > 0 {
 			canvas.DrawRoundRect(float32(me.x), float32(me.y), float32(me.width), float32(me.height), me.shape.CornerRadius, me.shape.CornerRadius, me.shape.CornerRadius, me.shape.CornerRadius, me.paint)
 		} else {

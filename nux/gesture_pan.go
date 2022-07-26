@@ -42,6 +42,7 @@ func RemovePanCancelGesture(widget Widget, callback GestureCallback) {
 }
 
 func addPanCallback(widget Widget, which int, callback GestureCallback) {
+	widget = widget.Info().Self
 	if r := GestureManager().FindGestureRecognizer(widget, (*panGestureRecognizer)(nil)); r != nil {
 		recognizer := r.(*panGestureRecognizer)
 		recognizer.addCallback(which, callback)
@@ -53,6 +54,7 @@ func addPanCallback(widget Widget, which int, callback GestureCallback) {
 }
 
 func removePanCallback(widget Widget, which int, callback GestureCallback) {
+	widget = widget.Info().Self
 	if r := GestureManager().FindGestureRecognizer(widget, (*panGestureRecognizer)(nil)); r != nil {
 		pan := r.(*panGestureRecognizer)
 		pan.removeCallback(which, callback)

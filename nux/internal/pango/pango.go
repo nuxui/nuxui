@@ -124,7 +124,8 @@ func TestLayout() {
 	family := "sans-serif"
 	cstr := C.CString(text)
 	cfamily := C.CString(family)
-	// defer C.free(unsafe.Pointer(cstr))
+	defer C.free(unsafe.Pointer(cstr))
+	defer C.free(unsafe.Pointer(cfamily))
 
 	cr := C.cairo_create(nil)
 	fd := C.pango_font_description_new()

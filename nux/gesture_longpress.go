@@ -34,6 +34,7 @@ func RemoveLongPressUpGesture(widget Widget, callback GestureCallback) {
 }
 
 func addLongPressCallback(widget Widget, which int, callback GestureCallback) {
+	widget = widget.Info().Self
 	if r := GestureManager().FindGestureRecognizer(widget, (*longPressGestureRecognizer)(nil)); r != nil {
 		recognizer := r.(*longPressGestureRecognizer)
 		recognizer.addCallback(which, callback)
@@ -45,6 +46,7 @@ func addLongPressCallback(widget Widget, which int, callback GestureCallback) {
 }
 
 func removeLongPressCallback(widget Widget, which int, callback GestureCallback) {
+	widget = widget.Info().Self
 	if r := GestureManager().FindGestureRecognizer(widget, (*longPressGestureRecognizer)(nil)); r != nil {
 		press := r.(*longPressGestureRecognizer)
 		press.removeCallback(which, callback)

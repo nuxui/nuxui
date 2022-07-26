@@ -79,6 +79,7 @@ func (me *window) createDecor(attr Attr) Parent {
 	creator := FindTypeCreator("nuxui.org/nuxui/ui.Layer")
 	w := creator(MergeAttrs(decorAttr, attr))
 	if p, ok := w.(Parent); ok {
+		p.Info().Self = p
 		return p
 	} else {
 		log.Fatal("nuxui", "decor must be a Parent")

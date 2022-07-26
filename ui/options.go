@@ -12,12 +12,14 @@ type Options interface {
 	nux.Component
 	Values() []string
 	Selected() bool
+	SetOnSelectionChanged(callback func(widget Options, fromUser bool))
 }
 
 type options struct {
 	*nux.ComponentBase
 
 	single bool
+	onSelectionChanged func(widget Options, fromUser bool)
 }
 
 func NewOptions(attr nux.Attr) Options {
@@ -48,9 +50,15 @@ func (me *options) initChildrenCallback(widget nux.Widget) {
 	}
 }
 
+
+
 func (me *options) onCheckedChanged(widget CheckableWidget, checked bool, fromUser bool) {
 	if me.single && fromUser {
 		me.clearAllExcept(me.Content(), widget)
+	}
+
+	if fromUser {  // Options only accpet it self 'fromUser'
+		me.doSelectionChanged(fromUser)
 	}
 }
 
@@ -68,8 +76,14 @@ func (me *options) clearAllExcept(widget nux.Widget, except CheckableWidget) {
 	}
 }
 
-func (me *options) doCheckedChanged() {
+func (me *options) SetOnSelectionChanged(callback func(widget Options, fromUser bool)){
+	me.onSelectionChanged = callback
+}
 
+func (me *options) doSelectionChanged(fromUser bool) {
+	if me.onSelectionChanged != nil {
+		me.onSelectionChanged(me, fromUser)
+	}
 }
 
 func (me *options) Values() []string {

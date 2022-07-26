@@ -78,15 +78,15 @@ type editor struct {
 
 func (me *editor) OnMount() {
 	// log.I("nuxui", "editor mount")
-	nux.OnTapDown(me.Info().Self, me.onTapDown)
-	nux.OnTapUp(me.Info().Self, me.onTapUp)
-	nux.OnTapCancel(me.Info().Self, me.onTapCancel)
-	nux.OnPanDown(me.Info().Self, me.onPanStart)
+	nux.OnTapDown(me, me.onTapDown)
+	nux.OnTapUp(me, me.onTapUp)
+	nux.OnTapCancel(me, me.onTapCancel)
+	nux.OnPanDown(me, me.onPanStart)
 
-	nux.OnHoverEnter(me.Info().Self, func(detail nux.GestureDetail) {
+	nux.OnHoverEnter(me, func(detail nux.GestureDetail) {
 		nux.LoadNativeCursor(nux.CursorIBeam).Set()
 	})
-	nux.OnHoverExit(me.Info().Self, func(detail nux.GestureDetail) {
+	nux.OnHoverExit(me, func(detail nux.GestureDetail) {
 		nux.LoadNativeCursor(nux.CursorArrow).Set()
 	})
 }
@@ -116,7 +116,7 @@ func (me *editor) OnPanUpdate(detail nux.GestureDetail) {
 }
 
 func (me *editor) Focusable() bool {
-	return true
+	return true // TODO:: disabled
 }
 
 func (me *editor) HasFocus() bool {

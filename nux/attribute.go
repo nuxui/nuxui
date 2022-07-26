@@ -381,6 +381,33 @@ func (me Attr) GetStringArray(key string, defaultValue []string) []string {
 	return defaultValue
 }
 
+func (me Attr) GetFloat32Array(key string, defaultValue []float32) []float32 {
+	if attr, ok := me[key]; ok {
+		switch t := attr.(type) {
+		case []float32:
+			return t
+		case []any:
+			ret := make([]float32, len(t))
+			for i, a := range t {
+				if str, ok := a.(string); ok {
+					v, e := strconv.ParseFloat(str, 32)
+					if e != nil {
+						log.E("nuxui", "unsupport convert %s %T:%s to []float32, use default value instead", key, t, t)
+					}
+					ret[i] = float32(v)
+				} else {
+					log.E("nuxui", "unsupport convert %s %T:%s to []float32, use default value instead", key, t, t)
+					return defaultValue
+				}
+			}
+			return ret
+		default:
+			log.E("nuxui", "unsupport convert %s %T:%s to []float32, use default value instead", key, t, t)
+		}
+	}
+	return defaultValue
+}
+
 func (me Attr) Merge(attr ...Attr) {
 	for _, a := range attr {
 		for k, v := range a {

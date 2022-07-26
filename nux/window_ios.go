@@ -52,6 +52,7 @@ func (me *window) CreateDecor(attr Attr) Widget {
 	creator := FindTypeCreator("nuxui.org/nuxui/ui.Layer")
 	w := creator(attr)
 	if p, ok := w.(Parent); ok {
+		p.Info().Self = p
 		me.decor = p
 	} else {
 		log.Fatal("nuxui", "decor must is a Parent")

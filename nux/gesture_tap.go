@@ -75,6 +75,7 @@ func RemoveTapCancelGesture(widget Widget, callback GestureCallback) {
 }*/
 
 func addTapCallback(widget Widget, which int, callback GestureCallback) {
+	widget = widget.Info().Self
 	if r := GestureManager().FindGestureRecognizer(widget, (*tapGestureRecognizer)(nil)); r != nil {
 		recognizer := r.(*tapGestureRecognizer)
 		recognizer.addCallback(which, callback)

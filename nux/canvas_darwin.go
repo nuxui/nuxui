@@ -149,6 +149,8 @@ func (me *canvas) DrawRoundRect(x, y, width, height, rLT, rRT, rRB, rLB float32,
 		darwin.CGContextSetShadowWithColor(me.ctx, darwin.CGSizeMake(sx, -sy), sb, darwin.CGColorMake(r0, g0, b0, a0))
 	}
 
+	darwin.CGContextSetLineDash(me.ctx, 0, paint.Dash(), len(paint.Dash()))
+
 	switch paint.Style() {
 	case PaintStyle_Fill:
 		darwin.CGContextSetRGBFillColor(me.ctx, r, g, b, a)

@@ -43,7 +43,7 @@ func (me *logger) output(depth int, color string, level Level, levelTag string, 
 	ctag := C.CString(tag)
 	str := fmt.Sprintf(format, msg...)
 	cmsg := C.CString(str)
+	defer C.free(unsafe.Pointer(ctag))
+	defer C.free(unsafe.Pointer(cmsg))
 	C.log_print(C.int(level), ctag, cmsg)
-	C.free(unsafe.Pointer(ctag))
-	C.free(unsafe.Pointer(cmsg))
 }
