@@ -15,7 +15,9 @@ const (
 	CursorResizeNS
 	CursorResizeNWSE
 	CursorResizeNESW
+	CursorFinger
 	CursorHand
+	CursorDrag
 	CursorSizeAll
 	CursorCustom
 )

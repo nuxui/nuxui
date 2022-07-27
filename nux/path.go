@@ -6,7 +6,7 @@ package nux
 
 type Path interface {
 	Rect(x, y, width, height float32)
-	RoundRect(x, y, width, height, rx, ry float32)
+	RoundRect(x, y, width, height, rLT, rRT, rRB, rLB float32)
 	Ellipse(cx, cy, rx, ry float32)
 	MoveTo(x, y float32)
 	LineTo(x, y float32)

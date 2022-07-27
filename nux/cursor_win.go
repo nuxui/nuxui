@@ -62,6 +62,12 @@ func loadNativeCursor(c NativeCursor) *cursor {
 		shape = win32.IDC_WAIT
 	case CursorCrosshair:
 		shape = win32.IDC_CROSS
+	case CursorFinger:
+		shape = win32.IDC_HAND
+	case CursorHand:
+		shape = win32.IDC_HAND // TODO::
+	case CursorDrag:
+		shape = win32.IDC_ARROW // TODO::
 	case CursorResizeWE:
 		shape = win32.IDC_SIZEWE
 	case CursorResizeNS:

@@ -39,7 +39,17 @@ func (me *path) native() *path {
 func (me *path) Rect(x, y, width, height float32) {
 }
 
-func (me *path) RoundRect(x, y, width, height, rx, ry float32) {
+func (me *path) RoundRect(x, y, width, height, rLT, rRT, rRB, rLB float32) {
+	if width < 0 || height < 0 {
+		return
+	}
+
+	me.cairo.NewSubPath()
+	me.cairo.Arc(x+width-rRT, y+rRT, rRT, -90*_RADIAN, 0)
+	me.cairo.Arc(x+width-rRB, y+height-rRB, rRB, 0, 90*_RADIAN)
+	me.cairo.Arc(x+rLB, y+height-rLB, rLB, 90*_RADIAN, 180*_RADIAN)
+	me.cairo.Arc(x+rLT, y+rLT, rLT, 180*_RADIAN, 270*_RADIAN)
+	me.cairo.ClosePath()
 }
 
 func (me *path) Ellipse(cx, cy, rx, ry float32) {

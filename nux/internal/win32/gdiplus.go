@@ -940,6 +940,7 @@ func GdipGetPenDashStyle(pen *GpPen, dashStyle *GpDashStyle) GpStatus {
 		uintptr(unsafe.Pointer(dashStyle)))
 	return GpStatus(ret)
 }
+
 func GdipSetPenDashStyle(pen *GpPen, dashStyle GpDashStyle) GpStatus {
 	ret, _, _ := procGdipSetPenDashStyle.Call(
 		uintptr(unsafe.Pointer(pen)),

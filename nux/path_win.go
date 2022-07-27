@@ -36,19 +36,7 @@ func (me *path) Rect(x, y, width, height float32) {
 	win32.GdipAddPathRectangle(me.ptr, x, y, width, height)
 }
 
-func (me *path) RoundRect(x, y, width, height, rx, ry float32) {
-	dx := rx + rx
-	dy := ry + ry
-
-	win32.GdipAddPathLine(me.ptr, x+rx, y, x+width-dx, y)
-	win32.GdipAddPathArc(me.ptr, x+width-dx, y, dx, dy, 270, 90)
-	win32.GdipAddPathLine(me.ptr, x+width, y+ry, x+width, y+height-dy)
-	win32.GdipAddPathArc(me.ptr, x+width-dx, y+height-dy, dx, dy, 0, 90)
-	win32.GdipAddPathLine(me.ptr, x+width-dx, y+height, x+rx, y+height)
-	win32.GdipAddPathArc(me.ptr, x, y+height-dy, dx, dy, 90, 90)
-	win32.GdipAddPathLine(me.ptr, x, y+height-dy, x, y+ry)
-	win32.GdipAddPathArc(me.ptr, x, y, dx, dy, 180, 90)
-	win32.GdipClosePathFigure(me.ptr)
+func (me *path) RoundRect(x, y, width, height, rLT, rRT, rRB, rLB float32) {
 }
 
 func (me *path) Ellipse(cx, cy, rx, ry float32) {

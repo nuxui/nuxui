@@ -24,6 +24,18 @@ uintptr_t nux_NSCursor_IBeamCursor(){
 uintptr_t nux_NSCursor_pointingHandCursor(){
 	return (uintptr_t)[NSCursor pointingHandCursor];
 }
+
+uintptr_t nux_NSCursor_crosshairCursor(){
+	return (uintptr_t)[NSCursor crosshairCursor];
+}
+
+uintptr_t nux_NSCursor_openHandCursor(){
+	return (uintptr_t)[NSCursor openHandCursor];
+}
+
+uintptr_t nux_NSCursor_closedHandCursor(){
+	return (uintptr_t)[NSCursor closedHandCursor];
+}
 */
 import "C"
 
@@ -37,6 +49,18 @@ func NSCursor_ArrowCursor() NSCursor {
 
 func NSCursor_PointingHandCursor() NSCursor {
 	return NSCursor(C.nux_NSCursor_pointingHandCursor())
+}
+
+func NSCursor_CrosshairCursor() NSCursor {
+	return NSCursor(C.nux_NSCursor_crosshairCursor())
+}
+
+func NSCursor_OpenHandCursor() NSCursor {
+	return NSCursor(C.nux_NSCursor_openHandCursor())
+}
+
+func NSCursor_ClosedHandCursor() NSCursor {
+	return NSCursor(C.nux_NSCursor_closedHandCursor())
 }
 
 func (me NSCursor) Set() {

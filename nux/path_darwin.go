@@ -36,8 +36,7 @@ func (me *path) Rect(x, y, width, height float32) {
 	darwin.CGPathAddRect(me.ptr, nil, darwin.CGRectMake(x, y, width, height))
 }
 
-func (me *path) RoundRect(x, y, width, height, rx, ry float32) {
-	darwin.CGPathAddRoundedRect(me.ptr, nil, darwin.CGRectMake(x, y, width, height), rx, ry)
+func (me *path) RoundRect(x, y, width, height, rLT, rRT, rRB, rLB float32) {
 }
 
 func (me *path) Ellipse(cx, cy, rx, ry float32) {

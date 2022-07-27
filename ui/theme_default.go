@@ -45,19 +45,19 @@ func button_theme(kind nux.ThemeKind) nux.Attr {
 				"states": []nux.Attr{
 					{"state": "default", "shape": nux.Attr{
 						"shape":        "rect",
-						"solid":        "#ffffff",
+						"solid":        "#fafafa",
 						"cornerRadius": "6px",
 						"shadow":       nux.Attr{"color": "#00000088", "x": 0, "y": "1px", "blur": "3px"},
 					}},
 					{"state": "hovered | pressed", "shape": nux.Attr{
 						"shape":        "rect",
-						"solid":        "#f0f0f0",
+						"solid":        "#eeeeee",
 						"cornerRadius": "6px",
 						"shadow":       nux.Attr{"color": "#00000088", "x": 0, "y": "1px", "blur": "3px"},
 					}},
 					{"state": "hovered", "shape": nux.Attr{
 						"shape":        "rect",
-						"solid":        "#f6f6f6",
+						"solid":        "#f4f4f4",
 						"cornerRadius": "6px",
 						"shadow":       nux.Attr{"color": "#00000088", "x": 0, "y": "1px", "blur": "3px"},
 					}},

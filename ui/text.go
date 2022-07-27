@@ -22,7 +22,7 @@ type Text interface {
 	Text() string
 	SetText(text string)
 	SetTextColor(nux.Color)
-	TextColor()nux.Color
+	TextColor() nux.Color
 }
 
 type text struct {
@@ -130,7 +130,7 @@ func (me *text) TextColor() nux.Color {
 }
 
 func (me *text) SetTextColor(color nux.Color) {
-	if me.textColor != color{
+	if me.textColor != color {
 		me.textColor = color
 		nux.RequestRedraw(me)
 	}

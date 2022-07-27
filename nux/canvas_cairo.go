@@ -101,18 +101,36 @@ func (me *canvas) DrawRoundRect(x, y, width, height float32, rLT, rRT, rRB, rLB 
 
 	fix := paint.Style() == PaintStyle_Stroke && int32(paint.Width())%2 != 0
 	if fix {
-		// C.cairo_identity_matrix(me.ptr)
 		me.Save()
 		me.Translate(0.5, 0.5)
 	}
 
-	me.cairo.NewSubPath()
-	me.cairo.Arc(x+width-rRT, y+rRT, rRT, -90*_RADIAN, 0)
-	me.cairo.Arc(x+width-rRB, y+height-rRB, rRB, 0, 90*_RADIAN)
-	me.cairo.Arc(x+rLB, y+height-rLB, rLB, 90*_RADIAN, 180*_RADIAN)
-	me.cairo.Arc(x+rLT, y+rLT, rLT, 180*_RADIAN, 270*_RADIAN)
-	me.cairo.ClosePath()
-	me.drawPaint(paint)
+	path := newPath()
+	path.RoundRect(x, y, width, height, rLT, rRT, rRB, rLB)
+
+	// me.cairo.NewSubPath()
+	// me.cairo.Arc(x+width-rRT, y+rRT, rRT, -90*_RADIAN, 0)
+	// me.cairo.Arc(x+width-rRB, y+height-rRB, rRB, 0, 90*_RADIAN)
+	// me.cairo.Arc(x+rLB, y+height-rLB, rLB, 90*_RADIAN, 180*_RADIAN)
+	// me.cairo.Arc(x+rLT, y+rLT, rLT, 180*_RADIAN, 270*_RADIAN)
+	// me.cairo.ClosePath()
+
+	// TODO:: shadow
+	if sc, sx, sy, sb := paint.Shadow(); sc != 0 && sb > 0 {
+		me.Save()
+		me.Translate(sx, sy)
+
+		me.cairo.NewPath()
+		copy := path.native().cairo.CopyPath()
+		me.cairo.AppendPath(copy)
+		copy.Destroy()
+		r, g, b, a := sc.RGBAf()
+		me.cairo.SetSourceRGBA(r, g, b, a)
+		me.cairo.Fill()
+		me.Restore()
+	}
+
+	me.DrawPath(path, paint)
 
 	if fix {
 		me.cairo.Restore()

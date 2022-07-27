@@ -46,7 +46,7 @@ func loadNativeCursor(c NativeCursor) *cursor {
 	case CursorWait:
 		shape = xlib.XC_watch
 	case CursorCrosshair:
-		shape = xlib.XC_tcross
+		shape = xlib.XC_cross
 	case CursorResizeWE:
 		shape = xlib.XC_sb_h_double_arrow
 	case CursorResizeNS:
@@ -55,6 +55,12 @@ func loadNativeCursor(c NativeCursor) *cursor {
 		shape = xlib.XC_fleur
 	case CursorResizeNESW:
 		shape = xlib.XC_fleur
+	case CursorFinger:
+		shape = xlib.XC_hand2
+	case CursorDrag:
+		shape = 61 // TODO:: which is drag?
+	case CursorHand:
+		shape = xlib.XC_hand1
 	default:
 		log.Fatal("nux", "unknown cursor type: %d", c)
 	}

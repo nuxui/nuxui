@@ -139,12 +139,26 @@ func (me *canvas) DrawRoundRect(x, y, width, height float32, rLT, rRT, rRB, rLB 
 
 	// TODO:: if r=0, use line
 	win32.GdipCreatePath(win32.FillModeWinding, &path)
+	defer win32.GdipDeletePath(path)
+
 	win32.GdipAddPathArc(path, x+width-rRT-rRT, y, rRT+rRT, rRT+rRT, -90, 90)
 	win32.GdipAddPathArc(path, x+width-rRB-rRB, y+height-rRB-rRB, rRB+rRB, rRB+rRB, 0, 90)
 	win32.GdipAddPathArc(path, x, y+height-rLB-rLB, rLB+rLB, rLB+rLB, 90, 90)
 	win32.GdipAddPathArc(path, x, y, rLT+rLT, rLT+rLT, 180, 90)
 	win32.GdipClosePathFigure(path)
 
+	// TODO:: gdiplus shadow
+	if sc, sx, sy, sb := paint.Shadow(); sc != 0 && sb > 0 {
+		// win32.GdipSetPenColor(me.pen, win32.ARGB(0x1f000000))
+		// win32.GdipSetPenWidth(me.pen, 1)
+		// win32.GdipDrawPath(me.ptr, me.pen, path)
+
+		me.Save()
+		me.Translate(sx, sy)
+		win32.GdipSetSolidFillColor(me.brush, win32.ARGB(sc.ARGB()))
+		win32.GdipFillPath(me.ptr, me.brush, path)
+		me.Restore()
+	}
 	// TODO:: use native paint
 	if paint.Style()&PaintStyle_Stroke == PaintStyle_Stroke {
 		win32.GdipSetPenColor(me.pen, win32.ARGB(paint.Color().ARGB()))
@@ -156,7 +170,6 @@ func (me *canvas) DrawRoundRect(x, y, width, height float32, rLT, rRT, rRB, rLB 
 		win32.GdipFillPath(me.ptr, me.brush, path)
 	}
 
-	win32.GdipDeletePath(path)
 	win32.GdipSetSmoothingMode(me.ptr, lastSmoothingMode)
 }
 
