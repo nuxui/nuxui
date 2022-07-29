@@ -26,8 +26,8 @@ NSInteger nux_NSEvent_ButtonNumber(uintptr_t nsevent){
   return [(NSEvent *)nsevent buttonNumber];
 }
 
-BOOL nux_NSEvent_HasPreciseScrollingDeltas(uintptr_t nsevent){
-  return [(NSEvent *)nsevent hasPreciseScrollingDeltas];
+int nux_NSEvent_HasPreciseScrollingDeltas(uintptr_t nsevent){
+  return  (int)( [(NSEvent *)nsevent hasPreciseScrollingDeltas]);
 }
 
 CGFloat nux_NSEvent_ScrollingDeltaX(uintptr_t nsevent){
@@ -46,8 +46,8 @@ NSUInteger nux_NSEvent_ModifierFlags(uintptr_t nsevent){
   return [(NSEvent *)nsevent modifierFlags];
 }
 
-BOOL nux_NSEvent_IsARepeat(uintptr_t nsevent){
-  return [(NSEvent *)nsevent isARepeat];
+int nux_NSEvent_IsARepeat(uintptr_t nsevent){
+  return (int)([(NSEvent *)nsevent isARepeat]);
 }
 
 char* nux_NSEvent_Characters(uintptr_t nsevent){

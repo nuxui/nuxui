@@ -55,7 +55,7 @@ func newDoubleTapGestureRecognizer(target Widget) *doubleTapGestureRecognizer {
 	}
 
 	return &doubleTapGestureRecognizer{
-		callbacks:          [][]GestureCallback{[]GestureCallback{}},
+		callbacks:          [][]GestureCallback{{}},
 		rejectFirstPointer: 0,
 		firstTap:           nil,
 		secondTap:          nil,
@@ -154,7 +154,7 @@ func (me *doubleTapGestureRecognizer) Clear(widget Widget) {
 		GestureArenaManager().Resolve(me.secondTap.Pointer(), me, false)
 	}
 	me.reset()
-	me.callbacks = [][]GestureCallback{[]GestureCallback{}}
+	me.callbacks = [][]GestureCallback{{}}
 }
 
 func (me *doubleTapGestureRecognizer) reset() {

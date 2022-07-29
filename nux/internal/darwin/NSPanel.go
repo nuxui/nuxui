@@ -36,20 +36,20 @@ uintptr_t nux_NSOpenPanel_shared(){
 	return (uintptr_t)([NSOpenPanel openPanel]);
 }
 
-void nux_NSOpenPanel_setCanChooseFiles(uintptr_t nsOpenPanel, BOOL can){
-	[(NSOpenPanel*)(nsOpenPanel) setCanChooseFiles:can];
+void nux_NSOpenPanel_setCanChooseFiles(uintptr_t nsOpenPanel, int can){
+	[(NSOpenPanel*)(nsOpenPanel) setCanChooseFiles:can>0];
 }
 
-void nux_NSOpenPanel_setCanChooseDirectories(uintptr_t nsOpenPanel, BOOL can){
-	[(NSOpenPanel*)(nsOpenPanel) setCanChooseDirectories:can];
+void nux_NSOpenPanel_setCanChooseDirectories(uintptr_t nsOpenPanel, int can){
+	[(NSOpenPanel*)(nsOpenPanel) setCanChooseDirectories:can>0];
 }
 
-void nux_NSOpenPanel_setAllowsMultipleSelection(uintptr_t nsOpenPanel, BOOL allow){
-	[(NSOpenPanel*)(nsOpenPanel) setAllowsMultipleSelection:allow];
+void nux_NSOpenPanel_setAllowsMultipleSelection(uintptr_t nsOpenPanel, int allow){
+	[(NSOpenPanel*)(nsOpenPanel) setAllowsMultipleSelection:allow>0];
 }
 
-void nux_NSOpenPanel_setCanCreateDirectories(uintptr_t nsOpenPanel, BOOL can){
-	[(NSOpenPanel*)(nsOpenPanel) setCanCreateDirectories:can];
+void nux_NSOpenPanel_setCanCreateDirectories(uintptr_t nsOpenPanel, int can){
+	[(NSOpenPanel*)(nsOpenPanel) setCanCreateDirectories:can>0];
 }
 
 void nux_NSOpenPanel_setAllowedContentTypes(uintptr_t nsOpenPanel, void* types, int count){
@@ -105,25 +105,25 @@ func SharedNSOpenPanel() NSOpenPanel {
 }
 
 func (me NSOpenPanel) SetCanChooseFiles(can bool) {
-	var b C.BOOL
+	var b C.int
 	if can {
-		b = 1
+		b = C.int(1)
 	}
 	C.nux_NSOpenPanel_setCanChooseFiles(C.uintptr_t(me), b)
 }
 
 func (me NSOpenPanel) SetCanChooseDirectories(can bool) {
-	var b C.BOOL
+	var b C.int
 	if can {
-		b = 1
+		b = C.int(1)
 	}
 	C.nux_NSOpenPanel_setCanChooseDirectories(C.uintptr_t(me), b)
 }
 
 func (me NSOpenPanel) SetAllowsMultipleSelection(allow bool) {
-	var b C.BOOL
+	var b C.int
 	if allow {
-		b = 1
+		b = C.int(1)
 	}
 	C.nux_NSOpenPanel_setAllowsMultipleSelection(C.uintptr_t(me), b)
 }
@@ -137,9 +137,9 @@ func (me NSOpenPanel) SetAllowedContentTypes(types []UTType) {
 }
 
 func (me NSOpenPanel) SetCanCreateDirectories(can bool) {
-	var b C.BOOL
+	var b C.int
 	if can {
-		b = 1
+		b = C.int(1)
 	}
 	C.nux_NSOpenPanel_setCanCreateDirectories(C.uintptr_t(me), b)
 }

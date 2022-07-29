@@ -78,7 +78,7 @@ func newLongPressGestureRecognizer(target Widget) *longPressGestureRecognizer {
 	}
 
 	return &longPressGestureRecognizer{
-		callbacks: [][]GestureCallback{[]GestureCallback{}, []GestureCallback{}, []GestureCallback{}},
+		callbacks: [][]GestureCallback{{}, {}, {}},
 		initEvent: nil,
 		target:    target,
 		timer:     nil,
@@ -177,7 +177,7 @@ func (me *longPressGestureRecognizer) Clear(widget Widget) {
 		GestureArenaManager().Resolve(me.initEvent.Pointer(), me, false)
 	}
 	me.reset()
-	me.callbacks = [][]GestureCallback{[]GestureCallback{}, []GestureCallback{}, []GestureCallback{}}
+	me.callbacks = [][]GestureCallback{{}, {}, {}}
 }
 
 func (me *longPressGestureRecognizer) reset() {

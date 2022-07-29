@@ -613,7 +613,7 @@ func (me *attr) nextValue(parent int) (any, error) {
 		}
 		return str, nil
 	}
-	return nil, nil
+
 }
 
 func (me *attr) nextArray() ([]any, error) {
