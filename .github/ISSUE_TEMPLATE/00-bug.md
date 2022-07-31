@@ -1,6 +1,6 @@
 ---
 name: Bugs
-about: The go command, standard library, or anything else
+about: The nuxui command, standard library, or anything else
 title: "affected/package: "
 ---
 
