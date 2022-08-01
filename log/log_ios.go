@@ -1,0 +1,49 @@
+// Copyright 2018 The NuxUI Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+//go:build ios
+
+package log
+
+/*
+#cgo CFLAGS: -x objective-c -DGL_SILENCE_DEPRECATION
+#cgo LDFLAGS: -framework Foundation
+
+#import <QuartzCore/QuartzCore.h>
+
+void log_print(int level, char* tag, char* msg){
+	NSLog(@"%s %s", tag, msg);
+}
+
+*/
+import "C"
+import (
+	"fmt"
+	"io"
+	"time"
+	"unsafe"
+)
+
+func new(out io.Writer, prefix string, flags int, depth int) Logger {
+	me := &logger{
+		depth:  depth,
+		out:    out,
+		flags:  flags,
+		prefix: prefix,
+		level:  VERBOSE,
+		logs:   make(chan string, lBufferSize),
+		timer:  map[uint32]time.Time{},
+	}
+
+	return me
+}
+
+func (me *logger) output(depth int, color string, level Level, levelTag string, tag string, format string, msg ...any) {
+	ctag := C.CString(tag)
+	str := fmt.Sprintf(format, msg...)
+	cmsg := C.CString(str)
+	defer C.free(unsafe.Pointer(ctag))
+	defer C.free(unsafe.Pointer(cmsg))
+	C.log_print(C.int(level), ctag, cmsg)
+}
