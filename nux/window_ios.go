@@ -2,70 +2,72 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build ios
+//go:build darwin && ios
 
 package nux
 
-/*
-#include <stdint.h>
-#import <UIKit/UIKit.h>
-
-// char*   window_title(uintptr_t window);
-// void    window_setTitle(uintptr_t window, char* title);
-// float   window_alpha(uintptr_t window);
-// void    window_setAlpha(uintptr_t window, float alpha);
-void window_getSize(uintptr_t window, int32_t *width, int32_t *height);
-void window_getContentSize(uintptr_t window, int32_t *width, int32_t *height);
-CGContextRef window_getCGContext(uintptr_t window);
-*/
-import "C"
-
 import (
+	"runtime"
+	"time"
+
 	"nuxui.org/nuxui/log"
-	"unsafe"
+	"nuxui.org/nuxui/nux/internal/ios"
 )
 
-type window struct {
-	windptr      C.uintptr_t
-	decor        Parent
-	buffer       unsafe.Pointer
-	bufferWidth  int32
-	bufferHeight int32
-	delegate     WindowDelegate
-	focusWidget  Widget
+type nativeWindow struct {
+	ptr ios.UIWindow
 
-	initEvent PointerEvent
-	timer     Timer
-
-	cgContext uintptr
-	canvas    Canvas
+	pendingAttr Attr
 }
 
-func newWindow(attr Attr) *window {
-	me := &window{}
+func newNativeWindow(attr Attr) (me *nativeWindow) {
+	ios.SetWindowEventHandler(nativeWindowEventHandler)
 
-	me.CreateDecor(attr)
+	width, height := measureWindowSize(attr.GetDimen("width", "100%"), attr.GetDimen("height", "100%"))
+	me = &nativeWindow{
+		ptr: ios.NewUIWindow(width, height),
+	}
+	// me.SetTitle(attr.GetString("title", ""))
+
+	runtime.SetFinalizer(me, freeWindow)
 	return me
 }
 
-func (me *window) CreateDecor(attr Attr) Widget {
-	creator := FindTypeCreator("nuxui.org/nuxui/ui.Layer")
-	w := creator(attr)
-	if p, ok := w.(Parent); ok {
-		p.Info().Self = p
-		me.decor = p
-	} else {
-		log.Fatal("nuxui", "decor must is a Parent")
-	}
-
-	return me.decor
+func freeWindow(me *nativeWindow) {
 }
 
-var TestDraw func(Canvas)
+func (me *nativeWindow) Center() {
+}
 
-func (me *window) Draw(canvas Canvas) {
-	if me.decor != nil {
-		if f, ok := me.decor.(Draw); ok {
+func (me *nativeWindow) Show() {
+	me.ptr.MakeKeyAndVisible()
+}
+
+func (me *nativeWindow) ContentSize() (width, height int32) {
+	w, h := me.ptr.Frame().Size()
+	return int32(w), int32(h)
+}
+
+func (me *nativeWindow) Title() string {
+	// return me.ptr.Title()
+	return ""
+}
+
+func (me *nativeWindow) SetTitle(title string) {
+	// me.ptr.SetTitle(title)
+}
+
+func (me *nativeWindow) lockCanvas() Canvas {
+	return newCanvas(ios.UIGraphicsGetCurrentContext())
+}
+
+func (me *nativeWindow) unlockCanvas(canvas Canvas) {
+	canvas.Flush()
+}
+
+func (me *nativeWindow) draw(canvas Canvas, decor Widget) {
+	if decor != nil {
+		if f, ok := decor.(Draw); ok {
 			canvas.Save()
 			if TestDraw != nil {
 				TestDraw(canvas)
@@ -77,203 +79,89 @@ func (me *window) Draw(canvas Canvas) {
 	}
 }
 
-func (me *window) ID() uint64 {
-	return 0
-}
-
-func (me *window) Size() (width, height int32) {
-	var w, h C.int32_t
-	C.window_getSize(me.windptr, &w, &h)
-	return int32(w), int32(h)
-}
-
-func (me *window) ContentSize() (width, height int32) {
-	var w, h C.int32_t
-	C.window_getContentSize(me.windptr, &w, &h)
-	return int32(w), int32(h)
-}
-
-func (me *window) LockCanvas() Canvas {
-	me.canvas = newCanvas(C.window_getCGContext(me.windptr))
-	return me.canvas
-}
-
-func (me *window) UnlockCanvas(c Canvas) {
-}
-
-func (me *window) Decor() Widget {
-	return me.decor
-}
-
-func (me *window) Alpha() float32 {
-	return 0 //float32(C.window_alpha(me.windptr))
-}
-
-func (me *window) SetAlpha(alpha float32) {
-	// C.window_setAlpha(me.windptr, C.float(alpha))
-}
-
-func (me *window) Title() string {
-	return "" //C.GoString(C.window_title(me.windptr))
-}
-
-func (me *window) SetTitle(title string) {
-	// ctitle := C.CString(title)
-	// C.window_setTitle(me.windptr, ctitle)
-	// C.free(unsafe.Pointer(ctitle))
-}
-
-func (me *window) SetDelegate(delegate WindowDelegate) {
-	me.delegate = delegate
-}
-
-func (me *window) Delegate() WindowDelegate {
-	return me.delegate
-}
-
-func (me *window) handlePointerEvent(e PointerEvent) {
-	me.switchFocusIfPossible(e)
-
-	if me.delegate != nil {
-		if f, ok := me.delegate.(windowDelegate_HandlePointerEvent); ok {
-			f.HandlePointerEvent(e)
-			return
+func nativeWindowEventHandler(event any) bool {
+	switch e := event.(type) {
+	case ios.UIEvent:
+		return handleUIEvent(e)
+	// case *ios.TypingEvent:
+	// 	return handleTypingEvent(e)
+	case *ios.WindowEvent:
+		switch e.Type {
+		case ios.Event_WindowDidResize:
+			theApp.mainWindow.resize()
+		case ios.Event_WindowDrawRect:
+			theApp.mainWindow.draw()
 		}
 	}
 
-	hitTestResultManagerInstance.handlePointerEvent(me.Decor(), e)
+	return false
 }
 
-func (me *window) handleScrollEvent(e ScrollEvent) {
-	hitTestResultManagerInstance.handleScrollEvent(me.Decor(), e)
-}
-
-func (me *window) handleKeyEvent(e KeyEvent) {
-	if me.focusWidget != nil {
-		if f, ok := me.focusWidget.(KeyEventHandler); ok {
-			if f.OnKeyEvent(e) {
-				return
-			} else {
-				goto other
-			}
+func handleUIEvent(event ios.UIEvent) bool {
+	switch event.Type() {
+	case ios.UIEventTypeTouches:
+		if event.AllTouches().Count() == 1 {
+			return handlePointerEvent(event)
 		}
-	} else {
-		goto other
-	}
-
-other:
-	if me.decor != nil {
-		me.handleOtherWidgetKeyEvent(me.decor, e)
-	}
-}
-
-func (me *window) handleOtherWidgetKeyEvent(p Parent, e KeyEvent) bool {
-	if p.ChildrenCount() > 0 {
-		var compt Widget
-		for _, c := range p.Children() {
-			compt = nil
-			if cpt, ok := c.(Component); ok {
-				c = cpt.Content()
-				compt = cpt
-			}
-			if cp, ok := c.(Parent); ok {
-				if me.handleOtherWidgetKeyEvent(cp, e) {
-					return true
-				}
-			} else if f, ok := c.(KeyEventHandler); ok {
-				if f.OnKeyEvent(e) {
-					return true
-				}
-			}
-
-			if compt != nil {
-				if f, ok := compt.(KeyEventHandler); ok {
-					if f.OnKeyEvent(e) {
-						return true
-					}
-				}
-			}
-		}
+	case ios.UIEventTypeMotion:
+		log.I("nuxui", "handleUIEvent === UIEventTypeMotion")
+	case ios.UIEventTypeRemoteControl:
+		log.I("nuxui", "handleUIEvent === UIEventTypeRemoteControl")
+	case ios.UIEventTypePresses:
+		log.I("nuxui", "handleUIEvent === UIEventTypePresses")
+	case ios.UIEventTypeHover:
+		log.I("nuxui", "handleUIEvent === UIEventTypeHover")
+	case ios.UIEventTypeScroll:
+		log.I("nuxui", "handleUIEvent === UIEventTypeScroll")
+	case ios.UIEventTypeTransform:
+		log.I("nuxui", "handleUIEvent === UIEventTypeTransform")
 	}
 	return false
 }
 
-func (me *window) handleTypingEvent(e TypingEvent) {
-	if me.focusWidget != nil {
-		if f, ok := me.focusWidget.(TypingEventHandler); ok {
-			f.OnTypingEvent(e)
-			return
+var lastMouseEvent map[PointerButton]PointerEvent = map[PointerButton]PointerEvent{}
+
+func handlePointerEvent(uievent ios.UIEvent) bool {
+	touch := ios.UITouch(uievent.AllTouches().ObjectAtIndex(0))
+	x, y := touch.LocationInView(0) // Pass nil to get the touch location in the window's coordinates
+
+	e := &pointerEvent{
+		event: event{
+			window: theApp.MainWindow(),
+			time:   time.Now(),
+			etype:  Type_PointerEvent,
+			action: Action_None,
+		},
+		pointer: 0,
+		button:  ButtonPrimary,
+		kind:    Kind_Touch,
+		x:       x,
+		y:       y,
+	}
+
+	switch touch.Phase() {
+	case ios.UITouchPhaseBegan:
+		e.action = Action_Down
+		e.pointer = time.Now().UnixNano()
+		lastMouseEvent[e.button] = e
+	case ios.UITouchPhaseMoved:
+		e.action = Action_Drag
+		if v, ok := lastMouseEvent[e.button]; ok {
+			e.pointer = v.Pointer()
+		}
+	case ios.UITouchPhaseEnded:
+		e.action = Action_Up
+		if v, ok := lastMouseEvent[e.button]; ok {
+			e.pointer = v.Pointer()
+			delete(lastMouseEvent, e.button)
+		}
+	case ios.UITouchPhaseCancelled:
+		e.action = Action_Up
+		if v, ok := lastMouseEvent[e.button]; ok {
+			e.pointer = v.Pointer()
+			delete(lastMouseEvent, e.button)
 		}
 	}
 
-	log.E("nuxui", "none widget handle typing event")
-}
-
-func (me *window) requestFocus(widget Widget) {
-	if me.focusWidget == widget {
-		return
-	}
-
-	if me.focusWidget != nil {
-		if f, ok := me.focusWidget.(Focus); ok && f.HasFocus() {
-			f.FocusChanged(false)
-		}
-	}
-
-	if f, ok := widget.(Focus); ok {
-		if f.Focusable() {
-			me.focusWidget = widget
-			if !f.HasFocus() {
-				f.FocusChanged(true)
-			}
-		}
-	}
-}
-
-func (me *window) switchFocusIfPossible(event PointerEvent) {
-	if event.Type() != Type_PointerEvent || !event.IsPrimary() {
-		return
-	}
-
-	switch event.Action() {
-	case Action_Down:
-		me.initEvent = event
-		if event.Kind() == Kind_Mouse {
-			me.switchFocusAtPoint(event.X(), event.Y())
-		}
-	case Action_Move:
-		if event.Kind() == Kind_Touch {
-			if me.timer != nil {
-				if me.initEvent.Distance(event.X(), event.Y()) >= GESTURE_MIN_PAN_DISTANCE {
-					me.switchFocusAtPoint(me.initEvent.X(), me.initEvent.Y())
-				}
-			}
-		}
-	case Action_Up:
-		if event.Kind() == Kind_Touch {
-			if event.Time().UnixNano()-me.initEvent.Time().UnixNano() < GESTURE_LONG_PRESS_TIMEOUT.Nanoseconds() {
-				me.switchFocusAtPoint(event.X(), event.Y())
-			}
-		}
-	}
-
-}
-
-func (me *window) switchFocusAtPoint(x, y float32) {
-	if me.focusWidget != nil {
-		if s, ok := me.focusWidget.(Size); ok {
-			f := s.Frame()
-			if x >= float32(f.X) && x <= float32(f.X+f.Width) &&
-				y >= float32(f.Y) && y <= float32(f.Y+f.Height) {
-				// point is in current focus widget, do not need change focus
-				return
-			}
-		}
-
-		if f, ok := me.focusWidget.(Focus); ok && f.HasFocus() {
-			me.focusWidget = nil
-			f.FocusChanged(false)
-		}
-	}
-
+	return App().MainWindow().handlePointerEvent(e)
 }

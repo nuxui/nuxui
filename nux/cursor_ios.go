@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build ios
+//go:build darwin && ios
 
 package nux
 
@@ -20,4 +20,14 @@ func cursorPositionScreenToWindow(wind Window, x0, y0 float32) (x, y float32) {
 
 func cursorPositionWindowToScreen(wind Window, x0, y0 float32) (x, y float32) {
 	return
+}
+
+type cursor struct {
+}
+
+func (me *cursor) Set() {
+}
+
+func loadNativeCursor(c NativeCursor) *cursor {
+	return &cursor{}
 }

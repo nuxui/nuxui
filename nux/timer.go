@@ -6,8 +6,6 @@ package nux
 
 import (
 	"time"
-
-	"nuxui.org/nuxui/log"
 )
 
 type timerLoop struct {
@@ -80,7 +78,7 @@ func NewInterval(duration time.Duration, callback func()) Timer {
 }
 
 func NewTimerBackToUI(duration time.Duration, callback func()) Timer {
-	log.V("nuxui", "callback = %p", &callback)
+	// log.V("nuxui", "callback = %p", &callback)
 	t := &timer{
 		backui:   true,
 		running:  true,
@@ -88,9 +86,9 @@ func NewTimerBackToUI(duration time.Duration, callback func()) Timer {
 	}
 	go func(t *timer) {
 		time.Sleep(duration)
-		log.V("nuxui", "timerLoopInstance.ding <- t 0")
+		// log.V("nuxui", "timerLoopInstance.ding <- t 0")
 		timerLoopInstance.ding <- t
-		log.V("nuxui", "timerLoopInstance.ding <- t 1")
+		// log.V("nuxui", "timerLoopInstance.ding <- t 1")
 
 	}(t)
 

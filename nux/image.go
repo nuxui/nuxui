@@ -5,7 +5,6 @@
 package nux
 
 import (
-	"os"
 	"path/filepath"
 	"strings"
 )
@@ -16,16 +15,6 @@ type Image interface {
 }
 
 func LoadImageFromFile(filename string) (Image, error) {
-	_, err := os.Stat(filename)
-	if err != nil {
-		return nil, err
-	}
-
-	filename, err = filepath.Abs(filename)
-	if err != nil {
-		return nil, err
-	}
-
 	ext := strings.ToLower(filepath.Ext(filename))
 
 	switch ext {

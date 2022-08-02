@@ -2,13 +2,19 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build darwin && !ios
+//go:build darwin && ios
 
-package darwin
+package ios
 
 /*
+#cgo CFLAGS: -x objective-c -DGL_SILENCE_DEPRECATION
+#cgo LDFLAGS: -framework Foundation -framework CoreGraphics -framework UIKit -framework CoreText -framework GLKit
+
 #import <QuartzCore/QuartzCore.h>
-#import <Cocoa/Cocoa.h>
+#import <UIKit/UIKit.h>
+#import <GLKit/GLKit.h>
+#import <CoreText/CoreText.h>
+#import <CoreGraphics/CoreGraphics.h>
 
 void nux_CGContextDrawImage(CGContextRef ctx, CGRect rect, CGImageRef image){
 	CGContextSaveGState(ctx);
@@ -18,15 +24,15 @@ void nux_CGContextDrawImage(CGContextRef ctx, CGRect rect, CGImageRef image){
 	CGContextRestoreGState(ctx);
 }
 
-CGContextRef nux_CGCurrentContext(){
-    return [NSGraphicsContext currentContext].CGContext;
+CGContextRef nux_UIGraphicsGetCurrentContext(){
+    return UIGraphicsGetCurrentContext();
 }
 */
 import "C"
 import "unsafe"
 
-func CGCurrentContext() CGContextRef {
-	return CGContextRef(C.nux_CGCurrentContext())
+func UIGraphicsGetCurrentContext() CGContextRef {
+	return CGContextRef(C.nux_UIGraphicsGetCurrentContext())
 }
 
 func CGContextResetClip(ctx CGContextRef) {
@@ -111,6 +117,7 @@ func CGContextStrokeRectWithWidth(ctx CGContextRef, rect CGRect, width float32) 
 }
 
 func CGContextDrawImage(ctx CGContextRef, rect CGRect, image CGImageRef) {
+	// C.CGContextDrawImage(C.CGContextRef(ctx), C.CGRect(rect), C.CGImageRef(image))
 	C.nux_CGContextDrawImage(C.CGContextRef(ctx), C.CGRect(rect), C.CGImageRef(image))
 }
 

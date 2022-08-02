@@ -2,13 +2,19 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build darwin && !ios
+//go:build darwin && ios
 
-package darwin
+package ios
 
 /*
+#cgo CFLAGS: -x objective-c -DGL_SILENCE_DEPRECATION -DGLES_SILENCE_DEPRECATION
+#cgo LDFLAGS: -framework Foundation -framework CoreGraphics -framework UIKit -framework CoreText -framework GLKit -framework UniformTypeIdentifiers -framework QuartzCore -framework ImageIO
+
 #import <QuartzCore/QuartzCore.h>
-#import <Cocoa/Cocoa.h>
+#import <UIKit/UIKit.h>
+#import <GLKit/GLKit.h>
+#import <CoreText/CoreText.h>
+#import <CoreGraphics/CoreGraphics.h>
 
 CGImageRef nux_CGImageSourceCreateImageAtIndex(char* name){
     NSURL *url = [NSURL fileURLWithPath: [NSString stringWithUTF8String:name]];
@@ -34,6 +40,10 @@ func CGImageSourceCreateImageAtIndex(filename string) CGImageRef {
 	return CGImageRef(C.nux_CGImageSourceCreateImageAtIndex(cpath))
 }
 
+func CGImageCreateCopy(image CGImageRef) CGImageRef {
+	return CGImageRef(C.CGImageCreateCopy(C.CGImageRef(image)))
+}
+
 func CGImageRelease(image CGImageRef) {
 	C.CGImageRelease(C.CGImageRef(image))
 }
@@ -41,3 +51,5 @@ func CGImageRelease(image CGImageRef) {
 func CGImageGetSize(image CGImageRef) (width, height int32) {
 	return int32(C.CGImageGetWidth(C.CGImageRef(image))), int32(C.CGImageGetHeight(C.CGImageRef(image)))
 }
+
+

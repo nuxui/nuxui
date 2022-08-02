@@ -30,6 +30,12 @@ func createNativeApp_() *nativeApp {
 func (me *nativeApp) run() {
 	defer win32.GdiplusShutdown()
 
+	theApp.createMainWindow()
+	theApp.mainWindow.Center()
+	theApp.mainWindow.Show()
+
+	theApp.windowPrepared <- struct{}{}
+
 	var msg win32.MSG
 	var ret int32
 	var err error
@@ -51,7 +57,7 @@ func (me *nativeApp) terminate() {
 }
 
 func invalidateRectAsync_(dirtRect *Rect) {
-	win32.RedrawWindow(theApp.window.native().hwnd, nil, 0, win32.RDW_INVALIDATE)
+	win32.RedrawWindow(theApp.mainWindow.native().hwnd, nil, 0, win32.RDW_INVALIDATE)
 }
 
 func startTextInput() {
@@ -69,7 +75,7 @@ func runOnUI(callback func()) {
 		go func() {
 			chanBackToUI <- callback
 		}()
-		win32.SendMessage(theApp.window.native().hwnd, win32.WM_USER, 0, 0)
+		win32.SendMessage(theApp.mainWindow.native().hwnd, win32.WM_USER, 0, 0)
 	}
 }
 

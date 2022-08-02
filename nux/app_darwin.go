@@ -15,17 +15,78 @@ type nativeApp struct {
 }
 
 func createNativeApp_() *nativeApp {
-	return &nativeApp{
-		ptr: darwin.NSApp_SharedApplication(),
-	}
+	me := &nativeApp{}
+	darwin.SetNSApplicationDelegate(me)
+	me.ptr = darwin.NSApp_SharedApplication()
+	return me
 }
 
 func (me *nativeApp) run() {
+	theApp.createMainWindow()
+	theApp.mainWindow.Center()
+	theApp.mainWindow.Show()
+
+	theApp.windowPrepared <- struct{}{}
+
 	me.ptr.Run()
 }
 
 func (me *nativeApp) terminate() {
 	me.ptr.Terminate()
+}
+
+func (me *nativeApp) ApplicationWillFinishLaunching(notification darwin.NSNotification) {
+	// log.I("nuxui", "ApplicationWillFinishLaunching")
+}
+
+func (me *nativeApp) ApplicationDidFinishLaunching(notification darwin.NSNotification) {
+	// log.I("nuxui", "ApplicationDidFinishLaunching")
+}
+
+func (me *nativeApp) ApplicationWillBecomeActive(notification darwin.NSNotification) {
+	// log.I("nuxui", "ApplicationWillBecomeActive")
+}
+
+func (me *nativeApp) ApplicationDidBecomeActive(notification darwin.NSNotification) {
+	// log.I("nuxui", "ApplicationDidBecomeActive")
+}
+
+func (me *nativeApp) ApplicationWillResignActive(notification darwin.NSNotification) {
+	// log.I("nuxui", "ApplicationWillResignActive")
+}
+
+func (me *nativeApp) ApplicationDidResignActive(notification darwin.NSNotification) {
+	// log.I("nuxui", "ApplicationDidResignActive")
+}
+
+func (me *nativeApp) ApplicationShouldTerminate(sender darwin.NSApplication) darwin.NSApplicationTerminateReply {
+	// log.I("nuxui", "ApplicationShouldTerminate")
+	return darwin.NSTerminateNow
+}
+
+func (me *nativeApp) ApplicationShouldTerminateAfterLastWindowClosed(sender darwin.NSApplication) bool {
+	// log.I("nuxui", "ApplicationShouldTerminateAfterLastWindowClosed")
+	return true
+}
+
+func (me *nativeApp) ApplicationWillTerminate(notification darwin.NSNotification) {
+	// log.I("nuxui", "ApplicationWillTerminate")
+}
+
+func (me *nativeApp) ApplicationWillHide(notification darwin.NSNotification) {
+	// log.I("nuxui", "ApplicationWillHide")
+}
+
+func (me *nativeApp) ApplicationDidHide(notification darwin.NSNotification) {
+	// log.I("nuxui", "ApplicationDidHide")
+}
+
+func (me *nativeApp) ApplicationWillUnhide(notification darwin.NSNotification) {
+	// log.I("nuxui", "ApplicationWillUnhide")
+}
+
+func (me *nativeApp) ApplicationDidUnhide(notification darwin.NSNotification) {
+	// log.I("nuxui", "ApplicationDidUnhide")
 }
 
 func runOnUI(callback func()) {

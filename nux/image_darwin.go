@@ -24,7 +24,7 @@ func freeImage(img *nativeImage) {
 }
 
 type nativeImage struct {
-	ptr darwin.CGImage
+	ptr darwin.CGImageRef
 }
 
 func (me *nativeImage) PixelSize() (width, height int32) {

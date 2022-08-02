@@ -20,9 +20,11 @@ type Application interface {
 type application struct {
 	native           *nativeApp
 	mainThreadID     uint64
-	window           Window
+	mainWindow       Window
+	createMainWindow func()
 	invalidateSignal chan *Rect
 	measureSignal    chan Widget
+	windowPrepared   chan struct{}
 }
 
 const (
@@ -33,6 +35,7 @@ var theApp = &application{
 	native:           createNativeApp(),
 	invalidateSignal: make(chan *Rect, invalidateSignalSize),
 	measureSignal:    make(chan Widget, invalidateSignalSize),
+	windowPrepared:   make(chan struct{}, 1),
 }
 
 func init() {
@@ -45,16 +48,21 @@ func App() Application {
 	return theApp
 }
 
-func Run(window Window) {
+func Run(createMainWindow func()) {
+	if createMainWindow == nil {
+		log.Fatal("nuxui", "createMainWindow can not be nil")
+	}
+	if theApp.createMainWindow != nil {
+		log.Fatal("nuxui", "do not call Run again")
+	}
+
+	theApp.createMainWindow = createMainWindow
+
 	if tid := currentThreadID(); tid != theApp.mainThreadID {
 		log.Fatal("nuxui", "main called on thread %d, but init run on %d", tid, theApp.mainThreadID)
 	}
 
 	defer runtime.UnlockOSThread()
-
-	theApp.window = window
-	window.Center()
-	window.Show()
 
 	go refreshLoop()
 
@@ -67,14 +75,17 @@ func (me *application) Run() {
 
 // not nil
 func (me *application) MainWindow() Window {
-	if me.window == nil {
+	if me.mainWindow == nil {
 		log.Fatal("nuxui", "main window not created yet")
 	}
-	return me.window
+	return me.mainWindow
 }
 
 func (me *application) Terminate() {
 	me.native.terminate()
+}
+
+func (me *application) onDidFinishLaunch() {
 }
 
 func createNativeApp() *nativeApp {
@@ -89,6 +100,8 @@ func refreshLoop() {
 	var i, l int
 	var rect *Rect
 	var dirtRect *Rect = &Rect{}
+
+	<-theApp.windowPrepared
 
 	for {
 		select {
@@ -127,7 +140,7 @@ func RequestLayout(widget Widget) {
 
 func requestLayoutAsync(widget Widget) {
 	runOnUI(func() {
-		theApp.window.resize()
+		theApp.mainWindow.resize()
 	})
 }
 

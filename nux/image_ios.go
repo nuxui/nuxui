@@ -2,47 +2,42 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build ios
+//go:build darwin && ios
 
 package nux
 
-/*
-#import <QuartzCore/QuartzCore.h>
-#import <UIKit/UIKit.h>
-
-CGImageRef nux_loadImageFromFile(char* name){
-	UIImage *loadImage = [UIImage imageNamed:[NSString stringWithUTF8String:name]];
-	CGImageRef cgimage=loadImage.CGImage;
-	return cgimage;
-}
-*/
-import "C"
 import (
-	"path/filepath"
+	"nuxui.org/nuxui/nux/internal/ios"
 	"runtime"
-	"unsafe"
 )
 
-func loadImageFromFile(path string) Image {
-	path, _ = filepath.Abs(path)
-	cpath := C.CString(path)
-	defer C.free(unsafe.Pointer(cpath))
-
+func loadImageFromFile(filename string) Image {
+	img := ios.UIImage_ImageNamed(filename)
 	me := &nativeImage{
-		ptr: C.nux_loadImageFromFile(cpath),
+		ptr: ios.CGImageCreateCopy(img.CGImage()),
 	}
+
+	// crash ??
+	// me := &nativeImage{
+	// 	ptr: ios.CGImageSourceCreateImageAtIndex(filename),
+	// }
 	runtime.SetFinalizer(me, freeImage)
 	return me
 }
 
 func freeImage(img *nativeImage) {
-	C.CGImageRelease(img.ptr)
+	ios.CGImageRelease(img.ptr)
 }
 
 type nativeImage struct {
-	ptr C.CGImageRef
+	ptr ios.CGImageRef
 }
 
-func (me *nativeImage) Size() (width, height int32) {
-	return int32(C.CGImageGetWidth(me.ptr)), int32(C.CGImageGetHeight(me.ptr))
+func (me *nativeImage) PixelSize() (width, height int32) {
+	return ios.CGImageGetSize(me.ptr)
+}
+
+func (me *nativeImage) Draw(canvas Canvas) {
+	w, h := me.PixelSize()
+	ios.CGContextDrawImage(canvas.native().ctx, ios.CGRectMake(0, 0, float32(w), float32(h)), me.ptr)
 }

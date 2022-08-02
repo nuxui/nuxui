@@ -88,9 +88,9 @@ func nativeWindowEventHandler(event any) bool {
 	case *darwin.WindowEvent:
 		switch e.Type {
 		case darwin.Event_WindowDidResize:
-			theApp.window.resize()
+			theApp.mainWindow.resize()
 		case darwin.Event_WindowDrawRect:
-			theApp.window.draw()
+			theApp.mainWindow.draw()
 		}
 	}
 

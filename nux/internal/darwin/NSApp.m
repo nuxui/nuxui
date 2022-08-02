@@ -46,11 +46,10 @@
 @implementation NuxApplicationDelegate
 // Launching Applications
 - (void)applicationWillFinishLaunching:(NSNotification *)notification {
-  // NSLog(@"NuxApplicationDelegate applicationWillFinishLaunching");
+  go_nux_app_delegate(1, (uintptr_t)notification);
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
-  // NSLog(@"NuxApplicationDelegate applicationDidFinishLaunching");
   if (true /*TODO:: background*/) {
     [NSApp activateIgnoringOtherApps:YES];
   }
@@ -64,15 +63,16 @@
   // NSApplicationActivateIgnoringOtherApps)]; [window orderFrontRegardless];
   // [window makeKeyAndOrderFront:window];
   // go_nativeLoopPrepared();
+  go_nux_app_delegate(2, (uintptr_t)notification);
 }
 
 // Managing Active Status
 - (void)applicationWillBecomeActive:(NSNotification *)notification {
-  // NSLog(@"NuxApplicationDelegate applicationWillBecomeActive");
+  go_nux_app_delegate(3, (uintptr_t)notification);
 }
 
 - (void)applicationDidBecomeActive:(NSNotification *)notification {
-  // NSLog(@"NuxApplicationDelegate applicationDidBecomeActive");
+  go_nux_app_delegate(4, (uintptr_t)notification);
 
   // NSLog(@"window = %@", [[NSApplication sharedApplication] mainWindow]);
   // NSLog(@"window2 = %@", [[[[NSApplication sharedApplication] windows]
@@ -86,62 +86,55 @@
 }
 
 - (void)applicationWillResignActive:(NSNotification *)notification {
-  // NSLog(@"NuxApplicationDelegate applicationWillResignActive");
+  go_nux_app_delegate(5, (uintptr_t)notification);
 }
 
 - (void)applicationDidResignActive:(NSNotification *)notification {
-  // NSLog(@"NuxApplicationDelegate applicationDidResignActive");
+  go_nux_app_delegate(6, (uintptr_t)notification);
 }
 
-// // Terminating Applications
-// // - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication
-// *)sender
-// // {
-// // 	NSLog(@"NuxApplicationDelegate applicationShouldTerminate");
-// // }
+// Terminating Applications
+- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication*)sender
+{
+  return go_nux_app_delegate(7, (uintptr_t)sender);
+}
 
-- (BOOL)applicationShouldTerminateAfterLastWindowClosed:
-    (NSApplication *)sender {
-  // NSLog(@"NuxApplicationDelegate "
-        // @"applicationShouldTerminateAfterLastWindowClosed");
-  return YES;
+- (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender {
+  return go_nux_app_delegate(8, (uintptr_t)sender) > 0;
 }
 
 - (void)applicationWillTerminate:(NSNotification *)notification {
-  // NSLog(@"NuxApplicationDelegate applicationWillTerminate");
+  go_nux_app_delegate(9, (uintptr_t)notification);
 }
 
 // Hiding Applications
 - (void)applicationWillHide:(NSNotification *)notification {
-  // NSLog(@"NuxApplicationDelegate applicationWillHide");
+  go_nux_app_delegate(10, (uintptr_t)notification);
 }
 
 - (void)applicationDidHide:(NSNotification *)notification {
-  // NSLog(@"NuxApplicationDelegate applicationDidHide");
+  go_nux_app_delegate(11, (uintptr_t)notification);
 }
 
 - (void)applicationWillUnhide:(NSNotification *)notification {
-  // NSLog(@"NuxApplicationDelegate applicationWillUnhide");
+  go_nux_app_delegate(12, (uintptr_t)notification);
 }
 
 - (void)applicationDidUnhide:(NSNotification *)notification {
-  // NSLog(@"NuxApplicationDelegate applicationDidUnhide");
+  go_nux_app_delegate(13, (uintptr_t)notification);
 }
 
 // Managing Windows
 - (void)applicationWillUpdate:(NSNotification *)notification {
   // when has input
-  // NSLog(@"NuxApplicationDelegate applicationWillUpdate");
 }
 
 - (void)applicationDidUpdate:(NSNotification *)notification {
   // when has input
-  // NSLog(@"NuxApplicationDelegate applicationDidUpdate");
 }
 
 - (BOOL)applicationShouldHandleReopen:(NSApplication *)sender
                     hasVisibleWindows:(BOOL)flag {
-  // NSLog(@"NuxApplicationDelegate applicationShouldHandleReopen");
   return NO;
 }
 

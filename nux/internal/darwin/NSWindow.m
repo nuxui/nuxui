@@ -22,7 +22,7 @@
       [NSGraphicsContext graphicsContextWithCGContext:cgContext flipped:true];
   [NSGraphicsContext setCurrentContext:context];
 
-  go_nux_windowDrawRect((uintptr_t)[self window], cgContext);
+  go_nux_windowDrawRect((uintptr_t)[self window]);
 
   [NSGraphicsContext restoreGraphicsState];
 }

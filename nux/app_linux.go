@@ -36,6 +36,12 @@ func createNativeApp_() *nativeApp {
 func (me *nativeApp) run() {
 	defer xlib.XCloseDisplay(me.display)
 
+	theApp.createMainWindow()
+	theApp.mainWindow.Center()
+	theApp.mainWindow.Show()
+
+	theApp.windowPrepared <- struct{}{}
+
 	var event xlib.XEvent
 	for {
 		xlib.XNextEvent(me.display, &event)
@@ -46,7 +52,7 @@ func (me *nativeApp) run() {
 			continue
 		}
 
-		if theApp.window.native().handleNativeEvent(event.Convert()) {
+		if theApp.mainWindow.native().handleNativeEvent(event.Convert()) {
 
 		}
 	}
@@ -70,7 +76,7 @@ func runOnUI(callback func()) {
 			Serial:      0,
 			SendEvent:   1,
 			Display:     theApp.native.display,
-			Window:      theApp.window.native().window,
+			Window:      theApp.mainWindow.native().window,
 			MessageType: xlib.XInternAtom(theApp.native.display, "nux_user_backToUI", false),
 			Format:      32,
 		}
@@ -84,7 +90,7 @@ func backToUI() {
 }
 
 func invalidateRectAsync_(dirtRect *Rect) {
-	nw := theApp.window.native()
+	nw := theApp.mainWindow.native()
 	w, h := nw.ContentSize()
 	xlib.XClearArea(nw.display, nw.window, 0, 0, w, h, true)
 	// xlib.XClearArea(nw.display, nw.window, 0, 0, 0, 0, true)

@@ -121,7 +121,7 @@ func go_onPointerEvent(deviceId, pointerId, action C.jint, x, y C.jfloat) {
 	pointerKey := int(pointerId)
 	e := &pointerEvent{
 		event: event{
-			window: theApp.window,
+			window: theApp.mainWindow,
 			time:   time.Now(),
 			etype:  Type_PointerEvent,
 			action: Action_None,
@@ -160,9 +160,9 @@ func go_onPointerEvent(deviceId, pointerId, action C.jint, x, y C.jfloat) {
 
 //export go_surfaceCreated
 func go_surfaceCreated(jnienv *C.JNIEnv, activity C.jobject, surfaceHolder C.jobject) {
-	theApp.window.jnienv = jnienv
-	theApp.window.activity = activity
-	theApp.window.surfaceHolder = surfaceHolder
+	theApp.mainWindow.jnienv = jnienv
+	theApp.mainWindow.activity = activity
+	theApp.mainWindow.surfaceHolder = surfaceHolder
 	windowAction(activity, Action_WindowCreated)
 	log.V("nuxui", "go_surfaceCreated surfaceHolder=%d", surfaceHolder)
 }
@@ -170,20 +170,20 @@ func go_surfaceCreated(jnienv *C.JNIEnv, activity C.jobject, surfaceHolder C.job
 //export go_surfaceChanged
 func go_surfaceChanged(jnienv *C.JNIEnv, activity C.jobject, surfaceHolder C.jobject, format, width, height C.int) {
 	log.V("nuxui", "go_surfaceChanged surfaceHolder=%d", surfaceHolder)
-	theApp.window.jnienv = jnienv
-	theApp.window.activity = activity
-	theApp.window.surfaceHolder = surfaceHolder
-	theApp.window.width = int32(width)
-	theApp.window.height = int32(height)
+	theApp.mainWindow.jnienv = jnienv
+	theApp.mainWindow.activity = activity
+	theApp.mainWindow.surfaceHolder = surfaceHolder
+	theApp.mainWindow.width = int32(width)
+	theApp.mainWindow.height = int32(height)
 	windowAction(activity, Action_WindowMeasured)
 }
 
 //export go_surfaceRedrawNeeded
 func go_surfaceRedrawNeeded(jnienv *C.JNIEnv, activity C.jobject, surfaceHolder C.jobject) {
 	log.V("nuxui", "go_surfaceRedrawNeeded surfaceHolder=%d", surfaceHolder)
-	theApp.window.jnienv = jnienv
-	theApp.window.activity = activity
-	theApp.window.surfaceHolder = surfaceHolder
+	theApp.mainWindow.jnienv = jnienv
+	theApp.mainWindow.activity = activity
+	theApp.mainWindow.surfaceHolder = surfaceHolder
 	windowAction(activity, Action_WindowDraw)
 }
 
@@ -193,7 +193,7 @@ func windowAction(activity C.jobject, action EventAction) {
 			time:   time.Now(),
 			etype:  Type_WindowEvent,
 			action: action,
-			window: theApp.window,
+			window: theApp.mainWindow,
 		},
 	}
 

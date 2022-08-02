@@ -49,10 +49,16 @@ type window struct {
 }
 
 func NewWindow(attr Attr) Window {
+	if theApp.mainWindow != nil {
+		log.Fatal("nuxui", "nuxui only supported single window")
+	}
+
 	if attr == nil {
 		attr = Attr{}
 	}
+
 	me := &window{}
+	theApp.mainWindow = me
 	me.ComponentBase = NewComponentBase(me, attr)
 	me.decor = me.createDecor(attr)
 	OnHoverEnter(me.decor, func(detail GestureDetail) {})
@@ -62,6 +68,7 @@ func NewWindow(attr Attr) Window {
 
 	me.nativeWnd = newNativeWindow(attr)
 
+	// TODO:: wait app running
 	mountWidget(me.decor, nil)
 
 	return me

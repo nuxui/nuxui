@@ -150,7 +150,7 @@ func (me *nativeWindow) handleNativeEvent(event any) bool {
 			me.width = int32(e.Width)
 			me.height = int32(e.Height)
 			me.sizeChanged = true
-			theApp.window.resize()
+			theApp.mainWindow.resize()
 		}
 		// log.I("nuxui", "XConfigureEvent: width=%d, height=%d, w=%d, h=%d", e.Width, e.Height, w, h)
 	case *xlib.XClientMessageEvent:
@@ -159,13 +159,13 @@ func (me *nativeWindow) handleNativeEvent(event any) bool {
 			backToUI()
 		}
 	case *xlib.XExposeEvent:
-		theApp.window.draw()
+		theApp.mainWindow.draw()
 	case *xlib.XMapEvent: // show window
-		theApp.window.resize()
+		theApp.mainWindow.resize()
 	case *xlib.XResizeRequestEvent:
 		// log.I("nuxui", "XResizeRequestEvent w=%d, h=%d", e.Width, e.Height)
-		// theApp.window.measure()
-		// theApp.window.layout()
+		// theApp.mainWindow.measure()
+		// theApp.mainWindow.layout()
 		// InvalidateRect(0,0,0,0)
 	case *xlib.XUnmapEvent: // hide window
 	case *xlib.XVisibilityEvent:

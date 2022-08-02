@@ -138,7 +138,7 @@ func go_nux_windowDidResize(window C.uintptr_t) {
 }
 
 //export go_nux_windowDrawRect
-func go_nux_windowDrawRect(window C.uintptr_t, cgcontext C.CGContextRef) {
+func go_nux_windowDrawRect(window C.uintptr_t) {
 	if windowEventHandler != nil {
 		windowEventHandler(&WindowEvent{
 			Window: NSWindow(window),

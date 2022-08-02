@@ -198,10 +198,10 @@ func nativeWindowEventHandler(hwnd uintptr, msg uint32, wParam uintptr, lParam u
 	case win32.WM_CREATE:
 	case win32.WM_PAINT:
 		// log.I("nuxui", "WM_PAINT")
-		theApp.window.draw()
+		theApp.mainWindow.draw()
 	case win32.WM_SIZE:
-		theApp.window.resize()
-		// w, h := theApp.window.ContentSize()
+		theApp.mainWindow.resize()
+		// w, h := theApp.mainWindow.ContentSize()
 		// log.I("nuxui", "WM_SIZE, w=%d, h=%d",w,h)
 		InvalidateRect(0, 0, 0, 0)
 	case win32.WM_NCMOUSEMOVE:

@@ -25,7 +25,8 @@ void      nux_NSApp_Terminate(uintptr_t app);
 import "C"
 
 var (
-	runOnUI = make(chan func())
+	runOnUI                  = make(chan func())
+	theNSApplicationDelegate NSApplicationDelegate
 )
 
 func NSApp_SharedApplication() NSApplication {
@@ -48,7 +49,51 @@ func (me NSApplication) Terminate() {
 	C.nux_NSApp_Terminate(C.uintptr_t(me))
 }
 
+func SetNSApplicationDelegate(delegate NSApplicationDelegate) {
+	theNSApplicationDelegate = delegate
+}
+
 //------------------------------------------------------------
+
+//export go_nux_app_delegate
+func go_nux_app_delegate(action C.int, obj C.uintptr_t) C.int {
+	if theNSApplicationDelegate == nil {
+		return -1
+	}
+
+	switch action {
+	case 1:
+		theNSApplicationDelegate.ApplicationWillFinishLaunching(NSNotification(obj))
+	case 2:
+		theNSApplicationDelegate.ApplicationDidFinishLaunching(NSNotification(obj))
+	case 3:
+		theNSApplicationDelegate.ApplicationWillBecomeActive(NSNotification(obj))
+	case 4:
+		theNSApplicationDelegate.ApplicationDidBecomeActive(NSNotification(obj))
+	case 5:
+		theNSApplicationDelegate.ApplicationWillResignActive(NSNotification(obj))
+	case 6:
+		theNSApplicationDelegate.ApplicationDidResignActive(NSNotification(obj))
+	case 7:
+		return C.int(theNSApplicationDelegate.ApplicationShouldTerminate(NSApplication(obj)))
+	case 8:
+		if theNSApplicationDelegate.ApplicationShouldTerminateAfterLastWindowClosed(NSApplication(obj)) {
+			return 1
+		}
+		return 0
+	case 9:
+		theNSApplicationDelegate.ApplicationWillTerminate(NSNotification(obj))
+	case 10:
+		theNSApplicationDelegate.ApplicationWillHide(NSNotification(obj))
+	case 11:
+		theNSApplicationDelegate.ApplicationDidHide(NSNotification(obj))
+	case 12:
+		theNSApplicationDelegate.ApplicationWillUnhide(NSNotification(obj))
+	case 13:
+		theNSApplicationDelegate.ApplicationDidUnhide(NSNotification(obj))
+	}
+	return 0
+}
 
 //export go_nux_app_sendEvent
 func go_nux_app_sendEvent(event C.uintptr_t) int {

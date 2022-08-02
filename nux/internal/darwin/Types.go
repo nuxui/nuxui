@@ -22,6 +22,7 @@ void nux_NSRect_size(NSRect rect, CGFloat *outWidth, CGFloat* outHeight){
 	*outWidth = rect.size.width;
 	*outHeight = rect.size.height;
 }
+
 int nux_NSArray_count(uintptr_t nsarray){
 	return (int)((NSArray*)nsarray).count;
 }
@@ -54,8 +55,8 @@ type CGAffineTransform C.CGAffineTransform
 type CGPathRef C.CGPathRef
 type CGMutablePathRef C.CGMutablePathRef
 type CGContextRef C.CGContextRef
-type CGImage C.CGImageRef
-type CGColor C.CGColorRef
+type CGImageRef C.CGImageRef
+type CGColorRef C.CGColorRef
 
 type NSPoint C.NSPoint
 type NSRect C.NSRect
@@ -72,6 +73,7 @@ type NSCursor C.uintptr_t
 type NSSavePanel C.uintptr_t
 type NSOpenPanel C.uintptr_t
 type NSWorkspace C.uintptr_t
+type NSNotification C.uintptr_t
 type NSArray C.uintptr_t
 type NSURL C.uintptr_t
 type UTType C.uintptr_t
@@ -110,8 +112,8 @@ func CGSizeMake(width, height float32) CGSize {
 	return CGSize(C.CGSizeMake(C.CGFloat(width), C.CGFloat(height)))
 }
 
-func CGColorMake(red, green, blue, alpha float32) CGColor {
-	return CGColor(C.nux_CGColorMake(C.CGFloat(red), C.CGFloat(green), C.CGFloat(blue), C.CGFloat(alpha)))
+func CGColorMake(red, green, blue, alpha float32) CGColorRef {
+	return CGColorRef(C.nux_CGColorMake(C.CGFloat(red), C.CGFloat(green), C.CGFloat(blue), C.CGFloat(alpha)))
 }
 
 func NSMakeRect(x, y, width, height float32) NSRect {

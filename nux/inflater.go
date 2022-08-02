@@ -98,6 +98,15 @@ func inflateLayoutAttr(parent Widget, layoutAttr Attr, styleAttr Attr) Widget {
 				} else {
 					log.Fatal("nuxui", "%T is not a WidgetParent but has 'children' node", p)
 				}
+			} else if children, ok := childrenNode.([]Attr); ok {
+				if p, ok := widget.(Parent); ok {
+					for _, childAttr := range children {
+						childWidget := inflateLayoutAttr(widget, childAttr, styleAttr)
+						p.AddChild(childWidget)
+					}
+				} else {
+					log.Fatal("nuxui", "%T is not a WidgetParent but has 'children' node", p)
+				}
 			} else {
 				log.Fatal("nuxui", "'children' node must be widget array")
 			}
@@ -129,7 +138,7 @@ func InflateDrawable(drawable any) Drawable {
 	case string:
 		if strings.HasPrefix(t, "#") {
 			return InflateDrawable(Attr{"type": "nuxui.org/nuxui/ui.ColorDrawable", "color": t})
-		} else if strings.Count(t, "/") > 1 {
+		} else if strings.Count(t, "/") >= 1 {
 			return InflateDrawable(Attr{"type": "nuxui.org/nuxui/ui.ImageDrawable", "src": t})
 		} else {
 			if path, err := filepath.Abs(t); err == nil {
