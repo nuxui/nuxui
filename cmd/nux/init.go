@@ -80,7 +80,7 @@ func runInit(cmd *command) error {
 	}()
 
 	// Make sure gobind is up to date.
-	if err := goInstall([]string{"golang.org/x/mobile/cmd/gobind@latest"}, nil); err != nil {
+	if err := goInstall([]string{"nuxui.org/nuxui/cmd/gobind@latest"}, nil); err != nil {
 		return err
 	}
 

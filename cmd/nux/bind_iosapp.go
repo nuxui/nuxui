@@ -98,7 +98,7 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 		}
 
 		// Run `go mod tidy` to force to create go.sum.
-		// Without go.sum, `go build` fails as of Go 1.16.
+		// Without go.sum, `go build` fails as of Go 1.18.
 		if modulesUsed {
 			if err := goModTidyAt(outSrcDir, env); err != nil {
 				return err

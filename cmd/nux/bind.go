@@ -23,7 +23,7 @@ import (
 
 var cmdBind = &command{
 	run:   runBind,
-	Name:  "bind",
+	Name:  "gxbind",
 	Usage: "[-target android|" + strings.Join(applePlatforms, "|") + "] [-bootclasspath <path>] [-classpath <path>] [-o output] [build flags] [package]",
 	Short: "build a library for Android and iOS",
 	Long: `
@@ -54,7 +54,7 @@ instruction sets (arm, arm64, 386, amd64). A subset of instruction sets
 can be selected by specifying target type with the architecture name. E.g.,
 -target=android/arm,android/386.
 
-For Apple -target platforms, gomobile must be run on an OS X machine with
+For Apple -target platforms, nux must be run on an OS X machine with
 Xcode installed. The generated Objective-C types can be prefixed with the
 -prefix flag.
 

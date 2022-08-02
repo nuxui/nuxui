@@ -94,8 +94,8 @@ func determineGoVersion() error {
 		// Ignore unknown versions; it's probably a devel version.
 		return nil
 	}
-	if minor < 16 {
-		return errors.New("Go 1.16 or newer is required")
+	if minor < 18 {
+		return errors.New("Go 1.18 or newer is required")
 	}
 	return nil
 }
@@ -151,7 +151,7 @@ func helpDocumentation(path string) {
 		w.WriteString(cmd.Long)
 	}
 
-	w.WriteString("*/\npackage main // import \"golang.org/x/mobile/cmd/gomobile\"\n")
+	w.WriteString("*/\npackage main // import \"nuxui.org/nuxui/cmd/nux\"\n")
 
 	if err := ioutil.WriteFile(path, w.Bytes(), 0666); err != nil {
 		log.Fatal(err)
@@ -160,7 +160,7 @@ func helpDocumentation(path string) {
 
 var commands = []*command{
 	// TODO(crawshaw): cmdRun
-	cmdBind,
+	// cmdBind,
 	cmdBuild,
 	cmdClean,
 	cmdInit,
@@ -186,19 +186,19 @@ var usageTmpl = template.Must(template.New("usage").Parse(
 
 To install:
 
-	$ go install golang.org/x/mobile/cmd/gomobile@latest
-	$ gomobile init
+	$ go install nuxui.org/nuxui/cmd/nux@latest
+	$ nux init
 
-At least Go 1.16 is required.
+At least Go 1.18 is required.
 For detailed instructions, see https://golang.org/wiki/Mobile.
 
 Usage:
 
-	gomobile command [arguments]
+	nux command [arguments]
 
 Commands:
 {{range .}}
 	{{.Name | printf "%-11s"}} {{.Short}}{{end}}
 
-Use 'gomobile help [command]' for more information about that command.
+Use 'nux help [command]' for more information about that command.
 `))

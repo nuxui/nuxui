@@ -5,6 +5,6 @@
 
 package main
 
-import (
-	_ "golang.org/x/mobile/cmd/gobind"
-)
+// import (
+// 	_ "nuxui.org/nuxui/cmd/gobind"
+// )

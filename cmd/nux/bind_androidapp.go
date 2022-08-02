@@ -69,7 +69,7 @@ func goAndroidBind(gobind string, pkgs []*packages.Package, targets []targetInfo
 		env = append(env, gopath)
 
 		// Run `go mod tidy` to force to create go.sum.
-		// Without go.sum, `go build` fails as of Go 1.16.
+		// Without go.sum, `go build` fails as of Go 1.18.
 		if modulesUsed {
 			if err := goModTidyAt(filepath.Join(tmpdir, "src"), env); err != nil {
 				return err

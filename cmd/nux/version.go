@@ -26,7 +26,7 @@ Version prints versions of the gomobile binary and tools
 }
 
 func runVersion(cmd *command) (err error) {
-	// Check this binary matches the version in golang.org/x/mobile/cmd/gomobile
+	// Check this binary matches the version in nuxui.org/nuxui/cmd/nux
 	// source code in GOPATH. If they don't match, currently there is no
 	// way to reliably identify the revision number this binary was built
 	// against.
@@ -36,11 +36,11 @@ func runVersion(cmd *command) (err error) {
 			return "", err
 		}
 		bindir := filepath.Dir(bin)
-		cmd := exec.Command("go", "list", "-f", "{{.Stale}}", "golang.org/x/mobile/cmd/gomobile")
+		cmd := exec.Command("go", "list", "-f", "{{.Stale}}", "nuxui.org/nuxui/cmd/nux")
 		cmd.Env = append(os.Environ(), "GOBIN="+bindir)
 		out, err := cmd.CombinedOutput()
 		if err != nil {
-			return "", fmt.Errorf("cannot test gomobile binary: %v, %s", err, out)
+			return "", fmt.Errorf("cannot test nux binary: %v, %s", err, out)
 		}
 		if strings.TrimSpace(string(out)) != "false" {
 			return "", fmt.Errorf("binary is out of date, re-install it")
@@ -48,7 +48,7 @@ func runVersion(cmd *command) (err error) {
 		return mobileRepoRevision()
 	}()
 	if err != nil {
-		fmt.Printf("gomobile version unknown: %v\n", err)
+		fmt.Printf("nux version unknown: %v\n", err)
 		return nil
 	}
 
@@ -65,18 +65,18 @@ func runVersion(cmd *command) (err error) {
 }
 
 func mobileRepoRevision() (rev string, err error) {
-	b, err := exec.Command("go", "list", "-f", "{{.Dir}}", "golang.org/x/mobile/app").CombinedOutput()
+	b, err := exec.Command("go", "list", "-f", "{{.Dir}}", "nuxui.org/nuxui/nux").CombinedOutput()
 	if err != nil {
-		return "", fmt.Errorf("mobile repo not found: %v, %s", err, b)
+		return "", fmt.Errorf("nux repo not found: %v, %s", err, b)
 	}
 
 	repo := filepath.Dir(string(b))
 	if err := os.Chdir(repo); err != nil {
-		return "", fmt.Errorf("mobile repo %q not accessible: %v", repo, err)
+		return "", fmt.Errorf("nux repo %q not accessible: %v", repo, err)
 	}
 	revision, err := exec.Command("git", "log", "-n", "1", "--format=format: +%h %cd", "HEAD").CombinedOutput()
 	if err != nil {
-		return "", fmt.Errorf("mobile repo git log failed: %v, %s", err, revision)
+		return "", fmt.Errorf("nux repo git log failed: %v, %s", err, revision)
 	}
 	return string(bytes.Trim(revision, " \t\r\n")), nil
 }

@@ -43,7 +43,7 @@ instruction sets (arm, 386, amd64, arm64). A subset of instruction sets can
 be selected by specifying target type with the architecture name. E.g.
 -target=android/arm,android/386.
 
-For Apple -target platforms, gomobile must be run on an OS X machine with
+For Apple -target platforms, nux must be run on an OS X machine with
 Xcode installed.
 
 By default, -target ios will generate an XCFramework for both ios
@@ -283,8 +283,8 @@ func init() {
 
 	addBuildFlagsNVXWork(cmdInit)
 
-	addBuildFlags(cmdBind)
-	addBuildFlagsNVXWork(cmdBind)
+	// addBuildFlags(cmdBind)
+	// addBuildFlagsNVXWork(cmdBind)
 
 	addBuildFlagsNVXWork(cmdClean)
 }

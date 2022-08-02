@@ -9,15 +9,15 @@ Gomobile is a tool for building and running mobile apps written in Go.
 
 To install:
 
-	$ go install golang.org/x/mobile/cmd/gomobile@latest
+	$ go install nuxui.org/nuxui/cmd/nux@latest
 	$ gomobile init
 
-At least Go 1.16 is required.
+At least Go 1.18 is required.
 For detailed instructions, see https://golang.org/wiki/Mobile.
 
 Usage:
 
-	gomobile command [arguments]
+	nux command [arguments]
 
 Commands:
 
@@ -62,7 +62,7 @@ instruction sets (arm, arm64, 386, amd64). A subset of instruction sets
 can be selected by specifying target type with the architecture name. E.g.,
 -target=android/arm,android/386.
 
-For Apple -target platforms, gomobile must be run on an OS X machine with
+For Apple -target platforms, nux must be run on an OS X machine with
 Xcode installed. The generated Objective-C types can be prefixed with the
 -prefix flag.
 
@@ -95,7 +95,7 @@ instruction sets (arm, 386, amd64, arm64). A subset of instruction sets can
 be selected by specifying target type with the architecture name. E.g.
 -target=android/arm,android/386.
 
-For Apple -target platforms, gomobile must be run on an OS X machine with
+For Apple -target platforms, nux must be run on an OS X machine with
 Xcode installed.
 
 By default, -target ios will generate an XCFramework for both ios
@@ -167,4 +167,4 @@ Usage:
 
 Version prints versions of the gomobile binary and tools
 */
-package main // import "golang.org/x/mobile/cmd/gomobile"
+package main // import "nuxui.org/nuxui/cmd/nux"
