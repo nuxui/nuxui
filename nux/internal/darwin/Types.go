@@ -44,10 +44,12 @@ const (
 	_RADIAN = _PI / 180.0
 )
 
-type CGPoint C.CGPoint
-type CGSize C.CGSize
-type CGRect C.CGRect
-type CGAffineTransform C.CGAffineTransform
+type (
+	CGPoint           C.CGPoint
+	CGSize            C.CGSize
+	CGRect            C.CGRect
+	CGAffineTransform C.CGAffineTransform
+)
 
 // typedef struct CF_BRIDGED_TYPE(id) CGPath *CGMutablePathRef;
 // typedef const struct CF_BRIDGED_TYPE(id) CGPath *CGPathRef;

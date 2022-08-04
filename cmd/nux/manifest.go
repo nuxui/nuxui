@@ -32,8 +32,8 @@ func manifestLibName(data []byte) (string, error) {
 	if err := xml.Unmarshal(data, manifest); err != nil {
 		return "", err
 	}
-	if manifest.Activity.Name != "org.golang.app.GoNativeActivity" {
-		return "", fmt.Errorf("can only build an .apk for GoNativeActivity, not %q", manifest.Activity.Name)
+	if manifest.Activity.Name != "org.nuxui.app.NuxActivity" {
+		return "", fmt.Errorf("can only build an .apk for NuxActivity, not %q", manifest.Activity.Name)
 	}
 	libName := ""
 	for _, md := range manifest.Activity.MetaData {
@@ -55,21 +55,25 @@ type manifestTmplData struct {
 }
 
 var manifestTmpl = template.Must(template.New("manifest").Parse(`
-<manifest
-	xmlns:android="http://schemas.android.com/apk/res/android"
+<manifest 
+    xmlns:android="http://schemas.android.com/apk/res/android" 
 	package="{{.JavaPkgPath}}"
 	android:versionCode="1"
-	android:versionName="1.0">
-
-	<application android:label="{{.Name}}" android:debuggable="true">
-	<activity android:name="org.golang.app.GoNativeActivity"
-		android:label="{{.Name}}"
-		android:configChanges="orientation|keyboardHidden">
-		<meta-data android:name="android.app.lib_name" android:value="{{.LibName}}" />
-		<intent-filter>
-			<action android:name="android.intent.action.MAIN" />
-			<category android:name="android.intent.category.LAUNCHER" />
-		</intent-filter>
-	</activity>
-	</application>
+	android:versionName="1.0"
+    >
+    <application 
+        android:debuggable="true" 
+        android:label="{{.Name}}" 
+        android:name="org.nuxui.app.NuxApplication">
+        <meta-data android:name="org.nuxui.app.libname" android:value="{{.LibName}}"/>
+        <activity 
+			android:configChanges="keyboardHidden|orientation" 
+			android:label="{{.Name}}" 
+			android:name="org.nuxui.app.NuxActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+    </application>
 </manifest>`))

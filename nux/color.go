@@ -67,3 +67,7 @@ func (me Color) ARGB() uint32 {
 func (me Color) Equal(color Color) bool {
 	return uint32(me) == uint32(color)
 }
+
+func FromARGB(color uint32) Color {
+	return Color(((color & 0xff) << 24) | (color >> 8))
+}

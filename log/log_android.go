@@ -13,7 +13,7 @@ package log
 #include <android/log.h>
 
 void log_print(int level, char* tag, char* msg){
-	__android_log_print(level, tag, msg);
+	__android_log_print(level, tag, msg, "");
 }
 
 */

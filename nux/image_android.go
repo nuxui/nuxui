@@ -6,38 +6,32 @@
 
 package nux
 
-/*
-#include <jni.h>
-jobject createImage(char* fileName);
-jint bitmap_getWidth(jobject bitmap);
-jint bitmap_getHeight(jobject bitmap);
-void bitmap_recycle(jobject bitmap);
-*/
-import "C"
 import (
-	"path/filepath"
+	"nuxui.org/nuxui/nux/internal/android"
 	"runtime"
 )
 
-func loadImageFromFile(path string) Image {
-	path, _ = filepath.Abs(path)
-	chars := ([]byte)(path)
-
+func loadImageFromFile(filename string) Image {
 	me := &nativeImage{
-		ptr: C.createImage((*C.char)(&chars[0])),
+		ref: android.CreateBitmap(filename),
 	}
 	runtime.SetFinalizer(me, freeImage)
 	return me
 }
 
 func freeImage(img *nativeImage) {
-	C.bitmap_recycle(img.ptr)
+	img.ref.Recycle()
 }
 
 type nativeImage struct {
-	ptr C.jobject
+	ref android.Bitmap
 }
 
-func (me *nativeImage) Size() (width, height int32) {
-	return int32(C.bitmap_getWidth(me.ptr)), int32(C.bitmap_getHeight(me.ptr))
+func (me *nativeImage) PixelSize() (width, height int32) {
+	return me.ref.GetWidth(), me.ref.GetHeight()
+}
+
+func (me *nativeImage) Draw(canvas Canvas) {
+	w, h := me.PixelSize()
+	canvas.native().ref.DrawBitmap(me.ref, 0, 0, float32(w), float32(h), 0)
 }

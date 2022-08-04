@@ -47,7 +47,7 @@ func goAndroidBuild(pkg *packages.Package, targets []targetInfo) (map[string]boo
 		buf.WriteString(`<?xml version="1.0" encoding="utf-8"?>`)
 		err := manifestTmpl.Execute(buf, manifestTmplData{
 			// TODO(crawshaw): a better package path.
-			JavaPkgPath: "org.golang.todo." + libName,
+			JavaPkgPath: "org.nuxui.demo." + libName,
 			Name:        strings.Title(appName),
 			LibName:     libName,
 		})

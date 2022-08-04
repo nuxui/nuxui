@@ -51,5 +51,3 @@ func CGImageRelease(image CGImageRef) {
 func CGImageGetSize(image CGImageRef) (width, height int32) {
 	return int32(C.CGImageGetWidth(C.CGImageRef(image))), int32(C.CGImageGetHeight(C.CGImageRef(image)))
 }
-
-

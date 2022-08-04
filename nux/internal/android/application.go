@@ -1,0 +1,19 @@
+// Copyright 2018 The NuxUI Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+//go:build android
+
+package android
+
+/*
+#include <jni.h>
+#include <stdlib.h>
+
+jobject nux_NuxApplication_instance();
+*/
+import "C"
+
+func NuxApplication_instance() Application {
+	return Application(C.nux_NuxApplication_instance())
+}
