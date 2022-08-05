@@ -7,7 +7,11 @@
   </h1>
 </a>
 
-NuxUI is Golang SDK for crafting beautiful, fast user experiences for mobile, web, and desktop from a single codebase. NuxUI works with brand new project, is used by developers and organizations around the world, and is free and open source.
+NuxUI is Golang GUI SDK for IOS, Android, macOS, Windows, Linux from a single codebase.
+
+NuxUI is now in developing, the API maybe changed before first stable version.
+
+Any suggestion or good idea post to [discussions](https://github.com/nuxui/nuxui/discussions), let's us make it awesome
 
 ## Documentation
 
