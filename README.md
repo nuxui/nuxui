@@ -19,6 +19,8 @@ Any suggestion or good idea post to [discussions](https://github.com/nuxui/nuxui
 
 * [NuxUI documentation](https://nuxui.org/)
 
+* [NuxUI Samples](https://github.com/nuxui/samples)
+
 ## Quick Start
 ```
 git clone https://github.com/nuxui/samples.git
