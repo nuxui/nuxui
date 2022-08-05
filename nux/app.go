@@ -49,7 +49,6 @@ func App() Application {
 }
 
 func Run(createMainWindow func()) {
-	log.I("nuxui", "Run 0 ===")
 	if createMainWindow == nil {
 		log.Fatal("nuxui", "createMainWindow can not be nil")
 	}
@@ -63,7 +62,6 @@ func Run(createMainWindow func()) {
 	// but it is still run in order, has not effect
 	if runtime.GOOS == "android" {
 		theApp.mainThreadID = currentThreadID()
-		log.I("nuxui", "Run 1 ===")
 	}
 
 	if tid := currentThreadID(); tid != theApp.mainThreadID {

@@ -251,7 +251,7 @@ func (me NSLayoutManager) DrawText(textContainer NSTextContainer, font NSFont, t
 }
 
 func (me NSLayoutManager) CharacterIndexForPoint(textContainer NSTextContainer, font NSFont, text string, width, height, x, y float32) (index uint32, fraction float32) {
-	var f C.CGFloat
+	f := C.CGFloat(0)
 	ctext := C.CString(text)
 	defer C.free(unsafe.Pointer(ctext))
 	i := C.nux_NSLayoutManager_characterIndexForPoint(C.uintptr_t(me), C.uintptr_t(textContainer), C.uintptr_t(font), ctext, C.CGFloat(width), C.CGFloat(height), C.CGFloat(x), C.CGFloat(y), &f)

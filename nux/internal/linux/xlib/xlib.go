@@ -126,7 +126,7 @@ func XGetAtomName(display *Display, atom Atom) string {
 }
 
 func XInternAtom(display *Display, atom_name string, only_if_exists bool) Atom {
-	var exist C.Bool
+	exist := C.Bool(0)
 	if only_if_exists {
 		exist = 1
 	}
@@ -136,7 +136,7 @@ func XInternAtom(display *Display, atom_name string, only_if_exists bool) Atom {
 }
 
 func XSendEvent(display *Display, window Window, propagate bool, eventMask EventMask, event *XEvent) Status {
-	var p C.Bool
+	p := C.Bool(0)
 	if propagate {
 		p = 1
 	}
@@ -146,7 +146,7 @@ func XSendEvent(display *Display, window Window, propagate bool, eventMask Event
 func Xutf8LookupString(xic XIC, event *XKeyPressedEvent) (buffer string, keySym KeySym, status Status) {
 	var k *C.KeySym = (*C.KeySym)(&keySym)
 	var s *C.Status = (*C.Status)(&status)
-	var len C.int = 20
+	len := C.int(20)
 	text := make([]C.char, int(len+1))
 
 	len = C.Xutf8LookupString(C.XIC(xic), (*C.XKeyPressedEvent)(unsafe.Pointer(event)), (*C.char)(unsafe.Pointer(&text[0])), len, k, s)
@@ -160,7 +160,7 @@ func Xutf8LookupString(xic XIC, event *XKeyPressedEvent) (buffer string, keySym 
 }
 
 func XClearArea(display *Display, window Window, x, y, width, height int32, exposures bool) int {
-	var exp C.Bool
+	exp := C.Bool(0)
 	if exposures {
 		exp = 1
 	}
@@ -232,7 +232,7 @@ func XFlush(display *Display) {
 }
 
 func XSync(display *Display, discard bool) {
-	var d C.Bool
+	d := C.Bool(0)
 	if discard {
 		d = 1
 	}

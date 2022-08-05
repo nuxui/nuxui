@@ -75,7 +75,7 @@ func (me GtkFileChooser) SetCurrentName(name string) {
 }
 
 func (me GtkFileChooser) SetSelectMultiple(enable bool) {
-	var b C.gboolean
+	b := C.gboolean(0)
 	if enable {
 		b = 1
 	}
@@ -83,7 +83,7 @@ func (me GtkFileChooser) SetSelectMultiple(enable bool) {
 }
 
 func (me GtkFileChooser) SetCreateFolders(enable bool) {
-	var b C.gboolean
+	b := C.gboolean(0)
 	if enable {
 		b = 1
 	}
@@ -91,7 +91,7 @@ func (me GtkFileChooser) SetCreateFolders(enable bool) {
 }
 
 func (me GtkFileChooser) SetDoOverwriteConfirmation(enable bool) {
-	var b C.gboolean
+	b := C.gboolean(0)
 	if enable {
 		b = 1
 	}

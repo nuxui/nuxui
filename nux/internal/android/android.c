@@ -4,16 +4,11 @@
 
 //go:build android
 
-#include <errno.h>
-#include <fcntl.h>
-#include <stdint.h>
-#include <string.h>
-#include <sched.h>
-#include <sys/syscall.h>
 #include <jni.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <dlfcn.h>
 #include <pthread.h>
-#include <unistd.h>
 #include <sys/types.h>
 #include <android/log.h>
 #include "_cgo_export.h"
@@ -22,12 +17,12 @@
 extern "C" {
 #endif
 
-#define LOG_VERB(...) __android_log_print(ANDROID_LOG_VERBOSE, "nuxui", __VA_ARGS__)
-#define LOG_ERR(...) __android_log_print(ANDROID_LOG_ERROR, "nuxui", __VA_ARGS__)
+#define LOG_VERB(...)  __android_log_print(ANDROID_LOG_VERBOSE, "nuxui", __VA_ARGS__)
+#define LOG_ERR(...)   __android_log_print(ANDROID_LOG_ERROR, "nuxui", __VA_ARGS__)
 #define LOG_FATAL(...) __android_log_print(ANDROID_LOG_FATAL, "nuxui", __VA_ARGS__)
 
-static jfloat sDensity = 1;
-static pid_t mainThreadId;
+static JNIEnv* nuxJNIEnv;
+
 
 // Call the Go main.main
 void nux_call_main_main(){
@@ -35,8 +30,23 @@ void nux_call_main_main(){
 	if (!mainPC) {
 		LOG_FATAL("missing main.main");
 	}
-    LOG_VERB("nux_call_main_main 0 ");
 	go_nux_callMain(mainPC);
+}
+
+jobject nux_newLocalRef(jobject ref){
+    return (*nuxJNIEnv)->NewLocalRef(nuxJNIEnv, ref);
+}
+
+jobject nux_newGlobalRef(jobject ref){
+    return (*nuxJNIEnv)->NewGlobalRef(nuxJNIEnv, ref);
+}
+
+void nux_deleteLocalRef(jobject localRef){
+    (*nuxJNIEnv)->DeleteLocalRef(nuxJNIEnv, localRef);
+}
+
+void nux_deleteGlobalRef(jobject globalRef){
+    (*nuxJNIEnv)->DeleteGlobalRef(nuxJNIEnv, globalRef);
 }
 
 static jclass nux_find_class(JNIEnv *env, const char *class_name) {
@@ -69,18 +79,24 @@ static jmethodID nux_find_static_method(JNIEnv *env, jclass clazz, const char *n
     return m;
 }
 
-JNIEnv* jnienv;
+static jfieldID nux_find_static_fieldid(JNIEnv *env, jclass clazz, const char *name, const char *sig){
+    jfieldID f = (*env)->GetStaticFieldID(env, clazz, name, sig);
+    if (f == 0) {
+        (*env)->ExceptionClear(env);
+        LOG_FATAL("cannot find field %s %s", name, sig);
+        return 0;
+    }
+    return f;
+}
 
 struct{
     jclass clazz;
-    jobject thiz;
-    jmethodID instance;
+    jobject instance;
     jmethodID backToUI;
 } NuxApplication;
 
 struct{
     jclass clazz;
-    // jobject thiz;
     jmethodID drawText;
     jmethodID createStaticLayout;
     jmethodID createBitmap;
@@ -148,285 +164,302 @@ struct {
 } RectF;
 
 void nux_init_classes(JNIEnv *env){
-    jnienv = env;
-
     jclass clsApplication = nux_find_class(env, "org/nuxui/app/NuxApplication");
-    NuxApplication.clazz = (*env)->NewGlobalRef(env, clsApplication);
-    NuxApplication.instance = nux_find_static_method(env, NuxApplication.clazz, "instance", "()Lorg/nuxui/app/NuxApplication;");
+    NuxApplication.clazz = nux_newGlobalRef(clsApplication);
     NuxApplication.backToUI = nux_find_method(env, NuxApplication.clazz, "backToUI", "()V");
+    NuxApplication.instance = (*env)->GetStaticObjectField(env, NuxApplication.clazz, nux_find_static_fieldid(env, NuxApplication.clazz, "mInstance", "Lorg/nuxui/app/NuxApplication;"));
+    nux_deleteLocalRef(clsApplication);
     
     jclass clsActivity = nux_find_class(env, "org/nuxui/app/NuxActivity");
-    NuxActivity.clazz = (*env)->NewGlobalRef(env, clsActivity);
+    NuxActivity.clazz = nux_newGlobalRef(clsActivity);
     NuxActivity.drawText = nux_find_static_method(env, NuxActivity.clazz, "drawText", "(Landroid/graphics/Canvas;Ljava/lang/String;ILandroid/text/TextPaint;)V");
     NuxActivity.createStaticLayout = nux_find_static_method(env, NuxActivity.clazz, "createStaticLayout", "(Ljava/lang/String;ILandroid/text/TextPaint;)Landroid/text/StaticLayout;");
     NuxActivity.createBitmap = nux_find_static_method(env, NuxActivity.clazz, "createBitmap", "(Ljava/lang/String;)Landroid/graphics/Bitmap;");
+    nux_deleteLocalRef(clsActivity);
 
     jclass clsSurfaceHolder = nux_find_class(env, "android/view/SurfaceHolder");
-    SurfaceHolder.clazz = (*env)->NewGlobalRef(env, clsSurfaceHolder);
+    SurfaceHolder.clazz = nux_newGlobalRef(clsSurfaceHolder);
     SurfaceHolder.lockCanvas = nux_find_method(env, SurfaceHolder.clazz, "lockCanvas", "()Landroid/graphics/Canvas;");
     SurfaceHolder.unlockCanvasAndPost = nux_find_method(env, SurfaceHolder.clazz, "unlockCanvasAndPost", "(Landroid/graphics/Canvas;)V");
+    nux_deleteLocalRef(clsSurfaceHolder);
 
     jclass clsPaint = nux_find_class(env, "android/text/TextPaint");
-    Paint.clazz = (*env)->NewGlobalRef(env, clsPaint);
+    Paint.clazz = nux_newGlobalRef(clsPaint);
     Paint.init = nux_find_method(env, Paint.clazz, "<init>", "()V");
     Paint.setColor = nux_find_method(env, Paint.clazz, "setColor", "(I)V");
     Paint.getColor = nux_find_method(env, Paint.clazz, "getColor", "()I");
     Paint.setTextSize = nux_find_method(env, Paint.clazz, "setTextSize", "(F)V");
     Paint.setStyle = nux_find_method(env, Paint.clazz, "setStyle", "(Landroid/graphics/Paint$Style;)V");
     Paint.setAntiAlias = nux_find_method(env, Paint.clazz, "setAntiAlias", "(Z)V");
+    nux_deleteLocalRef(clsPaint);
 
     jclass clsStyle = nux_find_class(env, "android/graphics/Paint$Style");
-    Style.clazz = (*env)->NewGlobalRef(env, clsStyle);
+    Style.clazz = nux_newGlobalRef(clsStyle);
     Style.FILL = (*env)->GetStaticFieldID(env, Style.clazz, "FILL", "Landroid/graphics/Paint$Style;");
+    nux_deleteLocalRef(clsStyle);
 
     jclass clsCanvas = nux_find_class(env, "android/graphics/Canvas");
-    Canvas.clazz = (*env)->NewGlobalRef(env, clsCanvas);
+    Canvas.clazz = nux_newGlobalRef(clsCanvas);
     Canvas.save = nux_find_method(env, Canvas.clazz, "save", "()I");
     Canvas.restore = nux_find_method(env, Canvas.clazz, "restore", "()V");
     Canvas.translate = nux_find_method(env, Canvas.clazz, "translate", "(FF)V");
     Canvas.scale = nux_find_method(env, Canvas.clazz, "scale", "(FF)V");
     Canvas.rotate = nux_find_method(env, Canvas.clazz, "rotate", "(F)V");
     Canvas.clipRect = nux_find_method(env, Canvas.clazz, "clipRect", "(FFFF)Z");
-    // Canvas.drawColor = nux_find_method(env, Canvas.clazz, "drawColor", "(I)V");
+    Canvas.drawColor = nux_find_method(env, Canvas.clazz, "drawColor", "(I)V");
     Canvas.drawRect = nux_find_method(env, Canvas.clazz, "drawRect", "(FFFFLandroid/graphics/Paint;)V");
     Canvas.drawRoundRect = nux_find_method(env, Canvas.clazz, "drawRoundRect", "(FFFFFFLandroid/graphics/Paint;)V");
     Canvas.drawBitmap = nux_find_method(env, Canvas.clazz, "drawBitmap", "(Landroid/graphics/Bitmap;Landroid/graphics/Rect;Landroid/graphics/RectF;Landroid/graphics/Paint;)V");
+    nux_deleteLocalRef(clsCanvas);
 
     jclass clsStaticLayout = nux_find_class(env, "android/text/StaticLayout");
-    StaticLayout.clazz = (*env)->NewGlobalRef(env, clsStaticLayout);
+    StaticLayout.clazz = nux_newGlobalRef(clsStaticLayout);
     StaticLayout.init = nux_find_method(env, StaticLayout.clazz, "<init>", "(Ljava/lang/CharSequence;Landroid/text/TextPaint;ILandroid/text/Layout$Alignment;FFZ)V");
     StaticLayout.getWidth = nux_find_method(env, StaticLayout.clazz, "getWidth", "()I");
     StaticLayout.getHeight = nux_find_method(env, StaticLayout.clazz, "getHeight", "()I");
+    nux_deleteLocalRef(clsStaticLayout);
 
     jclass clsBitmap = nux_find_class(env, "android/graphics/Bitmap");
-    Bitmap.clazz = (*env)->NewGlobalRef(env, clsBitmap);
+    Bitmap.clazz = nux_newGlobalRef(clsBitmap);
     Bitmap.getWidth = nux_find_method(env, Bitmap.clazz, "getWidth", "()I");
     Bitmap.getHeight = nux_find_method(env, Bitmap.clazz, "getHeight", "()I");
     Bitmap.recycle = nux_find_method(env, Bitmap.clazz, "recycle", "()V");
+    nux_deleteLocalRef(clsBitmap);
 
     jclass clsRect = nux_find_class(env, "android/graphics/Rect");
-    Rect.clazz = (*env)->NewGlobalRef(env, clsRect);
+    Rect.clazz = nux_newGlobalRef(clsRect);
     Rect.init = nux_find_method(env, Rect.clazz, "<init>", "(IIII)V");
+    nux_deleteLocalRef(clsRect);
 
     jclass clsRectF = nux_find_class(env, "android/graphics/RectF");
-    RectF.clazz = (*env)->NewGlobalRef(env, clsRectF);
+    RectF.clazz = nux_newGlobalRef(clsRectF);
     RectF.init = nux_find_method(env, RectF.clazz, "<init>", "(FFFF)V");
-}
-
-void nux_deleteGlobalRef(jobject globalRef){
-    (*jnienv)->DeleteGlobalRef(jnienv, globalRef);
-}
-
-void nux_deleteLocalRef(jobject localRef){
-    (*jnienv)->DeleteLocalRef(jnienv, localRef);
+    nux_deleteLocalRef(clsRectF);
 }
 
 void nux_BackToUI(){
-    (*jnienv)->CallVoidMethod(jnienv, NuxApplication.thiz, NuxApplication.backToUI);
+    (*nuxJNIEnv)->CallVoidMethod(nuxJNIEnv, NuxApplication.instance, NuxApplication.backToUI);
 }
 
 jobject nux_new_Rect(jint left, jint top, jint right, jint bottom){
-    return (*jnienv)->NewObject(jnienv, Rect.clazz, Rect.init, left, top, right, bottom);
+    jobject rect = (*nuxJNIEnv)->NewObject(nuxJNIEnv, Rect.clazz, Rect.init, left, top, right, bottom);
+    jobject g = nux_newGlobalRef(rect);
+    nux_deleteLocalRef(rect);
+    return g;
 }
 
 jobject nux_new_RectF(jfloat left, jfloat top, jfloat right, jfloat bottom){
-    return (*jnienv)->NewObject(jnienv, RectF.clazz, RectF.init, left, top, right, bottom);
+    jobject rectf = (*nuxJNIEnv)->NewObject(nuxJNIEnv, RectF.clazz, RectF.init, left, top, right, bottom);
+    jobject g = nux_newGlobalRef(rectf);
+    nux_deleteLocalRef(rectf);
+    return g;
 }
 
 jobject nux_surfaceHolder_lockCanvas(jobject surfaceHolder){
-    return (*jnienv)->CallObjectMethod(jnienv, surfaceHolder, SurfaceHolder.lockCanvas);
+    jobject canvas = (*nuxJNIEnv)->CallObjectMethod(nuxJNIEnv, surfaceHolder, SurfaceHolder.lockCanvas);
+    jobject g = nux_newGlobalRef(canvas);
+    nux_deleteLocalRef(canvas);
+    return g;
 }
 
 void nux_surfaceHolder_unlockCanvas(jobject surfaceHolder, jobject canvas){
-    (*jnienv)->CallVoidMethod(jnienv, surfaceHolder, SurfaceHolder.unlockCanvasAndPost, canvas);
+    (*nuxJNIEnv)->CallVoidMethod(nuxJNIEnv, surfaceHolder, SurfaceHolder.unlockCanvasAndPost, canvas);
 }
 
 jint nux_canvas_save(jobject canvas){
-    return (*jnienv)->CallIntMethod(jnienv, canvas, Canvas.save);
+    return (*nuxJNIEnv)->CallIntMethod(nuxJNIEnv, canvas, Canvas.save);
 }
 
 void nux_canvas_restore(jobject canvas){
-    (*jnienv)->CallVoidMethod(jnienv, canvas, Canvas.restore);
+    (*nuxJNIEnv)->CallVoidMethod(nuxJNIEnv, canvas, Canvas.restore);
 }
 
 void nux_canvas_translate(jobject canvas, jfloat x, jfloat y){
-    (*jnienv)->CallVoidMethod(jnienv, canvas, Canvas.translate, x, y);
+    (*nuxJNIEnv)->CallVoidMethod(nuxJNIEnv, canvas, Canvas.translate, x, y);
 }
 
 void nux_canvas_scale(jobject canvas, jfloat x, jfloat y){
-    (*jnienv)->CallVoidMethod(jnienv, canvas, Canvas.scale, x, y);
+    (*nuxJNIEnv)->CallVoidMethod(nuxJNIEnv, canvas, Canvas.scale, x, y);
 }
 
 void nux_canvas_rotate(jobject canvas, jfloat degrees){
-    (*jnienv)->CallVoidMethod(jnienv, canvas, Canvas.rotate, degrees);
+    (*nuxJNIEnv)->CallVoidMethod(nuxJNIEnv, canvas, Canvas.rotate, degrees);
 }
 
 void nux_canvas_clipRect(jobject canvas, jfloat left, jfloat top, jfloat right, jfloat bottom){
-    jboolean ret = (*jnienv)->CallBooleanMethod(jnienv, canvas, Canvas.clipRect, left, top, right, bottom);
+    jboolean ret = (*nuxJNIEnv)->CallBooleanMethod(nuxJNIEnv, canvas, Canvas.clipRect, left, top, right, bottom);
 }
 
-// void nux_canvas_drawColor(jobject canvas, uint32_t color){
-//     (*jnienv)->CallVoidMethod(jnienv, canvas, Canvas.drawColor, color);
-// }
+void nux_canvas_drawColor(jobject canvas, uint32_t color){
+    (*nuxJNIEnv)->CallVoidMethod(nuxJNIEnv, canvas, Canvas.drawColor, color);
+}
 
 void nux_canvas_drawRect(jobject canvas, jfloat left, jfloat top, jfloat right, jfloat bottom, jobject paint){
-    (*jnienv)->CallVoidMethod(jnienv, canvas, Canvas.drawRect, left, top, right, bottom, paint);
+    (*nuxJNIEnv)->CallVoidMethod(nuxJNIEnv, canvas, Canvas.drawRect, left, top, right, bottom, paint);
 }
 
 void nux_canvas_drawRoundRect(jobject canvas, jfloat left, jfloat top, jfloat right, jfloat bottom, jfloat rx, jfloat ry, jobject paint){
-    (*jnienv)->CallVoidMethod(jnienv, canvas, Canvas.drawRoundRect, left, top, right, bottom, rx, ry, paint);
+    (*nuxJNIEnv)->CallVoidMethod(nuxJNIEnv, canvas, Canvas.drawRoundRect, left, top, right, bottom, rx, ry, paint);
 }
 
 void nux_canvas_drawBitmap(jobject canvas, jobject bitmap, jfloat left, jfloat top, jfloat right, jfloat bottom, jobject paint){
-    // jobject rect = nux_new_Rect(0,0,0,0);
     jobject rectf = nux_new_RectF(left, top, right, bottom);
-    (*jnienv)->CallVoidMethod(jnienv, canvas, Canvas.drawBitmap, bitmap, NULL, rectf, paint);
-    // (*jnienv)->DeleteLocalRef(jnienv, rect);
-    (*jnienv)->DeleteLocalRef(jnienv, rectf);
+    (*nuxJNIEnv)->CallVoidMethod(nuxJNIEnv, canvas, Canvas.drawBitmap, bitmap, NULL, rectf, paint);
+    nux_deleteGlobalRef(rectf);
 }
 
 void nux_canvas_drawText(jobject canvas, char* text, jint width, jobject paint){
-    jstring str = (*jnienv)->NewStringUTF(jnienv, text);
-    (*jnienv)->CallStaticVoidMethod(jnienv, NuxActivity.clazz, NuxActivity.drawText, canvas, str, width, paint);
-    (*jnienv)->DeleteLocalRef(jnienv, str);
+    jstring str = (*nuxJNIEnv)->NewStringUTF(nuxJNIEnv, text);
+    (*nuxJNIEnv)->CallStaticVoidMethod(nuxJNIEnv, NuxActivity.clazz, NuxActivity.drawText, canvas, str, width, paint);
+    nux_deleteLocalRef(str);
 }
 
 // --------------- StaticLayout ----------------------
 
 jobject nux_new_StaticLayout(jstring text, jint width, jobject paint){
-    return (*jnienv)->CallStaticObjectMethod(jnienv, NuxActivity.clazz, NuxActivity.createStaticLayout, text, width, paint);
+    jobject layout = (*nuxJNIEnv)->CallStaticObjectMethod(nuxJNIEnv, NuxActivity.clazz, NuxActivity.createStaticLayout, text, width, paint);
+    jobject g = nux_newGlobalRef(layout);
+    nux_deleteLocalRef(layout);
+    return g;
 }
 
 jint nux_staticLayout_getWidth(jobject staticLayout){
-    return (*jnienv)->CallIntMethod(jnienv, staticLayout, StaticLayout.getWidth);
+    return (*nuxJNIEnv)->CallIntMethod(nuxJNIEnv, staticLayout, StaticLayout.getWidth);
 }
 
 jint nux_staticLayout_getHeight(jobject staticLayout){
-    return (*jnienv)->CallIntMethod(jnienv, staticLayout, StaticLayout.getHeight);
+    return (*nuxJNIEnv)->CallIntMethod(nuxJNIEnv, staticLayout, StaticLayout.getHeight);
 }
 
 // --------------- Paint ----------------------
 
 jobject nux_new_Paint(){
-    return (*jnienv)->NewObject(jnienv, Paint.clazz, Paint.init);
+    jobject paint = (*nuxJNIEnv)->NewObject(nuxJNIEnv, Paint.clazz, Paint.init);
+    jobject g = nux_newGlobalRef(paint);
+    nux_deleteLocalRef(paint);
+    return g;
 }
 
 void nux_paint_setTextSize(jobject paint, jfloat textSize){
-    textSize *= sDensity;
-    (*jnienv)->CallVoidMethod(jnienv, paint, Paint.setTextSize, textSize);
+    (*nuxJNIEnv)->CallVoidMethod(nuxJNIEnv, paint, Paint.setTextSize, textSize);
 }
 
 void nux_paint_setColor(jobject paint, uint32_t color){
-    (*jnienv)->CallVoidMethod(jnienv, paint, Paint.setColor, color);
+    (*nuxJNIEnv)->CallVoidMethod(nuxJNIEnv, paint, Paint.setColor, color);
 }
 
 jint nux_paint_getColor(jobject paint){
-    return (*jnienv)->CallIntMethod(jnienv, paint, Paint.getColor);
+    return (*nuxJNIEnv)->CallIntMethod(nuxJNIEnv, paint, Paint.getColor);
 }
 
 void nux_paint_setStyle(jobject paint, jint style){
     // LOG_ERR("Paint.setStyle=%p objPaint=%p Style.FILL=%p", Paint.setStyle, objPaint, Style.FILL);
-    // (*jnienv)->CallVoidMethod(jnienv, paint, Paint.setStyle, Style.FILL);
+    // (*nuxJNIEnv)->CallVoidMethod(nuxJNIEnv, paint, Paint.setStyle, Style.FILL);
 }
 
 void nux_paint_setAntiAlias(jobject paint, jboolean aa){
-    (*jnienv)->CallVoidMethod(jnienv, paint, Paint.setAntiAlias, aa);
+    (*nuxJNIEnv)->CallVoidMethod(nuxJNIEnv, paint, Paint.setAntiAlias, aa);
 }
 
 void nux_paint_measureText(jobject paint, char* text, jint width, jint *outWidth, jint* outHeight){
-    jstring str = (*jnienv)->NewStringUTF(jnienv, text);
+    jstring str = (*nuxJNIEnv)->NewStringUTF(nuxJNIEnv, text);
     jobject layout = nux_new_StaticLayout(str, width, paint);
-    *outWidth = nux_staticLayout_getWidth(layout);
+    *outWidth  = nux_staticLayout_getWidth(layout);
     *outHeight = nux_staticLayout_getHeight(layout);
-    (*jnienv)->DeleteLocalRef(jnienv, str);
-    (*jnienv)->DeleteLocalRef(jnienv, layout);
+    nux_deleteLocalRef(str);
+    nux_deleteGlobalRef(layout);
 }
 
 // --------------- Bitmap ----------------------
 
 jobject nux_createBitmap(char* fileName){
-    jstring str = (*jnienv)->NewStringUTF(jnienv, fileName);
-    jobject bitmap = (*jnienv)->CallStaticObjectMethod(jnienv, NuxActivity.clazz, NuxActivity.createBitmap, str);
-    (*jnienv)->DeleteLocalRef(jnienv, str);
-    return (*jnienv)->NewGlobalRef(jnienv, bitmap);
+    jstring str = (*nuxJNIEnv)->NewStringUTF(nuxJNIEnv, fileName);
+    jobject bitmap = (*nuxJNIEnv)->CallStaticObjectMethod(nuxJNIEnv, NuxActivity.clazz, NuxActivity.createBitmap, str);
+    jobject g = nux_newGlobalRef(bitmap);
+    nux_deleteLocalRef(str);
+    nux_deleteLocalRef(bitmap);
+    return g;
 }
 
 jint nux_bitmap_getWidth(jobject bitmap){
-    return (*jnienv)->CallIntMethod(jnienv, bitmap, Bitmap.getWidth);
+    return (*nuxJNIEnv)->CallIntMethod(nuxJNIEnv, bitmap, Bitmap.getWidth);
 }
 
 jint nux_bitmap_getHeight(jobject bitmap){
-    return (*jnienv)->CallIntMethod(jnienv, bitmap, Bitmap.getHeight);
+    return (*nuxJNIEnv)->CallIntMethod(nuxJNIEnv, bitmap, Bitmap.getHeight);
 }
 
 void nux_bitmap_recycle(jobject bitmap){
-    (*jnienv)->CallIntMethod(jnienv, bitmap, Bitmap.recycle);
-    (*jnienv)->DeleteGlobalRef(jnienv, bitmap);
+    (*nuxJNIEnv)->CallIntMethod(nuxJNIEnv, bitmap, Bitmap.recycle);
 }
 
 jobject nux_NuxApplication_instance(){
-    jobject instance = (*jnienv)->CallStaticObjectMethod(jnienv, NuxApplication.clazz, NuxApplication.instance);
-    return (*jnienv)->NewGlobalRef(jnienv, instance);
+    return NuxApplication.instance;
 }
 
 // --------------- NuxActivity lifecycle ----------------------
 
 void native_NuxActivity_onCreate(JNIEnv *env, jobject activity, jbyteArray native_saved_state) {
-    mainThreadId = gettid();
     LOG_VERB("native_NuxActivity_onCreate thiz=%p, gettid = %d", activity, gettid());
-    // NuxActivity.thiz = (*env)->NewGlobalRef(env, activity);  // TODO:: delete this ref when destroy
-
-    LOG_VERB("native_NuxActivity_onCreate gettid 1 = %d", gettid());
-    // nux_call_main_main();
-    LOG_VERB("native_NuxActivity_onCreate gettid 2 = %d", gettid());
+    go_NuxActivity_onCreate(activity);
 }
 
 void native_NuxActivity_onStart(JNIEnv *env, jobject activity) {
     LOG_VERB("native_NuxActivity_onStart begin ");
+    go_NuxActivity_onStart(activity);
 }
 
 void native_NuxActivity_onRestart(JNIEnv *env, jobject activity) {
     LOG_VERB("native_NuxActivity_onRestart begin ");
+    go_NuxActivity_onRestart(activity);
 }
 
 void native_NuxActivity_onResume(JNIEnv *env, jobject activity) {
     LOG_VERB("native_NuxActivity_onResume begin ");
+    go_NuxActivity_onResume(activity);
 }
 
 void native_NuxActivity_onPause(JNIEnv *env, jobject activity) {
     LOG_VERB("native_NuxActivity_onPause begin ");
+    go_NuxActivity_onPause(activity);
 }
 
 void native_NuxActivity_onStop(JNIEnv *env, jobject activity) {
     LOG_VERB("native_NuxActivity_onStop begin ");
+    go_NuxActivity_onStop(activity);
 }
 
 void native_NuxActivity_onDestroy(JNIEnv *env, jobject activity) {
     LOG_VERB("native_NuxActivity_onDestroy begin ");
-}
-
-void native_NuxActivity_surfaceRedrawNeeded(JNIEnv *env, jobject activity, jobject surfaceHolder) {
-    LOG_VERB("native_NuxActivity_surfaceRedrawNeeded begin ");
-    go_nux_surfaceRedrawNeeded(env, activity, surfaceHolder);
+    go_NuxActivity_onDestroy(activity);
 }
 
 void native_NuxActivity_surfaceCreated(JNIEnv *env, jobject activity, jobject surfaceHolder) {
     LOG_VERB("native_NuxActivity_surfaceCreated activity=%ud,%p, surfaceHolder=%ud,%p", activity, activity, surfaceHolder, surfaceHolder);
-    go_nux_surfaceCreated(env, activity, surfaceHolder);
+    go_NuxActivity_surfaceCreated(activity, surfaceHolder);
 }
 
 void native_NuxActivity_surfaceChanged(JNIEnv *env, jobject activity, jobject surfaceHolder,
                                                          jint format, jint width, jint height) {
     LOG_VERB("native_NuxActivity_surfaceChanged begin ");
-    go_nux_surfaceChanged(env, activity, surfaceHolder, format, width, height);
+    go_NuxActivity_surfaceChanged(activity, surfaceHolder, format, width, height);
+}
+
+void native_NuxActivity_surfaceRedrawNeeded(JNIEnv *env, jobject activity, jobject surfaceHolder) {
+    LOG_VERB("native_NuxActivity_surfaceRedrawNeeded begin ");
+    go_NuxActivity_surfaceRedrawNeeded(activity, surfaceHolder);
 }
 
 void native_NuxActivity_surfaceDestroyed(JNIEnv *env, jobject activity, jobject surfaceHolder) {
     LOG_VERB("native_NuxActivity_surfaceDestroyed begin ");
+    go_NuxActivity_surfaceDestroyed(activity, surfaceHolder);
 }
 
 jboolean native_NuxActivity_onTouch(JNIEnv *env, jobject thiz, jint device_id, jint pointer_id, jint action, jfloat x, jfloat y) {
-    go_nux_onPointerEvent(device_id, pointer_id, action, x, y);
+    if (go_NuxActivity_onTouch(device_id, pointer_id, action, x, y) > 0) {
+        return (jboolean)1;
+    }
+    return (jboolean)0;
 }
 
 void native_NuxApplication_onBackToUI(JNIEnv *env, jobject thiz) {
@@ -434,18 +467,38 @@ void native_NuxApplication_onBackToUI(JNIEnv *env, jobject thiz) {
     go_nux_backToUI();
 }
 
-void native_NuxApplication_onCreate(JNIEnv *env, jobject thiz, jfloat density){
-    sDensity = density;
-    LOG_VERB("native_NuxApplication_onCreate ");
+void native_NuxApplication_onConfigurationChanged(JNIEnv *env, jobject application, jobject newConfig){
+    LOG_VERB("native_NuxApplication_onConfigurationChanged ");
+    go_NuxApplication_onConfigurationChanged(application, newConfig);
+}
 
+void native_NuxApplication_onCreate(JNIEnv *env, jobject application, jfloat density){
+    LOG_VERB("native_NuxApplication_onCreate ");
+    nuxJNIEnv = env;
     // put here can make sure the init func and main func run only once
     nux_init_classes(env);
+    // any go code run first time will triger go init func 
+    nux_call_main_main();
+    
+    go_NuxApplication_onCreate(application);
+}
 
+void native_NuxApplication_onLowMemory(JNIEnv *env, jobject application){
+    LOG_VERB("native_NuxApplication_onLowMemory ");
+    go_NuxApplication_onLowMemory(application);
+}
+
+void native_NuxApplication_onTerminate(JNIEnv *env, jobject application){
+    LOG_VERB("native_NuxApplication_onTerminate ");
+    go_NuxApplication_onTerminate(application);
+}
+
+void native_NuxApplication_onTrimMemory(JNIEnv *env, jobject application, jint level){
+    LOG_VERB("native_NuxApplication_onTrimMemory ");
+    go_NuxApplication_onTrimMemory(application, level);
 }
 
 JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
-    LOG_VERB("JNI_OnLoad gettid = %d", gettid());
-
     JNIEnv* env;
     if ( (*vm)->GetEnv(vm, (void**)(&env), JNI_VERSION_1_6) != JNI_OK ) {
         return JNI_ERR;
@@ -456,8 +509,12 @@ JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
     if (clsNuxApplication == NULL) return JNI_ERR;
 
     static const JNINativeMethod methodsNuxApplication[] = {
-        {"native_NuxApplication_onCreate",           "(F)V",                                 &native_NuxApplication_onCreate},
-        {"native_NuxApplication_onBackToUI",         "()V",                                  &native_NuxApplication_onBackToUI},
+        {"native_NuxApplication_onConfigurationChanged", "(Landroid/content/res/Configuration;)V", &native_NuxApplication_onConfigurationChanged},
+        {"native_NuxApplication_onCreate",               "(F)V",                                   &native_NuxApplication_onCreate},
+        {"native_NuxApplication_onLowMemory",            "()V",                                    &native_NuxApplication_onLowMemory},
+        {"native_NuxApplication_onTerminate",            "()V",                                    &native_NuxApplication_onTerminate},
+        {"native_NuxApplication_onTrimMemory",           "(I)V",                                   &native_NuxApplication_onTrimMemory},
+        {"native_NuxApplication_onBackToUI",             "()V",                                    &native_NuxApplication_onBackToUI},
     };
 
     int rc = (*env)->RegisterNatives(env, clsNuxApplication, methodsNuxApplication, sizeof(methodsNuxApplication)/sizeof(JNINativeMethod));
@@ -468,7 +525,7 @@ JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
     if (clsNuxActivity == NULL) return JNI_ERR;
 
     static const JNINativeMethod methodsNuxActivity[] = {
-        {"native_NuxActivity_onCreate",              "([B)V",                               &native_NuxActivity_onCreate},
+        {"native_NuxActivity_onCreate",              "([B)V",                                &native_NuxActivity_onCreate},
         {"native_NuxActivity_onStart",               "()V",                                  &native_NuxActivity_onStart},
         {"native_NuxActivity_onRestart",             "()V",                                  &native_NuxActivity_onRestart},
         {"native_NuxActivity_onResume",              "()V",                                  &native_NuxActivity_onResume},

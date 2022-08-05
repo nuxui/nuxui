@@ -55,20 +55,20 @@ type manifestTmplData struct {
 }
 
 var manifestTmpl = template.Must(template.New("manifest").Parse(`
-<manifest 
-    xmlns:android="http://schemas.android.com/apk/res/android" 
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
 	package="{{.JavaPkgPath}}"
 	android:versionCode="1"
 	android:versionName="1.0"
     >
-    <application 
-        android:debuggable="true" 
-        android:label="{{.Name}}" 
+    <application
+        android:debuggable="true"
+        android:label="{{.Name}}"
         android:name="org.nuxui.app.NuxApplication">
         <meta-data android:name="org.nuxui.app.libname" android:value="{{.LibName}}"/>
-        <activity 
-			android:configChanges="keyboardHidden|orientation" 
-			android:label="{{.Name}}" 
+        <activity
+			android:configChanges="keyboardHidden|orientation"
+			android:label="{{.Name}}"
 			android:name="org.nuxui.app.NuxActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>

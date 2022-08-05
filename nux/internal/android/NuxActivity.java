@@ -43,35 +43,13 @@ public class NuxActivity extends Activity implements SurfaceHolder.Callback2 {
     private native void    native_NuxActivity_surfaceDestroyed(SurfaceHolder holder);
     private native boolean native_NuxActivity_onTouch(int deviceId, int pointerId, int action, float x, float y);
 
-    // private Handler mHandler;
     private NuxView mNuxView;
-
-    // private void load(){
-    //     String libname = "nuxui";
-    //     ActivityInfo ai;
-    //     try {
-    //         ai = getPackageManager().getActivityInfo(
-    //                 getIntent().getComponent(), PackageManager.GET_META_DATA);
-    //         if (ai.metaData != null) {
-    //             String ln = ai.metaData.getString(META_DATA_LIB_NAME);
-    //             if (ln != null) libname = ln;
-    //         }
-    //     } catch (PackageManager.NameNotFoundException e) {
-    //         throw new RuntimeException("Error getting activity info", e);
-    //     }
-
-    //     System.loadLibrary(libname);
-    // }
 
     @Override
     protected void onCreate( Bundle savedInstanceState) {
-        Log.i("nuxui", "onCreate myPid=" + android.os.Process.myPid() + ", myTid="+android.os.Process.myTid()+", thread="+Thread.currentThread().getId());
-
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
-        
-        super.onCreate(savedInstanceState);
 
-        // load();
+        super.onCreate(savedInstanceState);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             Window window = this.getWindow();
@@ -79,8 +57,6 @@ public class NuxActivity extends Activity implements SurfaceHolder.Callback2 {
             window.setStatusBarColor(0x40000000);
             window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
         }
-
-        // mHandler = new Handler(getMainLooper(), this);
 
         mNuxView = new NuxView(this);
         mNuxView.getHolder().addCallback(this);
@@ -132,26 +108,22 @@ public class NuxActivity extends Activity implements SurfaceHolder.Callback2 {
     }
 
     @Override
-    public void surfaceRedrawNeeded(SurfaceHolder holder) {
-        Log.i("nuxui", "surfaceRedrawNeeded myPid=" + android.os.Process.myPid() + ", myTid="+android.os.Process.myTid()+", thread="+Thread.currentThread().getId());
-        native_NuxActivity_surfaceRedrawNeeded(holder);
-    }
-
-    @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        Log.i("nuxui", "surfaceCreated myPid=" + android.os.Process.myPid() + ", myTid="+android.os.Process.myTid()+", thread="+Thread.currentThread().getId());
         native_NuxActivity_surfaceCreated(holder);
     }
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        Log.i("nuxui", "surfaceChanged myPid=" + android.os.Process.myPid() + ", myTid="+android.os.Process.myTid()+", thread="+Thread.currentThread().getId());
         native_NuxActivity_surfaceChanged(holder, format, width, height);
     }
 
     @Override
+    public void surfaceRedrawNeeded(SurfaceHolder holder) {
+        native_NuxActivity_surfaceRedrawNeeded(holder);
+    }
+
+    @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
-        Log.i("nuxui", "surfaceDestroyed myPid=" + android.os.Process.myPid() + ", myTid="+android.os.Process.myTid()+", thread="+Thread.currentThread().getId());
         native_NuxActivity_surfaceDestroyed(holder);
     }
 
@@ -221,18 +193,4 @@ public class NuxActivity extends Activity implements SurfaceHolder.Callback2 {
         return b;
     }
 
-    // public void backToUI(){
-    //     Message msg = Message.obtain(mHandler, 100);
-    //     mHandler.sendMessage(msg);
-    // }
-
-    // @Override
-    // public boolean handleMessage(Message msg) {
-    //     switch(msg.what){
-    //         case 100:   // backToUI
-    //             native_NuxActivity_onBackToUI();
-    //             break;
-    //     }
-    //     return false;
-    // }
 }

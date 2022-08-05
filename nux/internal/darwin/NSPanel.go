@@ -105,7 +105,7 @@ func SharedNSOpenPanel() NSOpenPanel {
 }
 
 func (me NSOpenPanel) SetCanChooseFiles(can bool) {
-	var b C.int
+	b := C.int(0)
 	if can {
 		b = C.int(1)
 	}
@@ -113,7 +113,7 @@ func (me NSOpenPanel) SetCanChooseFiles(can bool) {
 }
 
 func (me NSOpenPanel) SetCanChooseDirectories(can bool) {
-	var b C.int
+	b := C.int(0)
 	if can {
 		b = C.int(1)
 	}
@@ -121,7 +121,7 @@ func (me NSOpenPanel) SetCanChooseDirectories(can bool) {
 }
 
 func (me NSOpenPanel) SetAllowsMultipleSelection(allow bool) {
-	var b C.int
+	b := C.int(0)
 	if allow {
 		b = C.int(1)
 	}
@@ -137,7 +137,7 @@ func (me NSOpenPanel) SetAllowedContentTypes(types []UTType) {
 }
 
 func (me NSOpenPanel) SetCanCreateDirectories(can bool) {
-	var b C.int
+	b := C.int(0)
 	if can {
 		b = C.int(1)
 	}

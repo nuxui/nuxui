@@ -7,6 +7,7 @@
 package nux
 
 import (
+	"nuxui.org/nuxui/log"
 	"nuxui.org/nuxui/nux/internal/android"
 	"runtime"
 )
@@ -17,29 +18,54 @@ type nativeApp struct {
 
 func createNativeApp_() *nativeApp {
 	me := &nativeApp{
-		// ref: android.NuxApplication_instance(),
+		ref: android.NuxApplication_instance(),
 	}
+	android.SetApplicationDelegate(me)
 	runtime.SetFinalizer(me, freeApp)
 	return me
 }
 
 func freeApp(app *nativeApp) {
-	// android.DeleteGlobalRef(android.JObject(app.ref))
 }
 
 func (me *nativeApp) run() {
+	log.I("nuxui", "nativeApp run() 0 %d", currentThreadID())
 	// theApp.windowPrepared <- struct{}{}
 }
 
 func (me *nativeApp) terminate() {
 }
 
+func (me *nativeApp) OnCreateWindow(activity android.Activity) {
+	// theApp.createMainWindow()
+}
+
+func (me *nativeApp) OnConfigurationChanged(app android.Application, newConfig android.Configuration) {
+
+}
+
+func (me *nativeApp) OnCreate(app android.Application) {
+	theApp.createMainWindow()
+}
+
+func (me *nativeApp) OnLowMemory(app android.Application) {
+
+}
+
+func (me *nativeApp) OnTerminate(app android.Application) {
+
+}
+
+func (me *nativeApp) OnTrimMemory(app android.Application, level int32) {
+
+}
+
 func runOnUI(callback func()) {
-	// if IsMainThread() {
-	// 	callback()
-	// } else {
-	// 	android.BackToUI(callback)
-	// }
+	if IsMainThread() {
+		callback()
+	} else {
+		android.BackToUI(callback)
+	}
 }
 
 func invalidateRectAsync_(dirtRect *Rect) {

@@ -11,11 +11,16 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.content.res.Resources;
+import android.content.res.Configuration;
 
 public class NuxApplication extends Application implements Handler.Callback {
     public static final String META_DATA_LIB_NAME = "org.nuxui.app.libname";
 
+    private native void native_NuxApplication_onConfigurationChanged(Configuration newConfig);
     private native void native_NuxApplication_onCreate(float density);
+    private native void native_NuxApplication_onLowMemory();
+    private native void native_NuxApplication_onTerminate();
+    private native void native_NuxApplication_onTrimMemory(int level);
     private native void native_NuxApplication_onBackToUI();
 
     private static NuxApplication mInstance;
@@ -38,19 +43,35 @@ public class NuxApplication extends Application implements Handler.Callback {
     }
 
     @Override
-    public void onCreate() {
-        Log.i("nuxui", "NuxApplication onCreate");
+    public void onConfigurationChanged(Configuration newConfig) {
+        native_NuxApplication_onConfigurationChanged(newConfig);
+    }
 
+    @Override
+    public void onCreate() {
         super.onCreate();
         mInstance = this;
 
-        Log.i("nuxui", "NuxApplication load");
         load();
 
         mHandler = new Handler(getMainLooper(), this);
 
-        Log.i("nuxui", "NuxApplication lonative_NuxApplication_onCreatead");
         native_NuxApplication_onCreate(Resources.getSystem().getDisplayMetrics().density);
+    }
+
+    @Override
+    public void onLowMemory() {
+        native_NuxApplication_onLowMemory();
+    }
+
+    @Override
+    public void onTerminate() {
+        native_NuxApplication_onTerminate();
+    }
+
+    @Override
+    public void onTrimMemory(int level) {
+        native_NuxApplication_onTrimMemory(level);
     }
 
     public static NuxApplication instance(){
