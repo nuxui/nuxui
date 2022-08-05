@@ -28,4 +28,4 @@ go build . && ./widgets
 ```
 ## Screenshot
 
-![](https://gitee.com/nuxui/website/raw/master/static/samples/screenshot_widgets.jpg)
+![](https://gitee.com/nuxui/website/raw/master/static/samples/screenshot_widgets.webp)
