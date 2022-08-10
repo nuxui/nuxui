@@ -38,11 +38,11 @@ go install nuxui.org/nuxui/cmd/nux@latest
 cd github.com/nuxui/samples/counter
 
 # ios
-/Users/mustodo/go/bin/nux build -target=iossimulator -bundleid="samples.counter" -teamid="MU53V3J3JA" .
+nux build -target=iossimulator -bundleid="app.id" -teamid="YOURTEAMID" .
 xcrun simctl install booted ./counter.app
 
 #android
-nux build -target=android/ -ldflags="-s -w" . 
+nux build -target=android -ldflags="-s -w" . 
 adb install -r counter.apk
 ```
 
