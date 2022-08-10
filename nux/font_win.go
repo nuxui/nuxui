@@ -7,6 +7,7 @@
 package nux
 
 import (
+	"math"
 	"nuxui.org/nuxui/nux/internal/win32"
 	"runtime"
 )
@@ -75,7 +76,7 @@ func init() {
 	win32.GdipCreateFromHDC(globalDC, &globalGP)
 }
 
-func (me *nativeFontLayout) MeasureText(font Font, text string, width, height int32) (textWidth, textHeight int32) {
+func (me *nativeFontLayout) MeasureText(font Font, paint Paint, text string, width, height int32) (textWidth, textHeight int32) {
 	if text == "" {
 		return 0, 0
 	}

@@ -71,6 +71,8 @@ func newNativeWindow(attr Attr) *nativeWindow {
 	xlib.XSetICFocus(me.xic)
 	xlib.XFlush(me.display)
 
+	theApp.mainWindow.mountWidget()
+
 	runtime.SetFinalizer(me, freeNativeWindow)
 	return me
 }

@@ -63,7 +63,7 @@ func freeNativeFontLayout(me *nativeFontLayout) {
 	me.layout.Free()
 }
 
-func (me *nativeFontLayout) MeasureText(font Font, text string, width, height int32) (textWidth, textHeight int32) {
+func (me *nativeFontLayout) MeasureText(font Font, paint Paint, text string, width, height int32) (textWidth, textHeight int32) {
 	// pango.TestLayout()
 	me.layout.SetFontDescription(font.native().fd)
 	me.layout.SetText(text)

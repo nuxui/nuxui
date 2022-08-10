@@ -91,6 +91,7 @@ func (me *nativeWindow) Show() {
 	if err != nil {
 		log.E("error UpdateWindow %s", err.Error())
 	}
+	theApp.mainWindow.mountWidget()
 }
 
 func (me *nativeWindow) ContentSize() (width, height int32) {

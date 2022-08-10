@@ -72,8 +72,8 @@ type Frame struct {
 }
 
 func (me *Frame) String() string {
-	return fmt.Sprintf("{width: %d, height: %d, padding:{left: %d, top: %d, right: %d, bottom: %d}, margin:{left: %d, top: %d, right: %d, bottom: %d}", me.Width,
-		me.Height, me.Padding.Left, me.Padding.Top, me.Padding.Right, me.Padding.Bottom, me.Margin.Left, me.Margin.Top, me.Margin.Right, me.Margin.Bottom)
+	return fmt.Sprintf("{x:%d, y:%d, width: %d, height: %d, padding:{left: %d, top: %d, right: %d, bottom: %d}, margin:{left: %d, top: %d, right: %d, bottom: %d}",
+		me.X, me.Y, me.Width, me.Height, me.Padding.Left, me.Padding.Top, me.Padding.Right, me.Padding.Bottom, me.Margin.Left, me.Margin.Top, me.Margin.Right, me.Margin.Bottom)
 }
 
 func (me *Frame) Clear() {
