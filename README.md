@@ -36,6 +36,7 @@ go install nuxui.org/nuxui/cmd/nux@latest
 
 # into sample code
 cd github.com/nuxui/samples/counter
+go mod tidy
 
 # ios
 nux build -target=iossimulator -bundleid="app.id" -teamid="YOURTEAMID" .
