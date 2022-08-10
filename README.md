@@ -21,13 +21,33 @@ Any suggestion or good idea post to [discussions](https://github.com/nuxui/nuxui
 
 * [NuxUI Samples](https://github.com/nuxui/samples)
 
-## Quick Start
+## Quick Start for desktop
 ```
 git clone https://github.com/nuxui/samples.git
 cd github.com/nuxui/samples/widgets
 go mod tidy
 go build . && ./widgets
 ```
+
+## Build for mobile
+```
+# get build tools
+go install nuxui.org/nuxui/cmd/nux@latest
+
+# into sample code
+cd github.com/nuxui/samples/counter
+
+# ios
+/Users/mustodo/go/bin/nux build -target=iossimulator -bundleid="samples.counter" -teamid="MU53V3J3JA" .
+xcrun simctl install booted ./counter.app
+
+#android
+nux build -target=android/ -ldflags="-s -w" . 
+adb install -r counter.apk
+```
+
 ## Screenshot
 
-![](https://gitee.com/nuxui/website/raw/master/static/samples/screenshot_widgets.webp)
+<img src="https://gitee.com/nuxui/website/raw/master/static/samples/screenshot_widgets.webp" width="400px" >
+
+<img src="https://gitee.com/nuxui/website/raw/master/static/samples/screenshot_ios.webp" width="180px" ><img src="https://gitee.com/nuxui/website/raw/master/static/samples/screenshot_android.webp" width="221px" >
