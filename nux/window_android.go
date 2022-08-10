@@ -9,6 +9,7 @@ package nux
 import (
 	"nuxui.org/nuxui/log"
 	"nuxui.org/nuxui/nux/internal/android"
+	"os"
 	"runtime"
 	"time"
 )
@@ -39,7 +40,7 @@ func (me *nativeWindow) OnCreate(activity android.Activity) {
 		activity.SetTitle(title)
 	}
 
-	// theApp.mainWindow.mountWidget()
+	theApp.mainWindow.mountWidget()
 }
 
 func (me *nativeWindow) OnStart(activity android.Activity) {
@@ -66,6 +67,7 @@ func (me *nativeWindow) OnDestroy(activity android.Activity) {
 	log.I("nuxui", "nativeWindow OnDestroy")
 	// theApp.mainWindow.ejectWidget()
 	android.DeleteGlobalRef(android.JObject(me.act))
+	os.Exit(0)
 }
 
 func (me *nativeWindow) OnSurfaceCreated(activity android.Activity, surfaceHolder android.SurfaceHolder) {
@@ -74,6 +76,7 @@ func (me *nativeWindow) OnSurfaceCreated(activity android.Activity, surfaceHolde
 	me.surfaceHolder = android.SurfaceHolder(android.NewGlobalRef(android.JObject(surfaceHolder)))
 
 	me.penddingAttr = nil
+	theApp.windowPrepared <- struct{}{}
 }
 
 func (me *nativeWindow) OnSurfaceChanged(activity android.Activity, surfaceHolder android.SurfaceHolder, format, width, height int32) {

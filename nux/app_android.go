@@ -42,8 +42,6 @@ func (me *nativeApp) OnConfigurationChanged(app android.Application, newConfig a
 
 func (me *nativeApp) OnCreate(app android.Application) {
 	theApp.mainWindow = newWindow(theApp.manifest.GetAttr("mainWindow", nil))
-	theApp.mainWindow.mountWidget()
-	theApp.windowPrepared <- struct{}{}
 }
 
 func (me *nativeApp) OnLowMemory(app android.Application) {
