@@ -6,9 +6,11 @@
 
 #include <jni.h>
 #include <stdlib.h>
+#include <errno.h>
 #include <unistd.h>
 #include <dlfcn.h>
 #include <pthread.h>
+#include <string.h>
 #include <sys/types.h>
 #include <android/log.h>
 #include <android/looper.h>
