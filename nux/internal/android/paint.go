@@ -15,8 +15,8 @@ void nux_paint_setColor(jobject paint, uint32_t color);
 jint nux_paint_getColor(jobject paint);
 void nux_paint_setTextSize(jobject paint, jfloat textSize);
 void nux_paint_setStyle(jobject paint, jint style);
+jint nux_paint_getStyle(jobject paint);
 void nux_paint_setAntiAlias(jobject paint, jboolean aa);
-void nux_paint_measureText(jobject paint, char* text, jint width, jint *outWidth, jint* outHeight);
 */
 import "C"
 
@@ -30,4 +30,16 @@ func (me Paint) SetColor(color uint32) {
 
 func (me Paint) GetColor() uint32 {
 	return uint32(C.nux_paint_getColor(C.jobject(me)))
+}
+
+func (me Paint) SetStyle(style int) {
+	C.nux_paint_setStyle(C.jobject(me), C.jint(style))
+}
+
+func (me Paint) GetStyle() int {
+	return int(C.nux_paint_getStyle(C.jobject(me)))
+}
+
+func (me Paint) SetTextSize(size float32) {
+	C.nux_paint_setTextSize(C.jobject(me), C.jfloat(size))
 }

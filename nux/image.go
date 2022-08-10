@@ -9,6 +9,8 @@ import (
 	"strings"
 )
 
+var _ Image = (*nativeImage)(nil)
+
 type Image interface {
 	PixelSize() (width, height int32)
 	Draw(canvas Canvas)

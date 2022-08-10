@@ -47,10 +47,10 @@ func (me *gestureArenaManager) Sweep(pointer int64) {
 		if len(arena.members) != 0 {
 			for i, v := range arena.members {
 				if i == 0 {
-					log.V("nuxui", "Sweep AccpetGesture %T", v)
+					// log.V("nuxui", "Sweep AccpetGesture %T", v)
 					v.AccpetGesture(pointer)
 				} else {
-					log.V("nuxui", "Sweep RejectGesture %T", v)
+					// log.V("nuxui", "Sweep RejectGesture %T", v)
 					v.RejectGesture(pointer)
 				}
 			}

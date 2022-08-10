@@ -10,6 +10,8 @@ import (
 	"nuxui.org/nuxui/util"
 )
 
+var _ Scroll = (*scroll)(nil)
+
 // only one child
 type Scroll interface {
 	nux.Parent

@@ -4,6 +4,8 @@
 
 package nux
 
+// https://www.iosdev.recipes/info-plist/permissions/
+
 const (
 	permission_granted = 0 + iota
 	permission_denied

@@ -14,6 +14,8 @@ import (
 	"nuxui.org/nuxui/nux"
 )
 
+var _ Text = (*text)(nil)
+
 type Text interface {
 	nux.Widget
 	nux.Size
@@ -139,7 +141,7 @@ func (me *text) SetTextColor(color nux.Color) {
 func (me *text) Measure(width, height nux.MeasureDimen) {
 	frame := me.Frame()
 
-	outW, outH := me.fontLayout.MeasureText(me.font, me.text, width.Value(), height.Value())
+	outW, outH := me.fontLayout.MeasureText(me.font, me.paint, me.text, width.Value(), height.Value())
 	// log.I("nuxui", "fontLayout.MeasureText outW=%d, outH=%d", outW, outH)
 
 	hPPx, hPPt, vPPx, vPPt, paddingMeasuredFlag := measurePadding(width, height, me.Padding(), frame, float32(outH), 0)

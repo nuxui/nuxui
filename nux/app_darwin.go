@@ -21,8 +21,12 @@ func createNativeApp_() *nativeApp {
 	return me
 }
 
+func (me *nativeApp) init() {
+
+}
+
 func (me *nativeApp) run() {
-	theApp.createMainWindow()
+	theApp.mainWindow = newWindow(theApp.manifest.GetAttr("mainWindow", nil))
 	theApp.mainWindow.Center()
 	theApp.mainWindow.Show()
 
@@ -41,6 +45,7 @@ func (me *nativeApp) ApplicationWillFinishLaunching(notification darwin.NSNotifi
 
 func (me *nativeApp) ApplicationDidFinishLaunching(notification darwin.NSNotification) {
 	// log.I("nuxui", "ApplicationDidFinishLaunching")
+	theApp.mainWindow.mountWidget()
 }
 
 func (me *nativeApp) ApplicationWillBecomeActive(notification darwin.NSNotification) {

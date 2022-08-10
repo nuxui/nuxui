@@ -11,6 +11,8 @@ import (
 
 type OnVisualChanged func(nux.Widget)
 
+var _ Visual = (*WidgetVisual)(nil)
+
 type Visual interface {
 	Background() nux.Drawable
 	SetBackground(nux.Drawable)

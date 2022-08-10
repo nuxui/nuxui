@@ -8,6 +8,8 @@ import (
 	"nuxui.org/nuxui/nux"
 )
 
+var _ Options = (*options)(nil)
+
 type Options interface {
 	nux.Component
 	Values() []string

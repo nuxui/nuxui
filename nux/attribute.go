@@ -58,7 +58,7 @@ func (me Attr) GetAttr(key string, defaultValue Attr) Attr {
 		case map[string]any:
 			ret = *(*Attr)(unsafe.Pointer(&t))
 		default:
-			log.E("nuxui", "unsupport convert %T to Attr, use default value instead", t)
+			log.E("nuxui", "%s: unsupport convert %T to Attr, use default value instead", key, t)
 
 		}
 	}

@@ -42,6 +42,8 @@ func NewShape(attr nux.Attr) *Shape {
 	}
 }
 
+var _ ShapeDrawable = (*shapeDrawable)(nil)
+
 type ShapeDrawable interface {
 	nux.Drawable
 	SetShape(shape Shape)

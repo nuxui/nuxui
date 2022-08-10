@@ -9,22 +9,22 @@ import android.content.pm.PackageManager;
 import android.app.Application;
 import android.os.Handler;
 import android.os.Message;
-import android.util.Log;
 import android.content.res.Resources;
 import android.content.res.Configuration;
+import android.util.DisplayMetrics;
+import android.util.Log;
 
-public class NuxApplication extends Application implements Handler.Callback {
+public class NuxApplication extends Application {
     public static final String META_DATA_LIB_NAME = "org.nuxui.app.libname";
 
     private native void native_NuxApplication_onConfigurationChanged(Configuration newConfig);
-    private native void native_NuxApplication_onCreate(float density);
+    private native void native_NuxApplication_onCreate(float density, int densityDpi, float scaledDensity, int widthPixels, int heightPixels, float xdpi, float ydpi);
     private native void native_NuxApplication_onLowMemory();
     private native void native_NuxApplication_onTerminate();
     private native void native_NuxApplication_onTrimMemory(int level);
-    private native void native_NuxApplication_onBackToUI();
 
     private static NuxApplication mInstance;
-    private Handler mHandler;
+    public  static NuxApplication instance(){return mInstance;}
 
     private void load(){
         String libname = "nuxui";
@@ -44,6 +44,7 @@ public class NuxApplication extends Application implements Handler.Callback {
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
         native_NuxApplication_onConfigurationChanged(newConfig);
     }
 
@@ -54,42 +55,25 @@ public class NuxApplication extends Application implements Handler.Callback {
 
         load();
 
-        mHandler = new Handler(getMainLooper(), this);
-
-        native_NuxApplication_onCreate(Resources.getSystem().getDisplayMetrics().density);
+        DisplayMetrics dm = Resources.getSystem().getDisplayMetrics();
+        native_NuxApplication_onCreate(dm.density, dm.densityDpi, dm.scaledDensity, dm.widthPixels, dm.heightPixels, dm.xdpi, dm.ydpi);
     }
 
     @Override
     public void onLowMemory() {
+        super.onLowMemory();
         native_NuxApplication_onLowMemory();
     }
 
     @Override
     public void onTerminate() {
+        super.onTerminate();
         native_NuxApplication_onTerminate();
     }
 
     @Override
     public void onTrimMemory(int level) {
+        super.onTrimMemory(level);
         native_NuxApplication_onTrimMemory(level);
-    }
-
-    public static NuxApplication instance(){
-        return mInstance;
-    }
-
-    public void backToUI(){
-        Message msg = Message.obtain(mHandler, 100);
-        mHandler.sendMessage(msg);
-    }
-
-    @Override
-    public boolean handleMessage(Message msg) {
-        switch(msg.what){
-            case 100:   // backToUI
-                native_NuxApplication_onBackToUI();
-                break;
-        }
-        return false;
     }
 }

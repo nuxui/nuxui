@@ -36,7 +36,7 @@ func createNativeApp_() *nativeApp {
 func (me *nativeApp) run() {
 	defer xlib.XCloseDisplay(me.display)
 
-	theApp.createMainWindow()
+	theApp.mainWindow = NewWindow(theApp.manifest.GetAttr("mainWindow", nil))
 	theApp.mainWindow.Center()
 	theApp.mainWindow.Show()
 

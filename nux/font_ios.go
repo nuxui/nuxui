@@ -7,6 +7,7 @@
 package nux
 
 import (
+	"math"
 	"nuxui.org/nuxui/nux/internal/ios"
 	"runtime"
 )
@@ -64,9 +65,9 @@ func freeNativeFontLayout(me *nativeFontLayout) {
 	ios.NSObject_release(uintptr(me.layout))
 }
 
-func (me *nativeFontLayout) MeasureText(font Font, text string, width, height int32) (textWidth, textHeight int32) {
+func (me *nativeFontLayout) MeasureText(font Font, paint Paint, text string, width, height int32) (textWidth, textHeight int32) {
 	w, h := me.layout.MeasureText(me.container, font.native().ptr, text, float32(width), float32(height))
-	return int32(w + 0.999999999999999), int32(h + 0.999999999999999)
+	return int32(math.Ceil(float64(w))), int32(math.Ceil(float64(h)))
 }
 
 func (me *nativeFontLayout) DrawText(canvas Canvas, font Font, paint Paint, text string, width, height int32) {

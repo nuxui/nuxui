@@ -10,6 +10,8 @@ import (
 	"nuxui.org/nuxui/util"
 )
 
+var _ Layer = (*layer)(nil)
+
 type Layer interface {
 	nux.Parent
 	nux.Size

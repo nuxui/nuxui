@@ -13,6 +13,8 @@ type Matrix struct {
 	F float32
 }
 
+var _ Canvas = (*canvas)(nil)
+
 type Canvas interface {
 	Save()
 	Restore()

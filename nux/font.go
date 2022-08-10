@@ -20,6 +20,8 @@ const (
 	FontWeight_Black      FontWeight = 900
 )
 
+var _ Font = (*font)(nil)
+
 type Font interface {
 	Family() string
 	// SetFamily(family string)
@@ -105,7 +107,7 @@ func FontWeightFromName(name string) FontWeight {
 }
 
 type FontLayout interface {
-	MeasureText(font Font, text string, width, height int32) (textWidth, textHeight int32)
+	MeasureText(font Font, paint Paint, text string, width, height int32) (textWidth, textHeight int32)
 	DrawText(canvas Canvas, font Font, paint Paint, text string, width, height int32)
 	CharacterIndexForPoint(font Font, text string, width, height int32, x, y float32) uint32
 
@@ -123,8 +125,8 @@ type fontLayout struct {
 	naiveLayout *nativeFontLayout
 }
 
-func (me *fontLayout) MeasureText(font Font, text string, width, height int32) (textWidth, textHeight int32) {
-	return me.naiveLayout.MeasureText(font, text, width, height)
+func (me *fontLayout) MeasureText(font Font, paint Paint, text string, width, height int32) (textWidth, textHeight int32) {
+	return me.naiveLayout.MeasureText(font, paint, text, width, height)
 }
 
 func (me *fontLayout) DrawText(canvas Canvas, font Font, paint Paint, text string, width, height int32) {

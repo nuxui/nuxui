@@ -9,6 +9,8 @@ import (
 	"nuxui.org/nuxui/nux"
 )
 
+var _ ImageDrawable = (*imageDrawable)(nil)
+
 type ImageDrawable interface {
 	nux.Drawable
 }

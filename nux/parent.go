@@ -13,6 +13,8 @@ import (
 // child.Parent().BringChildToFront(child)
 // }
 
+var _ Parent = (*WidgetParent)(nil)
+
 type Parent interface {
 	Widget
 	InsertChild(index int, child ...Widget)

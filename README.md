@@ -17,7 +17,7 @@ Any suggestion or good idea post to [discussions](https://github.com/nuxui/nuxui
 
 * [Install NuxUI](https://nuxui.org/start/install/)
 
-* [NuxUI documentation](https://nuxui.org/)
+* [NuxUI Documentation](https://nuxui.org/)
 
 * [NuxUI Samples](https://github.com/nuxui/samples)
 

@@ -12,16 +12,18 @@ import (
 )
 
 type Application interface {
-	MainWindow() Window
-	Terminate()
+	Init(manifest string)
 	Run()
+	Terminate()
+	Manifest() Attr
+	MainWindow() Window
 }
 
 type application struct {
 	native           *nativeApp
+	manifest         Attr
 	mainThreadID     uint64
 	mainWindow       Window
-	createMainWindow func()
 	invalidateSignal chan *Rect
 	measureSignal    chan Widget
 	windowPrepared   chan struct{}
@@ -39,7 +41,10 @@ var theApp = &application{
 }
 
 func init() {
+	// if runtime.GOOS != "android" {
 	runtime.LockOSThread()
+	// }
+
 	theApp.mainThreadID = currentThreadID()
 	timerLoopInstance.init()
 }
@@ -48,16 +53,7 @@ func App() Application {
 	return theApp
 }
 
-func Run(createMainWindow func()) {
-	if createMainWindow == nil {
-		log.Fatal("nuxui", "createMainWindow can not be nil")
-	}
-	if theApp.createMainWindow != nil {
-		log.Fatal("nuxui", "do not call Run again")
-	}
-
-	theApp.createMainWindow = createMainWindow
-
+func (me *application) Init(manifest string) {
 	// in android, the thread id of init func is different with main func
 	// but it is still run in order, has not effect
 	if runtime.GOOS == "android" {
@@ -68,21 +64,40 @@ func Run(createMainWindow func()) {
 		log.Fatal("nuxui", "main called on thread %d, but init run on %d", tid, theApp.mainThreadID)
 	}
 
-	defer runtime.UnlockOSThread()
+	me.manifest = ParseAttr(manifest)
+	me.native.init()
+}
 
-	go refreshLoop()
-
-	theApp.Run()
+func (me *application) checkInit() {
+	if me.manifest == nil {
+		log.Fatal("nuxui", "app should init first by call 'App().Init(manifest)'")
+	}
 }
 
 func (me *application) Run() {
+	me.checkInit()
+
+	if runtime.GOOS != "android" {
+		defer runtime.UnlockOSThread()
+	}
+
+	go refreshLoop()
+
 	me.native.run()
 }
 
 // not nil
+func (me *application) Manifest() Attr {
+	me.checkInit()
+	return me.manifest
+}
+
+// not nil
 func (me *application) MainWindow() Window {
+	me.checkInit()
+
 	if me.mainWindow == nil {
-		log.Fatal("nuxui", "main window not created yet")
+		log.Fatal("nuxui", `MainWindow is not prepared, should use it when first widget 'OnMount' or use delegate like 'App().SetMainWindowDelegate(...)'`)
 	}
 	return me.mainWindow
 }
@@ -96,6 +111,10 @@ func (me *application) onDidFinishLaunch() {
 
 func createNativeApp() *nativeApp {
 	return createNativeApp_()
+}
+
+func GotoUI(callback func()) {
+	runOnUI(callback)
 }
 
 func RunOnUI(callback func()) {

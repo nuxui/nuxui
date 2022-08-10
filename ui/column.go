@@ -10,6 +10,8 @@ import (
 	"nuxui.org/nuxui/util"
 )
 
+var _ Column = (*column)(nil)
+
 type Column interface {
 	nux.Parent
 	nux.Size

@@ -21,6 +21,10 @@ func createNativeApp_() *nativeApp {
 	return me
 }
 
+func (me *nativeApp) init() {
+
+}
+
 func (me *nativeApp) run() {
 	me.ptr.Run()
 }
@@ -37,9 +41,10 @@ func (me *nativeApp) DidFinishLaunchingWithOptions(launchOptions map[string]uint
 	// log.I("nuxui", "DidFinishLaunchingWithOptions")
 	// theApp.onDidFinishLaunch()
 
-	theApp.createMainWindow()
+	theApp.mainWindow = newWindow(theApp.manifest.GetAttr("mainWindow", nil))
 	theApp.mainWindow.Center()
 	theApp.mainWindow.Show()
+	theApp.mainWindow.mountWidget()
 
 	theApp.windowPrepared <- struct{}{}
 

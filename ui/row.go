@@ -10,6 +10,8 @@ import (
 	"nuxui.org/nuxui/util"
 )
 
+var _ Row = (*row)(nil)
+
 type Row interface {
 	nux.Parent
 	nux.Size

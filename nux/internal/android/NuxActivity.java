@@ -5,16 +5,8 @@
 package org.nuxui.app;
 
 import android.app.Activity;
-
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Paint;
 import android.os.Build;
 import android.os.Bundle;
-import android.text.Layout;
-import android.text.StaticLayout;
-import android.text.TextPaint;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -22,10 +14,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
-import android.content.res.Resources;
-import android.graphics.RectF;
-import android.graphics.Rect;
-import java.io.IOException;
 
 public class NuxActivity extends Activity implements SurfaceHolder.Callback2 {
     private static final String KEY_NATIVE_SAVED_STATE = "android:native_state";
@@ -41,13 +29,13 @@ public class NuxActivity extends Activity implements SurfaceHolder.Callback2 {
     private native void    native_NuxActivity_surfaceCreated(SurfaceHolder holder);
     private native void    native_NuxActivity_surfaceChanged(SurfaceHolder holder, int format, int width, int height);
     private native void    native_NuxActivity_surfaceDestroyed(SurfaceHolder holder);
-    private native boolean native_NuxActivity_onTouch(int deviceId, int pointerId, int action, float x, float y);
+    private native boolean native_NuxActivity_onTouch(MotionEvent event);
 
     private NuxView mNuxView;
 
     @Override
     protected void onCreate( Bundle savedInstanceState) {
-		requestWindowFeature(Window.FEATURE_NO_TITLE);
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
 
         super.onCreate(savedInstanceState);
 
@@ -129,25 +117,33 @@ public class NuxActivity extends Activity implements SurfaceHolder.Callback2 {
 
     @Override
     public boolean onTouchEvent(MotionEvent e) {
-        // int pointerCounet = e.getPointerCount();
-        // int maskedAction = e.getActionMasked();
-        // int actionIndex = e.getActionIndex();
-        // boolean handled = false;
-        // if (maskedAction == MotionEvent.ACTION_DOWN || maskedAction == MotionEvent.ACTION_POINTER_DOWN){
-        //     handled = native_NuxActivity_onTouch(e.getDeviceId(), e.getPointerId(actionIndex), MotionEvent.ACTION_DOWN, e.getX(actionIndex), e.getY(actionIndex));
-        // }else if(maskedAction == MotionEvent.ACTION_UP || maskedAction == MotionEvent.ACTION_POINTER_UP){
-        //     handled = native_NuxActivity_onTouch(e.getDeviceId(), e.getPointerId(actionIndex), MotionEvent.ACTION_UP, e.getX(actionIndex), e.getY(actionIndex));
-        // }else if(maskedAction == MotionEvent.ACTION_MOVE){
-        //     for(int i =0; i!= pointerCounet; i++){
-        //         handled = native_NuxActivity_onTouch(e.getDeviceId(), e.getPointerId(i), MotionEvent.ACTION_MOVE, e.getX(i), e.getY(i));
-        //     }
-        // }else if(maskedAction == MotionEvent.ACTION_CANCEL||maskedAction == MotionEvent.ACTION_OUTSIDE){
-        //     handled = native_NuxActivity_onTouch(e.getDeviceId(), e.getPointerId(actionIndex), maskedAction, e.getX(actionIndex), e.getY(actionIndex));
+        int pointerCounet = e.getPointerCount();
+        int maskedAction = e.getActionMasked();
+        int actionIndex = e.getActionIndex();
+        boolean handled = false;
+//        if (maskedAction == MotionEvent.ACTION_DOWN || maskedAction == MotionEvent.ACTION_POINTER_DOWN){
+//            handled = native_NuxActivity_onTouch(e.getDeviceId(), e.getPointerId(actionIndex), MotionEvent.ACTION_DOWN, e.getX(actionIndex), e.getY(actionIndex));
+//        }else if(maskedAction == MotionEvent.ACTION_UP || maskedAction == MotionEvent.ACTION_POINTER_UP){
+//            handled = native_NuxActivity_onTouch(e.getDeviceId(), e.getPointerId(actionIndex), MotionEvent.ACTION_UP, e.getX(actionIndex), e.getY(actionIndex));
+//        }else if(maskedAction == MotionEvent.ACTION_MOVE){
+//            for(int i =0; i!= pointerCounet; i++){
+//                handled = native_NuxActivity_onTouch(e.getDeviceId(), e.getPointerId(i), MotionEvent.ACTION_MOVE, e.getX(i), e.getY(i));
+//            }
+//        }else if(maskedAction == MotionEvent.ACTION_CANCEL||maskedAction == MotionEvent.ACTION_OUTSIDE){
+//            handled = native_NuxActivity_onTouch(e.getDeviceId(), e.getPointerId(actionIndex), maskedAction, e.getX(actionIndex), e.getY(actionIndex));
+//        }
+
+        // Log.i("nuxui", "maskedAction = " + maskedAction + ", pointerCounet = " + pointerCounet + ", actionIndex = " + actionIndex);
+        // int index = e.getActionIndex();
+        // Log.i("nuxui", "index="+index+ ", PointerId: " + e.getPointerId(index) + ", X="+e.getX(index) + ", Y="+e.getY(index));
+
+        // for(int i =0; i!= pointerCounet; i++){
+        //     Log.i("nuxui", "PointerId: " + e.getPointerId(i) + ", X="+e.getX(i) + ", Y="+e.getY(i));
         // }
 
-        // if (handled){
-        //     return true;
-        // }
+        if (native_NuxActivity_onTouch(e)){
+            return true;
+        }
         return super.onTouchEvent(e);
     }
 
@@ -162,35 +158,8 @@ public class NuxActivity extends Activity implements SurfaceHolder.Callback2 {
         return super.onGenericMotionEvent(event);
     }
 
-    public static void drawText(Canvas canvas ,String text, int width,  TextPaint paint){
-        Log.i("nuxui", "drawText myPid=" + android.os.Process.myPid() + ", myTid="+android.os.Process.myTid()+", thread="+Thread.currentThread().getId());
-        StaticLayout mTextLayout = new StaticLayout(text, paint, width, Layout.Alignment.ALIGN_NORMAL, 1.0f, 0, false);
-        mTextLayout.draw(canvas);
-    }
-
-    public static StaticLayout createStaticLayout(String text, int width,  TextPaint paint){
-        return new StaticLayout(text, paint, width, Layout.Alignment.ALIGN_NORMAL, 1.0f, 0, false);
-    }
-
-    public static Bitmap createBitmap(String fileName){
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        Bitmap b = null;
-        try{
-            if (fileName.startsWith("assets/")){
-                Log.i("nuxui", "createBitmap myPid=" + android.os.Process.myPid() + ", myTid="+android.os.Process.myTid()+", thread="+Thread.currentThread().getId());
-                String s = fileName.substring(7, fileName.length());
-                b = BitmapFactory.decodeStream(NuxApplication.instance().getAssets().open(s));
-                Log.i("nuxui", "startsWith assets: " + s + " b=" + b);
-                return b;
-            }else{
-                Log.i("nuxui", "not startsWith assets: " + fileName);
-                b = BitmapFactory.decodeFile(fileName, options);
-            }
-        } catch (IOException e) {
-            Log.i("nuxui", "startsWith assets " + e);
-            e.printStackTrace();
-        }
-        return b;
+    public void invalidateAsync(){
+        mNuxView.invalidate();
     }
 
 }

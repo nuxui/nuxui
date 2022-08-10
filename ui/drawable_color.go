@@ -9,6 +9,8 @@ import (
 	"nuxui.org/nuxui/nux"
 )
 
+var _ ColorDrawable = (*colorDrawable)(nil)
+
 type ColorDrawable interface {
 	nux.Drawable
 	Color() nux.Color

@@ -7,7 +7,6 @@
 package nux
 
 import (
-	"nuxui.org/nuxui/log"
 	"nuxui.org/nuxui/nux/internal/android"
 	"runtime"
 )
@@ -17,27 +16,24 @@ type nativeApp struct {
 }
 
 func createNativeApp_() *nativeApp {
-	me := &nativeApp{
-		ref: android.NuxApplication_instance(),
-	}
-	android.SetApplicationDelegate(me)
+	me := &nativeApp{}
 	runtime.SetFinalizer(me, freeApp)
 	return me
 }
 
 func freeApp(app *nativeApp) {
+	// nothing to free
+}
+
+func (me *nativeApp) init() {
+	me.ref = android.NuxApplication_instance()
+	android.SetApplicationDelegate(me)
 }
 
 func (me *nativeApp) run() {
-	log.I("nuxui", "nativeApp run() 0 %d", currentThreadID())
-	// theApp.windowPrepared <- struct{}{}
 }
 
 func (me *nativeApp) terminate() {
-}
-
-func (me *nativeApp) OnCreateWindow(activity android.Activity) {
-	// theApp.createMainWindow()
 }
 
 func (me *nativeApp) OnConfigurationChanged(app android.Application, newConfig android.Configuration) {
@@ -45,7 +41,9 @@ func (me *nativeApp) OnConfigurationChanged(app android.Application, newConfig a
 }
 
 func (me *nativeApp) OnCreate(app android.Application) {
-	theApp.createMainWindow()
+	theApp.mainWindow = newWindow(theApp.manifest.GetAttr("mainWindow", nil))
+	theApp.mainWindow.mountWidget()
+	theApp.windowPrepared <- struct{}{}
 }
 
 func (me *nativeApp) OnLowMemory(app android.Application) {
@@ -69,9 +67,9 @@ func runOnUI(callback func()) {
 }
 
 func invalidateRectAsync_(dirtRect *Rect) {
-	// TODO:: error for render radio options
-	// darwin.NSApp().KeyWindow().InvalidateRectAsync(float32(rect.X), float32(rect.Y), float32(rect.Width), float32(rect.Height))
-	// darwin.NSApp().KeyWindow().InvalidateRectAsync(0, 0, 0, 0)
+	runOnUI(func() {
+		theApp.mainWindow.draw()
+	})
 }
 
 func startTextInput() {

@@ -16,9 +16,9 @@ package ios
 #import <CoreGraphics/CoreGraphics.h>
 
 uintptr_t nux_NewUIWindow(CGFloat width, CGFloat height);
-void nux_UIWindow_makeKeyAndVisible(uintptr_t nuxwindow);
-CGRect nux_UIWindow_frame(uintptr_t nuxwindow);
-void nux_UIWindow_InvalidateRect_async(uintptr_t nuxwindow, CGFloat x, CGFloat y, CGFloat width, CGFloat height);
+void      nux_UIWindow_makeKeyAndVisible(uintptr_t nuxwindow);
+CGRect    nux_UIWindow_frame(uintptr_t nuxwindow);
+void      nux_UIWindow_InvalidateRect_async(uintptr_t nuxwindow, CGFloat x, CGFloat y, CGFloat width, CGFloat height);
 */
 import "C"
 

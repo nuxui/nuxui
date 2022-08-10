@@ -15,6 +15,8 @@ import (
 	"nuxui.org/nuxui/util"
 )
 
+var _ Label = (*label)(nil)
+
 type Label interface {
 	nux.Widget
 	nux.Size
@@ -234,7 +236,7 @@ func (me *label) SetText(text string) {
 func (me *label) Measure(width, height nux.MeasureDimen) {
 	frame := me.Frame()
 
-	me.textWidth, me.textHeight = me.fontLayout.MeasureText(me.font, me.text, width.Value(), height.Value())
+	me.textWidth, me.textHeight = me.fontLayout.MeasureText(me.font, me.paint, me.text, width.Value(), height.Value())
 	txtW := float32(me.textWidth)
 	txtH := float32(me.textHeight)
 

@@ -86,7 +86,6 @@ func mountWidget(child Widget, parent Parent) {
 			mountWidget(c, p)
 		}
 	}
-
 	if compt, ok := child.(Component); ok {
 		mountWidget(compt.Content(), parent)
 	}

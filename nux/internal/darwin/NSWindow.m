@@ -169,6 +169,26 @@
 
 @implementation NuxWindowDelegate
 
+// - (NSRect)window:(NSWindow *)window willPositionSheet:(NSWindow *)sheet usingRect:(NSRect)rect {
+//   NSLog(@"NuxWindowDelegate willPositionSheet");
+// }
+
+- (void)windowWillBeginSheet:(NSNotification *)notification{
+  NSLog(@"NuxWindowDelegate windowWillBeginSheet");
+}
+
+- (void)windowDidEndSheet:(NSNotification *)notification {
+  NSLog(@"NuxWindowDelegate windowDidEndSheet");
+}
+
+- (void)windowDidBecomeMain:(NSNotification *)notification{
+  // NSLog(@"NuxWindowDelegate windowDidBecomeMain");
+}
+
+- (void)windowDidResignMain:(NSNotification *)notification{
+  // NSLog(@"NuxWindowDelegate windowDidResignMain");
+}
+
 - (NSSize)windowWillResize:(NSWindow *)sender toSize:(NSSize)frameSize {
   // NSLog(@"NuxWindowDelegate windowWillResize sender=%@", sender);
   return frameSize;

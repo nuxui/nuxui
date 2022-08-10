@@ -18,7 +18,6 @@ void nux_canvas_rotate(jobject canvas, jfloat degrees);
 void nux_canvas_clipRect(jobject canvas, jfloat left, jfloat top, jfloat right, jfloat bottom);
 void nux_canvas_drawRect(jobject canvas, jfloat left, jfloat top, jfloat right, jfloat bottom, jobject paint);
 void nux_canvas_drawRoundRect(jobject canvas, jfloat left, jfloat top, jfloat right, jfloat bottom, jfloat rx, jfloat ry, jobject paint);
-void nux_canvas_drawText(jobject canvas, char* text, jint width, jobject paint);
 void nux_canvas_drawBitmap(jobject canvas, jobject bitmap, jfloat left, jfloat top, jfloat right, jfloat bottom, jobject paint);
 */
 import "C"

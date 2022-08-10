@@ -12,6 +12,8 @@ import (
 	"nuxui.org/nuxui/util"
 )
 
+var _ Image = (*image)(nil)
+
 type Image interface {
 	nux.Widget
 	nux.Size

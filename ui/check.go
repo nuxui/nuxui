@@ -32,6 +32,8 @@ func NewRadio(attr nux.Attr) Radio {
 	return Radio(NewCheck(attr))
 }
 
+var _ Check = (*check)(nil)
+
 type Check interface {
 	Label
 	Checkable

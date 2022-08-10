@@ -14,18 +14,12 @@ jobject nux_NuxApplication_instance();
 */
 import "C"
 
-import (
-	"nuxui.org/nuxui/log"
-)
-
 type ApplicationDelegate interface {
 	OnConfigurationChanged(app Application, newConfig Configuration)
 	OnCreate(app Application)
 	OnLowMemory(app Application)
 	OnTerminate(app Application)
 	OnTrimMemory(app Application, level int32)
-
-	OnCreateWindow(activity Activity)
 }
 
 func SetApplicationDelegate(delegate ApplicationDelegate) {
@@ -41,12 +35,20 @@ func NuxApplication_instance() Application {
 }
 
 //export go_NuxApplication_onCreate
-func go_NuxApplication_onCreate(application C.jobject) {
-	log.I("nuxui", "go_NuxApplication_onCreate  ==  0")
+func go_NuxApplication_onCreate(application C.jobject, density C.jfloat, densityDpi C.jint, scaledDensity C.jfloat, widthPixels C.jint, heightPixels C.jint, xdpi C.jfloat, ydpi C.jfloat) {
+	_displayMetrics = &displayMetrics{
+		WidthPixels:   int32(widthPixels),
+		HeightPixels:  int32(heightPixels),
+		Xdpi:          float32(xdpi),
+		Ydpi:          float32(ydpi),
+		ScaledDensity: float32(scaledDensity),
+		Density:       float32(density),
+		DensityDpi:    int32(densityDpi),
+	}
+
 	if applicationDelegate != nil {
 		applicationDelegate.OnCreate(Application(application))
 	}
-	log.I("nuxui", "go_NuxApplication_onCreate  ==  1")
 }
 
 //export go_NuxApplication_onConfigurationChanged

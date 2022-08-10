@@ -82,7 +82,7 @@ func (me *nativeFontLayout) MeasureText(font Font, text string, width, height in
 	rect := &win32.RectF{0, 0, float32(width), float32(height)}
 	size := &win32.RectF{}
 	win32.GdipMeasureString(globalGP, text, font.native().font, rect, nil, size, nil, nil)
-	return int32(size.Width + 0.999999999999999), int32(size.Height + 0.999999999999999)
+	return int32(math.Ceil(float64(size.Width))), int32(math.Ceil(float64(size.Height)))
 }
 
 func (me *nativeFontLayout) DrawText(canvas Canvas, font Font, paint Paint, text string, width, height int32) {

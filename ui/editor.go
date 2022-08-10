@@ -14,6 +14,8 @@ import (
 	"nuxui.org/nuxui/nux"
 )
 
+var _ Editor = (*editor)(nil)
+
 type Editor interface {
 	nux.Widget
 	nux.Size
@@ -156,7 +158,7 @@ func (me *editor) SetText(text string) {
 func (me *editor) Measure(width, height nux.MeasureDimen) {
 	frame := me.Frame()
 
-	outW, outH := me.fontLayout.MeasureText(me.font, me.text, width.Value(), height.Value())
+	outW, outH := me.fontLayout.MeasureText(me.font, me.paint, me.text, width.Value(), height.Value())
 
 	hPPx, hPPt, vPPx, vPPt, paddingMeasuredFlag := measurePadding(width, height, me.Padding(), frame, float32(outH), 0)
 	if hPPt >= 100.0 || vPPt >= 100.0 {
@@ -216,7 +218,7 @@ func (me *editor) Draw(canvas nux.Canvas) {
 
 	if me.flicker {
 		m := fmt.Sprintf("%s%s", front, string([]rune(me.editingText)[:me.editingLoc]))
-		outW, outH := me.fontLayout.MeasureText(me.font, m, 1000, 1000) // TODO:: 1000
+		outW, outH := me.fontLayout.MeasureText(me.font, me.paint, m, 1000, 1000) // TODO:: 1000
 		canvas.Translate(float32(outW), 0)
 		me.paintFlicker.SetColor(0x000000cc)
 		canvas.DrawRect(0, 1, 1, float32(outH-1), me.paintFlicker)

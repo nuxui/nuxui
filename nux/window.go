@@ -9,6 +9,8 @@ import (
 	"nuxui.org/nuxui/util"
 )
 
+var _ Window = (*window)(nil)
+
 type Window interface {
 	Component
 
@@ -28,6 +30,8 @@ type Window interface {
 	// private methods
 	// created()
 	createDecor(Attr) Parent
+	mountWidget()
+	ejectWidget()
 	resize()
 	draw()
 	handlePointerEvent(event PointerEvent) bool
@@ -48,7 +52,7 @@ type window struct {
 	timer       Timer
 }
 
-func NewWindow(attr Attr) Window {
+func newWindow(attr Attr) Window {
 	if theApp.mainWindow != nil {
 		log.Fatal("nuxui", "nuxui only supported single window")
 	}
@@ -67,10 +71,6 @@ func NewWindow(attr Attr) Window {
 	}
 
 	me.nativeWnd = newNativeWindow(attr)
-
-	// TODO:: wait app running
-	mountWidget(me.decor, nil)
-
 	return me
 }
 
@@ -97,6 +97,14 @@ func (me *window) createDecor(attr Attr) Parent {
 
 func (me *window) Decor() Widget {
 	return me.decor
+}
+
+func (me *window) mountWidget() {
+	mountWidget(me.decor, nil)
+}
+
+func (me *window) ejectWidget() {
+	EjectChild(me.decor)
 }
 
 func (me *window) Center() {
