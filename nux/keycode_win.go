@@ -93,8 +93,8 @@ const (
 	Key_Function     KeyCode = 0x3F       // kVK_Function FN TODO::
 	Key_Left         KeyCode = 0x25       // VK_LEFT
 	Key_Right        KeyCode = 0x27       // VK_RIGHT
-	Key_Down         KeyCode = 0x28       // VK_DOWN
 	Key_Up           KeyCode = 0x26       // VK_UP
+	Key_Down         KeyCode = 0x28       // VK_DOWN
 	Key_Mute         KeyCode = 0xAD       // VK_VOLUME_MUTE
 	Key_VolumeUp     KeyCode = 0xAF       // VK_VOLUME_UP
 	Key_VolumeDown   KeyCode = 0xAE       // VK_VOLUME_DOWN

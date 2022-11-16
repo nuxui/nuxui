@@ -94,8 +94,8 @@ const (
 	Key_Function     KeyCode = 119        // AKEYCODE_FUNCTION
 	Key_Left         KeyCode = 21         // AKEYCODE_DPAD_LEFT
 	Key_Right        KeyCode = 22         // AKEYCODE_DPAD_RIGHT
-	Key_Down         KeyCode = 20         // AKEYCODE_DPAD_DOWN
 	Key_Up           KeyCode = 19         // AKEYCODE_DPAD_UP
+	Key_Down         KeyCode = 20         // AKEYCODE_DPAD_DOWN
 	Key_Mute         KeyCode = 91         // AKEYCODE_MUTE ? AKEYCODE_VOLUME_MUTE 164
 	Key_VolumeUp     KeyCode = 24         // AKEYCODE_VOLUME_UP
 	Key_VolumeDown   KeyCode = 25         // AKEYCODE_VOLUME_DOWN

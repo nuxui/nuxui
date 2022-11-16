@@ -1,8 +1,10 @@
 .DS_Store
 .vscode
 .stfolder
+.stignore
 *.exe
 *.out
 *.app
 *.apk
 *.old
+cmd/nux/nux

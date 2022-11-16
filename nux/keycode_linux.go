@@ -93,8 +93,8 @@ const (
 	Key_Function     KeyCode = Key_Unknow // Unknow
 	Key_Left         KeyCode = 0xff51     // XK_Left
 	Key_Right        KeyCode = 0xff53     // XK_Right
-	Key_Down         KeyCode = 0xff54     // XK_Down
 	Key_Up           KeyCode = 0xff52     // XK_Up
+	Key_Down         KeyCode = 0xff54     // XK_Down
 	Key_Mute         KeyCode = Key_Unknow // Unknow
 	Key_VolumeUp     KeyCode = Key_Unknow // Unknow
 	Key_VolumeDown   KeyCode = Key_Unknow // Unknow

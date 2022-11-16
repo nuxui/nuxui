@@ -93,8 +93,8 @@ const (
 	Key_Function     KeyCode = 0x3F       // kVK_Function FN
 	Key_Left         KeyCode = 0x7B       // kVK_LeftArrow
 	Key_Right        KeyCode = 0x7C       // kVK_RightArrow
-	Key_Down         KeyCode = 0x7D       // kVK_DownArrow
 	Key_Up           KeyCode = 0x7E       // kVK_UpArrow
+	Key_Down         KeyCode = 0x7D       // kVK_DownArrow
 	Key_Mute         KeyCode = 0x4A       // kVK_Mute
 	Key_VolumeUp     KeyCode = 0x48       // kVK_VolumeUp
 	Key_VolumeDown   KeyCode = 0x49       // kVK_VolumeDown

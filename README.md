@@ -7,7 +7,7 @@
   </h1>
 </a>
 
-NuxUI is Golang GUI SDK for IOS, Android, macOS, Windows, Linux from a single codebase.
+NuxUI is Golang GUI Framework for IOS, Android, macOS, Windows, Linux.
 
 NuxUI is now in developing, the API maybe changed before first stable version.
 
@@ -15,7 +15,7 @@ Any suggestion or good idea post to [discussions](https://github.com/nuxui/nuxui
 
 ## Documentation
 
-* [Install NuxUI](https://nuxui.org/start/install/)
+* [NuxUI Installation](https://nuxui.org/start/install/)
 
 * [NuxUI Documentation](https://nuxui.org/)
 
@@ -42,7 +42,7 @@ go mod tidy
 nux build -target=iossimulator -bundleid="app.id" -teamid="YOURTEAMID" .
 xcrun simctl install booted ./counter.app
 
-#android
+# android
 nux build -target=android -ldflags="-s -w" . 
 adb install -r counter.apk
 ```

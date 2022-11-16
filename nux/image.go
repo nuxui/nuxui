@@ -21,7 +21,7 @@ func LoadImageFromFile(filename string) (Image, error) {
 
 	switch ext {
 	case ".svg":
-		return LoadImageSVGFromFile(filename), nil
+		// return LoadImageSVGFromFile(filename), nil
 	case ".png", ".jpg", ".jpeg":
 		return loadImageFromFile(filename), nil
 	}
